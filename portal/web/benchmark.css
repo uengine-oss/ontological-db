@@ -1,0 +1,183 @@
+/* Benchmark report — a document page, in the Studio's dark palette.
+   Emphasis encoding: one accent hue for this database, a recessive slate for
+   everything else. The pair is validated for CVD separation (ΔE 18.4 deutan)
+   and for 3:1 contrast against the card surface. */
+:root {
+  --bg: #14171c;
+  --bg-2: #191d24;
+  --bg-3: #20252e;
+  --line: #2c333e;
+  --fg: #e6eaf0;
+  --fg-dim: #93a1b3;
+  --fg-mute: #6b7787;
+  --accent: #18b6a0;
+  --accent-soft: #18b6a029;
+  --bar-dim: #5a6980;
+  --warn: #e0a33e;
+  --err: #e0554c;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg); color: var(--fg);
+  font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+
+/* ------------------------------------------------------------------ top --- */
+.top {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 24px;
+  background: var(--bg-2); border-bottom: 1px solid var(--line);
+}
+.back { color: var(--fg-dim); text-decoration: none; font-size: 13px; }
+.back:hover { color: var(--fg); }
+.back .mark { color: var(--accent); font-size: 16px; }
+.crumb {
+  font-size: 13px; color: var(--fg-mute);
+  border-left: 1px solid var(--line); padding-left: 12px;
+}
+
+/* Wide enough that eight columns of the latency table fit without a nested
+   scroll on a laptop; the prose inside is capped separately by its own measure. */
+main { max-width: 1240px; margin: 0 auto; padding: 40px 24px 96px; }
+
+h1 { font-size: 30px; line-height: 1.25; margin: 0 0 14px; letter-spacing: -.01em; }
+h2 { font-size: 19px; margin: 44px 0 14px; letter-spacing: -.005em; }
+h3 { font-size: 15px; margin: 0 0 6px; }
+.lede { color: var(--fg-dim); max-width: 68ch; margin: 0 0 22px; }
+code { font-family: var(--mono); font-size: .88em; color: var(--fg); background: var(--bg-3); padding: 1px 5px; border-radius: 4px; }
+
+/* --------------------------------------------------------- correctness --- */
+.gate {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-size: 13px; color: var(--fg-dim);
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 14px;
+}
+.gate .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--fg-mute); }
+.gate.ok .dot { background: var(--accent); }
+.gate.bad { color: var(--err); border-color: var(--err); }
+.gate.bad .dot { background: var(--err); }
+.gate b { color: var(--fg); font-weight: 600; }
+
+/* ------------------------------------------------------------ switcher --- */
+.switcher { display: flex; gap: 6px; margin: 26px 0 20px; }
+.switcher button {
+  font: inherit; font-size: 13px;
+  background: var(--bg-2); color: var(--fg-dim);
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 7px 14px; cursor: pointer;
+}
+.switcher button:hover { color: var(--fg); }
+.switcher button[aria-pressed="true"] {
+  color: var(--fg); border-color: var(--accent); background: var(--accent-soft);
+}
+
+/* ---------------------------------------------------------------- card --- */
+.card {
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 12px; padding: 22px 24px; margin: 0 0 22px;
+}
+.card > h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--fg-dim); margin: 0 0 4px; }
+.card .sub { font-size: 12.5px; color: var(--fg-mute); margin: 0 0 18px; }
+
+/* --------------------------------------------------------------- chart --- */
+.chart { display: grid; gap: 10px; }
+.chart .row {
+  display: grid; grid-template-columns: 190px 1fr 96px; align-items: center; gap: 12px;
+  padding: 2px 0; border-radius: 6px;
+}
+.chart .row:hover { background: #ffffff08; }
+.chart .name { font-size: 13px; color: var(--fg-dim); text-align: right; line-height: 1.25; }
+.chart .name .nm { display: block; }
+.chart .name .qual { display: block; font-size: 11px; color: var(--fg-mute); }
+.chart .row.self .name .nm { color: var(--fg); font-weight: 600; }
+.chart .track { height: 14px; background: #ffffff0a; border-radius: 4px; position: relative; }
+.chart .bar {
+  height: 100%; background: var(--bar-dim);
+  border-radius: 0 4px 4px 0; min-width: 2px;
+}
+.chart .row.self .bar { background: var(--accent); }
+
+/* Off the scale. A bar that is 650× the axis cannot share it, so this one is
+   drawn broken rather than merely long — hollow, with a torn end and a break
+   mark, so it never reads as "about the same as the bar above". */
+.chart .bar.clipped {
+  border-radius: 0;
+  background: repeating-linear-gradient(
+    135deg, var(--bar-dim) 0 3px, transparent 3px 7px);
+  opacity: .55;
+  -webkit-clip-path: polygon(0 0, calc(100% - 14px) 0, calc(100% - 20px) 50%, calc(100% - 14px) 100%, 0 100%);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, calc(100% - 20px) 50%, calc(100% - 14px) 100%, 0 100%);
+}
+.chart .breakmark {
+  position: absolute; right: -2px; top: 50%; transform: translateY(-50%);
+  color: var(--warn); font-size: 12px; letter-spacing: -2px;
+}
+.chart .val { font-family: var(--mono); font-size: 12.5px; color: var(--fg); font-variant-numeric: tabular-nums; }
+.chart .row.off .val { color: var(--warn); }
+.axis {
+  display: flex; justify-content: space-between;
+  margin: 12px 0 0 202px; padding-top: 7px;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono); font-size: 11.5px; color: var(--fg-mute);
+}
+.chart-note { margin: 12px 0 0 202px; font-size: 12px; color: var(--fg-mute); }
+
+/* --------------------------------------------------------------- table --- */
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { padding: 9px 10px; text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th {
+  font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--fg-dim); border-bottom: 1px solid var(--line);
+}
+tbody td { border-bottom: 1px solid #ffffff08; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+tbody th { text-align: left; font-weight: 500; color: var(--fg-dim); border-bottom: 1px solid #ffffff08; }
+tbody tr:hover td, tbody tr:hover th { background: #ffffff06; }
+td.self, th.self { background: var(--accent-soft); }
+thead th.self { color: var(--accent); }
+td.best { color: var(--accent); }
+tr.floor th, tr.floor td { color: var(--fg-mute); font-style: italic; border-bottom: 0; }
+.runs {
+  margin: 14px 0 0; font-size: 11.5px; color: var(--fg-mute); font-family: var(--mono);
+  display: flex; flex-wrap: wrap; gap: 4px 14px;
+}
+.runs span { max-width: 100%; overflow-wrap: anywhere; }
+
+/* --------------------------------------------------------------- notes --- */
+.notes article { margin: 0 0 22px; max-width: 74ch; }
+.notes p { margin: 0 0 8px; color: var(--fg-dim); }
+.notes b { color: var(--fg); font-weight: 600; }
+.notes .aside { font-size: 13.5px; color: var(--fg-mute); border-left: 2px solid var(--line); padding-left: 12px; }
+.caveats { max-width: 74ch; color: var(--fg-dim); padding-left: 20px; }
+.caveats li { margin-bottom: 6px; }
+.more { max-width: 74ch; color: var(--fg-mute); font-size: 13.5px; margin-top: 26px; }
+
+/* ------------------------------------------------------------- tooltip --- */
+.tip {
+  position: fixed; z-index: 20; pointer-events: none;
+  background: var(--bg-3); border: 1px solid var(--line); border-radius: 8px;
+  padding: 9px 12px; font-size: 12.5px; box-shadow: 0 8px 24px #0009;
+  max-width: 260px;
+}
+.tip.hidden { display: none; }
+.tip b { display: block; margin-bottom: 4px; color: var(--fg); }
+.tip dl { display: grid; grid-template-columns: auto auto; gap: 2px 14px; margin: 0; font-family: var(--mono); }
+.tip dt { color: var(--fg-mute); }
+.tip dd { margin: 0; text-align: right; color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+
+.empty { color: var(--fg-mute); font-size: 14px; }
+
+@media (max-width: 720px) {
+  .chart .row { grid-template-columns: 120px 1fr 78px; }
+  .axis, .chart-note { margin-left: 132px; }
+  h1 { font-size: 24px; }
+}

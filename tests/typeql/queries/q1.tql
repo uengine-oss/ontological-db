@@ -1,0 +1,14 @@
+match
+  $book isa book, has genre "science fiction";
+fetch {
+  "title": $book.title,
+  "authors": [
+	# this is a sub-fetch to return books without authors as well
+    match
+      authoring (work: $book, author: $author);
+    fetch {
+      "name": $author.name,
+    };
+  ],
+  "price": $book.price
+};

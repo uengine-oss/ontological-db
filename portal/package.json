@@ -1,0 +1,12 @@
+{
+  "name": "ontological-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Neo4j-Browser-style console for Ontological",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "dependencies": { "pg": "^8.13.0" }
+}

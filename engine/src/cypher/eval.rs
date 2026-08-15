@@ -1,0 +1,192 @@
+//! Expression evaluation for the write path.
+//!
+//! Read queries compile expressions into SQL. Write clauses (`CREATE`, `SET`,
+//! `MERGE`) need values *in Rust* to build property payloads, so they get this
+//! small evaluator over already-bound rows.
+
+use super::ast::*;
+use serde_json::{json, Map, Value};
+use std::collections::HashMap;
+
+pub type Env = HashMap<String, Value>;
+
+pub fn eval(e: &Expr, env: &Env, params: &Value) -> Result<Value, String> {
+    Ok(match e {
+        Expr::Lit(Lit::Int(i)) => json!(i),
+        Expr::Lit(Lit::Float(f)) => json!(f),
+        Expr::Lit(Lit::Str(s)) => json!(s),
+        Expr::Lit(Lit::Bool(b)) => json!(b),
+        Expr::Lit(Lit::Null) => Value::Null,
+        Expr::Param(p) => params.get(p).cloned().unwrap_or(Value::Null),
+        Expr::Var(v) => env.get(v).cloned().unwrap_or(Value::Null),
+        Expr::Prop(base, p) => {
+            let b = eval(base, env, params)?;
+            b.get(p).cloned().unwrap_or(Value::Null)
+        }
+        Expr::List(xs) => {
+            Value::Array(xs.iter().map(|x| eval(x, env, params)).collect::<Result<_, _>>()?)
+        }
+        Expr::Map(kv) => {
+            let mut m = Map::new();
+            for (k, v) in kv {
+                m.insert(k.clone(), eval(v, env, params)?);
+            }
+            Value::Object(m)
+        }
+        Expr::Neg(a) => match eval(a, env, params)? {
+            Value::Number(n) => n
+                .as_f64()
+                .map(|f| json!(-f))
+                .unwrap_or(Value::Null),
+            _ => Value::Null,
+        },
+        Expr::Not(a) => json!(!truthy(&eval(a, env, params)?)),
+        Expr::IsNull(a, want) => json!(eval(a, env, params)?.is_null() == *want),
+        Expr::Binary(op, l, r) => {
+            let a = eval(l, env, params)?;
+            let b = eval(r, env, params)?;
+            binary(*op, &a, &b)
+        }
+        Expr::Case { operand, whens, else_ } => {
+            let subject = match operand {
+                Some(o) => Some(eval(o, env, params)?),
+                None => None,
+            };
+            for (cond, val) in whens {
+                let hit = match &subject {
+                    Some(s) => *s == eval(cond, env, params)?,
+                    None => truthy(&eval(cond, env, params)?),
+                };
+                if hit {
+                    return eval(val, env, params);
+                }
+            }
+            match else_ {
+                Some(e) => eval(e, env, params)?,
+                None => Value::Null,
+            }
+        }
+        Expr::Func { name, args, .. } => {
+            let a: Vec<Value> =
+                args.iter().map(|x| eval(x, env, params)).collect::<Result<_, _>>()?;
+            func(name, &a)?
+        }
+        Expr::Star => Value::Null,
+    })
+}
+
+fn truthy(v: &Value) -> bool {
+    match v {
+        Value::Bool(b) => *b,
+        Value::Null => false,
+        Value::Number(n) => n.as_f64().is_some_and(|f| f != 0.0),
+        Value::String(s) => !s.is_empty(),
+        Value::Array(a) => !a.is_empty(),
+        Value::Object(o) => !o.is_empty(),
+    }
+}
+
+fn num(v: &Value) -> Option<f64> {
+    match v {
+        Value::Number(n) => n.as_f64(),
+        Value::String(s) => s.parse().ok(),
+        _ => None,
+    }
+}
+
+fn binary(op: BinOp, a: &Value, b: &Value) -> Value {
+    use BinOp::*;
+    match op {
+        Add => match (num(a), num(b)) {
+            (Some(x), Some(y)) => json!(x + y),
+            _ => json!(format!("{}{}", as_str(a), as_str(b))),
+        },
+        Sub | Mul | Div | Mod | Pow => match (num(a), num(b)) {
+            (Some(x), Some(y)) => json!(match op {
+                Sub => x - y,
+                Mul => x * y,
+                Div => {
+                    if y == 0.0 {
+                        return Value::Null;
+                    } else {
+                        x / y
+                    }
+                }
+                Mod => {
+                    if y == 0.0 {
+                        return Value::Null;
+                    } else {
+                        x % y
+                    }
+                }
+                _ => x.powf(y),
+            }),
+            _ => Value::Null,
+        },
+        Eq => json!(a == b),
+        Ne => json!(a != b),
+        Lt | Le | Gt | Ge => match (num(a), num(b)) {
+            (Some(x), Some(y)) => json!(match op {
+                Lt => x < y,
+                Le => x <= y,
+                Gt => x > y,
+                _ => x >= y,
+            }),
+            _ => {
+                let (x, y) = (as_str(a), as_str(b));
+                json!(match op {
+                    Lt => x < y,
+                    Le => x <= y,
+                    Gt => x > y,
+                    _ => x >= y,
+                })
+            }
+        },
+        And => json!(truthy(a) && truthy(b)),
+        Or => json!(truthy(a) || truthy(b)),
+        Xor => json!(truthy(a) != truthy(b)),
+        Concat => json!(format!("{}{}", as_str(a), as_str(b))),
+        StartsWith => json!(as_str(a).starts_with(&as_str(b))),
+        EndsWith => json!(as_str(a).ends_with(&as_str(b))),
+        Contains => json!(as_str(a).contains(&as_str(b))),
+        Regex => json!(false),
+        In => match b {
+            Value::Array(xs) => json!(xs.contains(a)),
+            _ => json!(false),
+        },
+    }
+}
+
+fn as_str(v: &Value) -> String {
+    match v {
+        Value::String(s) => s.clone(),
+        Value::Null => String::new(),
+        other => other.to_string(),
+    }
+}
+
+fn func(name: &str, a: &[Value]) -> Result<Value, String> {
+    Ok(match name.to_ascii_lowercase().as_str() {
+        "toupper" | "upper" => json!(as_str(&a[0]).to_uppercase()),
+        "tolower" | "lower" => json!(as_str(&a[0]).to_lowercase()),
+        "trim" => json!(as_str(&a[0]).trim()),
+        "tostring" => json!(as_str(&a[0])),
+        "tointeger" => num(&a[0]).map(|f| json!(f as i64)).unwrap_or(Value::Null),
+        "tofloat" => num(&a[0]).map(|f| json!(f)).unwrap_or(Value::Null),
+        "coalesce" => a.iter().find(|v| !v.is_null()).cloned().unwrap_or(Value::Null),
+        "size" | "length" => match &a[0] {
+            Value::Array(xs) => json!(xs.len()),
+            Value::String(s) => json!(s.chars().count()),
+            _ => Value::Null,
+        },
+        "abs" => num(&a[0]).map(|f| json!(f.abs())).unwrap_or(Value::Null),
+        "id" => a[0].get("_id").cloned().unwrap_or(Value::Null),
+        "labels" | "type" => a[0].get("_type").cloned().unwrap_or(Value::Null),
+        "keys" => match &a[0] {
+            Value::Object(o) => json!(o.keys().collect::<Vec<_>>()),
+            _ => Value::Null,
+        },
+        "timestamp" => json!(0),
+        other => return Err(format!("function '{other}' is not available in a write clause")),
+    })
+}

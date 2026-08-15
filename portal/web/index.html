@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ontological Studio</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='%2318b6a0'/></svg>">
+</head>
+<body>
+
+<aside id="rail">
+  <div class="rail-logo" title="Ontological Studio">◎</div>
+  <button class="rail-btn active" data-panel="schema" title="Database schema">
+    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>
+  </button>
+  <button class="rail-btn" data-panel="saved" title="Saved queries">
+    <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>
+  </button>
+  <button class="rail-btn" data-panel="audit" title="Query log">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+  </button>
+  <button class="rail-btn" data-panel="help" title="Help">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.8-.9 1.4v.6"/><circle cx="12" cy="17" r=".8" fill="currentColor"/></svg>
+  </button>
+  <a class="rail-btn" href="/benchmark.html" title="Benchmark — against Neo4j, Apache AGE and TypeDB">
+    <svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7 20v-6"/><path d="M12 20V6"/><path d="M17 20v-9"/></svg>
+  </a>
+  <div class="rail-spacer"></div>
+  <div id="conn-dot" class="rail-dot" title="connection"></div>
+</aside>
+
+<section id="sidebar">
+  <!-- schema -->
+  <div class="panel" data-panel="schema">
+    <header>
+      <h2>Ontological DB</h2>
+      <select id="graph-select" title="active graph"></select>
+    </header>
+    <div class="pane" id="db-info"></div>
+
+    <h3>Entity types <span class="hint">click to query</span></h3>
+    <div class="chips" id="entity-chips"></div>
+
+    <h3>Relationship types</h3>
+    <div class="chips" id="rel-chips"></div>
+
+    <h3>Property keys</h3>
+    <div class="chips subtle" id="prop-chips"></div>
+
+    <h3>Type hierarchy <span class="hint">subtypes are matched automatically</span></h3>
+    <div id="hierarchy"></div>
+  </div>
+
+  <!-- saved -->
+  <div class="panel hidden" data-panel="saved">
+    <header><h2>Saved queries</h2></header>
+    <div id="saved-list"></div>
+  </div>
+
+  <!-- audit -->
+  <div class="panel hidden" data-panel="audit">
+    <header><h2>Query log</h2><button id="audit-refresh" class="mini">refresh</button></header>
+    <div id="audit-list"></div>
+  </div>
+
+  <!-- help -->
+  <div class="panel hidden" data-panel="help">
+    <header><h2>Help</h2></header>
+    <div class="help">
+      <h3>Start here</h3>
+      <pre class="snippet" data-run="MATCH (n) RETURN n LIMIT 25">MATCH (n) RETURN n LIMIT 25</pre>
+      <h3>Inheritance</h3>
+      <p>A label matches every subtype. Query the supertype and the whole
+         hierarchy answers — no multi-label bookkeeping.</p>
+      <pre class="snippet" data-run="MATCH (v:Vehicle) RETURN v.model, labels(v)">MATCH (v:Vehicle) RETURN v.model, labels(v)</pre>
+      <h3>Relationship vector search</h3>
+      <p>Embeddings live on relationships too, not just nodes.</p>
+      <pre class="snippet" data-run="MATCH (a)-[r:CITES]->(b)&#10;RETURN a, r, b, vector.similarity(r.context_emb, $q) AS score&#10;ORDER BY score DESC LIMIT 10">MATCH (a)-[r:CITES]->(b)
+RETURN a, r, b, vector.similarity(r.context_emb, $q) AS score
+ORDER BY score DESC LIMIT 10</pre>
+      <h3>See the SQL</h3>
+      <p>Every read query compiles to plain SQL that PostgreSQL plans itself.
+         Open the <b>SQL</b> tab on any result frame, or run:</p>
+      <pre class="snippet" data-run=":sql SELECT og_cypher_sql('default', 'MATCH (n) RETURN n')">:sql SELECT og_cypher_sql('default','MATCH (n) RETURN n')</pre>
+      <h3>How fast is it?</h3>
+      <p>The <a href="/benchmark.html">benchmark report</a> compares this
+         database with Neo4j, Apache AGE and TypeDB on one machine — answers
+         checked for equality before any timing is reported.</p>
+      <h3>Commands</h3>
+      <ul class="cmds">
+        <li><code>:schema</code> — machine-readable schema</li>
+        <li><code>:sql &lt;statement&gt;</code> — run raw SQL</li>
+        <li><code>:explain &lt;cypher&gt;</code> — compiled SQL + plan</li>
+        <li><code>:why &lt;cypher&gt;</code> — diagnose an empty result</li>
+        <li><code>:clear</code> — clear the stream</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<main id="main">
+  <div id="editor-wrap">
+    <div class="prompt">$</div>
+    <textarea id="editor" spellcheck="false" rows="1"
+      placeholder="MATCH (n) RETURN n LIMIT 25          —  ⌘/Ctrl + Enter to run"></textarea>
+    <div class="editor-actions">
+      <button id="run-btn" title="Run (Ctrl/Cmd + Enter)">
+        <svg viewBox="0 0 24 24"><path d="M7 4l12 8-12 8z" fill="currentColor" stroke="none"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="stream"></div>
+</main>
+
+<div id="inspector" class="hidden">
+  <header><span id="insp-title"></span><button id="insp-close">✕</button></header>
+  <div id="insp-body"></div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

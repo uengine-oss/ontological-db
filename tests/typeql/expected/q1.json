@@ -1,0 +1,12 @@
+[
+{
+  "title": "The Hitchhiker's Guide to the Galaxy",
+  "authors": [ { "name": "Adams, Douglas" } ],
+  "price": 91.47
+},
+{
+  "authors": [ { "name": "Herbert, Frank" } ],
+  "price": 5.49,
+  "title": "Dune"
+}
+]

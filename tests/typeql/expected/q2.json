@@ -1,0 +1,7 @@
+[
+{ "original_price": 5.49,  "final_price": 4.12,  "discount": 0.25, "title": "Dune" },
+{ "original_price": 6.12,  "final_price": 4.59,  "discount": 0.25, "title": "One Hundred Years of Solitude" },
+{ "original_price": 33.97, "final_price": 25.48, "discount": 0.25, "title": "The Iron Giant" },
+{ "original_price": 16.99, "final_price": 12.74, "discount": 0.25, "title": "The Hobbit" },
+{ "original_price": 24.47, "final_price": 18.35, "discount": 0.25, "title": "Hokusai's Fuji" }
+]

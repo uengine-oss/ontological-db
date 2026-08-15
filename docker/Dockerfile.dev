@@ -1,0 +1,25 @@
+# Ontological dev image: PostgreSQL 16 + pgvector + Rust/pgrx toolchain
+FROM pgvector/pgvector:pg16
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential postgresql-server-dev-16 \
+      curl ca-certificates git pkg-config \
+      libssl-dev libclang-dev clang libreadline-dev zlib1g-dev \
+      flex bison jq procps sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+# non-root dev user (pgrx refuses to run postgres as root)
+RUN useradd -m -s /bin/bash dev && echo "dev ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && chown -R dev /usr/share/postgresql/16/extension /usr/lib/postgresql/16/lib
+
+USER dev
+WORKDIR /home/dev
+
+ENV RUSTUP_HOME=/home/dev/.rustup CARGO_HOME=/home/dev/.cargo
+ENV PATH=/home/dev/.cargo/bin:/usr/lib/postgresql/16/bin:$PATH
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
+RUN cargo install cargo-pgrx --locked
+RUN cargo pgrx init --pg16 /usr/lib/postgresql/16/bin/pg_config
+
+WORKDIR /work

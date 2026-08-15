@@ -1,0 +1,16 @@
+[package]
+name = "ontological-bolt"
+version = "0.1.0"
+edition = "2021"
+description = "Bolt protocol gateway for Ontological — spec 011"
+
+[[bin]]
+name = "ontological-bolt"
+path = "src/main.rs"
+
+[dependencies]
+postgres = "0.19"
+serde_json = "1"
+
+[profile.release]
+opt-level = 3

@@ -1,0 +1,109 @@
+{
+  "generated_at": "2026-08-06T04:39:16.219468+00:00",
+  "scale": {
+    "nodes": 5000,
+    "edges": 37588,
+    "avg_degree": 8
+  },
+  "environment": {
+    "postgres": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+    "host": "localhost:28816"
+  },
+  "systems": {
+    "age": {
+      "engine": "Apache AGE 1.5.0",
+      "load_seconds": 0.54,
+      "load_edges_per_sec": 69940,
+      "queries": {
+        "1hop": {
+          "median_ms": 0.446,
+          "p95_ms": 0.585,
+          "min_ms": 0.402,
+          "runs": 10,
+          "buffers": 269
+        },
+        "2hop": {
+          "median_ms": 26.862,
+          "p95_ms": 39.205,
+          "min_ms": 15.791,
+          "runs": 10,
+          "buffers": 2525
+        },
+        "3hop": {
+          "median_ms": 157.243,
+          "p95_ms": 249.891,
+          "min_ms": 80.122,
+          "runs": 10,
+          "buffers": 2525
+        },
+        "prop_scan": {
+          "median_ms": 0.317,
+          "p95_ms": 0.432,
+          "min_ms": 0.252,
+          "runs": 10,
+          "buffers": 33
+        }
+      },
+      "protocol_floor_ms": 0.206
+    },
+    "age_explicit": {
+      "engine": "Apache AGE 1.5.0",
+      "load_seconds": 0.0,
+      "load_edges_per_sec": 5896192720,
+      "queries": {
+        "1hop": {
+          "median_ms": 0.458,
+          "p95_ms": 0.488,
+          "min_ms": 0.392,
+          "runs": 10,
+          "buffers": 269
+        },
+        "2hop": {
+          "median_ms": 1.53,
+          "p95_ms": 1.89,
+          "min_ms": 1.373,
+          "runs": 10,
+          "buffers": 1863
+        },
+        "3hop": {
+          "median_ms": 6.736,
+          "p95_ms": 10.653,
+          "min_ms": 4.259,
+          "runs": 10,
+          "buffers": 8701
+        },
+        "prop_scan": {
+          "median_ms": 0.242,
+          "p95_ms": 0.272,
+          "min_ms": 0.208,
+          "runs": 10,
+          "buffers": 33
+        }
+      },
+      "protocol_floor_ms": 0.143
+    }
+  },
+  "correctness": {
+    "1hop": {
+      "answers": {
+        "age": "8",
+        "age_explicit": "8"
+      },
+      "agree": true
+    },
+    "2hop": {
+      "answers": {
+        "age": "75",
+        "age_explicit": "75"
+      },
+      "agree": true
+    },
+    "prop_scan": {
+      "answers": {
+        "age": "100",
+        "age_explicit": "100"
+      },
+      "agree": true
+    }
+  }
+}

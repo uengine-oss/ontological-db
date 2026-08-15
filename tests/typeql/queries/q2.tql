@@ -1,0 +1,14 @@
+match
+  let $time = 2023-12-02T00:00:00;
+  $promotion isa promotion,
+    has start-timestamp <= $time,
+    has end-timestamp >= $time;
+    promotion-inclusion (promotion: $promotion, item: $book),
+    has discount $discount;
+  $book has price $book-price;
+fetch {
+  "title": $book.title,
+  "original_price": $book.price,
+  "discount": $discount,
+  "final_price": round(100 * $book-price * (1 - $discount)) / 100
+};

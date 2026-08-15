@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmark — Ontological Studio</title>
+<link rel="stylesheet" href="/benchmark.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='%2318b6a0'/></svg>">
+</head>
+<body>
+
+<header class="top">
+  <a class="back" href="/"><span class="mark">◎</span> Ontological Studio</a>
+  <span class="crumb">Benchmark</span>
+</header>
+
+<main>
+
+  <h1>Ontological against Neo4j, Apache AGE and TypeDB</h1>
+  <p class="lede">
+    The same graph, the same four questions, on one machine — with every
+    system's answers checked for equality <em>before</em> any timing is
+    reported. Numbers on this page are read straight out of
+    <code>bench/results/</code>; nothing here is retyped by hand, so the page
+    cannot drift from the measurements.
+  </p>
+
+  <div id="gate" class="gate">checking…</div>
+
+  <div class="switcher" role="group" aria-label="dataset size" id="scale-switch"></div>
+
+  <section id="report" aria-live="polite"></section>
+
+  <section class="notes">
+    <h2>What the numbers say</h2>
+
+    <article>
+      <h3>Neo4j is the traversal number to beat</h3>
+      <p>
+        Neo4j answers the three-hop question in <b data-metric="neo4j-3hop"></b>
+        against our <b data-metric="og-3hop"></b> — <b data-metric="og-vs-neo4j"></b>
+        faster — and its latency barely responds to scale. At one and two hops
+        this benchmark cannot see its engine at all: the measured time is at the
+        protocol floor, the cost of an <em>empty</em> query through the same
+        client. Read the floor row of every table before comparing across
+        transports.
+      </p>
+    </article>
+
+    <article>
+      <h3>Apache AGE collapses on <code>*1..n</code>, not on storage</h3>
+      <p>
+        The headline gap against AGE is real but it is not a storage result.
+        Asked the same question as a union of fixed-length patterns — exactly
+        what TypeQL forces TypeDB to do — AGE answers
+        <b data-metric="age-explicit-3hop"></b> instead of
+        <b data-metric="age-3hop"></b>, a factor of
+        <b data-metric="age-vle-factor"></b>. Its one-hop and property-scan
+        times are competitive with everyone here. What fails is the
+        variable-length path operator: the expansion runs inside a function scan
+        the planner cannot see into, and the terminal node is then rejoined
+        against a full scan of the vertex table.
+      </p>
+      <p class="aside">
+        AGE also creates no index on edge endpoints or properties as installed.
+        Every system in these tables was given the indexes its own documentation
+        calls for; benchmarking AGE without them measures a misconfiguration.
+      </p>
+    </article>
+
+    <article>
+      <h3>TypeDB finds fastest and writes slowest</h3>
+      <p>
+        TypeDB has the quickest single-hop and one of the quickest property
+        lookups here — a <code>@key</code> lookup goes straight to the attribute
+        object. Traversal is where the type system stops helping: TypeQL has no
+        <code>*1..n</code>, so bounded depth must be written as a disjunction
+        that re-walks its own prefixes. Loading the million-edge graph took
+        <b data-metric="typedb-load"></b> against
+        <b data-metric="neo4j-load"></b> for Neo4j.
+      </p>
+    </article>
+
+    <article>
+      <h3>The plain-SQL floor is still hard to beat</h3>
+      <p>
+        Two indexed tables and a recursive CTE — no query engine, no schema, no
+        Cypher — win nearly every cell. That row is in the table on purpose.
+        Anything in this comparison has to justify itself against it, not
+        against the other products.
+      </p>
+    </article>
+
+    <h2>What this does not show</h2>
+    <ul class="caveats">
+      <li>One machine, one process, <b>no concurrency</b> — every query ran alone.</li>
+      <li>Two scales of one graph shape: uniform random, fixed average degree. No hubs, no skew.</li>
+      <li>Four read queries. No writes under measurement, no shortest path, no LDBC SNB.</li>
+      <li>Community and default configurations; no engine was tuned for this workload.</li>
+      <li>Warm cache throughout; cold start is not measured.</li>
+      <li>
+        Some systems were measured in separate runs against the same seeded
+        graph — the TypeDB load alone takes minutes. Same machine, same edge
+        list, same method; not the same wall-clock minute. Each table names the
+        run every column came from.
+      </li>
+    </ul>
+
+    <p class="more">
+      Full method, query text, page counts and the <code>EXPLAIN</code> output
+      behind the AGE finding: <code>docs/benchmark.md</code>. The harness is
+      <code>bench/harness.py</code>; it voids its own timings whenever the
+      systems disagree on an answer.
+    </p>
+  </section>
+
+</main>
+
+<div id="tip" class="tip hidden" role="status"></div>
+
+<script src="/benchmark.js"></script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+{
+  "generated_at": "2026-08-06T04:32:29.128831+00:00",
+  "scale": {
+    "nodes": 50000,
+    "edges": 974936,
+    "avg_degree": 20
+  },
+  "environment": {
+    "postgres": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+    "host": "localhost:28816"
+  },
+  "systems": {
+    "neo4j": {
+      "engine": "Neo4j 5.26.28 (community)",
+      "load_seconds": 9.38,
+      "load_edges_per_sec": 103918,
+      "queries": {
+        "1hop": {
+          "median_ms": 0.739,
+          "p95_ms": 0.947,
+          "min_ms": 0.628,
+          "runs": 20
+        },
+        "2hop": {
+          "median_ms": 0.921,
+          "p95_ms": 1.887,
+          "min_ms": 0.751,
+          "runs": 20
+        },
+        "3hop": {
+          "median_ms": 2.993,
+          "p95_ms": 4.429,
+          "min_ms": 2.621,
+          "runs": 20
+        },
+        "prop_scan": {
+          "median_ms": 0.68,
+          "p95_ms": 1.573,
+          "min_ms": 0.571,
+          "runs": 20
+        }
+      },
+      "protocol_floor_ms": 0.79
+    },
+    "typedb": {
+      "engine": "TypeDB 3.12.1",
+      "load_seconds": 232.91,
+      "load_edges_per_sec": 4186,
+      "queries": {
+        "1hop": {
+          "median_ms": 0.462,
+          "p95_ms": 0.555,
+          "min_ms": 0.411,
+          "runs": 20
+        },
+        "2hop": {
+          "median_ms": 1.484,
+          "p95_ms": 1.714,
+          "min_ms": 1.175,
+          "runs": 20
+        },
+        "3hop": {
+          "median_ms": 19.725,
+          "p95_ms": 26.796,
+          "min_ms": 14.734,
+          "runs": 20
+        },
+        "prop_scan": {
+          "median_ms": 0.517,
+          "p95_ms": 0.683,
+          "min_ms": 0.42,
+          "runs": 20
+        }
+      },
+      "protocol_floor_ms": 0.367
+    }
+  },
+  "correctness": {
+    "1hop": {
+      "answers": {
+        "neo4j": "15",
+        "typedb": "15"
+      },
+      "agree": true
+    },
+    "2hop": {
+      "answers": {
+        "neo4j": "359",
+        "typedb": "359"
+      },
+      "agree": true
+    },
+    "prop_scan": {
+      "answers": {
+        "neo4j": "100",
+        "typedb": "100"
+      },
+      "agree": true
+    }
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "generated_at": "2026-08-06T04:28:50.866484+00:00",
+  "scale": {
+    "nodes": 5000,
+    "edges": 37588,
+    "avg_degree": 8
+  },
+  "environment": {
+    "postgres": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+    "host": "localhost:28816"
+  },
+  "systems": {
+    "ontological": {
+      "engine": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1)",
+      "load_seconds": 0.68,
+      "load_edges_per_sec": 55347,
+      "queries": {
+        "1hop": {
+          "median_ms": 0.778,
+          "p95_ms": 0.924,
+          "min_ms": 0.63,
+          "runs": 10,
+          "buffers": 1405
+        },
+        "2hop": {
+          "median_ms": 1.111,
+          "p95_ms": 1.394,
+          "min_ms": 0.781,
+          "runs": 10,
+          "buffers": 1859
+        },
+        "3hop": {
+          "median_ms": 3.619,
+          "p95_ms": 5.096,
+          "min_ms": 2.193,
+          "runs": 10,
+          "buffers": 4188
+        },
+        "prop_scan": {
+          "median_ms": 0.644,
+          "p95_ms": 0.817,
+          "min_ms": 0.541,
+          "runs": 10,
+          "buffers": 1170
+        }
+      },
+      "protocol_floor_ms": 0.202
+    },
+    "ontological_raw": {
+      "engine": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1)",
+      "load_seconds": 0.03,
+      "load_edges_per_sec": 1089923,
+      "queries": {
+        "1hop": {
+          "median_ms": 0.24,
+          "p95_ms": 0.298,
+          "min_ms": 0.207,
+          "runs": 10,
+          "buffers": 383
+        },
+        "2hop": {
+          "median_ms": 0.352,
+          "p95_ms": 0.413,
+          "min_ms": 0.32,
+          "runs": 10,
+          "buffers": 1197
+        },
+        "3hop": {
+          "median_ms": 0.893,
+          "p95_ms": 1.188,
+          "min_ms": 0.601,
+          "runs": 10,
+          "buffers": 2001
+        },
+        "prop_scan": {
+          "median_ms": 0.198,
+          "p95_ms": 0.313,
+          "min_ms": 0.185,
+          "runs": 10,
+          "buffers": 6
+        }
+      },
+      "protocol_floor_ms": 0.164
+    },
+    "age": {
+      "engine": "Apache AGE 1.5.0",
+      "load_seconds": 0.5,
+      "load_edges_per_sec": 74722,
+      "queries": {
+        "1hop": {
+          "median_ms": 0.421,
+          "p95_ms": 0.522,
+          "min_ms": 0.415,
+          "runs": 10,
+          "buffers": 269
+        },
+        "2hop": {
+          "median_ms": 26.503,
+          "p95_ms": 36.814,
+          "min_ms": 15.428,
+          "runs": 10,
+          "buffers": 2525
+        },
+        "3hop": {
+          "median_ms": 155.784,
+          "p95_ms": 242.781,
+          "min_ms": 79.467,
+          "runs": 10,
+          "buffers": 2525
+        },
+        "prop_scan": {
+          "median_ms": 0.25,
+          "p95_ms": 0.308,
+          "min_ms": 0.223,
+          "runs": 10,
+          "buffers": 33
+        }
+      },
+      "protocol_floor_ms": 0.167
+    },
+    "cte": {
+      "engine": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1)",
+      "load_seconds": 0.29,
+      "load_edges_per_sec": 129666,
+      "queries": {
+        "1hop": {
+          "median_ms": 0.229,
+          "p95_ms": 0.288,
+          "min_ms": 0.185,
+          "runs": 10,
+          "buffers": 6
+        },
+        "2hop": {
+          "median_ms": 0.312,
+          "p95_ms": 0.379,
+          "min_ms": 0.242,
+          "runs": 10,
+          "buffers": 168
+        },
+        "3hop": {
+          "median_ms": 0.476,
+          "p95_ms": 0.655,
+          "min_ms": 0.306,
+          "runs": 10,
+          "buffers": 1380
+        },
+        "prop_scan": {
+          "median_ms": 0.204,
+          "p95_ms": 0.294,
+          "min_ms": 0.159,
+          "runs": 10,
+          "buffers": 6
+        }
+      },
+      "protocol_floor_ms": 0.227
+    },
+    "neo4j": {
+      "engine": "Neo4j 5.26.28 (community)",
+      "load_seconds": 5.63,
+      "load_edges_per_sec": 6677,
+      "queries": {
+        "1hop": {
+          "median_ms": 1.819,
+          "p95_ms": 2.991,
+          "min_ms": 1.43,
+          "runs": 10
+        },
+        "2hop": {
+          "median_ms": 2.094,
+          "p95_ms": 2.856,
+          "min_ms": 1.648,
+          "runs": 10
+        },
+        "3hop": {
+          "median_ms": 1.784,
+          "p95_ms": 2.118,
+          "min_ms": 1.434,
+          "runs": 10
+        },
+        "prop_scan": {
+          "median_ms": 1.179,
+          "p95_ms": 1.561,
+          "min_ms": 0.916,
+          "runs": 10
+        }
+      },
+      "protocol_floor_ms": 2.051
+    },
+    "typedb": {
+      "skipped": "extension not installed"
+    }
+  },
+  "correctness": {
+    "1hop": {
+      "answers": {
+        "ontological": "8",
+        "ontological_raw": "8",
+        "age": "8",
+        "cte": "8",
+        "neo4j": "8"
+      },
+      "agree": true
+    },
+    "2hop": {
+      "answers": {
+        "ontological": "75",
+        "ontological_raw": "75",
+        "age": "75",
+        "cte": "75",
+        "neo4j": "75"
+      },
+      "agree": true
+    },
+    "prop_scan": {
+      "answers": {
+        "ontological": "100",
+        "ontological_raw": "100",
+        "age": "100",
+        "cte": "100",
+        "neo4j": "100"
+      },
+      "agree": true
+    }
+  },
+  "speedup_vs": {
+    "age": {
+      "1hop": 0.54,
+      "2hop": 23.86,
+      "3hop": 43.05,
+      "prop_scan": 0.39
+    },
+    "cte": {
+      "1hop": 0.29,
+      "2hop": 0.28,
+      "3hop": 0.13,
+      "prop_scan": 0.32
+    },
+    "ontological_raw": {
+      "1hop": 0.31,
+      "2hop": 0.32,
+      "3hop": 0.25,
+      "prop_scan": 0.31
+    },
+    "neo4j": {
+      "1hop": 2.34,
+      "2hop": 1.88,
+      "3hop": 0.49,
+      "prop_scan": 1.83
+    }
+  },
+  "integrity_violations": 0
+}

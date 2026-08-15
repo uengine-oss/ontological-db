@@ -1,0 +1,7 @@
+comment = 'Ontological — Cypher-native ontology graph database for the AI agent era'
+default_version = '0.1.0'
+module_pathname = '$libdir/ontological'
+relocatable = false
+superuser = false
+trusted = false
+requires = 'vector'
