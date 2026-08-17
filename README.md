@@ -59,7 +59,9 @@ tables into an in-memory CSR array. That buys a pointer-free hot loop for deep
 traversal and gives up patterns, types, transactional visibility and row-level
 security to get it. Both comparisons — how each one declares its tables, how
 each one traverses, and what their published numbers do and do not show — are in
-[`docs/comparison.md`](docs/comparison.md).
+[`docs/comparison.md`](docs/comparison.md); pgGraph 1.1.0 is also built from
+source and measured against this project, Neo4j and AGE on one machine in
+[`docs/deep-traversal.md`](docs/deep-traversal.md).
 
 Measured on identical data on one machine, with **every system's answers checked
 for equality before any timing is reported**, and with each system given the
@@ -96,6 +98,38 @@ Full method, the 5,000-node tables, the protocol-floor correction and what each
 engine's numbers mean: [`docs/benchmark.md`](docs/benchmark.md). Reproduce with
 `python3 bench/harness.py --scale 50000 --degree 20`. The harness voids its own
 timings when the systems disagree on an answer.
+
+### Past three hops
+
+That table stops at three hops because, until recently, so did we. Cypher's
+variable-length match yields **one row per path** — `count(b)` counts walks,
+`count(DISTINCT b)` counts nodes — and we were producing the first to answer the
+second. On a graph of average degree 20 that is 20× per extra hop: six hops took
+49 seconds to report 50,000 nodes.
+
+Nothing about the storage needed to change. A query that cannot observe how many
+paths reach a node does not need the paths, so the compiler now emits a
+visited-set BFS over the same heap tuples instead — MVCC, row-level security and
+this transaction's own writes all intact. Same data, same question:
+
+| | 6 hops |
+|---|---|
+| enumerate trails (before) | 49,334 ms |
+| visited-set BFS, still in the heap | **71 ms** |
+| compiled backend-local CSR (`og_csr_build`, not automatic) | 4.9 ms |
+
+Measured against the others on the same machine, at six hops: Neo4j 169 ms,
+recursive CTE 374 ms, pgGraph 2,458 ms — **of which 42 ms is its CSR walk** and
+the rest is the cost of returning one eleven-column row per reached node. Apache
+AGE does not reach four hops, and asked as explicit fixed-length depths its
+backend is OOM-killed at five. All of it, including what the numbers do not
+show: [`docs/deep-traversal.md`](docs/deep-traversal.md).
+
+The switch is conservative by construction. A bound path or relationship
+variable, a projection that can see duplicates, or a `WITH` anywhere disqualifies
+it; and below the depth where enumeration is actually cheaper — computed from the
+planner's own statistics, no scan — it is not applied, because the first version
+that applied it unconditionally made two-hop queries *slower*.
 
 ---
 
@@ -275,6 +309,8 @@ functions, so two of four run today. That is the honest number.
 
 - [`docs/architecture.md`](docs/architecture.md) — how the pieces fit, with diagrams
 - [`docs/comparison.md`](docs/comparison.md) — Apache AGE and pgGraph: storage, traversal, and what their numbers show
+- [`docs/benchmark.md`](docs/benchmark.md) — the 1/2/3-hop workload against Neo4j, AGE and TypeDB, and the method
+- [`docs/deep-traversal.md`](docs/deep-traversal.md) — past three hops: what trail enumeration cost, what replaced it, and the same question measured against Neo4j, AGE and a source-built pgGraph
 - [`docs/cypher.md`](docs/cypher.md) — supported syntax, precisely, including what is not
 - [`docs/typeql.md`](docs/typeql.md) — the TypeQL surface, the storage mapping, and what is not supported
 - [`docs/api.md`](docs/api.md) — every SQL function
