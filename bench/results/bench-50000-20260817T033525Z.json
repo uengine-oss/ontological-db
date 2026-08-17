@@ -1,0 +1,170 @@
+{
+  "generated_at": "2026-08-17T03:31:36.255629+00:00",
+  "scale": {
+    "nodes": 50000,
+    "edges": 974936,
+    "avg_degree": 20
+  },
+  "environment": {
+    "postgres": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+    "host": "localhost:28816"
+  },
+  "systems": {
+    "ontological": {
+      "engine": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1)",
+      "reuses": null,
+      "load_seconds": 5.81,
+      "load_edges_per_sec": 167909,
+      "queries": {
+        "1hop": {
+          "median_ms": 1.473,
+          "p95_ms": 1.63,
+          "min_ms": 1.432,
+          "runs": 5,
+          "buffers": 1723
+        },
+        "2hop": {
+          "median_ms": 2.98,
+          "p95_ms": 3.529,
+          "min_ms": 2.742,
+          "runs": 5,
+          "buffers": 3504
+        },
+        "3hop": {
+          "median_ms": 27.884,
+          "p95_ms": 36.114,
+          "min_ms": 23.829,
+          "runs": 5,
+          "buffers": 32168
+        },
+        "prop_scan": {
+          "median_ms": 0.447,
+          "p95_ms": 0.487,
+          "min_ms": 0.408,
+          "runs": 5,
+          "buffers": 1172
+        }
+      },
+      "protocol_floor_ms": 0.047
+    },
+    "age": {
+      "engine": "Apache AGE 1.5.0",
+      "reuses": null,
+      "load_seconds": 2.32,
+      "load_edges_per_sec": 420209,
+      "queries": {
+        "1hop": {
+          "median_ms": 1.44,
+          "p95_ms": 1.492,
+          "min_ms": 1.432,
+          "runs": 5,
+          "buffers": 1707
+        },
+        "2hop": {
+          "median_ms": 744.645,
+          "p95_ms": 901.86,
+          "min_ms": 604.496,
+          "runs": 5,
+          "buffers": 48523
+        },
+        "3hop": {
+          "median_ms": 14432.226,
+          "p95_ms": 17377.042,
+          "min_ms": 11636.089,
+          "runs": 5,
+          "buffers": 48523
+        },
+        "prop_scan": {
+          "median_ms": 0.11,
+          "p95_ms": 0.207,
+          "min_ms": 0.097,
+          "runs": 5,
+          "buffers": 35
+        }
+      },
+      "protocol_floor_ms": 0.048
+    },
+    "neo4j": {
+      "engine": "Neo4j 5.26.28 (community)",
+      "reuses": null,
+      "load_seconds": 13.74,
+      "load_edges_per_sec": 70973,
+      "queries": {
+        "1hop": {
+          "median_ms": 1.148,
+          "p95_ms": 1.405,
+          "min_ms": 0.784,
+          "runs": 5
+        },
+        "2hop": {
+          "median_ms": 1.586,
+          "p95_ms": 1.785,
+          "min_ms": 0.644,
+          "runs": 5
+        },
+        "3hop": {
+          "median_ms": 3.078,
+          "p95_ms": 5.424,
+          "min_ms": 2.694,
+          "runs": 5
+        },
+        "prop_scan": {
+          "median_ms": 0.659,
+          "p95_ms": 0.746,
+          "min_ms": 0.595,
+          "runs": 5
+        }
+      },
+      "protocol_floor_ms": 0.682
+    }
+  },
+  "correctness": {
+    "1hop": {
+      "answers": {
+        "ontological": "15",
+        "age": "15",
+        "neo4j": "15"
+      },
+      "agree": true
+    },
+    "2hop": {
+      "answers": {
+        "ontological": "359",
+        "age": "359",
+        "neo4j": "359"
+      },
+      "agree": true
+    },
+    "3hop": {
+      "answers": {
+        "ontological": "6696",
+        "age": "6696",
+        "neo4j": "6696"
+      },
+      "agree": true
+    },
+    "prop_scan": {
+      "answers": {
+        "ontological": "100",
+        "age": "100",
+        "neo4j": "100"
+      },
+      "agree": true
+    }
+  },
+  "speedup_vs": {
+    "age": {
+      "1hop": 0.98,
+      "2hop": 249.88,
+      "3hop": 517.58,
+      "prop_scan": 0.25
+    },
+    "neo4j": {
+      "1hop": 0.78,
+      "2hop": 0.53,
+      "3hop": 0.11,
+      "prop_scan": 1.47
+    }
+  },
+  "integrity_violations": 0
+}

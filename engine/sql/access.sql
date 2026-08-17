@@ -155,6 +155,47 @@ LANGUAGE sql STABLE PARALLEL SAFE ROWS 100 AS $$
      WHERE depth >= og_vlp.minhop AND depth <= og_vlp.maxhop
 $$;
 
+-- Reachability, in plain SQL — the same question `og_vlp` answers when nobody
+-- asked for the path.
+--
+-- The recursion carries no path array and the branch is `UNION`, not
+-- `UNION ALL`, so PostgreSQL deduplicates the worktable against everything
+-- already produced. That turns trail enumeration (degree^k rows) into a
+-- level-by-level sweep whose worktable can never exceed the number of
+-- reachable nodes. It is not a true visited set — a node found at depth 2 is
+-- emitted again at depth 3 because `(node, depth)` is a different row — so the
+-- work is O(k · |V|) rather than O(|V| + |E|). Cheap to have, and it needs no
+-- Rust: see `og_reach()` for the version that does keep a visited set.
+CREATE FUNCTION og_reach_sql(src int8, etypes int4[], dir "char", minhop int, maxhop int)
+RETURNS TABLE (node int8, depth int)
+LANGUAGE sql STABLE PARALLEL SAFE ROWS 1000 AS $$
+    WITH RECURSIVE walk(node, depth) AS (
+        SELECT og_reach_sql.src, 0
+      UNION
+        SELECT u.nbr, w.depth + 1
+          FROM walk w
+          JOIN og_data.og_adj a
+            ON a.src = w.node
+           AND (og_reach_sql.dir = 'b'::"char" OR a.dir = og_reach_sql.dir)
+           AND (og_reach_sql.etypes IS NULL OR a.etype = ANY (og_reach_sql.etypes))
+          CROSS JOIN LATERAL unnest(a.nbr) AS u(nbr)
+         WHERE w.depth < og_reach_sql.maxhop
+    )
+    SELECT node, min(depth)::int FROM walk
+     WHERE depth >= og_reach_sql.minhop
+     GROUP BY node
+$$;
+
+COMMENT ON FUNCTION og_reach_sql IS
+  'Reachability without paths, in SQL. See og_reach() for the visited-set version.';
+
+-- `og_reach` is written in Rust, and pgrx gives every set-returning function
+-- PostgreSQL's default guess of 1000 rows. `og_vlp` declares 100. Two functions
+-- that answer the same question must not be costed an order of magnitude apart
+-- for a reason that has nothing to do with either — the planner would pick
+-- different join orders for the two and the comparison would measure the guess.
+ALTER FUNCTION og_reach(int8, int4[], "char", int4, int4) ROWS 100;
+
 -- ---------------------------------------------------------------------------
 -- Row → JSON helpers used when a query returns a whole node/relationship whose
 -- concrete type is not known at compile time.

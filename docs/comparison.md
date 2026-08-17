@@ -8,6 +8,11 @@ lose.
 > Sources for the pgGraph material are its own documentation, README and blog,
 > retrieved 2026-08-16, against pgGraph 0.1.6 (alpha). Where a claim here is
 > ours rather than theirs, it says so.
+>
+> The *measurements* in [`deep-traversal.md`](deep-traversal.md) are newer and
+> were taken against **pgGraph 1.1.0**, built from source and installed into the
+> same PostgreSQL 16 as this extension. Where this document and that one differ,
+> that one is the measurement and this one is the design description.
 
 ---
 
@@ -168,7 +173,7 @@ function with trail semantics, LATERAL-joined per start row
 | | Apache AGE | pgGraph | Ontological |
 |---|---|---|---|
 | one hop | *d* index probes + *d* random fetches | array offset | one heap tuple |
-| deep paths (10+) | times out at these scales, by its authors' account | designed for it | recursive CTE — **our weak axis** |
+| deep paths (10+) | times out at these scales, by its authors' account | designed for it | visited-set BFS in the heap, or a compiled CSR — [measured](deep-traversal.md) |
 | arbitrary patterns | yes (openCypher) | no — fixed algorithms | yes (Cypher, TypeQL) |
 | joins with your own SQL | result is `agtype` | results feed back into SQL | paste `og_cypher_sql()` into a CTE |
 | type hierarchy | no | no | interval labels, constant-time |
@@ -201,6 +206,16 @@ timing is reported — full method in [`docs/benchmark.md`](benchmark.md).
 
 Written as fixed-length patterns, AGE is at parity with us. The collapse is one
 operator, not the storage.
+
+> **Since measured.** Everything in this section is pgGraph's own published
+> material, kept because it is what the project claims for itself. It is no
+> longer the only evidence available: pgGraph 1.1.0 has since been built from
+> source and measured against Neo4j, Apache AGE and this project on one machine,
+> one dataset and one workload, with every answer checked —
+> [`deep-traversal.md`](deep-traversal.md). The short version is that its CSR
+> walk is flat at 42 ms out to twenty hops, within 1.6× of our in-heap BFS, and
+> that its headline latency on a full-graph question is dominated by the cost of
+> returning one eleven-column row per reached node rather than by traversal.
 
 ### pgGraph's published numbers
 
@@ -272,16 +287,33 @@ Stated plainly, because the rest of this document is easier to write.
 cycles from expanding forever and it does not rescan the edge table the way
 AGE's operator does — but it is still in the recursive-CTE family, the frontier
 still materialises in a worktable, and every step still pays heap and MVCC cost.
-We measure 33.86 ms at three hops and are 11× behind Neo4j there. Ten and twenty
-hops are a range we have not measured and currently have no argument for.
-pgGraph's answer — lift the topology out of the heap into a contiguous array and
-walk it in a hot loop — is structurally better for that shape of question.
+We measure 33.86 ms at three hops and are 11× behind Neo4j there.
 
-The interesting part is how close the two designs already are: `og_adj` *is* a
-CSR layout. The difference is which side of the heap it sits on. Inside, we get
-MVCC, RLS, crash recovery and transactional writes; outside, pgGraph gets the
-pointer-free hot loop and gives those up. A future in-heap-plus-cached mirror is
-the obvious thing to consider, and it is not built.
+Ten and twenty hops used to be a range this document said we had not measured
+and had no argument for. They have since been measured, and the answer split
+into two claims of very different size ([`deep-traversal.md`](deep-traversal.md)).
+On 50,000 nodes / 999,784 edges, counting the distinct nodes within six hops:
+
+| | median |
+|---|---|
+| `og_vlp` — enumerate trails, as before | 49,334 ms |
+| `og_reach` — visited-set BFS, still in the heap, MVCC and RLS intact | 71 ms |
+| `og_csr_reach` — compiled backend-local CSR, pgGraph's shape | 4.9 ms |
+
+Most of what looked like an architectural gap was ours: Cypher's variable-length
+match yields one row per *path*, so `og_vlp` was producing `degreeᵏ` rows to
+answer a question bounded by `|V|`. Asking it as reachability is 691× faster
+without giving up a single guarantee, and the Cypher compiler now picks that
+path automatically when no path variable is bound and the projection cannot
+observe multiplicity.
+
+What remains is genuinely pgGraph's, and it is about 15×: the pointer-free hot
+loop over a contiguous array. The interesting part is how close the two designs
+already are — `og_adj` *is* a CSR layout, and the only difference is which side
+of the heap it sits on. `og_csr_build()` now builds the outside version too, and
+its costs are pgGraph's costs exactly: a per-backend compile (119 ms, 8.4 MiB
+here), a snapshot frozen until rebuilt, and no RLS. Which is why Cypher does not
+route to it; it is exposed, measured, and left as an explicit choice.
 
 ---
 

@@ -318,11 +318,14 @@ table.data .sub { display: block; font-size: 12px; color: var(--muted); font-fam
 .s-age  .bar-fill { background: var(--amber); }
 .s-agex .bar-fill { background: color-mix(in srgb, var(--amber) 48%, transparent); }
 .s-tdb  .bar-fill { background: var(--violet); }
+.s-pgg  .bar-fill { background: var(--orange); }
+.s-pggt .bar-fill { background: color-mix(in srgb, var(--orange) 46%, transparent); }
 .s-cte  .bar-fill { background: var(--muted); }
 .s-og   .vv { color: var(--accent); }
 .s-neo  .vv { color: var(--blue); }
 .s-age  .vv { color: var(--amber); }
 .s-tdb  .vv { color: var(--violet); }
+.s-pgg  .vv { color: var(--orange); }
 .chart-axis {
   position: relative; height: 26px; margin-top: 16px; padding-top: 10px;
   border-top: 1px solid var(--line-soft); font-family: var(--mono); font-size: 10.5px; color: var(--muted);
@@ -424,6 +427,7 @@ footer { border-top: 1px solid var(--line); padding: 34px 0 60px; }
       <a href="#seam">컴파일</a>
       <a href="#why">특장점</a>
       <a href="#bench">벤치마크</a>
+      <a href="#deep">깊은 홉</a>
       <a href="#usecase">활용</a>
       <a href="#neo4j">Neo4j 샘플</a>
       <a href="#status">현황</a>
@@ -457,12 +461,12 @@ footer { border-top: 1px solid var(--line); padding: 34px 0 60px; }
         <div class="l">2홉 순회<br>50,000 노드 / 974,936 엣지</div>
       </div>
       <div class="metric">
-        <div class="v a num">202×</div>
-        <div class="l">2홉 순회<br>vs Apache AGE의 <code class="inline-code">*1..n</code></div>
+        <div class="v a num">270 ms</div>
+        <div class="l">8홉 순회<br>같은 질문이 이전엔 <b>끝나지 않았습니다</b></div>
       </div>
       <div class="metric">
-        <div class="v num">4</div>
-        <div class="l">같은 데이터로 검증한 엔진<br>Neo4j · AGE · TypeDB · 재귀 CTE</div>
+        <div class="v num">5</div>
+        <div class="l">같은 기계에서 직접 빌드해 검증한 엔진<br>Neo4j · AGE · TypeDB · pgGraph · 재귀 CTE</div>
       </div>
       <div class="metric">
         <div class="v num">0</div>
@@ -470,12 +474,13 @@ footer { border-top: 1px solid var(--line); padding: 34px 0 60px; }
       </div>
     </div>
     <p class="footnote">
-      PostgreSQL 16.14 · Neo4j 5.26 · TypeDB 3.12 · 같은 기계 · 각 시스템에 각자의 인덱스를 부여 · 중앙값.
+      PostgreSQL 16.14 · Neo4j 5.26 · TypeDB 3.12 · pgGraph 1.1.0 · 같은 기계 ·
+      각 시스템에 각자의 문서가 요구하는 인덱스와 자원 한도를 부여 · 중앙값.
       <b>모든 시스템의 답이 일치하는지 먼저 확인하고, 일치할 때만 시간을 보고합니다.</b>
       <br>
-      위 202×는 AGE의 <b>가변 길이 경로 연산자</b>와의 비교입니다 — 같은 질문을 고정 길이 패턴의
-      합집합으로 쓰면 AGE는 7.99 ms로 답하고 격차는 사라집니다. 그 수치도
-      <a href="#bench">아래 벤치마크</a>에 그대로 싣습니다.
+      8홉 270 ms는 <b>우리 자신의 이전 동작과의 비교</b>입니다 — 다른 제품이 아니라.
+      왜 끝나지 않았고 무엇을 바꿔서 끝나게 되었는지는
+      <a href="#deep">깊은 홉</a>에 전부 적었습니다.
     </p>
   </div>
 </section>
@@ -815,20 +820,211 @@ og_node_view · og_edge_view · og_type_view</div>
 
     <div style="height:52px"></div>
 
+    <!-- ── 03.2 깊은 홉 ─────────────────────────────────── -->
+    <div class="shead" id="deep">
+      <div class="rail">03.2 · 깊은 홉</div>
+      <div>
+        <h2>4홉을 넘기면 우리가 하던 일은 순회가 아니었습니다. <em>경로 열거</em>였습니다.</h2>
+        <p>
+          Cypher의 가변 길이 매치는 <b>경로마다 한 행</b>을 냅니다. 그게 규격입니다 —
+          <code class="inline-code">RETURN count(b)</code>는 걸어간 경로를 세고,
+          <code class="inline-code">count(DISTINCT b)</code>는 도달한 노드를 셉니다. 다른 질문입니다.
+          문제는 우리가 <b>두 번째 질문에도 첫 번째 답을 만들어 주고 있었다</b>는 것입니다.
+          평균 차수 20인 그래프에서 그 비용은 홉마다 20배씩 곱해집니다.
+        </p>
+      </div>
+    </div>
+
+    <div class="tablewrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th style="width:34%">a에서 3홉 안의 노드를 세는 두 방법</th>
+            <th style="text-align:right">만드는 행</th>
+            <th style="text-align:right">6홉에서</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>경로 열거</b> — 서로 다른 엣지 순서를 전부 나열<br>
+                <span class="sub">사이클 방지를 위해 행마다 경로 배열을 복사하고 선형 검사</span></td>
+            <td class="n">degree<sup>k</sup></td>
+            <td class="n lose">약 6,700만 행</td>
+          </tr>
+          <tr>
+            <td><b>도달성</b> — 방문 집합을 들고 노드를 한 번씩만 확장<br>
+                <span class="sub">힙 튜플도 MVCC도 RLS도 그대로. 나가는 것은 경로뿐</span></td>
+            <td class="n">≤ |V|</td>
+            <td class="n win">50,000 행</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="footnote">
+      답은 5만 노드입니다. 그걸 알아내려고 6,700만 개의 경로를 만들고 있었습니다.
+      <b>이건 AGE의 <code class="inline-code">*1..n</code>이 보이는 재스캔과는 다른 문제입니다</b> —
+      우리 함수는 그래프를 실제로 걸었습니다. 다만 <b>질문의 형태에 비례하는 일</b>을 했지,
+      답의 크기에 비례하는 일을 하지 않았습니다.
+    </p>
+
+    <div style="height:34px"></div>
+
+    <div class="shead">
+      <div class="rail">03.3 · 무엇을 바꿨나</div>
+      <div>
+        <h2>저장 구조는 그대로입니다. 컴파일러가 질문을 다시 읽을 뿐입니다.</h2>
+        <p>
+          새 인덱스도, 새 테이블도, 새 문법도 없습니다. Cypher가 뜻하는 바도 바뀌지 않았습니다.
+          컴파일러가 <b>경로를 관측할 수 있는 질의인지</b> 판정하고, 관측할 수 없을 때만
+          경로 열거 대신 <b>방문 집합 BFS</b>(<code class="inline-code">og_reach</code>)를 내보냅니다.
+        </p>
+      </div>
+    </div>
+
+    <div class="tablewrap">
+      <table class="data">
+        <thead>
+          <tr><th style="width:52%">질의</th><th>컴파일 결과</th><th>이유</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code class="inline-code">-[:K*1..8]-&gt;(b) RETURN count(DISTINCT b)</code></td>
+            <td class="win">og_reach</td><td>중복 행이 답을 바꿀 수 없음</td>
+          </tr>
+          <tr>
+            <td><code class="inline-code">-[:K*1..8]-&gt;(b) RETURN DISTINCT b.name</code></td>
+            <td class="win">og_reach</td><td>같음</td>
+          </tr>
+          <tr>
+            <td><code class="inline-code">-[:K*1..8]-&gt;(b) RETURN count(b)</code></td>
+            <td>og_vlp</td><td><b>경로 수를 세는 질문</b> — 답이 달라짐</td>
+          </tr>
+          <tr>
+            <td><code class="inline-code">MATCH p = (a)-[:K*1..8]-&gt;(b)</code></td>
+            <td>og_vlp</td><td>경로 변수를 묶음</td>
+          </tr>
+          <tr>
+            <td><code class="inline-code">-[e:K*1..8]-&gt;(b) RETURN count(DISTINCT b)</code></td>
+            <td>og_vlp</td><td>관계 변수를 묶음</td>
+          </tr>
+          <tr>
+            <td><code class="inline-code">-[:K*1..2]-&gt;(b) RETURN count(DISTINCT b)</code></td>
+            <td>og_vlp</td><td><b>얕아서 바꾸면 손해</b> — 아래 설명</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="footnote">
+      <b>마지막 줄이 이 변경에서 가장 많이 배운 지점입니다.</b>
+      <code class="inline-code">og_reach</code>는 Rust 집합 반환 함수라
+      <code class="inline-code">og_vlp</code>(SQL 함수)와 달리 주변 플랜에 인라인되지 않고 레벨마다 SPI 비용을 냅니다.
+      첫 구현은 조건 없이 바꿨고, 2홉에서 <b>1.9 ms → 4.9 ms로 더 느려졌습니다</b>.
+      그래서 교차점을 계산합니다 — <code class="inline-code">Σ degree<sup>i</sup> &gt; |V|</code>,
+      즉 <b>걸어야 할 경로 수가 찾을 노드 수를 넘는 지점</b>. 두 값 모두 플래너 통계에서 읽으므로
+      스캔 한 번 하지 않습니다. 5만 노드/차수 20에서는 3홉에 「아니오」, 4홉에 「예」가 나오고,
+      측정된 교차점과 정확히 일치합니다.
+    </p>
+
+    <div style="height:34px"></div>
+
+    <div class="shead">
+      <div class="rail">03.4 · 깊은 홉 벤치마크</div>
+      <div>
+        <h2>Neo4j · Apache AGE · pgGraph를 직접 빌드해서 같은 서버에 올렸습니다.</h2>
+        <p>
+          pgGraph 1.1.0은 소스에서 빌드해 이 확장과 <b>같은 PostgreSQL 16</b>에 설치했습니다.
+          AGE 1.5.0도 소스에서 빌드했습니다 — 공식 이미지가 x86-64뿐이라 arm64 호스트에서
+          에뮬레이션으로 재는 건 허수아비를 세우는 일이기 때문입니다.
+          질문은 <b>시작 노드를 제외한, k홉 안의 서로 다른 노드 수</b> — 다섯 시스템이 모두
+          정확히 같은 형태로 쓸 수 있는 유일한 형태이고, 끝난 모든 칸에서 답이 일치했습니다.
+        </p>
+      </div>
+    </div>
+
+    <div class="chart" id="chart-deep">
+      <div class="chart-group">
+        <h4>3홉</h4>
+        <div class="bar-row s-og">  <span class="nm">ontological</span>    <div class="bar-track"><div class="bar-fill" data-ms="29.06"></div></div>    <span class="vv num">29.06 ms</span></div>
+        <div class="bar-row s-raw"> <span class="nm">└ storage path</span> <div class="bar-track"><div class="bar-fill" data-ms="1.06"></div></div>     <span class="vv num">1.06 ms</span></div>
+        <div class="bar-row s-neo"> <span class="nm">neo4j 5</span>        <div class="bar-track"><div class="bar-fill" data-ms="4.66"></div></div>     <span class="vv num">4.66 ms</span></div>
+        <div class="bar-row s-pgg"> <span class="nm">pggraph 1.1</span>    <div class="bar-track"><div class="bar-fill" data-ms="237.87"></div></div>   <span class="vv num">237.87 ms</span></div>
+        <div class="bar-row s-age"> <span class="nm">apache age</span>     <div class="bar-track"><div class="bar-fill off" data-ms="13696"></div></div> <span class="vv num off">13,697 ms</span></div>
+        <div class="bar-row s-cte"> <span class="nm">recursive CTE</span>  <div class="bar-track"><div class="bar-fill" data-ms="2.17"></div></div>     <span class="vv num">2.17 ms</span></div>
+      </div>
+      <div class="chart-group">
+        <h4>6홉 — AGE는 4홉에 도달하지 못합니다</h4>
+        <div class="bar-row s-og">  <span class="nm">ontological</span>    <div class="bar-track"><div class="bar-fill" data-ms="267.75"></div></div>   <span class="vv num">267.75 ms</span></div>
+        <div class="bar-row s-raw"> <span class="nm">└ storage path</span> <div class="bar-track"><div class="bar-fill" data-ms="67.10"></div></div>    <span class="vv num">67.10 ms</span></div>
+        <div class="bar-row s-neo"> <span class="nm">neo4j 5</span>        <div class="bar-track"><div class="bar-fill" data-ms="168.82"></div></div>   <span class="vv num">168.82 ms</span></div>
+        <div class="bar-row s-pgg"> <span class="nm">pggraph 1.1</span>    <div class="bar-track"><div class="bar-fill" data-ms="2457.50"></div></div>  <span class="vv num">2,457.50 ms</span></div>
+        <div class="bar-row s-pggt"><span class="nm">└ 순회만</span>        <div class="bar-track"><div class="bar-fill" data-ms="42.76"></div></div>    <span class="vv num">42.76 ms</span></div>
+        <div class="bar-row s-cte"> <span class="nm">recursive CTE</span>  <div class="bar-track"><div class="bar-fill" data-ms="374.39"></div></div>   <span class="vv num">374.39 ms</span></div>
+      </div>
+      <div class="chart-group">
+        <h4>8홉</h4>
+        <div class="bar-row s-og">  <span class="nm">ontological</span>    <div class="bar-track"><div class="bar-fill" data-ms="270.31"></div></div>   <span class="vv num">270.31 ms</span></div>
+        <div class="bar-row s-raw"> <span class="nm">└ storage path</span> <div class="bar-track"><div class="bar-fill" data-ms="70.51"></div></div>    <span class="vv num">70.51 ms</span></div>
+        <div class="bar-row s-neo"> <span class="nm">neo4j 5</span>        <div class="bar-track"><div class="bar-fill" data-ms="151.67"></div></div>   <span class="vv num">151.67 ms</span></div>
+        <div class="bar-row s-pgg"> <span class="nm">pggraph 1.1</span>    <div class="bar-track"><div class="bar-fill" data-ms="2540.89"></div></div>  <span class="vv num">2,540.89 ms</span></div>
+        <div class="bar-row s-pggt"><span class="nm">└ 순회만</span>        <div class="bar-track"><div class="bar-fill" data-ms="42.46"></div></div>    <span class="vv num">42.46 ms</span></div>
+        <div class="bar-row s-cte"> <span class="nm">recursive CTE</span>  <div class="bar-track"><div class="bar-fill" data-ms="788.02"></div></div>   <span class="vv num">788.02 ms</span></div>
+      </div>
+      <div class="chart-axis" id="chart-deep-axis"></div>
+    </div>
+
+    <p class="footnote">
+      50,000 노드 / 974,936 엣지 · 평균 차수 20 · 시작점 5개 중앙값 · 문장당 60초 상한 ·
+      끝난 모든 칸에서 7개 시스템 정답 일치.
+      <br>
+      <b>「pggraph └ 순회만」을 반드시 함께 읽으십시오.</b> 같은 순회를
+      <code class="inline-code">max_rows := 10</code>으로 요청하면 pgGraph는 6홉 42.76 ms,
+      8홉 42.46 ms — <b>20홉까지 평평합니다.</b> 자기 아키텍처가 주장하는 그대로입니다.
+      2.4초는 도달 노드 5만 개를 <code class="inline-code">path</code>·<code class="inline-code">edge_path</code>·<code class="inline-code">node</code> jsonb를
+      포함한 11컬럼 행으로 내보내는 비용(행당 약 48 µs)이고,
+      <code class="inline-code">hydrate := false</code>와 무관합니다. pgGraph의
+      <code class="inline-code">max_rows</code> 기본값은 1000이고 공개 벤치마크도 depth 1–2의
+      <b>바운드된</b> 순회입니다 — 바운드된 질문에는 빠릅니다
+      (<code class="inline-code">shortest_path</code> 4홉 8.0 ms).
+      그 분해 없이 2.4초만 싣는 것이 바로 이 사이트가 계속 경계하는 허수아비입니다.
+      <br>
+      <b>AGE 칸은 약 90 ms 과대평가되어 있습니다.</b> 질문을 통일하려 붙인
+      <code class="inline-code">b.val &lt;&gt; a.val</code>이 agtype에서는 행마다 JSON 추출이라,
+      1홉이 1.44 ms에서 94 ms가 됩니다(우리는 1.47→1.52, Neo4j는 1.15→0.96).
+      빼도 3홉은 13.6초 대 1.06 ms입니다.
+      그리고 <b>AGE를 고정 길이 깊이로 전개하면 5·6홉에서 백엔드가 커널에 OOM-kill 당해
+      postmaster가 재시작합니다</b> — 이 사이트가 권하던 회피책이 100만 엣지에서 4홉을 넘기면
+      무너진다는 뜻입니다.
+    </p>
+
+    <div style="height:52px"></div>
+
     <div class="honest">
       <span class="tag">우리에게 불리한 수치 · 숨기지 않습니다</span>
       <h3>이 표에서 우리가 지는 칸들</h3>
       <ul>
         <li>
-          <b>3홉에서 Neo4j가 우리보다 11배 빠릅니다</b> (2.99 ms vs 33.86 ms).
-          규모에 따른 증가도 Neo4j가 완만합니다 — 데이터가 26배로 늘 때 3홉 시간은
-          Neo4j 3.7배, 우리는 9.4배. 이게 우리가 넘어야 할 수치이고, 아직 못 넘었습니다.
+          <b>1홉부터 4홉까지 Neo4j가 우리보다 빠릅니다</b> (3홉 4.66 ms vs 29.06 ms).
+          5홉을 넘기면 두 시스템 모두 평평해지고 그 지점부터는 우리 저장 경로가
+          2.3배 앞서지만(67 ms vs 169 ms), <b>Cypher 표면으로는 여전히 1.6배 뒤집니다.</b>
+          그 두 문장의 차이가 통째로 우리 질의 엔진의 비용입니다.
         </li>
         <li>
-          <b>손으로 짠 재귀 CTE가 거의 모든 칸에서 우리를 이깁니다.</b>
+          <b>손으로 짠 재귀 CTE가 얕은 홉의 거의 모든 칸에서 우리를 이깁니다.</b>
           인덱스 걸린 테이블 두 개에 질의 엔진도, 타입 시스템도, Cypher도 없는 구성입니다 —
-          그런데 더 빠릅니다. 아닌 척하면 나머지 수치의 값어치까지 떨어집니다.
-          이 표에 있는 무엇이든 다른 제품이 아니라 저 줄을 상대로 자기 존재를 증명해야 합니다.
+          그런데 1홉에서 0.08 ms 대 0.11 ms로 더 빠릅니다. 아닌 척하면 나머지 수치의
+          값어치까지 떨어집니다. 이 표에 있는 무엇이든 다른 제품이 아니라 저 줄을 상대로
+          자기 존재를 증명해야 합니다.
+          <br>
+          <span class="sub" style="display:block;margin-top:6px">
+            뒤집히는 지점은 6홉입니다 — 8홉에서 CTE 788 ms 대 우리 70.5 ms.
+            프론티어가 그래프를 덮을 때까지는 SQL 열 줄이 그래프 데이터베이스를 이기고,
+            그 다음부터는 아닙니다. 어느 쪽 제품의 헤드라인 수치보다 이게 더 쓸모 있는 사실입니다.
+          </span>
+        </li>
+        <li>
+          <b>첫 구현은 얕은 홉을 더 느리게 만들었습니다</b> — 2홉 1.9 ms → 4.9 ms.
+          도달성으로 바꾸는 것이 언제나 이득이라고 가정했기 때문이고, 측정이 아니었으면
+          그대로 배포했을 것입니다. 지금은 통계로 교차점을 계산해 그 아래에서는 바꾸지 않습니다.
         </li>
         <li>
           <b>AGE에 대한 격차는 저장 구조가 아니라 <code class="inline-code">*1..n</code> 하나입니다.</b>
@@ -847,9 +1043,15 @@ og_node_view · og_edge_view · og_type_view</div>
           인접 세그먼트를 양방향으로 채우는 비용을 적재 시점에 선불로 내고, 순회에서 회수하는 거래입니다.
         </li>
         <li>
+          <b>깊은 홉 비교는 균일 랜덤 그래프 한 종류, 한 규모입니다.</b>
+          허브가 있는 power-law 그래프는 프론티어 기반 순회를 깨뜨리는 바로 그 형태인데
+          측정하지 않았습니다. 그리고 pgGraph는 <b>이 문서가 다루는 질문</b>으로 쟀습니다 —
+          자기 벤치마크가 쓰는 바운드된 순회가 아니라. 그래서 「순회만」 줄을 함께 싣습니다.
+        </li>
+        <li>
           <b>아직 돌리지 않은 것들:</b> LDBC SNB(생성기 미연결), openCypher TCK 통과율 추적,
           동시성(모든 질의를 단독으로 돌렸습니다), 장애 주입 및 장기 스트레스,
-          TypeDB 순회를 재귀 함수로 다시 쓴 변형.
+          TypeDB 순회를 재귀 함수로 다시 쓴 변형, 측정 중 쓰기.
           이건 하네스의 공백이지, 돌려놓고 뺀 결과가 아닙니다.
         </li>
       </ul>
@@ -861,7 +1063,17 @@ docker run -d --name bench-neo4j  -p 27687:7687 -e NEO4J_AUTH=neo4j/benchpass123
 docker run -d --name bench-typedb -p 21729:1729 typedb/typedb:latest
 pip install neo4j typedb-driver
 
+<span class="c"># 03 · 기존 워크로드 (1·2·3홉, 경로 의미 그대로)</span>
 python3 bench/harness.py --scale 50000 --degree 20 --runs 8
+
+<span class="c"># 03.4 · 깊은 홉 (도달성 질문, 다섯 엔진 동시)</span>
+python3 bench/harness.py --scale 50000 --degree 20 --workload reach \
+  --hops 1,2,3,4,5,6,8 --query-timeout 60 \
+  --systems ontological,ontological_raw,cte,age,age_explicit,pggraph,neo4j
+
+<span class="c"># pgGraph의 순회 비용과 행 출력 비용을 분리</span>
+psql -d bench_pggraph -f bench/pggraph_cost.sql
+
 python3 bench/harness.py --compare-baseline bench/results/baseline.json  <span class="c"># 20% 이상 느려지면 non-zero 종료</span></pre>
   </div>
 </section>
@@ -1517,8 +1729,10 @@ SELECT og_cypher_sql('default',
     return Math.max(1.2, Math.min(100, w));
   }
 
-  (function axis() {
-    var host = document.getElementById("chart-axis");
+  // Both charts share one scale on purpose: a reader comparing the shallow
+  // workload against the deep one must not have the axis change under them.
+  function axis(id) {
+    var host = document.getElementById(id);
     if (!host) return;
     [0.1, 1, 10, 100, 1000, 10000].forEach(function (v) {
       var t = document.createElement("span");
@@ -1531,15 +1745,21 @@ SELECT og_cypher_sql('default',
     note.className = "scale-note";
     note.textContent = "로그 스케일";
     host.appendChild(note);
-  })();
+  }
+  axis("chart-axis");
+  axis("chart-deep-axis");
 
   function paint() { fills.forEach(function (f) { f.style.width = widthFor(Number(f.dataset.ms)) + "%"; }); }
 
-  if ("IntersectionObserver" in window) {
+  var charts = ["chart", "chart-deep"]
+    .map(function (id) { return document.getElementById(id); })
+    .filter(Boolean);
+
+  if ("IntersectionObserver" in window && charts.length) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) { if (e.isIntersecting) { paint(); io.disconnect(); } });
     }, { threshold: 0.15 });
-    io.observe(document.getElementById("chart"));
+    charts.forEach(function (c) { io.observe(c); });
   } else {
     paint();
   }

@@ -85,7 +85,54 @@ def recreate(db):
             raise RuntimeError(r.stderr.strip()[:2000])
 
 
-def timed_in_session(db, prelude, sqls, runs, warmup=None):
+class Timeout(Exception):
+    """A system was given the same wall-clock budget as everyone else and used it."""
+
+    def __init__(self, seconds):
+        super().__init__(f"exceeded {seconds}s")
+        self.seconds = seconds
+
+
+class Crashed(Exception):
+    """
+    A query took the server down with it.
+
+    This is a result, not an accident: a deep enough question asked the wrong
+    way gets the backend killed by the kernel, and that is worth reporting. But
+    a crashing backend restarts the whole postmaster, so without handling it
+    here one system's failure silently voids every other system's numbers in
+    the same run — which is exactly what it did the first time.
+    """
+
+
+CRASH_SIGNS = (
+    "server closed the connection",
+    "terminated by signal",
+    "in recovery mode",
+    "not yet accepting connections",
+    "crash of another server process",
+    "connection to server was lost",
+)
+
+
+def looks_like_crash(err):
+    return any(sign in err for sign in CRASH_SIGNS)
+
+
+def wait_for_server(seconds=180):
+    """Block until the server is accepting connections again."""
+    deadline = time.time() + seconds
+    while time.time() < deadline:
+        r = subprocess.run(
+            [PSQL, "-h", PGHOST, "-p", PGPORT, "-d", "postgres", "-tAc", "SELECT 1"],
+            capture_output=True, text=True, timeout=30)
+        if r.returncode == 0:
+            return True
+        time.sleep(2)
+    return False
+
+
+def timed_in_session(db, prelude, sqls, runs, warmup=None, timeout_s=None):
     """
     Time queries inside a single psql session.
 
@@ -97,20 +144,30 @@ def timed_in_session(db, prelude, sqls, runs, warmup=None):
     charged for a cold plan cache on a text another system had already seen.
     """
     warmup = max(2, len(sqls)) if warmup is None else warmup
-    lines = ["\\timing on"]
+    lines = ["\\timing off"]
+    if timeout_s:
+        # A deep hop on a system that enumerates paths does not return in this
+        # lifetime. The cap is the same for everyone and is recorded next to
+        # the result, so "did not finish" is a measurement rather than a hang.
+        lines.append(f"SET statement_timeout = '{int(timeout_s)}s';")
     if prelude:
-        lines.append("\\timing off")
         lines.append(prelude.rstrip().rstrip(";") + ";")
-        lines.append("\\timing on")
+    lines.append("\\timing on")
     seq = []
     for i in range(warmup + runs):
         seq.append(sqls[i % len(sqls)])
     lines += [q.rstrip().rstrip(";") + ";" for q in seq]
 
     args = [PSQL, "-h", PGHOST, "-p", PGPORT, "-d", db, "-v", "ON_ERROR_STOP=1", "-q", "-tA", "-f", "-"]
-    r = subprocess.run(args, input="\n".join(lines), capture_output=True, text=True, timeout=1800)
+    wall = (timeout_s + 30) * (warmup + runs) if timeout_s else 1800
+    r = subprocess.run(args, input="\n".join(lines), capture_output=True, text=True, timeout=wall)
     if r.returncode != 0:
-        raise RuntimeError(r.stderr.strip()[:2000])
+        err = r.stderr.strip()
+        if "statement timeout" in err or "canceling statement" in err:
+            raise Timeout(timeout_s)
+        if looks_like_crash(err):
+            raise Crashed(err[:400])
+        raise RuntimeError(err[:2000])
     times = [float(m) for m in re.findall(r"^Time: ([\d.]+) ms", r.stdout, re.M)]
     times = times[warmup:]
     if not times:
@@ -177,22 +234,43 @@ class PgSystem:
     def version(self):
         return psql("postgres", "SELECT version()").split(" on ")[0]
 
-    def answer(self, query):
+    def answer(self, query, timeout_s=None):
         pre = (self.prelude.rstrip().rstrip(";") + ";\n") if self.prelude else ""
-        out = psql(self.db, pre + query)
+        if timeout_s:
+            pre = f"SET statement_timeout = '{int(timeout_s)}s';\n" + pre
+        try:
+            out = psql(self.db, pre + query, timeout=(timeout_s or 600) + 60)
+        except RuntimeError as e:
+            if looks_like_crash(str(e)):
+                raise Crashed(str(e)[:400])
+            raise
         raw = out.strip().splitlines()[-1].strip()
         # og_cypher -> {"count(b)": 8}; AGE -> 8; plain SQL -> 8
         if raw.startswith("{"):
             raw = str(list(json.loads(raw).values())[0])
         return raw.strip('"')
 
-    def measure(self, queries, runs):
-        m = timed_in_session(self.db, self.prelude, queries, runs)
+    def measure(self, queries, runs, warmup=None, timeout_s=None):
+        m = timed_in_session(self.db, self.prelude, queries, runs, warmup, timeout_s)
         try:
             m["buffers"] = buffers_read(self.db, queries[0], self.prelude)
         except Exception:
             pass
         return m
+
+    def reach_hop(self, start_local, hops):
+        """
+        Distinct nodes *other than the start* within `hops` hops.
+
+        The deep workload needs a question every system can state exactly.
+        `n_hop` cannot be it: Cypher counts the start node again when a cycle
+        returns to it, and pgGraph's `graph.traverse(include_start := false)`
+        never does — a one-node difference that voids the comparison at exactly
+        the depths it is supposed to measure. Excluding the start everywhere
+        removes the ambiguity without favouring anyone; `val` is unique per
+        node, so `b.val <> a.val` is node identity in every dialect here.
+        """
+        raise NotImplementedError
 
     def teardown(self):
         pass
@@ -260,6 +338,11 @@ class Ontological(PgSystem):
         return (f"SELECT og_cypher('benchg', $$ MATCH (a:P)-[:K*1..{hops}]->(b:P) "
                 f"WHERE a.val = {start_local} RETURN count(DISTINCT b) $$)")
 
+    def reach_hop(self, start_local, hops):
+        return (f"SELECT og_cypher('benchg', $$ MATCH (a:P)-[:K*1..{hops}]->(b:P) "
+                f"WHERE a.val = {start_local} AND b.val <> {start_local} "
+                f"RETURN count(DISTINCT b) $$)")
+
     def prop_scan(self):
         return ("SELECT og_cypher('benchg', $$ MATCH (a:P) WHERE a.val < 100 "
                 "RETURN count(a) $$)")
@@ -287,6 +370,13 @@ class OntologicalRaw(Ontological):
     def one_hop(self, start_local):
         return (f"SELECT count(*) FROM og_expand({self._start(start_local)}, "
                 f"ARRAY[{self.rid}]::int4[], 'o')")
+
+    def reach_hop(self, start_local, hops):
+        # Inherited from Ontological this would have measured the Cypher
+        # surface twice. The point of this row is the storage access path.
+        return (f"SELECT count(*) FROM og_reach({self._start(start_local)}, "
+                f"ARRAY[{self.rid}]::int4[], 'o'::\"char\", 1, {hops}) r "
+                f"WHERE r.node <> {self._start(start_local)}")
 
     def n_hop(self, start_local, hops):
         return (f"SELECT count(DISTINCT node) FROM og_vlp({self._start(start_local)}, "
@@ -363,6 +453,11 @@ class AGE(PgSystem):
         return (f"SELECT * FROM cypher('benchg', $$ MATCH (a:P)-[:K*1..{hops}]->(b:P) "
                 f"WHERE a.val = {start_local} RETURN count(DISTINCT b) $$) AS (c agtype)")
 
+    def reach_hop(self, start_local, hops):
+        return (f"SELECT * FROM cypher('benchg', $$ MATCH (a:P)-[:K*1..{hops}]->(b:P) "
+                f"WHERE a.val = {start_local} AND b.val <> {start_local} "
+                f"RETURN count(DISTINCT b) $$) AS (c agtype)")
+
     def prop_scan(self):
         return ("SELECT * FROM cypher('benchg', $$ MATCH (a:P) WHERE a.val < 100 "
                 "RETURN count(a) $$) AS (c agtype)")
@@ -391,6 +486,16 @@ class AGEExplicit(AGE):
                 f"-[:K]->({'b' if i == depth - 1 else 'm' + str(i)}:P)" for i in range(depth))
             parts.append(f"SELECT * FROM cypher('benchg', $$ MATCH {pattern} "
                          f"WHERE a.val = {start_local} RETURN b $$) AS (c agtype)")
+        return "SELECT count(DISTINCT c) FROM (" + " UNION ALL ".join(parts) + ") t"
+
+    def reach_hop(self, start_local, hops):
+        parts = []
+        for depth in range(1, hops + 1):
+            pattern = "(a:P)" + "".join(
+                f"-[:K]->({'b' if i == depth - 1 else 'm' + str(i)}:P)" for i in range(depth))
+            parts.append(f"SELECT * FROM cypher('benchg', $$ MATCH {pattern} "
+                         f"WHERE a.val = {start_local} AND b.val <> {start_local} "
+                         f"RETURN b $$) AS (c agtype)")
         return "SELECT count(DISTINCT c) FROM (" + " UNION ALL ".join(parts) + ") t"
 
 
@@ -427,7 +532,137 @@ class CTE(PgSystem):
                  WHERE w.depth < {hops} AND NOT (e.id = ANY(w.path)))
             SELECT count(DISTINCT node) FROM w WHERE depth > 0"""
 
+    def reach_hop(self, start_local, hops):
+        # The plain-SQL floor gets the same freedom every other system has:
+        # asked for reachability, it may answer with a visited set instead of
+        # enumerating trails. `UNION` deduplicates the worktable, which is what
+        # a hand-written CTE would do once the author noticed the difference.
+        return f"""
+            WITH RECURSIVE w(node, depth) AS (
+                SELECT {start_local}, 0
+              UNION
+                SELECT e.dst, w.depth+1
+                  FROM w JOIN e ON e.src = w.node
+                 WHERE w.depth < {hops})
+            SELECT count(DISTINCT node) FROM w
+             WHERE depth > 0 AND node <> {start_local}"""
+
     def prop_scan(self):
+        return "SELECT count(*) FROM n WHERE val < 100"
+
+
+class PgGraph(PgSystem):
+    """
+    pgGraph 1.1 — a graph *index* over ordinary tables, not a graph store.
+
+    It reads the same two plain tables the `cte` system uses, because that is
+    what it is designed for: your tables stay the source of truth and
+    `graph.build()` compiles their topology into a backend-local CSR artifact.
+    So this row measures the architecture rather than a data model.
+
+    Three things about the comparison have to be stated rather than assumed:
+
+    - **It answers reachability, not paths.** `graph.traverse()` has no
+      variable-length pattern and no trail semantics; `uniqueness :=
+      'node_global'` reports each reached node once. That is exactly the
+      question `count(DISTINCT b)` asks, which is why this comparison is
+      meaningful at all — and it is why there is no pgGraph column for a query
+      that binds a path.
+    - **`hydrate := false`.** Asked to hydrate, it fetches the source rows,
+      which is a different amount of work from counting ids. The Cypher systems
+      are counting node identity, so pgGraph is asked for identity too.
+    - **`max_rows` must be raised.** It defaults to 1000, and a capped result is
+      a wrong answer, not a fast one. The correctness gate catches this if it is
+      ever missed.
+
+    `graph.build()` is run during setup and is *not* in any timing, matching how
+    the CSR compile is reported separately in `docs/deep-traversal.md`. The
+    per-backend load cost that follows a build is charged to whoever measures a
+    cold connection; this harness measures warm ones, for everybody.
+    """
+    name = "pggraph"
+    db = "bench_pggraph"
+    # pgGraph caps each statement at 64 MB of working memory by default and
+    # refuses the query rather than swapping — the circuit breaker doing its
+    # job. A full traversal of a 50,000-node graph does not fit in that, so it
+    # is raised here for the same reason AGE is given the indexes its
+    # documentation asks for: benchmarking a default that its own docs tell you
+    # to change measures the default, not the engine.
+    prelude = "SET graph.query_memory_mb = 4096; SET graph.query_work_limit = 200000000"
+
+    def version(self):
+        try:
+            return "pgGraph " + psql(
+                "postgres", "SELECT default_version FROM pg_available_extensions "
+                            "WHERE name='graph'")
+        except Exception:
+            return "pgGraph"
+
+    def available(self):
+        try:
+            return psql("postgres", "SELECT count(*) FROM pg_available_extensions "
+                                    "WHERE name='graph'") == "1"
+        except Exception:
+            return False
+
+    def setup(self, n_nodes, edges):
+        self.n_nodes = n_nodes
+        recreate(self.db)
+        psql(self.db, "CREATE EXTENSION graph", tuples_only=False)
+        psql(self.db, f"""
+            CREATE TABLE n (id int PRIMARY KEY, name text, val int);
+            CREATE TABLE e (id serial PRIMARY KEY, src int, dst int);
+            INSERT INTO n SELECT i, 'n'||i, i FROM generate_series(0,{n_nodes-1}) i;
+        """.replace("%%", "%"), tuples_only=False)
+        values = ",".join(f"({s},{d})" for s, d in edges)
+        psql(self.db, f"""
+            INSERT INTO e (src,dst) VALUES {values};
+            CREATE INDEX ON e(src); CREATE INDEX ON e(dst); CREATE INDEX ON n(val);
+            ANALYZE;
+        """, tuples_only=False)
+        # Register the two tables and compile. `e` is not registered as a node
+        # table, so pgGraph reads both endpoints from it — its edge-table mode.
+        psql(self.db, """
+            SELECT graph.add_table('public.n'::regclass, id_column := 'id',
+                                   columns := ARRAY['val']);
+            SELECT graph.add_edge(from_table := 'public.e'::regclass,
+                                  from_column := 'src',
+                                  to_table := 'public.n'::regclass,
+                                  to_column := 'dst',
+                                  label := 'k', bidirectional := false);
+        """, tuples_only=False)
+        psql(self.db, "SELECT * FROM graph.build()", tuples_only=False, timeout=1800)
+
+    # Circuit breakers, sized to the graph rather than switched off. pgGraph
+    # pre-allocates in proportion to these, so "set them to infinity" is
+    # rejected outright — which is the safety property working. They are set
+    # just above what the whole graph can produce, so no answer is ever capped
+    # and no memory is reserved for a frontier that cannot exist.
+    def _limits(self):
+        n = getattr(self, "n_nodes", 100000)
+        return n + 1000
+
+    def _traverse(self, start_local, hops):
+        cap = self._limits()
+        return (f"SELECT count(*) FROM graph.traverse('public.n'::regclass, "
+                f"'{start_local}', max_depth := {hops}, direction := 'out', "
+                f"uniqueness := 'node_global', include_start := false, "
+                f"hydrate := false, max_rows := {cap}, "
+                f"max_nodes := {cap}, max_frontier := {cap})")
+
+    def one_hop(self, start_local):
+        return self._traverse(start_local, 1)
+
+    def n_hop(self, start_local, hops):
+        return self._traverse(start_local, hops)
+
+    # `include_start := false` is exactly "every node but the start", so the
+    # normalised question needs no adjustment on this side.
+    reach_hop = n_hop
+
+    def prop_scan(self):
+        # No graph question — the source table answers it, which is the point of
+        # a derived index that does not own the data.
         return "SELECT count(*) FROM n WHERE val < 100"
 
 
@@ -534,17 +769,21 @@ class Neo4j:
         return (f"MATCH (a:P {{val: {start_local}}})-[:K*1..{hops}]->(b:P) "
                 f"RETURN count(DISTINCT b) AS c")
 
+    def reach_hop(self, start_local, hops):
+        return (f"MATCH (a:P {{val: {start_local}}})-[:K*1..{hops}]->(b:P) "
+                f"WHERE b.val <> {start_local} RETURN count(DISTINCT b) AS c")
+
     def prop_scan(self):
         return "MATCH (a:P) WHERE a.val < 100 RETURN count(a) AS c"
 
     def _run(self, q):
         return [r["c"] for r in self.session.run(q)]
 
-    def answer(self, query):
+    def answer(self, query, timeout_s=None):
         return str(self._run(query)[0])
 
-    def measure(self, queries, runs):
-        return client_timed(self._run, queries, runs)
+    def measure(self, queries, runs, warmup=None, timeout_s=None):
+        return client_timed(self._run, queries, runs, warmup)
 
     def teardown(self):
         if self.session:
@@ -708,11 +947,11 @@ class TypeDB:
     def _run(self, q):
         return [row.get("c").as_value().get() for row in self.tx.query(q).resolve()]
 
-    def answer(self, query):
+    def answer(self, query, timeout_s=None):
         return str(self._run(query)[0])
 
-    def measure(self, queries, runs):
-        return client_timed(self._run, queries, runs)
+    def measure(self, queries, runs, warmup=None, timeout_s=None):
+        return client_timed(self._run, queries, runs, warmup)
 
     def teardown(self):
         if self.tx:
@@ -722,7 +961,7 @@ class TypeDB:
 
 
 SYSTEMS = {c.name: c for c in
-           (Ontological, OntologicalRaw, AGE, AGEExplicit, CTE, Neo4j, TypeDB)}
+           (Ontological, OntologicalRaw, AGE, AGEExplicit, CTE, PgGraph, Neo4j, TypeDB)}
 
 
 # --------------------------------------------------------------------------
@@ -784,17 +1023,36 @@ def run(args):
 
     # --- correctness gate: every system must agree before timings mean anything
     print("→ correctness check")
-    for label, maker in (
-        ("1hop", lambda s, st: s.one_hop(st)),
-        ("2hop", lambda s, st: s.n_hop(st, 2)),
-        ("prop_scan", lambda s, _st: s.prop_scan()),
-    ):
+    hops_wanted = [int(h) for h in str(args.hops).split(",") if h.strip()]
+    q = "reach_hop" if args.workload == "reach" else "n_hop"
+    checks = ([("1hop", lambda s, st: s.one_hop(st))] if args.workload != "reach" else []) + \
+             [(f"{'reach' if args.workload == 'reach' else ''}{h}hop",
+               (lambda h: lambda s, st: getattr(s, q)(st, h))(h))
+              for h in hops_wanted] + \
+             [("prop_scan", lambda s, _st: s.prop_scan())]
+    dead = {}
+    for label, maker in checks:
         answers = {}
         for name, s in live.items():
+            if name in dead:
+                answers[name] = f"error: {dead[name]}"
+                continue
             try:
-                answers[name] = s.answer(maker(s, starts[0]))
+                answers[name] = s.answer(maker(s, starts[0]), args.query_timeout)
+            except Crashed as e:
+                # One system's crash restarts the postmaster and would void
+                # everyone else's numbers. Record it, stop asking this system
+                # anything deeper, and wait for the server before moving on.
+                dead[name] = f"crashed the server at {label}"
+                print(f"  ! {name} crashed the server at {label} — not asked anything deeper")
+                answers[name] = f"error: crashed ({str(e)[:80]})"
+                wait_for_server()
             except Exception as e:
+                # A system that cannot finish inside the cap has no answer to
+                # disagree with; that is a missing cell, not a wrong one.
                 answers[name] = f"error: {e}"[:200]
+                if isinstance(e, Timeout):
+                    dead[name] = f"exceeded {args.query_timeout}s at {label}"
         distinct = {v for v in answers.values() if not v.startswith("error")}
         report["correctness"][label] = {
             "answers": answers,
@@ -817,20 +1075,52 @@ def run(args):
             print(f"    {name:<12} error: {str(e)[:100]}")
 
     # --- timings
-    for label, maker in (
-        ("1hop", lambda s, st: s.one_hop(st)),
-        ("2hop", lambda s, st: s.n_hop(st, 2)),
-        ("3hop", lambda s, st: s.n_hop(st, 3)),
-        ("prop_scan", lambda s, _st: s.prop_scan()),
-    ):
+    #
+    # Deep hops need two things the shallow workload did not. A per-statement
+    # cap, because a system that enumerates paths does not return at six hops
+    # and the run has to finish. And a give-up rule: once a system has blown
+    # the cap at depth k it is not asked depth k+1, because the answer is known
+    # and the wall-clock is not free. Both are recorded in the results file, so
+    # a blank cell says which of the two produced it.
+    hops = [int(h) for h in str(args.hops).split(",") if h.strip()]
+    reach = args.workload == "reach"
+    q = "reach_hop" if reach else "n_hop"
+    workload = ([] if reach else [("1hop", lambda s, st: s.one_hop(st))]) + \
+               [(f"{'reach' if reach else ''}{h}hop",
+                 (lambda h: lambda s, st: getattr(s, q)(st, h))(h))
+                for h in hops if reach or h > 1] + \
+               [("prop_scan", lambda s, _st: s.prop_scan())]
+    gave_up = dict(dead)
+
+    for label, maker in workload:
         print(f"→ {label}")
+        digits = "".join(c for c in label if c.isdigit())
+        deep = digits != "" and int(digits) >= 4
         for name, s in live.items():
+            if name in gave_up:
+                report["systems"][name]["queries"][label] = {
+                    "not_attempted": f"exceeded {args.query_timeout}s at {gave_up[name]}"}
+                print(f"    {name:<12} not attempted ({gave_up[name]} already exceeded the cap)")
+                continue
             sqls = [maker(s, st) for st in starts]
             try:
-                m = s.measure(sqls, args.runs)
+                # A fifty-call warm-up is right for a bolt driver on a
+                # sub-millisecond query and absurd on one that takes a second.
+                m = s.measure(sqls, args.runs if not deep else min(args.runs, 3),
+                              warmup=1 if deep else None,
+                              timeout_s=args.query_timeout)
                 report["systems"][name]["queries"][label] = m
                 print(f"    {name:<12} {m['median_ms']:>9.3f} ms"
                       + (f"   {m['buffers']:>7} pages" if "buffers" in m else ""))
+            except Timeout as t:
+                report["systems"][name]["queries"][label] = {"timeout_s": t.seconds}
+                gave_up[name] = label
+                print(f"    {name:<12} > {t.seconds}s — did not finish")
+            except Crashed as c:
+                report["systems"][name]["queries"][label] = {"crashed": str(c)[:200]}
+                gave_up[name] = label
+                print(f"    {name:<12} crashed the server — not asked anything deeper")
+                wait_for_server()
             except Exception as e:
                 report["systems"][name]["queries"][label] = {"error": str(e)[:400]}
                 print(f"    {name:<12} error: {str(e)[:120]}")
@@ -927,6 +1217,15 @@ def main():
     ap.add_argument(
         "--systems",
         default="ontological,ontological_raw,age,age_explicit,cte,neo4j,typedb")
+    ap.add_argument("--hops", default="2,3",
+                    help="traversal depths to measure, e.g. 2,3,4,5,6,8")
+    ap.add_argument("--workload", choices=("classic", "reach"), default="classic",
+                    help="classic: the published 1/2/3-hop workload, one row per "
+                         "path. reach: distinct nodes other than the start, the "
+                         "only question every system states identically")
+    ap.add_argument("--query-timeout", type=int, default=120,
+                    help="per-statement cap in seconds; a system that blows it "
+                         "is recorded as such and not asked anything deeper")
     ap.add_argument("--compare-baseline", default=None)
     args = ap.parse_args()
 

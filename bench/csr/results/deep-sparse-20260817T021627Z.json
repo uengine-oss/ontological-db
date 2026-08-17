@@ -1,0 +1,365 @@
+{
+  "when": "2026-08-17T02:16:25+00:00",
+  "db": "bench_sparse",
+  "label": "sparse",
+  "graph": "200000/799988",
+  "csr_build": {
+    "nodes": 200000,
+    "edges": 799988,
+    "bytes": 9599912,
+    "ms": 229.4
+  },
+  "starts": [
+    "68719510070",
+    "68719543403",
+    "68719576736",
+    "68719610069",
+    "68719643402"
+  ],
+  "depths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "cells": {
+    "vlp@1": {
+      "median_ms": 0.173,
+      "min_ms": 0.139,
+      "max_ms": 0.198,
+      "runs": 5,
+      "answers": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "agrees": true
+    },
+    "reach_sql@1": {
+      "median_ms": 0.141,
+      "min_ms": 0.126,
+      "max_ms": 0.199,
+      "runs": 5,
+      "answers": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "agrees": true
+    },
+    "reach@1": {
+      "median_ms": 0.083,
+      "min_ms": 0.077,
+      "max_ms": 0.095,
+      "runs": 5,
+      "answers": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "agrees": true
+    },
+    "csr@1": {
+      "median_ms": 0.06,
+      "min_ms": 0.059,
+      "max_ms": 0.078,
+      "runs": 5,
+      "answers": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "agrees": true
+    },
+    "vlp@2": {
+      "median_ms": 0.188,
+      "min_ms": 0.17,
+      "max_ms": 0.238,
+      "runs": 5,
+      "answers": [
+        "20",
+        "20",
+        "20",
+        "20",
+        "20"
+      ],
+      "agrees": true
+    },
+    "reach_sql@2": {
+      "median_ms": 0.154,
+      "min_ms": 0.137,
+      "max_ms": 0.195,
+      "runs": 5,
+      "answers": [
+        "20",
+        "20",
+        "20",
+        "20",
+        "20"
+      ],
+      "agrees": true
+    },
+    "reach@2": {
+      "median_ms": 0.119,
+      "min_ms": 0.105,
+      "max_ms": 0.127,
+      "runs": 5,
+      "answers": [
+        "20",
+        "20",
+        "20",
+        "20",
+        "20"
+      ],
+      "agrees": true
+    },
+    "csr@2": {
+      "median_ms": 0.06,
+      "min_ms": 0.057,
+      "max_ms": 0.063,
+      "runs": 5,
+      "answers": [
+        "20",
+        "20",
+        "20",
+        "20",
+        "20"
+      ],
+      "agrees": true
+    },
+    "vlp@3": {
+      "median_ms": 0.347,
+      "min_ms": 0.24,
+      "max_ms": 0.383,
+      "runs": 5,
+      "answers": [
+        "84",
+        "84",
+        "84",
+        "84",
+        "84"
+      ],
+      "agrees": true
+    },
+    "reach_sql@3": {
+      "median_ms": 0.252,
+      "min_ms": 0.223,
+      "max_ms": 0.275,
+      "runs": 5,
+      "answers": [
+        "84",
+        "84",
+        "84",
+        "84",
+        "84"
+      ],
+      "agrees": true
+    },
+    "reach@3": {
+      "median_ms": 0.252,
+      "min_ms": 0.198,
+      "max_ms": 0.336,
+      "runs": 5,
+      "answers": [
+        "84",
+        "84",
+        "84",
+        "84",
+        "84"
+      ],
+      "agrees": true
+    },
+    "csr@3": {
+      "median_ms": 0.067,
+      "min_ms": 0.064,
+      "max_ms": 0.095,
+      "runs": 5,
+      "answers": [
+        "84",
+        "84",
+        "84",
+        "84",
+        "84"
+      ],
+      "agrees": true
+    },
+    "vlp@4": {
+      "median_ms": 0.936,
+      "min_ms": 0.535,
+      "max_ms": 1.176,
+      "runs": 5,
+      "answers": [
+        "340",
+        "340",
+        "339",
+        "340",
+        "340"
+      ],
+      "agrees": true
+    },
+    "reach_sql@4": {
+      "median_ms": 0.657,
+      "min_ms": 0.35,
+      "max_ms": 0.752,
+      "runs": 5,
+      "answers": [
+        "340",
+        "340",
+        "339",
+        "340",
+        "340"
+      ],
+      "agrees": true
+    },
+    "reach@4": {
+      "median_ms": 0.582,
+      "min_ms": 0.342,
+      "max_ms": 0.65,
+      "runs": 5,
+      "answers": [
+        "340",
+        "340",
+        "339",
+        "340",
+        "340"
+      ],
+      "agrees": true
+    },
+    "csr@4": {
+      "median_ms": 0.095,
+      "min_ms": 0.09,
+      "max_ms": 0.099,
+      "runs": 5,
+      "answers": [
+        "340",
+        "340",
+        "339",
+        "340",
+        "340"
+      ],
+      "agrees": true
+    },
+    "vlp@5": {
+      "median_ms": 2.985,
+      "min_ms": 1.383,
+      "max_ms": 3.53,
+      "runs": 5,
+      "answers": [
+        "1358",
+        "1362",
+        "1357",
+        "1360",
+        "1361"
+      ],
+      "agrees": true
+    },
+    "reach_sql@5": {
+      "median_ms": 1.49,
+      "min_ms": 1.081,
+      "max_ms": 1.735,
+      "runs": 5,
+      "answers": [
+        "1358",
+        "1362",
+        "1357",
+        "1360",
+        "1361"
+      ],
+      "agrees": true
+    },
+    "reach@5": {
+      "median_ms": 1.113,
+      "min_ms": 0.653,
+      "max_ms": 1.395,
+      "runs": 5,
+      "answers": [
+        "1358",
+        "1362",
+        "1357",
+        "1360",
+        "1361"
+      ],
+      "agrees": true
+    },
+    "csr@5": {
+      "median_ms": 0.18,
+      "min_ms": 0.173,
+      "max_ms": 0.186,
+      "runs": 5,
+      "answers": [
+        "1358",
+        "1362",
+        "1357",
+        "1360",
+        "1361"
+      ],
+      "agrees": true
+    },
+    "vlp@6": {
+      "median_ms": 7.207,
+      "min_ms": 5.278,
+      "max_ms": 8.5,
+      "runs": 5,
+      "answers": [
+        "5353",
+        "5381",
+        "5364",
+        "5363",
+        "5382"
+      ],
+      "agrees": true
+    },
+    "reach_sql@6": {
+      "median_ms": 4.554,
+      "min_ms": 3.907,
+      "max_ms": 5.114,
+      "runs": 5,
+      "answers": [
+        "5353",
+        "5381",
+        "5364",
+        "5363",
+        "5382"
+      ],
+      "agrees": true
+    },
+    "reach@6": {
+      "median_ms": 2.962,
+      "min_ms": 2.429,
+      "max_ms": 3.413,
+      "runs": 5,
+      "answers": [
+        "5353",
+        "5381",
+        "5364",
+        "5363",
+        "5382"
+      ],
+      "agrees": true
+    },
+    "csr@6": {
+      "median_ms": 0.486,
+      "min_ms": 0.443,
+      "max_ms": 0.507,
+      "runs": 5,
+      "answers": [
+        "5353",
+        "5381",
+        "5364",
+        "5363",
+        "5382"
+      ],
+      "agrees": true
+    }
+  }
+}
