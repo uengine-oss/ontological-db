@@ -1,0 +1,389 @@
+{
+  "generated_at": "2026-08-17T05:20:47.292829+00:00",
+  "scale": {
+    "nodes": 250000,
+    "edges": 499000,
+    "avg_degree": 2.0,
+    "shape": "grid"
+  },
+  "environment": {
+    "postgres": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+    "host": "localhost:28816"
+  },
+  "systems": {
+    "ontological": {
+      "engine": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1)",
+      "reuses": null,
+      "load_seconds": 4.08,
+      "load_edges_per_sec": 122199,
+      "queries": {
+        "reach10hop": {
+          "median_ms": 6.364,
+          "p95_ms": 6.756,
+          "min_ms": 6.272,
+          "runs": 3,
+          "buffers": 3625
+        },
+        "reach20hop": {
+          "median_ms": 10.316,
+          "p95_ms": 13.182,
+          "min_ms": 10.218,
+          "runs": 3,
+          "buffers": 5070
+        },
+        "reach50hop": {
+          "median_ms": 11.625,
+          "p95_ms": 15.892,
+          "min_ms": 9.906,
+          "runs": 3,
+          "buffers": 14804
+        },
+        "reach100hop": {
+          "median_ms": 27.556,
+          "p95_ms": 32.877,
+          "min_ms": 25.766,
+          "runs": 3,
+          "buffers": 49028
+        },
+        "reach500hop": {
+          "median_ms": 649.168,
+          "p95_ms": 677.975,
+          "min_ms": 646.745,
+          "runs": 3,
+          "buffers": 1132460
+        },
+        "prop_scan": {
+          "median_ms": 0.626,
+          "p95_ms": 0.828,
+          "min_ms": 0.501,
+          "runs": 5,
+          "buffers": 1177
+        }
+      },
+      "protocol_floor_ms": 0.047
+    },
+    "ontological_raw": {
+      "engine": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1)",
+      "reuses": "ontological",
+      "load_seconds": null,
+      "load_edges_per_sec": null,
+      "queries": {
+        "reach10hop": {
+          "median_ms": 0.371,
+          "p95_ms": 0.68,
+          "min_ms": 0.331,
+          "runs": 3,
+          "buffers": 846
+        },
+        "reach20hop": {
+          "median_ms": 0.672,
+          "p95_ms": 0.721,
+          "min_ms": 0.623,
+          "runs": 3,
+          "buffers": 2086
+        },
+        "reach50hop": {
+          "median_ms": 1.758,
+          "p95_ms": 1.889,
+          "min_ms": 1.542,
+          "runs": 3,
+          "buffers": 10604
+        },
+        "reach100hop": {
+          "median_ms": 5.582,
+          "p95_ms": 5.587,
+          "min_ms": 5.324,
+          "runs": 3,
+          "buffers": 40802
+        },
+        "reach500hop": {
+          "median_ms": 146.338,
+          "p95_ms": 150.007,
+          "min_ms": 145.38,
+          "runs": 3,
+          "buffers": 1002036
+        },
+        "prop_scan": {
+          "median_ms": 0.079,
+          "p95_ms": 0.09,
+          "min_ms": 0.064,
+          "runs": 5,
+          "buffers": 8
+        }
+      },
+      "protocol_floor_ms": 0.047
+    },
+    "cte": {
+      "engine": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1)",
+      "reuses": null,
+      "load_seconds": 1.36,
+      "load_edges_per_sec": 366173,
+      "queries": {
+        "reach10hop": {
+          "median_ms": 0.14,
+          "p95_ms": 0.163,
+          "min_ms": 0.107,
+          "runs": 3,
+          "buffers": 1326
+        },
+        "reach20hop": {
+          "median_ms": 0.307,
+          "p95_ms": 0.353,
+          "min_ms": 0.299,
+          "runs": 3,
+          "buffers": 5058
+        },
+        "reach50hop": {
+          "median_ms": 1.307,
+          "p95_ms": 1.354,
+          "min_ms": 1.213,
+          "runs": 3,
+          "buffers": 30660
+        },
+        "reach100hop": {
+          "median_ms": 4.978,
+          "p95_ms": 5.074,
+          "min_ms": 4.852,
+          "runs": 3,
+          "buffers": 121398
+        },
+        "reach500hop": {
+          "median_ms": 145.15,
+          "p95_ms": 150.48,
+          "min_ms": 132.713,
+          "runs": 3,
+          "buffers": 3009504
+        },
+        "prop_scan": {
+          "median_ms": 0.067,
+          "p95_ms": 0.072,
+          "min_ms": 0.067,
+          "runs": 5,
+          "buffers": 8
+        }
+      },
+      "protocol_floor_ms": 0.048
+    },
+    "age": {
+      "engine": "Apache AGE 1.5.0",
+      "reuses": null,
+      "load_seconds": 1.71,
+      "load_edges_per_sec": 292030,
+      "queries": {
+        "reach10hop": {
+          "median_ms": 20068.343,
+          "p95_ms": 20098.276,
+          "min_ms": 20061.865,
+          "runs": 3,
+          "buffers": 48149
+        },
+        "reach20hop": {
+          "timeout_s": 60
+        },
+        "reach50hop": {
+          "not_attempted": "exceeded 60s at reach20hop"
+        },
+        "reach100hop": {
+          "not_attempted": "exceeded 60s at reach20hop"
+        },
+        "reach500hop": {
+          "not_attempted": "exceeded 60s at reach20hop"
+        },
+        "prop_scan": {
+          "not_attempted": "exceeded 60s at reach20hop"
+        }
+      },
+      "protocol_floor_ms": 0.059
+    },
+    "pggraph": {
+      "engine": "pgGraph 1.1.0",
+      "reuses": null,
+      "load_seconds": 3.93,
+      "load_edges_per_sec": 126922,
+      "queries": {
+        "reach10hop": {
+          "median_ms": 5.533,
+          "p95_ms": 5.687,
+          "min_ms": 5.296,
+          "runs": 3,
+          "buffers": 7348
+        },
+        "reach20hop": {
+          "median_ms": 28.986,
+          "p95_ms": 29.338,
+          "min_ms": 28.537,
+          "runs": 3,
+          "buffers": 25168
+        },
+        "reach50hop": {
+          "median_ms": 382.005,
+          "p95_ms": 388.218,
+          "min_ms": 375.84,
+          "runs": 3,
+          "buffers": 285028
+        },
+        "reach100hop": {
+          "median_ms": 2975.771,
+          "p95_ms": 2995.355,
+          "min_ms": 2965.043,
+          "runs": 3,
+          "buffers": 2126128
+        },
+        "reach500hop": {
+          "error": "psql:<stdin>:5: ERROR:  Graph resource limit exceeded in query.candidates: memory bytes would be 3978722386 with 5255025 already used; limit is 2115215163\nDETAIL:  pgGraph diagnostic: PG007\nHINT:  Reduce the operation size or raise the applicable graph query or maintenance resource limit."
+        },
+        "prop_scan": {
+          "median_ms": 0.063,
+          "p95_ms": 0.072,
+          "min_ms": 0.051,
+          "runs": 5,
+          "buffers": 8
+        }
+      },
+      "protocol_floor_ms": 0.047
+    },
+    "neo4j": {
+      "engine": "Neo4j 5.26.28 (community)",
+      "reuses": null,
+      "load_seconds": 5.61,
+      "load_edges_per_sec": 88974,
+      "queries": {
+        "reach10hop": {
+          "median_ms": 1.329,
+          "p95_ms": 1.448,
+          "min_ms": 1.155,
+          "runs": 3
+        },
+        "reach20hop": {
+          "median_ms": 8.621,
+          "p95_ms": 9.844,
+          "min_ms": 7.383,
+          "runs": 3
+        },
+        "reach50hop": {
+          "median_ms": 8.447,
+          "p95_ms": 8.744,
+          "min_ms": 7.731,
+          "runs": 3
+        },
+        "reach100hop": {
+          "median_ms": 4.331,
+          "p95_ms": 4.528,
+          "min_ms": 3.953,
+          "runs": 3
+        },
+        "reach500hop": {
+          "median_ms": 61.352,
+          "p95_ms": 64.85,
+          "min_ms": 61.085,
+          "runs": 3
+        },
+        "prop_scan": {
+          "median_ms": 0.956,
+          "p95_ms": 11.235,
+          "min_ms": 0.862,
+          "runs": 5
+        }
+      },
+      "protocol_floor_ms": 0.929
+    }
+  },
+  "correctness": {
+    "reach10hop": {
+      "answers": {
+        "ontological": "65",
+        "ontological_raw": "65",
+        "cte": "65",
+        "age": "65",
+        "pggraph": "65",
+        "neo4j": "65"
+      },
+      "agree": true
+    },
+    "reach20hop": {
+      "answers": {
+        "ontological": "230",
+        "ontological_raw": "230",
+        "cte": "230",
+        "age": "error: psql:<stdin>:3: ERROR:  canceling statement due to statement timeout",
+        "pggraph": "230",
+        "neo4j": "230"
+      },
+      "agree": true
+    },
+    "reach50hop": {
+      "answers": {
+        "ontological": "1325",
+        "ontological_raw": "1325",
+        "cte": "1325",
+        "age": "error: psql:<stdin>:3: ERROR:  canceling statement due to statement timeout",
+        "pggraph": "1325",
+        "neo4j": "1325"
+      },
+      "agree": true
+    },
+    "reach100hop": {
+      "answers": {
+        "ontological": "5150",
+        "ontological_raw": "5150",
+        "cte": "5150",
+        "age": "error: psql:<stdin>:3: ERROR:  canceling statement due to statement timeout",
+        "pggraph": "5150",
+        "neo4j": "5150"
+      },
+      "agree": true
+    },
+    "reach500hop": {
+      "answers": {
+        "ontological": "125713",
+        "ontological_raw": "125713",
+        "cte": "125713",
+        "age": "error: psql:<stdin>:3: ERROR:  canceling statement due to statement timeout",
+        "pggraph": "error: psql:<stdin>:3: ERROR:  Graph resource limit exceeded in query.candidates: memory bytes would be 3978722386 with 5255025 already used; limit is 2115215163\nDETAIL:  pgGraph diagnostic: PG007\nHIN",
+        "neo4j": "125713"
+      },
+      "agree": true
+    },
+    "prop_scan": {
+      "answers": {
+        "ontological": "100",
+        "ontological_raw": "100",
+        "cte": "100",
+        "age": "100",
+        "pggraph": "100",
+        "neo4j": "100"
+      },
+      "agree": true
+    }
+  },
+  "speedup_vs": {
+    "age": {
+      "reach10hop": 3153.42
+    },
+    "cte": {
+      "reach10hop": 0.02,
+      "reach20hop": 0.03,
+      "reach50hop": 0.11,
+      "reach100hop": 0.18,
+      "reach500hop": 0.22,
+      "prop_scan": 0.11
+    },
+    "ontological_raw": {
+      "reach10hop": 0.06,
+      "reach20hop": 0.07,
+      "reach50hop": 0.15,
+      "reach100hop": 0.2,
+      "reach500hop": 0.23,
+      "prop_scan": 0.13
+    },
+    "neo4j": {
+      "reach10hop": 0.21,
+      "reach20hop": 0.84,
+      "reach50hop": 0.73,
+      "reach100hop": 0.16,
+      "reach500hop": 0.09,
+      "prop_scan": 1.53
+    }
+  },
+  "integrity_violations": 0
+}

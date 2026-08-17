@@ -20,9 +20,17 @@ three up in exchange for the hot loop.
 ## Running it
 
 ```bash
-# fixtures
+# fixtures — random, for the saturating case
 createdb bench_csr    && psql -d bench_csr    -v nodes=50000  -v degree=20 -f gen.sql
 createdb bench_sparse && psql -d bench_sparse -v nodes=200000 -v degree=4  -f gen.sql
+
+# fixtures — large diameter, for questions that are actually about depth.
+# A random graph of degree 20 is entirely inside five hops, so "twenty hops"
+# there is "eight hops" with a different number on it.
+createdb bench_chain && psql -d bench_chain -v shape=chain -v nodes=1000000 -f gen_shape.sql
+createdb bench_grid  && psql -d bench_grid  -v shape=grid  -v nodes=1000000 -f gen_shape.sql
+python3 deep.py --db bench_chain --depths 10,100,1000,10000,100000 --label chain
+python3 deep.py --db bench_grid  --depths 10,20,50,100,500,1000    --label grid
 
 # the sweep — every variant, every depth, answers compared
 python3 deep.py --db bench_csr    --depths 1,2,3,4,5,6 --starts 5 --label dense

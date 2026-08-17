@@ -428,6 +428,7 @@ footer { border-top: 1px solid var(--line); padding: 34px 0 60px; }
       <a href="#why">특장점</a>
       <a href="#bench">벤치마크</a>
       <a href="#deep">깊은 홉</a>
+      <a href="#diameter">지름</a>
       <a href="#usecase">활용</a>
       <a href="#neo4j">Neo4j 샘플</a>
       <a href="#status">현황</a>
@@ -480,7 +481,8 @@ footer { border-top: 1px solid var(--line); padding: 34px 0 60px; }
       <br>
       8홉 270 ms는 <b>우리 자신의 이전 동작과의 비교</b>입니다 — 다른 제품이 아니라.
       왜 끝나지 않았고 무엇을 바꿔서 끝나게 되었는지는
-      <a href="#deep">깊은 홉</a>에 전부 적었습니다.
+      <a href="#deep">깊은 홉</a>
+      <a href="#diameter">지름</a>에 전부 적었습니다.
     </p>
   </div>
 </section>
@@ -976,6 +978,10 @@ og_node_view · og_edge_view · og_type_view</div>
       50,000 노드 / 974,936 엣지 · 평균 차수 20 · 시작점 5개 중앙값 · 문장당 60초 상한 ·
       끝난 모든 칸에서 7개 시스템 정답 일치.
       <br>
+      <b>이 그래프는 5홉이면 전체가 덮입니다.</b> 그래서 위의 평평한 곡선은 「깊이에 강하다」가 아니라
+      「프론티어가 더 자랄 곳이 없다」는 뜻입니다. 깊이 자체를 묻는 측정은
+      <a href="#diameter">지름이 큰 그래프</a>에 따로 있고, 거기서는 결론이 달라집니다.
+      <br>
       <b>「pggraph └ 순회만」을 반드시 함께 읽으십시오.</b> 같은 순회를
       <code class="inline-code">max_rows := 10</code>으로 요청하면 pgGraph는 6홉 42.76 ms,
       8홉 42.46 ms — <b>20홉까지 평평합니다.</b> 자기 아키텍처가 주장하는 그대로입니다.
@@ -998,15 +1004,141 @@ og_node_view · og_edge_view · og_type_view</div>
 
     <div style="height:52px"></div>
 
+    <!-- ── 03.5 지름이 큰 그래프 ────────────────────────── -->
+    <div class="shead" id="diameter">
+      <div class="rail">03.5 · 지름이 큰 그래프</div>
+      <div>
+        <h2>10만 홉을 걸어봤습니다. 그리고 결론 하나를 정정해야 합니다.</h2>
+        <p>
+          랜덤 그래프에서 「20홉」은 「8홉」과 같은 질문입니다 — 이미 다 덮였으니까요.
+          깊이가 의미를 가지려면 <b>지름</b>이 커야 합니다. 그래서 100만 노드짜리 두 형태를 만들었습니다:
+          <b>체인</b>(한 줄, 지름 100만, 차수 1 — 계보·이력·공급망)과
+          <b>격자</b>(1000×1000, 지름 1998, 차수 2 — 도로망·의존성 DAG).
+        </p>
+      </div>
+    </div>
+
+    <div class="tablewrap">
+      <table class="data">
+        <thead>
+          <tr><th style="width:16%">체인 · 100만 노드</th>
+              <th style="text-align:right">og_vlp</th><th style="text-align:right">og_reach_sql</th>
+              <th style="text-align:right">og_reach</th><th style="text-align:right">컴파일 CSR</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>100홉</td><td class="n">0.44 ms</td><td class="n">0.26 ms</td><td class="n">0.98 ms</td><td class="n win">0.08 ms</td></tr>
+          <tr><td>1,000홉</td><td class="n">8.96 ms</td><td class="n">1.40 ms</td><td class="n">8.82 ms</td><td class="n win">0.13 ms</td></tr>
+          <tr><td>10,000홉</td><td class="n lose">707.82 ms</td><td class="n">12.89 ms</td><td class="n">95.42 ms</td><td class="n win">0.73 ms</td></tr>
+          <tr><td><b>100,000홉</b></td><td class="n lose">65,820 ms</td><td class="n">154.49 ms</td><td class="n">1,015.93 ms</td><td class="n win">9.85 ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="height:14px"></div>
+    <div class="tablewrap">
+      <table class="data">
+        <thead>
+          <tr><th style="width:16%">격자 · 100만 노드</th>
+              <th style="text-align:right">og_vlp</th><th style="text-align:right">og_reach_sql</th>
+              <th style="text-align:right">og_reach</th><th style="text-align:right">컴파일 CSR</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>10홉</td><td class="n">4.29 ms</td><td class="n">0.28 ms</td><td class="n">0.28 ms</td><td class="n win">0.07 ms</td></tr>
+          <tr><td>20홉</td><td class="n lose">2,784.76 ms</td><td class="n">0.49 ms</td><td class="n">0.56 ms</td><td class="n win">0.08 ms</td></tr>
+          <tr><td>100홉</td><td class="n lose">&gt; 120초</td><td class="n">22.31 ms</td><td class="n">6.00 ms</td><td class="n win">0.43 ms</td></tr>
+          <tr><td>1,000홉</td><td class="n lose">&gt; 120초</td><td class="n">235.07 ms</td><td class="n">125.02 ms</td><td class="n win">10.61 ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="footnote">
+      <b>10만 홉이 SQL로 154 ms, 컴파일 배열로 9.85 ms입니다.</b> 같은 질문을 경로 열거로 풀면 65.8초입니다.
+      격자에서는 20홉이면 이미 끝납니다 — 거기서 터지는 건 노드가 아니라 <b>경로 수</b>(C(i+j, i))이기 때문입니다.
+      <br>
+      <b>그리고 여기서 우리 설계의 약점이 드러났습니다.</b> 체인에서 Rust BFS(<code class="inline-code">og_reach</code>)가
+      평범한 재귀 CTE에 <b>6.6배 집니다</b>(1,016 ms 대 154 ms). 레벨마다 SQL로 돌아가는데
+      체인은 프론티어가 노드 하나뿐이라 <b>일은 없고 레벨만 10만 개</b>이기 때문입니다.
+      루프 안에서 SPI 연결과 플랜을 매번 새로 만들던 것은 고쳐서 1,196 ms → 1,016 ms가 되었지만,
+      나머지는 SPI 경계를 넘는 비용 자체라 튜닝으로 사라지지 않습니다.
+      프론티어가 얇고 깊은 그래프라면 <code class="inline-code">og_reach_sql()</code>이 정답이고,
+      컴파일러는 아직 그걸 고르지 않습니다.
+    </p>
+
+    <div style="height:34px"></div>
+
+    <div class="shead">
+      <div class="rail">03.6 · 지름이 큰 그래프 · 엔진 비교</div>
+      <div>
+        <h2>여기서는 Neo4j가 우리를 이깁니다.</h2>
+        <p>25만 노드, 같은 정규화된 질문, 문장당 60초 상한, 끝난 모든 칸에서 정답 일치.</p>
+      </div>
+    </div>
+
+    <div class="tablewrap">
+      <table class="data">
+        <thead>
+          <tr><th style="width:14%">체인 · 25만</th>
+              <th style="text-align:right">ontological</th><th style="text-align:right">└ 저장 경로</th>
+              <th style="text-align:right">재귀 CTE</th><th style="text-align:right">apache age</th>
+              <th style="text-align:right">pggraph</th><th style="text-align:right">neo4j 5</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>10홉</td><td class="n">5.43</td><td class="n">0.20</td><td class="n win">0.10</td><td class="n lose">216.15</td><td class="n">1.65</td><td class="n">7.55</td></tr>
+          <tr><td>100홉</td><td class="n">5.99</td><td class="n">1.08</td><td class="n win">0.17</td><td class="n lose">1,083.86</td><td class="n">44.56</td><td class="n">7.30</td></tr>
+          <tr><td>1,000홉</td><td class="n">12.83</td><td class="n">9.59</td><td class="n win">1.00</td><td class="n lose">&gt;60초</td><td class="n lose">4,163.66</td><td class="n">13.01</td></tr>
+          <tr><td>10,000홉</td><td class="n">122.30</td><td class="n">91.01</td><td class="n win">7.86</td><td class="n lose">—</td><td class="n lose">2 GB 한도 초과</td><td class="n">10.86</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="height:14px"></div>
+    <div class="tablewrap">
+      <table class="data">
+        <thead>
+          <tr><th style="width:14%">격자 · 25만</th>
+              <th style="text-align:right">ontological</th><th style="text-align:right">└ 저장 경로</th>
+              <th style="text-align:right">재귀 CTE</th><th style="text-align:right">apache age</th>
+              <th style="text-align:right">pggraph</th><th style="text-align:right">neo4j 5</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>10홉</td><td class="n">6.36</td><td class="n">0.37</td><td class="n win">0.14</td><td class="n lose">20,068</td><td class="n">5.53</td><td class="n">1.33</td></tr>
+          <tr><td>20홉</td><td class="n">10.32</td><td class="n">0.67</td><td class="n win">0.31</td><td class="n lose">&gt;60초</td><td class="n">28.99</td><td class="n">8.62</td></tr>
+          <tr><td>100홉</td><td class="n">27.56</td><td class="n">5.58</td><td class="n">4.98</td><td class="n lose">—</td><td class="n lose">2,975.77</td><td class="n win">4.33</td></tr>
+          <tr><td>500홉</td><td class="n">649.17</td><td class="n">146.34</td><td class="n">145.15</td><td class="n lose">—</td><td class="n lose">&gt;60초</td><td class="n win">61.35</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="footnote">
+      단위 ms. <b>앞 절에서 「5홉 이후로 Neo4j보다 2.3배 빠르다」고 쓴 것은 그 그래프 형태에 한정된 이야기였습니다.</b>
+      지름이 있는 그래프에서는 Neo4j가 앞섭니다 — 격자 500홉에서 61 ms 대 우리 146 ms,
+      체인 10,000홉에서 10.9 ms 대 우리 91 ms. 일반화하면 이렇습니다:
+      <b>프론티어가 그래프를 덮는 형태</b>에서는 일이 중복 제거라 우리 힙 BFS가 앞서고,
+      <b>프론티어가 얇고 깊은 형태</b>에서는 일이 홉당 지연이라 Neo4j의 포인터 추적과
+      PostgreSQL 자신의 재귀 CTE가 둘 다 우리보다 앞섭니다.
+      체인 10,000홉을 7.86 ms에 답하는 재귀 CTE가 표 전체에서 1등입니다.
+      <br>
+      <b>pgGraph는 깊이에 대해 제곱으로 증가합니다.</b> 체인에서 프론티어가 노드 하나뿐이고 답이 선형으로
+      느는데도, 깊이를 2배로 하면 시간이 4배가 됩니다 — 100홉 44 ms, 200홉 177 ms, 400홉 671 ms,
+      800홉 2,687 ms, 1,600홉 10,639 ms. 10,000홉에서는 6.3 GB를 요구하다 자기 서킷 브레이커에 막히고,
+      <code class="inline-code">graph.query_memory_mb</code>를 최대치로 올려도 실효 상한은 약 2 GB에서 고정입니다.
+      행 출력 비용이 아닙니다 — 노드별 행을 만들지 않는
+      <code class="inline-code">graph.neighborhood()</code> 집계도 같은 질의에서 4,088 ms입니다.
+      다만 <b><code class="inline-code">graph.shortest_path</code>는 영향받지 않고 아주 빠릅니다</b> —
+      1,000홉 거리 8.8 ms, 3,000홉 거리 23.4 ms.
+      (<code class="inline-code">max_depth</code> 기본값이 20이라 그 이상은 오류가 아니라 <b>빈 결과</b>를 냅니다.
+      이 사이트의 초안은 그걸 「경로를 못 찾았다」고 적었는데, 인자를 넘기지 않은 우리 잘못이었습니다.)
+    </p>
+
+    <div style="height:52px"></div>
+
     <div class="honest">
       <span class="tag">우리에게 불리한 수치 · 숨기지 않습니다</span>
       <h3>이 표에서 우리가 지는 칸들</h3>
       <ul>
         <li>
           <b>1홉부터 4홉까지 Neo4j가 우리보다 빠릅니다</b> (3홉 4.66 ms vs 29.06 ms).
-          5홉을 넘기면 두 시스템 모두 평평해지고 그 지점부터는 우리 저장 경로가
-          2.3배 앞서지만(67 ms vs 169 ms), <b>Cypher 표면으로는 여전히 1.6배 뒤집니다.</b>
-          그 두 문장의 차이가 통째로 우리 질의 엔진의 비용입니다.
+          랜덤 그래프에서는 5홉을 넘기면 우리 저장 경로가 2.3배 앞서지만
+          (67 ms vs 169 ms), <b>Cypher 표면으로는 그래도 1.6배 뒤집니다.</b>
+          그리고 <b>지름이 있는 그래프에서는 그 우위조차 사라집니다</b> —
+          격자 500홉 61 ms 대 146 ms, 체인 10,000홉 10.9 ms 대 91 ms로 Neo4j가 앞섭니다.
+          <a href="#diameter">03.5~03.6</a>에 그대로 실었습니다.
         </li>
         <li>
           <b>손으로 짠 재귀 CTE가 얕은 홉의 거의 모든 칸에서 우리를 이깁니다.</b>
@@ -1073,6 +1205,12 @@ python3 bench/harness.py --scale 50000 --degree 20 --workload reach \
 
 <span class="c"># pgGraph의 순회 비용과 행 출력 비용을 분리</span>
 psql -d bench_pggraph -f bench/pggraph_cost.sql
+
+<span class="c"># 03.5~03.6 · 지름이 큰 그래프 (체인 · 격자)</span>
+python3 bench/harness.py --scale 250000 --shape chain --workload reach \
+  --hops 10,100,1000,10000 --query-timeout 60 --systems ontological,cte,age,pggraph,neo4j
+psql -d bench_chain -v shape=chain -v nodes=1000000 -f bench/csr/gen_shape.sql
+python3 bench/csr/deep.py --db bench_chain --depths 10,100,1000,10000,100000
 
 python3 bench/harness.py --compare-baseline bench/results/baseline.json  <span class="c"># 20% 이상 느려지면 non-zero 종료</span></pre>
   </div>

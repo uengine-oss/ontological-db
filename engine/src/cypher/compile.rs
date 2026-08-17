@@ -32,11 +32,17 @@ pub const PARAM: &str = "$1";
 /// An unanalysed database has no statistics to answer with, and falls back to
 /// depth alone.
 fn prefer_reachability(max: u32) -> bool {
+    /// Estimated walks past which `og_reach`'s fixed cost is repaid.
+    ///
+    /// Fitted to measurement rather than derived, and deliberately low. The two
+    /// failure modes are not symmetric: enumerating when we should not have
+    /// runs out of time or memory — 2.7 s at twenty hops on a lattice, 90 s at
+    /// thirty — while reaching when we should not have costs a bounded fraction
+    /// of a millisecond. A rule this cheap should err toward the bounded loss.
+    const WALKS: f64 = 512.0;
+    /// Degree cannot be estimated on an unanalysed table, so depth alone decides.
     const DEEP: u32 = 4;
-    if max >= 12 {
-        // No plausible degree makes enumeration survivable this deep.
-        return true;
-    }
+
     let est = crate::spiu::two::<f32, f32>(
         "SELECT (SELECT reltuples FROM pg_class WHERE oid = 'og_data.og_node'::regclass),
                 (SELECT reltuples FROM pg_class WHERE oid = 'og_data.og_edge'::regclass)",
@@ -50,12 +56,21 @@ fn prefer_reachability(max: u32) -> bool {
     // be sharper, but this decision only has to be right about an order of
     // magnitude, and it must not cost a scan to make.
     let degree = (edges / nodes).max(1.0);
+
+    // An earlier version compared the walk count against |V| instead, on the
+    // reasoning that enumeration is affordable while it produces fewer rows
+    // than there are nodes to find. That is wrong wherever many walks land on
+    // the same node: on a 1000x1000 lattice ten hops is 2,046 walks against a
+    // million nodes — "affordable" by that rule — but only 66 nodes are
+    // reachable, and enumerating cost 3.83 ms against 0.30 ms. Degree alone
+    // cannot see that overlap, so the rule no longer pretends to; it asks only
+    // whether enough walks are coming to pay for the switch.
     let mut walks = 0.0f64;
     let mut level = 1.0f64;
     for _ in 0..max {
         level *= degree;
         walks += level;
-        if walks > nodes {
+        if walks > WALKS || !walks.is_finite() {
             return true;
         }
     }

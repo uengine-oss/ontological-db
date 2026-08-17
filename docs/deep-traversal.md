@@ -53,9 +53,13 @@ similar shape: doing work proportional to the question's *form* rather than its
 
 `og_reach_sql` is the interesting cheap one: dropping the path column lets
 PostgreSQL's `UNION` deduplicate the worktable against everything produced so
-far. That is not a visited set — a node found at depth 2 is produced again at
-depth 3 because `(node, depth)` is a different row — so it is `O(k·|V|)` rather
-than `O(|V|+|E|)`. It needed no new code at all.
+far. That is not a visited set — a node reachable at two different depths is
+produced twice, because `(node, depth)` is a different row — so its cost depends
+on how many depths reach the same node. On a cyclic graph that is every depth and
+it degrades to `O(k·|V|)`; on a graph where each node has one distance from the
+start (a chain, a lattice, most DAGs) it is not paid at all, and `og_reach_sql`
+becomes the fastest thing here that still lives in the heap. It needed no new
+code.
 
 `og_reach` keeps MVCC, row-level security and this transaction's uncommitted
 writes, because it reads the same heap tuples the rest of the engine does.
@@ -145,8 +149,10 @@ topology is stored would change that.
 fixture `og_reach` is 71 ms at depth 6 and 69 ms at depth 20 — after the whole
 graph is reachable there is nothing left to do, so latency stops depending on
 depth. That flatness, not the constant, is what "20+ hops" actually requires.
-`og_reach_sql` never gets it, because re-emitting each node once per level keeps
-`O(k·|V|)` work on the clock: 426 ms at 6, 3,660 ms at 20.
+`og_reach_sql` never gets it *here*, because on a cyclic random graph every node
+is reachable at every remaining depth and gets re-emitted each time: 426 ms at 6,
+3,660 ms at 20. On the acyclic shapes further down that cost disappears and the
+ranking inverts.
 
 **The CSR's win is a single order of magnitude, and a stable one.** Dense depth
 6: 71.42 → 4.86 ms, a factor of 14.7. Dense depth 20: 69.43 → 4.88, 14.2.
@@ -373,13 +379,14 @@ reason AGE is given the indexes its documentation asks for.
 - **Against AGE, the gap is now structural.** 471× at three hops on the
   normalised question, and AGE does not reach four. Subtract the 90 ms
   normalisation penalty and it is still 13.6 s against 1.06 ms.
-- **Against Neo4j, this is the first workload where we win on depth.** Neo4j is
-  clearly better from one to four hops — 4.66 ms at three hops against our
-  29.06 ms through Cypher — and its curve also goes flat, at 151–169 ms. Our
-  storage path is flat at 67–71 ms, so past five hops we are **2.3× faster**
-  than Neo4j; through the Cypher surface we are 1.6× slower. The whole
-  difference between those two statements is this repository's own query-engine
-  overhead, which remains the largest single optimisation target in the codebase.
+- **Against Neo4j we win past five hops *on this shape*.** Neo4j is clearly
+  better from one to four hops — 4.66 ms at three hops against our 29.06 ms
+  through Cypher — and its curve also goes flat, at 151–169 ms, against our
+  storage path's 67–71 ms. Read that as a property of a graph whose frontier
+  covers everything by depth five, not as a general claim: on a graph with a
+  real diameter Neo4j is ahead of us, by 2.4× at 500 hops on a lattice and by
+  8× at 10,000 hops on a chain. See
+  [Much deeper, against the other engines](#much-deeper-against-the-other-engines).
 - **Against pgGraph, the architectures land within 1.6× of each other** on the
   traversal itself (42.8 ms against our 67.1 ms at six hops, both flat), and
   our compiled CSR is faster still at 4.86 ms. The 2.4 s figure is its result
@@ -405,11 +412,188 @@ the AGE normalisation penalty).
 
 ---
 
+## Much deeper: what happens when the graph has a diameter
+
+Everything above is measured on a uniform random graph of average degree 20,
+where the entire graph is inside five hops. On that shape "twenty hops" and
+"eight hops" are the same question asked twice, and the flat curves in those
+tables say nothing about depth — they say the frontier stopped growing.
+
+Depth only means something when the diameter is large. Two shapes where it is,
+both at **1,000,000 nodes** ([`bench/csr/gen_shape.sql`](../bench/csr/gen_shape.sql)):
+
+- **chain** — a line. Diameter 1,000,000, out-degree 1, exactly one path
+  anywhere. Lineage, provenance, a supply chain, a reply thread. Isolates
+  per-hop overhead from frontier work, and it is the case where enumerating
+  paths costs nothing extra at all.
+- **grid** — a 1000 × 1000 lattice pointing right and down. Diameter 1,998,
+  frontier grows linearly, nodes-within-*k* grows as *k*²/2 — but the number of
+  paths to (i, j) is C(i+j, i), which is combinatorial. Road networks, meshes,
+  dependency DAGs.
+
+### chain — 1,000,000 nodes, degree 1
+
+| depth | `og_vlp` | `og_reach_sql` | `og_reach` | `og_csr_reach` |
+|---|---|---|---|---|
+| 10 | 0.24 | 0.13 | 0.18 | **0.06** |
+| 100 | 0.44 | 0.26 | 0.98 | **0.08** |
+| 1,000 | 8.96 | 1.40 | 8.82 | **0.13** |
+| 10,000 | 707.82 | 12.89 | 95.42 | **0.73** |
+| 100,000 | 65,820.29 | 154.49 | 1,015.93 | **9.85** |
+
+### grid — 1,000,000 nodes (1000 × 1000), degree 2
+
+| depth | `og_vlp` | `og_reach_sql` | `og_reach` | `og_csr_reach` |
+|---|---|---|---|---|
+| 10 | 4.29 | 0.28 | 0.28 | **0.07** |
+| 20 | 2,784.76 | 0.49 | 0.56 | **0.08** |
+| 50 | *>120 s* | 8.10 | 1.80 | **0.17** |
+| 100 | *>120 s* | 22.31 | 6.00 | **0.43** |
+| 500 | *>120 s* | 186.77 | 108.31 | **9.40** |
+| 1,000 | *>120 s* | 235.07 | 125.02 | **10.61** |
+
+**One hundred thousand hops is 154 ms in SQL and 9.85 ms in the compiled array.**
+Trail enumeration takes 65.8 seconds to answer the same question, and on the
+lattice it is gone by twenty hops — because there the paths, not the nodes, are
+what explodes.
+
+Two things in these tables were not expected, and both changed the code.
+
+### `og_reach` is the wrong tool for a thin, deep graph
+
+On the chain, the Rust BFS **loses to a plain recursive CTE by 6.6×** at 100,000
+hops — 1,016 ms against 154 ms — and at 1,000 hops it is no better than trail
+enumeration. The reason is structural rather than incidental: `og_reach` goes
+back to SQL once per level, and on a chain the frontier is one node, so the walk
+is nothing but levels. About 10 µs of SPI per level, a hundred thousand times.
+
+Part of that was ours to fix. The first version opened an SPI connection and
+re-planned the query *inside the loop*; hoisting both out and preparing the plan
+once took 100,000 hops from 1,196 ms to 1,016 ms. The rest is the floor of
+crossing the SPI boundary at all, and no amount of tuning removes it. The honest
+statement is that **`og_reach_sql()` is the better path whenever the frontier
+stays small and the depth is large**, it is in `access.sql` for exactly that,
+and the compiler does not currently pick it — a third automatic choice would
+have to be made from a statistic that says whether frontiers overlap, and no
+such statistic is available for free.
+
+### The cost rule was wrong, and the lattice proved it
+
+The compiler's first rule was "rewrite when the estimated walks exceed `|V|`",
+on the reasoning that enumeration is affordable while it produces fewer rows
+than there are nodes to find. The lattice at ten hops is 2,046 walks against a
+million nodes — comfortably affordable by that rule — but only **66 nodes are
+reachable**, and enumerating them cost 4.29 ms against 0.28 ms. Degree alone
+cannot see that overlap and the rule no longer pretends to; it now asks only
+whether enough walks are coming to pay for the switch, with the threshold set
+low because the two failure modes are not symmetric. Enumerating when it should
+not have runs out of time; reaching when it should not have costs a bounded
+fraction of a millisecond.
+
+Measured against every case in this document, the rule now picks correctly on
+the lattice at ten hops, on the chain at ten and a hundred (where `og_vlp` is
+genuinely faster), and on the dense fixture at two and four.
+
+---
+
+## Much deeper, against the other engines
+
+250,000 nodes so the load stays reasonable for five engines, same normalised
+question, 60-second cap.
+
+### chain — 250,000 nodes, degree 1, diameter 250,000
+
+| depth | Ontological (Cypher) | Ontological (storage) | recursive CTE | Apache AGE | pgGraph | Neo4j 5 |
+|---|---|---|---|---|---|---|
+| 10 | 5.43 | 0.20 | **0.10** | 216.15 | 1.65 | 7.55 |
+| 100 | 5.99 | 1.08 | **0.17** | 1,083.86 | 44.56 | 7.30 |
+| 1,000 | 12.83 | 9.59 | **1.00** | *>60 s* | 4,163.66 | 13.01 |
+| 10,000 | 122.30 | 91.01 | **7.86** | — | *2 GB limit* | 10.86 |
+
+### grid — 250,000 nodes (500 × 500), degree 2, diameter 998
+
+| depth | Ontological (Cypher) | Ontological (storage) | recursive CTE | Apache AGE | pgGraph | Neo4j 5 |
+|---|---|---|---|---|---|---|
+| 10 | 6.36 | 0.37 | **0.14** | 20,068.34 | 5.53 | 1.33 |
+| 20 | 10.32 | 0.67 | **0.31** | *>60 s* | 28.99 | 8.62 |
+| 50 | 11.62 | 1.76 | **1.31** | — | 382.00 | 8.45 |
+| 100 | 27.56 | 5.58 | 4.98 | — | 2,975.77 | **4.33** |
+| 500 | 649.17 | 146.34 | 145.15 | — | *>60 s* | **61.35** |
+
+Every system returned identical answers at every depth any of them finished.
+
+### A correction we owe the earlier section
+
+The table further up says our storage path is 2.3× faster than Neo4j past five
+hops. **That is true only of the saturating shape it was measured on.** On a
+graph with a real diameter Neo4j wins: 61 ms against our 146 ms at 500 hops on
+the lattice, and 10.9 ms against our 91 ms at 10,000 hops on the chain. The
+useful generalisation is not "we are faster past five hops" but:
+
+- where the frontier **covers the graph**, the work is deduplication and our
+  in-heap BFS is ahead;
+- where the frontier **stays thin and the depth is large**, the work is
+  per-hop latency, and Neo4j's pointer-chasing record store and PostgreSQL's own
+  recursive CTE are both ahead of us.
+
+The recursive CTE wins outright on the chain — 7.86 ms at 10,000 hops, better
+than every product in the table including ours. Ten lines of SQL remain the
+thing to justify yourself against.
+
+### pgGraph's traversal is quadratic in depth
+
+This is the sharpest finding of the deep runs, and it needs stating carefully
+because it contradicts what the architecture is sold for. On the chain, where
+the frontier is a single node and the answer grows linearly, doubling the depth
+**quadruples** the time:
+
+| depth | 100 | 200 | 400 | 800 | 1,600 |
+|---|---|---|---|---|---|
+| `graph.traverse` | 44.14 ms | 177.16 ms | 671.08 ms | 2,687.20 ms | 10,638.78 ms |
+
+Four times the time for twice the depth, four doublings in a row. At 10,000 hops
+it asks for 6.3 GB and is refused by its own circuit breaker — and the ceiling
+is effectively fixed at about 2 GB, since raising `graph.query_memory_mb` to its
+maximum of 32,768 does not lift it.
+
+This is not the row-materialisation cost from the earlier section:
+`graph.neighborhood()`, which returns one aggregated count per depth and no rows
+per node at all, takes **4,088 ms** on the same query where `traverse` takes
+4,128 ms. The cost is inside the traversal.
+
+**`graph.shortest_path` is not affected and is very good** — distance 1,000 in
+8.8 ms, distance 3,000 in 23.4 ms, on the same graph where `traverse` to depth
+1,000 takes 4.2 s. It has to be told, though: `max_depth` defaults to **20**, and
+past that it returns *no rows* rather than an error. An earlier draft of this
+section reported that as a failure to find the path; it was our omission, and the
+measurement above passes `max_depth` explicitly.
+
+So pgGraph's published claims are consistent with what we measure at the depths
+it publishes — one and two hops, twenty hops — and the "20+ hops" framing is
+where it stops being safe to extrapolate. At the depths in this section it is
+the slowest system in the table that still finishes.
+
+Reproduce:
+
+```bash
+python3 bench/harness.py --scale 250000 --shape chain --workload reach \
+    --hops 10,100,1000,10000 --query-timeout 60 \
+    --systems ontological,ontological_raw,cte,age,pggraph,neo4j
+python3 bench/harness.py --scale 250000 --shape grid --workload reach \
+    --hops 10,20,50,100,500 --query-timeout 60 --systems …
+
+psql -d bench_chain -v shape=chain -v nodes=1000000 -f bench/csr/gen_shape.sql
+python3 bench/csr/deep.py --db bench_chain --depths 10,100,1000,10000,100000
+```
+
+---
+
 ## What this does not show
 
-- **One graph shape, uniformly random.** No hubs, no communities, no skew. Skew
-  is what breaks frontier-based traversal, and a power-law fixture would test
-  the frontier limits this branch does not have.
+- **Three graph shapes, none of them skewed.** Uniform random, a chain and a
+  lattice. No hubs, no communities, no power law — and skew is exactly what
+  breaks frontier-based traversal, so the frontier limits this branch does not
+  have are still untested.
 - **No concurrency.** Every query ran alone. The CSR's memory cost is per
   backend and its worst case is a connection storm; nothing here measures that.
 - **One workload against the other engines.** Reachability counting, one graph

@@ -70,9 +70,11 @@ SELECT og_csr_hops(:a, :dnode) AS hops,
 SELECT og_csr_drop();
 
 \echo '=== the compiler picks reachability only when no path is observable ==='
--- Depth 12 is past the point where any degree makes trail enumeration
--- survivable, so the cost rule always says yes and these assertions test the
--- semantic condition rather than the estimate.
+-- These run before the ANALYZE below, so the cost rule has no statistics and
+-- falls back to depth alone — which at twelve hops says yes. That is on
+-- purpose: it isolates the *semantic* condition, which is what these six
+-- assertions are about. The estimate itself is asserted separately, after
+-- ANALYZE, by `shallow_keeps_vlp`.
 SELECT og_cypher_sql('r', $$MATCH (x:N {name:'a'})-[:E*1..12]->(y:N) RETURN count(DISTINCT y)$$)
        LIKE '%og_reach(%' AS count_distinct_uses_reach;
 SELECT og_cypher_sql('r', $$MATCH (x:N {name:'a'})-[:E*1..12]->(y:N) RETURN DISTINCT y.name$$)

@@ -96,46 +96,66 @@ fn og_reach(
         adj_where(dir, "a", "$2")
     );
 
-    let mut visited: HashSet<i64> = HashSet::with_capacity(1024);
-    visited.insert(src);
-    let mut frontier = vec![src];
-    let mut out: Vec<(i64, i32)> = Vec::new();
-    // The start node is visited at depth 0 so the frontier never re-expands it,
-    // but a cycle that comes back to it still makes it an answer — `(a)-[*1..k]->(b)`
-    // binds `b = a` when one exists. Emitted once, at the depth it returns.
-    let mut start_done = minhop <= 0;
-    if minhop <= 0 {
-        out.push((src, 0));
-    }
+    // One SPI connection and one plan for the whole walk, not one per level.
+    //
+    // This matters far more than it looks. On a graph with a large diameter the
+    // frontier can be a single node and the level count can be six figures —
+    // a 1,000,000-node chain walked to 100,000 hops does almost no work per
+    // level and nothing but levels. Connecting and re-planning inside the loop
+    // made that case ten times slower than the same walk written as a plain
+    // recursive CTE, which was the measurement that found this.
+    let out = Spi::connect(|client| {
+        let stmt = client
+            .prepare(
+                sql.as_str(),
+                &[
+                    PgOid::BuiltIn(PgBuiltInOids::INT8ARRAYOID),
+                    PgOid::BuiltIn(PgBuiltInOids::INT4ARRAYOID),
+                ],
+            )
+            .unwrap_or_else(|e| error!("adjacency scan could not be planned: {e}"));
 
-    for depth in 1..=maxhop {
-        if frontier.is_empty() {
-            break;
+        let mut visited: HashSet<i64> = HashSet::with_capacity(1024);
+        visited.insert(src);
+        let mut frontier = vec![src];
+        let mut out: Vec<(i64, i32)> = Vec::new();
+        // The start node is visited at depth 0 so the frontier never re-expands
+        // it, but a cycle that comes back to it still makes it an answer —
+        // `(a)-[*1..k]->(b)` binds `b = a` when one exists. Emitted once, at the
+        // depth it returns.
+        let mut start_done = minhop <= 0;
+        if minhop <= 0 {
+            out.push((src, 0));
         }
-        let segments: Vec<Vec<Option<i64>>> = Spi::connect(|client| {
-            client
-                .select(&sql, None, &[frontier.clone().into(), etypes.clone().into()])
+
+        for depth in 1..=maxhop {
+            if frontier.is_empty() {
+                break;
+            }
+            let segments: Vec<Vec<Option<i64>>> = client
+                .select(&stmt, None, &[frontier.clone().into(), etypes.clone().into()])
                 .unwrap_or_else(|e| error!("adjacency scan failed: {e}"))
                 .filter_map(|r| r.get::<Vec<Option<i64>>>(1).ok().flatten())
-                .collect()
-        });
+                .collect();
 
-        let mut next = Vec::new();
-        for seg in segments {
-            for nbr in seg.into_iter().flatten() {
-                if visited.insert(nbr) {
-                    next.push(nbr);
-                    if depth >= minhop {
-                        out.push((nbr, depth));
+            let mut next = Vec::new();
+            for seg in segments {
+                for nbr in seg.into_iter().flatten() {
+                    if visited.insert(nbr) {
+                        next.push(nbr);
+                        if depth >= minhop {
+                            out.push((nbr, depth));
+                        }
+                    } else if nbr == src && !start_done && depth >= minhop {
+                        start_done = true;
+                        out.push((src, depth));
                     }
-                } else if nbr == src && !start_done && depth >= minhop {
-                    start_done = true;
-                    out.push((src, depth));
                 }
             }
+            frontier = next;
         }
-        frontier = next;
-    }
+        out
+    });
 
     TableIterator::new(out)
 }

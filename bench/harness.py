@@ -209,7 +209,36 @@ def buffers_read(db, sql, prelude=""):
 # data generation — one deterministic graph, three physical encodings
 # --------------------------------------------------------------------------
 
-def gen_edges(n_nodes, avg_degree, seed=42):
+def gen_edges(n_nodes, avg_degree, seed=42, shape="random"):
+    """
+    One deterministic edge list, in one of three shapes.
+
+    `random` is the shape every table in `docs/benchmark.md` uses, and it is the
+    wrong instrument for a question about depth: at average degree 20 the whole
+    graph sits inside five hops, so "twenty hops" and "eight hops" are the same
+    question asked twice. Depth only means something when the diameter is large,
+    and these are the two shapes where it is:
+
+      chain — a line. Diameter |V|, out-degree 1, exactly one path anywhere.
+              Lineage, provenance, a supply chain, a reply thread. Isolates
+              per-hop overhead from frontier work.
+      grid  — a square lattice pointing right and down. Diameter 2(√|V| - 1),
+              frontier grows linearly, nodes-within-k grows as k²/2 — but the
+              number of *paths* to (i,j) is C(i+j, i), which is combinatorial.
+              Road networks, meshes, dependency DAGs.
+    """
+    if shape == "chain":
+        return [(i, i + 1) for i in range(n_nodes - 1)]
+    if shape == "grid":
+        side = int(round(n_nodes ** 0.5))
+        n_nodes = side * side
+        edges = []
+        for i in range(n_nodes):
+            if i % side < side - 1:
+                edges.append((i, i + 1))
+            if i + side < n_nodes:
+                edges.append((i, i + side))
+        return edges
     rnd = random.Random(seed)
     edges = []
     for src in range(n_nodes):
@@ -970,12 +999,16 @@ SYSTEMS = {c.name: c for c in
 
 def run(args):
     n_nodes = args.scale
-    edges = gen_edges(n_nodes, args.degree)
+    if args.shape == "grid":
+        # A lattice has to be square, so the node count is rounded to fit.
+        n_nodes = int(round(n_nodes ** 0.5)) ** 2
+    edges = gen_edges(n_nodes, args.degree, shape=args.shape)
     wanted = [s.strip() for s in args.systems.split(",") if s.strip()]
 
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "scale": {"nodes": n_nodes, "edges": len(edges), "avg_degree": args.degree},
+        "scale": {"nodes": n_nodes, "edges": len(edges),
+                  "avg_degree": round(len(edges) / n_nodes, 2), "shape": args.shape},
         "environment": {
             "postgres": psql("postgres", "SELECT version()"),
             "host": f"{PGHOST}:{PGPORT}",
@@ -1219,6 +1252,10 @@ def main():
         default="ontological,ontological_raw,age,age_explicit,cte,neo4j,typedb")
     ap.add_argument("--hops", default="2,3",
                     help="traversal depths to measure, e.g. 2,3,4,5,6,8")
+    ap.add_argument("--shape", choices=("random", "chain", "grid"), default="random",
+                    help="graph shape. random is the published workload; chain "
+                         "and grid have a large diameter, which is the only way "
+                         "a question about depth means anything")
     ap.add_argument("--workload", choices=("classic", "reach"), default="classic",
                     help="classic: the published 1/2/3-hop workload, one row per "
                          "path. reach: distinct nodes other than the start, the "
