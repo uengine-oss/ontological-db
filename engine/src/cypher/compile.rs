@@ -17,6 +17,73 @@ use std::collections::HashMap;
 /// The bound jsonb parameter holding user `$params`.
 pub const PARAM: &str = "$1";
 
+/// Is enumerating trails to `max` hops more work than the answer is big?
+///
+/// Reachability is not free: `og_reach` is a Rust set-returning function, so
+/// unlike `og_vlp` it does not inline into the surrounding plan and it pays SPI
+/// setup per level — measured at a few tenths of a millisecond. Below the point
+/// where trail enumeration explodes, that overhead is the whole query, and
+/// rewriting makes it slower. Above it, the same overhead is invisible next to
+/// a factor of a thousand.
+///
+/// The crossover is where the number of walks passes the number of nodes there
+/// are to find: `Σ degreeⁱ > |V|`. Both terms come from the planner's own
+/// statistics — a catalog lookup, not a scan — so this costs nothing to ask.
+/// An unanalysed database has no statistics to answer with, and falls back to
+/// depth alone.
+fn prefer_reachability(max: u32) -> bool {
+    const DEEP: u32 = 4;
+    if max >= 12 {
+        // No plausible degree makes enumeration survivable this deep.
+        return true;
+    }
+    let est = crate::spiu::two::<f32, f32>(
+        "SELECT (SELECT reltuples FROM pg_class WHERE oid = 'og_data.og_node'::regclass),
+                (SELECT reltuples FROM pg_class WHERE oid = 'og_data.og_edge'::regclass)",
+        &[],
+    );
+    let (nodes, edges) = match est {
+        Ok((Some(n), Some(e))) if n > 0.0 && e > 0.0 => (n as f64, e as f64),
+        _ => return max >= DEEP,
+    };
+    // Average out-degree over the whole graph. A per-relation-type figure would
+    // be sharper, but this decision only has to be right about an order of
+    // magnitude, and it must not cost a scan to make.
+    let degree = (edges / nodes).max(1.0);
+    let mut walks = 0.0f64;
+    let mut level = 1.0f64;
+    for _ in 0..max {
+        level *= degree;
+        walks += level;
+        if walks > nodes {
+            return true;
+        }
+    }
+    false
+}
+
+/// Aggregates whose value does not change when a row is duplicated, provided
+/// their argument is spelled `DISTINCT`. `min`/`max` need no such qualifier.
+fn blind_expr(e: &Expr) -> bool {
+    match e {
+        Expr::Func { name, args, distinct } => {
+            let n = name.to_ascii_lowercase();
+            let ok = match n.as_str() {
+                "min" | "max" => true,
+                "count" | "collect" => *distinct && !matches!(args.first(), Some(Expr::Star)),
+                // sum/avg/stdev and anything user-defined: duplicates move them.
+                _ => !e.is_aggregate(),
+            };
+            ok && args.iter().all(blind_expr)
+        }
+        Expr::Binary(_, a, b) => blind_expr(a) && blind_expr(b),
+        Expr::Not(a) | Expr::Neg(a) | Expr::IsNull(a, _) => blind_expr(a),
+        Expr::List(xs) => xs.iter().all(blind_expr),
+        Expr::Map(kv) => kv.iter().all(|(_, v)| blind_expr(v)),
+        _ => !e.is_aggregate(),
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Bind {
     Node { alias: String, tid: Option<i32> },
@@ -40,6 +107,9 @@ pub struct Compiler {
     pub notes: Vec<String>,
     /// Set while an OPTIONAL MATCH is being compiled. See `OptionalScope`.
     optional: Option<OptionalScope>,
+    /// True when the query cannot observe how many *paths* reach a node, only
+    /// which nodes are reached — see [`Compiler::multiplicity_blind`].
+    reachability_only: bool,
 }
 
 /// The joins and predicates of one OPTIONAL MATCH.
@@ -76,6 +146,7 @@ impl Compiler {
             rel_ids: Vec::new(),
             notes: Vec::new(),
             optional: None,
+            reachability_only: false,
         }
     }
 
@@ -229,7 +300,41 @@ impl Compiler {
     // Read query compilation
     // ----------------------------------------------------------------------
 
+    /// Can this query tell how many *paths* reach a node, or only which nodes
+    /// are reached?
+    ///
+    /// Cypher's variable-length match yields one row per path, so
+    /// `RETURN count(b)` counts walks and `RETURN count(DISTINCT b)` counts
+    /// nodes. The first needs trail enumeration; the second does not, and
+    /// enumerating trails to answer it costs `degree^k` rows for an answer
+    /// bounded by `|V|`.
+    ///
+    /// The test is deliberately narrow, because being wrong here changes
+    /// answers rather than timings:
+    ///
+    /// * `WITH` disqualifies the query — it can aggregate before the RETURN,
+    ///   and this pass does not look inside it.
+    /// * `RETURN DISTINCT …` qualifies: duplicate rows cannot survive it.
+    /// * Otherwise the projection must aggregate, and every aggregate in it
+    ///   must be insensitive to duplicates — `count(DISTINCT x)` is, `count(x)`
+    ///   is not, `min`/`max` are whatever their argument is.
+    ///
+    /// A pattern that binds a path or relationship variable is rejected later,
+    /// at the hop itself: those observe multiplicity no matter what RETURN does.
+    fn multiplicity_blind(q: &Query) -> bool {
+        if q.clauses.iter().any(|c| matches!(c, Clause::With { .. })) {
+            return false;
+        }
+        let Some(Clause::Return(p)) = q.clauses.last() else { return false };
+        if p.distinct {
+            return true;
+        }
+        let exprs = || p.items.iter().map(|i| &i.expr).chain(p.order.iter().map(|o| &o.expr));
+        exprs().any(|e| e.is_aggregate()) && exprs().all(blind_expr)
+    }
+
     pub fn compile_read(&mut self, q: &Query) -> CResult<Compiled> {
+        self.reachability_only = Self::multiplicity_blind(q);
         let mut projection: Option<&Projection> = None;
 
         for clause in &q.clauses {
@@ -532,6 +637,13 @@ impl Compiler {
         let mut pending_rel: Option<&RelPat> = None;
         let mut hop_exprs: Vec<String> = Vec::new();
 
+        // `MATCH p = (a)-[*1..3]->(b)` binds the paths themselves, so this
+        // pattern must enumerate them however multiplicity-blind the RETURN is.
+        let outer_reachability = self.reachability_only;
+        if p.path_var.is_some() {
+            self.reachability_only = false;
+        }
+
         for elem in &p.elems {
             match elem {
                 PatElem::Node(np) => {
@@ -564,6 +676,7 @@ impl Compiler {
             };
             self.binds.insert(pv.clone(), Bind::Path { hops_expr: expr });
         }
+        self.reachability_only = outer_reachability;
         Ok(())
     }
 
@@ -729,8 +842,22 @@ impl Compiler {
             let w = self.fresh("vl");
             let joiner = if optional { "LEFT JOIN LATERAL" } else { "CROSS JOIN LATERAL" };
             let on = if optional { " ON true" } else { "" };
+            // `og_vlp` enumerates trails, so it produces degree^k rows and can
+            // bind a path. When nobody can observe the multiplicity — no path
+            // or relationship variable, and a projection that collapses
+            // duplicates — the same answer comes out of a BFS that visits each
+            // node once, and the cost stops being exponential in the depth.
+            let f = if rel.var.is_none() && self.reachability_only && prefer_reachability(max) {
+                self.notes.push(format!(
+                    "variable-length hop compiled as reachability (og_reach): \
+                     no path is observable, so trails are not enumerated"
+                ));
+                "og_reach"
+            } else {
+                "og_vlp"
+            };
             self.from.push(format!(
-                "{joiner} og_vlp({from_alias}.id, {etype_pred}, {dir_lit}::\"char\", {min}, {max}) {w}{on}"
+                "{joiner} {f}({from_alias}.id, {etype_pred}, {dir_lit}::\"char\", {min}, {max}) {w}{on}"
             ));
             self.note_optional_join(&w);
             self.constrain(format!("{to_alias}.id = {w}.node"));

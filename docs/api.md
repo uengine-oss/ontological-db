@@ -60,10 +60,24 @@ Property types: `string`, `int`, `long`, `float`, `bool`, `datetime`, `date`,
 |---|---|
 | `og_expand(src, etypes int4[], dir "char") → TABLE(nbr, eid)` | neighbours; `dir` is `'o'` or `'i'`. Inlinable, so the planner sees through it |
 | `og_expand_batch(srcs int8[], etypes, dir)` | many start points in one call |
-| `og_vlp(src, etypes, dir, minhop, maxhop) → TABLE(node, depth, path)` | variable-length walk with trail semantics; `dir` `'b'` for both |
+| `og_vlp(src, etypes, dir, minhop, maxhop) → TABLE(node, depth, path)` | variable-length walk with trail semantics; `dir` `'b'` for both. One row per path, so `degreeᵏ` rows |
+| `og_reach(src, etypes, dir, minhop, maxhop) → TABLE(node, depth)` | the same walk as reachability: visited set, one row per node, `depth` is the first depth it was reached at. Bounded by `\|V\|+\|E\|` however deep the question goes |
+| `og_reach_sql(...)` | pure-SQL reachability, `UNION` instead of a visited set. The floor `og_reach` is measured against |
+| `og_csr_build(etypes, dir) → TABLE(nodes, edges, bytes, build_ms)` | compile the topology into **backend-local** memory. See the caveats below |
+| `og_csr_reach(src, minhop, maxhop) → TABLE(node, depth)` / `og_csr_hops(src, dst, maxhop) → int` | reachability and bidirectional shortest-path length over the compiled graph |
+| `og_csr_stats()` / `og_csr_drop()` | what this backend holds; free it |
 | `og_nodes(root_type) → TABLE(id, type_id)` / `og_edges(root_type)` | subtype-aware scans |
 | `og_degree(src, etype, dir)` / `og_degree_all(src, dir)` | degree, used for cost estimation |
 | `og_make_id(shard, type_id, local)`, `og_id_type`, `og_id_shard`, `og_id_local` | identifier encoding |
+
+Cypher picks between `og_vlp` and `og_reach` on its own: `og_reach` when the
+query binds no path or relationship variable, its projection cannot observe how
+many paths reach a node, and the depth is past where enumeration is cheaper.
+Nothing routes to `og_csr_*` automatically, because a compiled graph is a frozen
+snapshot that row-level security is never consulted about — that is a choice a
+caller makes explicitly. `og_reach` and the `og_csr_*` functions are
+`PARALLEL RESTRICTED`; a plan containing one runs in the leader.
+Numbers and the full rule: [`deep-traversal.md`](deep-traversal.md).
 
 ### Operations
 

@@ -222,7 +222,7 @@ paste it into `EXPLAIN` — or into your own SQL, which is the honest answer to
 |---|---|
 | `(a:Label)` | scan of `og_data.v_<type>`, a `UNION ALL` view over concrete subtype tables |
 | `-[:T]->` | `LATERAL` over `og_adj` filtered by `etype`/`dir`, then `unnest(nbr, eid)` |
-| `-[:T*1..3]->` | `og_vlp()`, a recursive SQL function with trail semantics |
+| `-[:T*1..3]->` | `og_vlp()` when a path is observable, `og_reach()` — a visited-set BFS — when it is not and the depth makes it worth it ([`deep-traversal.md`](deep-traversal.md)) |
 | `a.prop` | `alias.p_prop`, or `alias.__ext->>'prop'` when undeclared |
 | `WHERE`, `ORDER BY`, `SKIP`, `LIMIT` | the same clauses |
 | `count/sum/avg/collect` | aggregates with a derived `GROUP BY` |
@@ -290,12 +290,17 @@ Stated plainly, with the reasoning in each `plan.md`:
   matters — is real.
 - **`WITH` and `UNION` are not implemented.** They fail loudly with a suggested
   alternative rather than silently doing something else.
-- **Deep traversal is the weak axis.** `og_vlp()` is a recursive SQL function:
-  trail semantics stop cycles and it does not rescan the way AGE's `*1..n` does,
-  but the frontier still materialises in a worktable and every step still pays
-  heap and MVCC cost. Three hops measure 33.86 ms, 11× behind Neo4j; ten and
-  twenty hops are unmeasured and currently unargued for. See
-  [`comparison.md`](comparison.md#where-pggraphs-design-beats-ours).
+- **Deep traversal was the weak axis, and most of the weakness was the
+  question, not the storage.** `og_vlp()` returns one row per *path*, which is
+  what Cypher's variable-length match means — and `degreeᵏ` rows to answer
+  something bounded by `|V|`. A query that cannot observe path multiplicity now
+  compiles to `og_reach()`, a visited-set BFS over the same heap tuples: six
+  hops on a million-edge graph go from 49 s to 71 ms with MVCC and RLS intact.
+  A backend-local compiled CSR (`og_csr_build`) buys a further 15× and gives up
+  exactly what pgGraph gives up, so nothing routes to it automatically. Three
+  hops through the Cypher surface are still 11× behind Neo4j; that gap is the
+  query engine's own overhead, not the traversal.
+  See [`deep-traversal.md`](deep-traversal.md).
 - **Sharding is designed, not built.** Read replicas work today because every
   structure is a plain heap relation. Distributed writes without two-phase commit
   would violate principle IX quietly, so they wait.

@@ -11,6 +11,7 @@
 
 pub mod adjacency;
 pub mod stats;
+pub mod traverse;
 
 use crate::catalog::{labeling, types};
 use crate::id;

@@ -344,6 +344,12 @@ what it costs to get a graph in, not how fast each engine writes.
   traversal planners.
 - **Four queries.** No writes under measurement, no pattern matching with
   predicates, no aggregation, no shortest path, no LDBC SNB.
+- **Nothing deeper than three hops.** Four and beyond is where the shape of the
+  traversal starts to matter more than the storage, and it has its own document
+  and its own harness: [`deep-traversal.md`](deep-traversal.md),
+  [`bench/csr/`](../bench/csr/). The `og_vlp` numbers here are the path a query
+  still takes when it binds a path variable; a query that cannot observe path
+  multiplicity is now compiled to a visited-set BFS instead.
 - **Community and default configurations.** Neo4j Enterprise, a tuned TypeDB, or
   a PostgreSQL with a larger `shared_buffers` would all move.
 - **Warm cache throughout.** Every number is steady-state on a warm cache; cold
