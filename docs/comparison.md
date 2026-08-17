@@ -8,6 +8,11 @@ lose.
 > Sources for the pgGraph material are its own documentation, README and blog,
 > retrieved 2026-08-16, against pgGraph 0.1.6 (alpha). Where a claim here is
 > ours rather than theirs, it says so.
+>
+> The *measurements* in [`deep-traversal.md`](deep-traversal.md) are newer and
+> were taken against **pgGraph 1.1.0**, built from source and installed into the
+> same PostgreSQL 16 as this extension. Where this document and that one differ,
+> that one is the measurement and this one is the design description.
 
 ---
 
@@ -201,6 +206,16 @@ timing is reported — full method in [`docs/benchmark.md`](benchmark.md).
 
 Written as fixed-length patterns, AGE is at parity with us. The collapse is one
 operator, not the storage.
+
+> **Since measured.** Everything in this section is pgGraph's own published
+> material, kept because it is what the project claims for itself. It is no
+> longer the only evidence available: pgGraph 1.1.0 has since been built from
+> source and measured against Neo4j, Apache AGE and this project on one machine,
+> one dataset and one workload, with every answer checked —
+> [`deep-traversal.md`](deep-traversal.md). The short version is that its CSR
+> walk is flat at 42 ms out to twenty hops, within 1.6× of our in-heap BFS, and
+> that its headline latency on a full-graph question is dominated by the cost of
+> returning one eleven-column row per reached node rather than by traversal.
 
 ### pgGraph's published numbers
 

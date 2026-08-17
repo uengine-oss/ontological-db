@@ -1,0 +1,410 @@
+{
+  "generated_at": "2026-08-17T03:03:51.828641+00:00",
+  "scale": {
+    "nodes": 5000,
+    "edges": 37588,
+    "avg_degree": 8
+  },
+  "environment": {
+    "postgres": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+    "host": "localhost:28816"
+  },
+  "systems": {
+    "ontological": {
+      "engine": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1)",
+      "reuses": null,
+      "load_seconds": 0.66,
+      "load_edges_per_sec": 56661,
+      "queries": {
+        "reach1hop": {
+          "median_ms": 0.482,
+          "p95_ms": 0.606,
+          "min_ms": 0.427,
+          "runs": 5,
+          "buffers": 1754
+        },
+        "reach2hop": {
+          "median_ms": 0.756,
+          "p95_ms": 0.968,
+          "min_ms": 0.709,
+          "runs": 5,
+          "buffers": 2046
+        },
+        "reach3hop": {
+          "median_ms": 2.672,
+          "p95_ms": 3.841,
+          "min_ms": 1.541,
+          "runs": 5,
+          "buffers": 4376
+        },
+        "reach4hop": {
+          "median_ms": 18.188,
+          "p95_ms": 27.466,
+          "min_ms": 9.645,
+          "runs": 3,
+          "buffers": 22260
+        },
+        "prop_scan": {
+          "median_ms": 0.419,
+          "p95_ms": 0.447,
+          "min_ms": 0.371,
+          "runs": 5,
+          "buffers": 1170
+        }
+      },
+      "protocol_floor_ms": 0.048
+    },
+    "ontological_raw": {
+      "engine": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1)",
+      "reuses": "ontological",
+      "load_seconds": null,
+      "load_edges_per_sec": null,
+      "queries": {
+        "reach1hop": {
+          "median_ms": 0.607,
+          "p95_ms": 0.665,
+          "min_ms": 0.56,
+          "runs": 5,
+          "buffers": 1754
+        },
+        "reach2hop": {
+          "median_ms": 0.742,
+          "p95_ms": 0.947,
+          "min_ms": 0.571,
+          "runs": 5,
+          "buffers": 2047
+        },
+        "reach3hop": {
+          "median_ms": 2.719,
+          "p95_ms": 4.011,
+          "min_ms": 1.592,
+          "runs": 5,
+          "buffers": 4376
+        },
+        "reach4hop": {
+          "median_ms": 18.575,
+          "p95_ms": 33.21,
+          "min_ms": 9.356,
+          "runs": 3,
+          "buffers": 22260
+        },
+        "prop_scan": {
+          "median_ms": 0.061,
+          "p95_ms": 0.067,
+          "min_ms": 0.06,
+          "runs": 5,
+          "buffers": 6
+        }
+      },
+      "protocol_floor_ms": 0.071
+    },
+    "cte": {
+      "engine": "PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1)",
+      "reuses": null,
+      "load_seconds": 0.41,
+      "load_edges_per_sec": 91131,
+      "queries": {
+        "reach1hop": {
+          "median_ms": 0.096,
+          "p95_ms": 0.15,
+          "min_ms": 0.087,
+          "runs": 5,
+          "buffers": 24
+        },
+        "reach2hop": {
+          "median_ms": 0.107,
+          "p95_ms": 0.126,
+          "min_ms": 0.094,
+          "runs": 5,
+          "buffers": 168
+        },
+        "reach3hop": {
+          "median_ms": 0.286,
+          "p95_ms": 0.365,
+          "min_ms": 0.18,
+          "runs": 5,
+          "buffers": 1380
+        },
+        "reach4hop": {
+          "median_ms": 1.838,
+          "p95_ms": 2.563,
+          "min_ms": 1.128,
+          "runs": 3,
+          "buffers": 10542
+        },
+        "prop_scan": {
+          "median_ms": 0.062,
+          "p95_ms": 0.066,
+          "min_ms": 0.061,
+          "runs": 5,
+          "buffers": 6
+        }
+      },
+      "protocol_floor_ms": 0.049
+    },
+    "age": {
+      "engine": "Apache AGE 1.5.0",
+      "reuses": null,
+      "load_seconds": 0.52,
+      "load_edges_per_sec": 72893,
+      "queries": {
+        "reach1hop": {
+          "median_ms": 7.567,
+          "p95_ms": 8.631,
+          "min_ms": 6.844,
+          "runs": 5,
+          "buffers": 2525
+        },
+        "reach2hop": {
+          "median_ms": 26.295,
+          "p95_ms": 36.136,
+          "min_ms": 15.967,
+          "runs": 5,
+          "buffers": 2525
+        },
+        "reach3hop": {
+          "median_ms": 153.263,
+          "p95_ms": 237.483,
+          "min_ms": 79.089,
+          "runs": 5,
+          "buffers": 2525
+        },
+        "reach4hop": {
+          "median_ms": 1256.523,
+          "p95_ms": 1909.635,
+          "min_ms": 615.677,
+          "runs": 3,
+          "buffers": 2525
+        },
+        "prop_scan": {
+          "median_ms": 0.095,
+          "p95_ms": 0.099,
+          "min_ms": 0.094,
+          "runs": 5,
+          "buffers": 33
+        }
+      },
+      "protocol_floor_ms": 0.054
+    },
+    "age_explicit": {
+      "engine": "Apache AGE 1.5.0",
+      "reuses": "age",
+      "load_seconds": null,
+      "load_edges_per_sec": null,
+      "queries": {
+        "reach1hop": {
+          "median_ms": 1.37,
+          "p95_ms": 1.408,
+          "min_ms": 1.343,
+          "runs": 5,
+          "buffers": 388
+        },
+        "reach2hop": {
+          "median_ms": 3.145,
+          "p95_ms": 3.444,
+          "min_ms": 2.969,
+          "runs": 5,
+          "buffers": 1863
+        },
+        "reach3hop": {
+          "median_ms": 9.237,
+          "p95_ms": 12.403,
+          "min_ms": 6.874,
+          "runs": 5,
+          "buffers": 8701
+        },
+        "reach4hop": {
+          "median_ms": 52.115,
+          "p95_ms": 77.798,
+          "min_ms": 30.066,
+          "runs": 3,
+          "buffers": 54195
+        },
+        "prop_scan": {
+          "median_ms": 0.097,
+          "p95_ms": 0.106,
+          "min_ms": 0.093,
+          "runs": 5,
+          "buffers": 33
+        }
+      },
+      "protocol_floor_ms": 0.049
+    },
+    "pggraph": {
+      "engine": "pgGraph 1.1.0",
+      "reuses": null,
+      "load_seconds": 0.6,
+      "load_edges_per_sec": 62295,
+      "queries": {
+        "reach1hop": {
+          "median_ms": 0.902,
+          "p95_ms": 0.975,
+          "min_ms": 0.811,
+          "runs": 5,
+          "buffers": 4072
+        },
+        "reach2hop": {
+          "median_ms": 3.207,
+          "p95_ms": 4.313,
+          "min_ms": 1.904,
+          "runs": 5,
+          "buffers": 5680
+        },
+        "reach3hop": {
+          "median_ms": 19.68,
+          "p95_ms": 29.69,
+          "min_ms": 10.849,
+          "runs": 5,
+          "buffers": 20620
+        },
+        "reach4hop": {
+          "median_ms": 122.764,
+          "p95_ms": 164.09,
+          "min_ms": 86.078,
+          "runs": 3,
+          "buffers": 104824
+        },
+        "prop_scan": {
+          "median_ms": 0.059,
+          "p95_ms": 0.07,
+          "min_ms": 0.058,
+          "runs": 5,
+          "buffers": 6
+        }
+      },
+      "protocol_floor_ms": 0.046
+    },
+    "neo4j": {
+      "engine": "Neo4j 5.26.28 (community)",
+      "reuses": null,
+      "load_seconds": 1.15,
+      "load_edges_per_sec": 32824,
+      "queries": {
+        "reach1hop": {
+          "median_ms": 3.301,
+          "p95_ms": 6.894,
+          "min_ms": 3.175,
+          "runs": 5
+        },
+        "reach2hop": {
+          "median_ms": 2.757,
+          "p95_ms": 4.972,
+          "min_ms": 2.501,
+          "runs": 5
+        },
+        "reach3hop": {
+          "median_ms": 2.168,
+          "p95_ms": 4.434,
+          "min_ms": 1.939,
+          "runs": 5
+        },
+        "reach4hop": {
+          "median_ms": 7.76,
+          "p95_ms": 7.847,
+          "min_ms": 7.725,
+          "runs": 3
+        },
+        "prop_scan": {
+          "median_ms": 1.048,
+          "p95_ms": 1.108,
+          "min_ms": 0.946,
+          "runs": 5
+        }
+      },
+      "protocol_floor_ms": 2.178
+    }
+  },
+  "correctness": {
+    "reach1hop": {
+      "answers": {
+        "ontological": "8",
+        "ontological_raw": "8",
+        "cte": "8",
+        "age": "8",
+        "age_explicit": "8",
+        "pggraph": "8",
+        "neo4j": "error: Neo4j.answer() takes 2 positional arguments but 3 were given"
+      },
+      "agree": true
+    },
+    "reach2hop": {
+      "answers": {
+        "ontological": "75",
+        "ontological_raw": "75",
+        "cte": "75",
+        "age": "75",
+        "age_explicit": "75",
+        "pggraph": "75",
+        "neo4j": "error: Neo4j.answer() takes 2 positional arguments but 3 were given"
+      },
+      "agree": true
+    },
+    "reach3hop": {
+      "answers": {
+        "ontological": "573",
+        "ontological_raw": "573",
+        "cte": "573",
+        "age": "573",
+        "age_explicit": "573",
+        "pggraph": "573",
+        "neo4j": "error: Neo4j.answer() takes 2 positional arguments but 3 were given"
+      },
+      "agree": true
+    },
+    "reach4hop": {
+      "answers": {
+        "ontological": "2912",
+        "ontological_raw": "2912",
+        "cte": "2912",
+        "age": "2912",
+        "age_explicit": "2912",
+        "pggraph": "2912",
+        "neo4j": "error: Neo4j.answer() takes 2 positional arguments but 3 were given"
+      },
+      "agree": true
+    },
+    "prop_scan": {
+      "answers": {
+        "ontological": "100",
+        "ontological_raw": "100",
+        "cte": "100",
+        "age": "100",
+        "age_explicit": "100",
+        "pggraph": "100",
+        "neo4j": "error: Neo4j.answer() takes 2 positional arguments but 3 were given"
+      },
+      "agree": true
+    }
+  },
+  "speedup_vs": {
+    "age": {
+      "reach1hop": 15.7,
+      "reach2hop": 34.78,
+      "reach3hop": 57.36,
+      "reach4hop": 69.09,
+      "prop_scan": 0.23
+    },
+    "cte": {
+      "reach1hop": 0.2,
+      "reach2hop": 0.14,
+      "reach3hop": 0.11,
+      "reach4hop": 0.1,
+      "prop_scan": 0.15
+    },
+    "ontological_raw": {
+      "reach1hop": 1.26,
+      "reach2hop": 0.98,
+      "reach3hop": 1.02,
+      "reach4hop": 1.02,
+      "prop_scan": 0.15
+    },
+    "neo4j": {
+      "reach1hop": 6.85,
+      "reach2hop": 3.65,
+      "reach3hop": 0.81,
+      "reach4hop": 0.43,
+      "prop_scan": 2.5
+    }
+  },
+  "integrity_violations": 0
+}

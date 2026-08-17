@@ -265,6 +265,146 @@ query whose caller is entitled to MVCC and RLS.
 
 ---
 
+## Against the other engines
+
+The tables above compare this repository with itself. The obvious next question
+is what the change is worth against Neo4j, Apache AGE and pgGraph — so all three
+were installed and measured rather than quoted.
+
+**pgGraph is in this one.** `docs/benchmark.md` excludes it because its published
+figures come from a different dataset and machine with no correctness gate.
+That objection does not apply to a build we compile ourselves and run on our own
+data: pgGraph 1.1.0 was built from source against PostgreSQL 16 and installed
+into the same server as Ontological and AGE. AGE 1.5.0 had to be built from
+source too — the published `apache/age` image for this release is x86-64 only,
+and measuring it under emulation on an arm64 host would have been a strawman.
+
+### The question, and why it had to change
+
+`count(DISTINCT b)` over `-[:K*1..k]->` is not a question every system states
+identically. Cypher counts the start node again when a cycle returns to it;
+pgGraph's `graph.traverse(include_start := false)` never does. That one-node
+difference voids the comparison at exactly the depths being measured, so the
+workload asks something unambiguous instead:
+
+> distinct nodes **other than the start** within *k* hops
+
+Every system expresses that exactly — `b.val <> a.val` in the three Cypher
+dialects, `node <> start` in the CTE, `include_start := false` in pgGraph. All
+seven systems returned identical answers at every depth either finished.
+
+One cost of that normalisation has to be disclosed, because it is not evenly
+distributed. Reading `b.val` in AGE is a JSON extraction per row, so the
+exclusion predicate costs AGE far more than anyone else. Measured on the same
+data, one hop:
+
+| | classic `count(DISTINCT b)` | normalised, with `b.val <> a.val` |
+|---|---|---|
+| Ontological | 1.47 ms | 1.52 ms |
+| Neo4j | 1.15 ms | 0.96 ms |
+| Apache AGE | 1.44 ms | 94.00 ms |
+
+So **AGE's column below overstates its traversal cost by roughly 90 ms**, and
+its one-hop storage is competitive — the finding `docs/benchmark.md` already
+reports. What the exclusion does not explain is the shape of its curve.
+
+### 50,000 nodes / 974,936 edges, average degree 20
+
+Median of five start nodes, warm, one PostgreSQL 16.14 with all three
+extensions, Neo4j 5.26 over bolt, 60-second cap per statement.
+
+| depth | Ontological (Cypher) | Ontological (`og_reach`) | recursive CTE | Apache AGE | pgGraph | Neo4j 5 |
+|---|---|---|---|---|---|---|
+| 1 | 1.52 | 0.11 | **0.08** | 94.00 | 1.16 | 0.96 |
+| 2 | 2.64 | 0.18 | **0.19** | 761.43 | 10.00 | 2.94 |
+| 3 | 29.06 | **1.06** | 2.17 | 13,696.72 | 237.87 | 4.66 |
+| 4 | 193.35 | **18.96** | 27.53 | *>60 s* | 2,123.56 | 63.27 |
+| 5 | 251.53 | **54.45** | 170.37 | — | 2,533.34 | 131.33 |
+| 6 | 267.75 | **67.10** | 374.39 | — | 2,457.50 | 168.82 |
+| 8 | 270.31 | **70.51** | 788.02 | — | 2,540.89 | 151.67 |
+| property scan | 0.37 | 0.07 | **0.04** | — | 0.07 | 0.66 |
+
+`—` means the system was not asked, because it had already blown the cap at a
+shallower depth and the answer was known.
+
+**AGE, asked as explicit fixed-length depths, is not in the table because it
+took the server down.** At five and six spelled-out hops the backend was killed
+by the kernel (`signal 9`) and PostgreSQL restarted, twice. That is a result —
+it is what `docs/benchmark.md` recommends as the workaround for `*1..n`, and it
+stops working somewhere past four hops on a million-edge graph — but a crashing
+backend also voids every other system measured in the same run, which is why
+the harness now detects a crash, stops asking that system anything deeper, and
+waits for recovery before continuing.
+
+### pgGraph: the traversal is fast, the row is expensive
+
+Taking 2.4 s at face value would be the mistake this document keeps warning
+about. The same traversal, at the same depth, asked for ten rows instead of all
+of them:
+
+| depth | traversal only (`max_rows := 10`) | full answer (~50,000 rows) |
+|---|---|---|
+| 2 | 1.67 ms | 10.00 ms |
+| 4 | 31.52 ms | 2,123.56 ms |
+| 6 | 42.76 ms | 2,457.50 ms |
+| 8 | 42.46 ms | 2,540.89 ms |
+
+**pgGraph's CSR walk goes flat at 42 ms and stays there to twenty hops**, which
+is exactly the property its architecture claims. Everything above that is the
+cost of materialising each reached node as a row: `graph.traverse` returns
+eleven columns including three `jsonb` (`path`, `edge_path`, `node`), which is
+about 48 µs per row and 2.4 s for fifty thousand of them. `hydrate := false`
+does not change it, so it is not the source-row fetch.
+
+This is a difference in what the API is for, not in engine quality. pgGraph's
+`max_rows` defaults to 1,000 and its published figures are bounded traversals —
+depth 1 and depth 2. Asked a bounded question it is quick: `graph.shortest_path`
+over the same graph, four hops and five rows, is **8.0 ms**.
+
+Two other measurements worth recording: the compiled artifact is **41.1 MB** for
+this graph, against 8.4 MiB for the CSR in `og_csr_build` — pgGraph carries
+labels, tenant bitmaps, active bits and sync overlays that ours does not — and
+its own resource limits had to be raised (`graph.query_memory_mb`, 64 MB by
+default) before a full 50,000-node traversal would run at all, for the same
+reason AGE is given the indexes its documentation asks for.
+
+### What the comparison actually says
+
+- **Against AGE, the gap is now structural.** 471× at three hops on the
+  normalised question, and AGE does not reach four. Subtract the 90 ms
+  normalisation penalty and it is still 13.6 s against 1.06 ms.
+- **Against Neo4j, this is the first workload where we win on depth.** Neo4j is
+  clearly better from one to four hops — 4.66 ms at three hops against our
+  29.06 ms through Cypher — and its curve also goes flat, at 151–169 ms. Our
+  storage path is flat at 67–71 ms, so past five hops we are **2.3× faster**
+  than Neo4j; through the Cypher surface we are 1.6× slower. The whole
+  difference between those two statements is this repository's own query-engine
+  overhead, which remains the largest single optimisation target in the codebase.
+- **Against pgGraph, the architectures land within 1.6× of each other** on the
+  traversal itself (42.8 ms against our 67.1 ms at six hops, both flat), and
+  our compiled CSR is faster still at 4.86 ms. The 2.4 s figure is its result
+  API, not its engine.
+- **The recursive CTE is still the floor to one hop, and stops being it at six.**
+  0.08 ms at one hop against our 0.11 ms; 788 ms at eight hops against our
+  70.5 ms. Ten lines of SQL beat a graph database until the frontier saturates,
+  and then they do not — which is a more useful thing to know than either
+  system's headline number.
+
+Reproduce with:
+
+```bash
+python3 bench/harness.py --scale 50000 --degree 20 --workload reach \
+    --hops 1,2,3,4,5,6,8 --query-timeout 60 \
+    --systems ontological,ontological_raw,cte,age,age_explicit,pggraph,neo4j
+psql -d bench_pggraph -f bench/pggraph_cost.sql
+```
+
+Raw runs: `bench/results/bench-50000-20260817T033001Z.json` (the table above)
+and `bench-50000-20260817T033525Z.json` (the classic-workload reference used for
+the AGE normalisation penalty).
+
+---
+
 ## What this does not show
 
 - **One graph shape, uniformly random.** No hubs, no communities, no skew. Skew
@@ -272,10 +412,13 @@ query whose caller is entitled to MVCC and RLS.
   the frontier limits this branch does not have.
 - **No concurrency.** Every query ran alone. The CSR's memory cost is per
   backend and its worst case is a connection storm; nothing here measures that.
-- **No comparison against Neo4j, AGE or pgGraph.** The systems in
-  `docs/benchmark.md` were not re-run. The `og_vlp` column is this repository's
-  own previous behaviour, which is the only baseline this change is entitled to
-  claim against.
+- **One workload against the other engines.** Reachability counting, one graph
+  shape, one scale. No pattern matching with predicates, no shortest path
+  measured across all systems, no LDBC SNB, no concurrency, no writes.
+- **pgGraph was measured on the question this document is about**, which is the
+  one it can express — not on the bounded, paginated traversals its own
+  benchmarks use and its API is shaped for. The split table above is there so
+  that distinction is visible rather than buried in a single number.
 - **No writes under measurement**, and no measurement of what a stale CSR costs
   to detect or rebuild.
 - **`og_reach_sql` is not wired into anything.** It is in `access.sql` because
