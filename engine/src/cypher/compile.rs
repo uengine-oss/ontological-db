@@ -12,7 +12,6 @@
 use super::ast::*;
 use super::views;
 use crate::catalog::types;
-use pgrx::prelude::*;
 use std::collections::HashMap;
 
 /// The bound jsonb parameter holding user `$params`.
@@ -39,6 +38,22 @@ pub struct Compiler {
     rel_ids: Vec<String>,
     /// Emitted for EXPLAIN-style diagnostics and the agent surface (spec 008).
     pub notes: Vec<String>,
+    /// Set while an OPTIONAL MATCH is being compiled. See `OptionalScope`.
+    optional: Option<OptionalScope>,
+}
+
+/// The joins and predicates of one OPTIONAL MATCH.
+///
+/// An optional pattern's predicates cannot go in `WHERE`: `A LEFT JOIN B ON
+/// true WHERE b.x = a.y` throws away exactly the rows the LEFT JOIN was there
+/// to keep, turning OPTIONAL MATCH back into MATCH. They belong in the `ON` of
+/// the join that introduced the alias they constrain, so they are collected
+/// here and placed when the clause closes.
+#[derive(Default)]
+struct OptionalScope {
+    /// (alias, index into `from`) for each join this clause added, in order.
+    joins: Vec<(String, usize)>,
+    preds: Vec<String>,
 }
 
 pub struct Compiled {
@@ -60,6 +75,116 @@ impl Compiler {
             n: 0,
             rel_ids: Vec::new(),
             notes: Vec::new(),
+            optional: None,
+        }
+    }
+
+    /// Compile one MATCH / OPTIONAL MATCH clause, including its `WHERE`.
+    ///
+    /// The `WHERE` of an OPTIONAL MATCH is part of the optional match, not a
+    /// filter on the result, so it is compiled inside the same scope.
+    pub fn compile_match(
+        &mut self,
+        patterns: &[Pattern],
+        optional: bool,
+        where_: Option<&Expr>,
+    ) -> CResult<()> {
+        self.begin_match_clause();
+        if optional {
+            self.optional = Some(OptionalScope::default());
+        }
+        let result = (|slf: &mut Self| -> CResult<()> {
+            for p in patterns {
+                slf.compile_pattern(p, optional)?;
+            }
+            if let Some(w) = where_ {
+                let sql = slf.expr(w, Some("bool"))?;
+                slf.constrain(sql);
+            }
+            Ok(())
+        })(self);
+        if optional {
+            self.close_optional();
+        }
+        result
+    }
+
+    /// `UNWIND expr AS alias` — one row per element of a list.
+    ///
+    /// Public because the write path needs it too: `UNWIND $rows AS row MATCH …
+    /// SET …` is how a Neo4j application writes a batch, and that path builds
+    /// its bindings through this compiler rather than re-implementing them.
+    pub fn compile_unwind(&mut self, expr: &Expr, alias: &str) -> CResult<()> {
+        let src = self.expr(expr, None)?;
+        let a = self.fresh("uw");
+        let joiner = if self.from.is_empty() { "" } else { "CROSS JOIN " };
+        self.from
+            .push(format!("{joiner}LATERAL jsonb_array_elements(({src})::jsonb) AS {a}(v)"));
+        self.binds.insert(alias.to_string(), Bind::Scalar { sql: format!("{a}.v") });
+        Ok(())
+    }
+
+    /// Add a predicate, to wherever it belongs: the `ON` of an optional join
+    /// while one is open, the query's `WHERE` otherwise.
+    fn constrain(&mut self, sql: String) {
+        match &mut self.optional {
+            Some(scope) => scope.preds.push(sql),
+            None => self.wheres.push(sql),
+        }
+    }
+
+    /// Move one FROM entry to the end, keeping the optional scope's recorded
+    /// indices pointing at the same joins.
+    fn move_join_to_end(&mut self, idx: usize) {
+        let entry = self.from.remove(idx);
+        self.from.push(entry);
+        let last = self.from.len() - 1;
+        if let Some(scope) = &mut self.optional {
+            for (_, i) in scope.joins.iter_mut() {
+                if *i == idx {
+                    *i = last;
+                } else if *i > idx {
+                    *i -= 1;
+                }
+            }
+        }
+    }
+
+    /// Record a join the current optional clause added, so its predicates can
+    /// find it later.
+    fn note_optional_join(&mut self, alias: &str) {
+        let idx = self.from.len() - 1;
+        if let Some(scope) = &mut self.optional {
+            scope.joins.push((alias.to_string(), idx));
+        }
+    }
+
+    /// Place each collected predicate on the join that introduced the last
+    /// alias it mentions. Joins are emitted in dependency order, so that join
+    /// is the earliest point at which the predicate can be evaluated — and the
+    /// only one where it filters the optional side without dropping the row.
+    fn close_optional(&mut self) {
+        let Some(scope) = self.optional.take() else { return };
+        for pred in scope.preds {
+            let target = scope
+                .joins
+                .iter()
+                .filter(|(alias, _)| mentions_alias(&pred, alias))
+                .max_by_key(|(_, idx)| *idx)
+                .map(|(_, idx)| *idx);
+            match target {
+                Some(idx) => {
+                    let join = &mut self.from[idx];
+                    if let Some(stripped) = join.strip_suffix(" ON true") {
+                        *join = format!("{stripped} ON ({pred})");
+                    } else {
+                        *join = format!("{join} AND ({pred})");
+                    }
+                }
+                // Nothing in this clause is constrained — it is a condition on
+                // the outer query, and belongs where any other one does.
+                None => self.wheres.push(pred),
+            }
         }
     }
 
@@ -110,30 +235,12 @@ impl Compiler {
         for clause in &q.clauses {
             match clause {
                 Clause::Match { patterns, optional, where_ } => {
-                    self.begin_match_clause();
-                    for p in patterns {
-                        self.compile_pattern(p, *optional)?;
-                    }
-                    if let Some(w) = where_ {
-                        let sql = self.expr(w, None)?;
-                        self.wheres.push(sql);
-                    }
+                    self.compile_match(patterns, *optional, where_.as_ref())?
                 }
-                Clause::Unwind { expr, alias } => {
-                    let src = self.expr(expr, None)?;
-                    let a = self.fresh("uw");
-                    self.from.push(format!(
-                        "CROSS JOIN LATERAL jsonb_array_elements(({src})::jsonb) AS {a}(v)"
-                    ));
-                    self.binds
-                        .insert(alias.clone(), Bind::Scalar { sql: format!("{a}.v") });
-                }
+                Clause::Unwind { expr, alias } => self.compile_unwind(expr, alias)?,
+                Clause::Call { name, args, yields } => self.compile_call(name, args, yields)?,
                 Clause::Return(p) => projection = Some(p),
-                Clause::With { .. } => {
-                    return Err("WITH is not supported in this release; split the query or use a \
-                                subquery on the SQL side"
-                        .into())
-                }
+                Clause::With { proj, where_ } => self.compile_with(proj, where_.as_ref())?,
                 _ => return Err("this clause is only valid in a write query".into()),
             }
         }
@@ -142,7 +249,112 @@ impl Compiler {
         self.build_select(proj)
     }
 
-    fn build_select(&mut self, proj: &Projection) -> CResult<Compiled> {
+    /// `WITH …` — the clause that makes Cypher a pipeline.
+    ///
+    /// Everything compiled so far becomes a subquery; its projected names
+    /// become the only bindings visible afterwards. That is exactly Cypher's
+    /// rule ("WITH is the horizon"), and it falls out of the implementation
+    /// rather than being enforced separately: nothing but the projected columns
+    /// survives into the next segment.
+    ///
+    /// Aggregation works for free — `WITH a, count(*) AS n` is a grouped SELECT,
+    /// and the `WHERE` after it filters the grouped rows, which is `HAVING`.
+    fn compile_with(&mut self, proj: &Projection, where_: Option<&Expr>) -> CResult<()> {
+        let inner = self.build_tabular(proj)?;
+        let alias = self.fresh("w");
+
+        // Names the segment exported, in the order the SELECT produced them.
+        let cols: Vec<String> = inner.columns.clone();
+        let quoted: Vec<String> = cols.iter().map(|c| quote_ident(c)).collect();
+
+        self.from = vec![format!("({}) AS {alias}({})", inner.sql, quoted.join(", "))];
+        self.wheres.clear();
+        self.rel_ids.clear();
+        self.binds = cols
+            .iter()
+            .zip(&quoted)
+            .map(|(name, q)| {
+                (name.clone(), Bind::Scalar { sql: format!("{alias}.{q}") })
+            })
+            .collect();
+
+        // `WITH … WHERE` filters what the horizon produced, so it is compiled
+        // against the new bindings, not the old ones.
+        if let Some(w) = where_ {
+            let sql = self.expr(w, Some("bool"))?;
+            self.wheres.push(sql);
+        }
+        Ok(())
+    }
+
+    /// `CALL proc(args) YIELD a, b AS c`.
+    ///
+    /// The procedure becomes a relation in the FROM list and its yielded
+    /// columns become ordinary bindings, so everything after it — WHERE,
+    /// another MATCH, RETURN — treats them like any other bound value.
+    fn compile_call(
+        &mut self,
+        name: &str,
+        args: &[Expr],
+        yields: &[(String, String)],
+    ) -> CResult<()> {
+        use crate::compat::procs;
+
+        let mut planned = Vec::new();
+        for a in args {
+            planned.push(match a {
+                Expr::Lit(Lit::Str(s)) => procs::Arg::Str(s.clone()),
+                // A procedure that walks from a node wants the node's id, not
+                // its jsonb — pass the column so the walk stays a join.
+                Expr::Var(v) => match self.binds.get(v) {
+                    Some(Bind::Node { alias, .. }) => procs::Arg::NodeId(format!("{alias}.id")),
+                    _ => procs::Arg::Sql(self.expr(a, None)?),
+                },
+                _ => procs::Arg::Sql(self.expr(a, None)?),
+            });
+        }
+
+        let alias = self.fresh("cp");
+        let plan = procs::plan(&self.graph, self.gid, name, &planned, &alias)?;
+
+        let joiner = if self.from.is_empty() {
+            String::new()
+        } else if plan.lateral {
+            "CROSS JOIN LATERAL ".into()
+        } else {
+            "CROSS JOIN ".into()
+        };
+        self.from.push(format!("{joiner}{}", plan.from));
+
+        // With no YIELD every column comes into scope under its own name, which
+        // is what Cypher does for a standalone CALL.
+        let wanted: Vec<(String, String)> = if yields.is_empty() {
+            plan.columns.iter().map(|c| (c.name.to_string(), c.name.to_string())).collect()
+        } else {
+            yields.to_vec()
+        };
+        for (col, as_name) in wanted {
+            let found = plan
+                .columns
+                .iter()
+                .find(|c| c.name.eq_ignore_ascii_case(&col))
+                .ok_or_else(|| {
+                    format!(
+                        "procedure '{name}' does not yield '{col}'. it yields: {}",
+                        plan.columns.iter().map(|c| c.name).collect::<Vec<_>>().join(", ")
+                    )
+                })?;
+            self.binds.insert(as_name, Bind::Scalar { sql: found.sql.clone() });
+        }
+        Ok(())
+    }
+
+    /// The parts of a projection, before deciding how to shape the result.
+    ///
+    /// `RETURN` packs them into one jsonb object per row; `WITH` keeps them as
+    /// columns so the next segment can join against them. Both need the same
+    /// SELECT underneath, so it is built once here.
+    fn build_core(&mut self, proj: &Projection) -> CResult<(String, String, String, Vec<String>)> {
         let mut cols = Vec::new();
         let mut names = Vec::new();
         let mut group_by = Vec::new();
@@ -158,7 +370,7 @@ impl Compiler {
                 }
                 continue;
             }
-            let sql = self.expr(&item.expr, None)?;
+            let sql = self.expr_for_output(&item.expr)?;
             let name = item.alias.clone().unwrap_or_else(|| item.expr.default_alias());
             if has_agg && !item.expr.is_aggregate() {
                 group_by.push(sql.clone());
@@ -182,17 +394,34 @@ impl Compiler {
             })
             .collect();
 
+        // Which projection aliases name an aggregate. `ORDER BY <alias>` where
+        // the alias is `count(*) AS count` must not push that alias into
+        // GROUP BY — grouping by an aggregate is not a thing, and PostgreSQL
+        // says so. The projection has already decided each alias's role.
+        let alias_is_agg: std::collections::HashMap<String, bool> = proj
+            .items
+            .iter()
+            .map(|item| {
+                let name = item.alias.clone().unwrap_or_else(|| item.expr.default_alias());
+                (name, item.expr.is_aggregate())
+            })
+            .collect();
+
         let mut order_cols = Vec::new();
         let mut order_by = Vec::new();
         for (i, o) in proj.order.iter().enumerate() {
+            let mut names_an_aggregate = false;
             let sql = match &o.expr {
-                Expr::Var(v) if !self.binds.contains_key(v) => alias_sql
-                    .get(v)
-                    .cloned()
-                    .ok_or_else(|| format!("ORDER BY refers to unknown name '{v}'"))?,
+                Expr::Var(v) if !self.binds.contains_key(v) => {
+                    names_an_aggregate = alias_is_agg.get(v).copied().unwrap_or(false);
+                    alias_sql
+                        .get(v)
+                        .cloned()
+                        .ok_or_else(|| format!("ORDER BY refers to unknown name '{v}'"))?
+                }
                 _ => self.expr(&o.expr, None)?,
             };
-            if has_agg && !o.expr.is_aggregate() && !group_by.contains(&sql) {
+            if has_agg && !o.expr.is_aggregate() && !names_an_aggregate && !group_by.contains(&sql) {
                 group_by.push(sql.clone());
             }
             order_cols.push(format!("{sql} AS o{i}"));
@@ -227,12 +456,6 @@ impl Compiler {
             "SELECT {distinct}{select_list}{from}{where_clause}{group}"
         );
 
-        let json_pairs: Vec<String> = names
-            .iter()
-            .enumerate()
-            .map(|(i, n)| format!("{}, t.c{i}", sql_str(n)))
-            .collect();
-
         let order = if order_by.is_empty() {
             String::new()
         } else {
@@ -253,12 +476,48 @@ impl Compiler {
             format!("WITH RECURSIVE {}\n", self.ctes.join(",\n"))
         };
 
-        let sql = format!(
-            "{with}SELECT jsonb_build_object({}) AS row FROM (\n{inner}\n) t{order}{limit}{skip}",
-            json_pairs.join(", ")
-        );
+        Ok((with, inner, format!("{order}{limit}{skip}"), names))
+    }
 
-        Ok(Compiled { sql, columns: names })
+    fn build_select(&mut self, proj: &Projection) -> CResult<Compiled> {
+        let (with, inner, tail, names) = self.build_core(proj)?;
+        let json_pairs: Vec<String> = names
+            .iter()
+            .enumerate()
+            .map(|(i, n)| format!("{}, t.c{i}", sql_str(n)))
+            .collect();
+        Ok(Compiled {
+            sql: format!(
+                "{with}SELECT jsonb_build_object({}) AS row FROM (\n{inner}\n) t{tail}",
+                json_pairs.join(", ")
+            ),
+            columns: names,
+        })
+    }
+
+    /// The same projection, left as columns instead of packed into one jsonb
+    /// object. `WITH` needs it: the next segment joins against these columns,
+    /// and it cannot join against a blob.
+    fn build_tabular(&mut self, proj: &Projection) -> CResult<Compiled> {
+        let (with, inner, tail, names) = self.build_core(proj)?;
+        // Every column crosses the horizon as jsonb, whatever it was before.
+        // The alternative — keeping each column's SQL type — would mean the
+        // next segment had to know which of its bindings is a node (jsonb) and
+        // which is a count (bigint) before it could compile a comparison. One
+        // representation for all of them is what makes the binding after a WITH
+        // the same kind of thing as any other scalar binding.
+        let projected: Vec<String> = names
+            .iter()
+            .enumerate()
+            .map(|(i, n)| format!("to_jsonb(t.c{i}) AS {}", quote_ident(n)))
+            .collect();
+        Ok(Compiled {
+            sql: format!(
+                "{with}SELECT {} FROM (\n{inner}\n) t{tail}",
+                projected.join(", ")
+            ),
+            columns: names,
+        })
     }
 
     // ----------------------------------------------------------------------
@@ -276,10 +535,20 @@ impl Compiler {
         for elem in &p.elems {
             match elem {
                 PatElem::Node(np) => {
-                    let alias = self.bind_node(np, optional && prev_node.is_some())?;
+                    let mark = self.from.len();
+                    let alias = self.bind_node(np, optional)?;
+                    let node_join_added = self.from.len() > mark;
                     if let (Some(prev), Some(rel)) = (prev_node.clone(), pending_rel.take()) {
                         let hop = self.join_rel(&prev, rel, &alias, optional)?;
                         hop_exprs.push(hop);
+                        // The node is constrained by the hop that reaches it, so
+                        // its join has to come *after* the hop's — otherwise the
+                        // predicate cannot be an ON condition and the node joins
+                        // to everything. Only matters under OPTIONAL MATCH,
+                        // where predicates live in ON rather than WHERE.
+                        if node_join_added && mark > 0 && self.from.len() > mark + 1 {
+                            self.move_join_to_end(mark);
+                        }
                     }
                     prev_node = Some(alias);
                 }
@@ -298,36 +567,62 @@ impl Compiler {
         Ok(())
     }
 
-    fn resolve_label(&mut self, labels: &[String]) -> CResult<Option<i32>> {
-        if labels.is_empty() {
-            return Ok(None);
-        }
-        if labels.len() > 1 {
-            return Err(format!(
-                "multi-label patterns (:{}) are not supported yet; declare a common supertype \
-                 instead — that is what the type system is for",
-                labels.join(":")
-            ));
-        }
-        let name = &labels[0];
-        match types::try_type_id(self.gid, name) {
-            Some(t) => Ok(Some(t)),
-            None => {
-                let near = types::nearest_type_names(self.gid, name);
-                Err(if near.is_empty() {
-                    format!("unknown label '{name}' in graph '{}'", self.graph)
-                } else {
-                    format!(
-                        "unknown label '{name}' in graph '{}'. did you mean: {}",
-                        self.graph,
-                        near.join(", ")
-                    )
-                })
-            }
+    /// Resolve a label set, reporting separately whether it can match at all.
+    /// Callers decide what "cannot match" means where they stand: an empty
+    /// result for a plain MATCH, a row of NULLs under OPTIONAL MATCH.
+    fn resolve_label_match(&mut self, labels: &[String]) -> CResult<(Option<i32>, bool)> {
+        match types::resolve_label_set(self.gid, &self.graph, labels)? {
+            types::LabelMatch::Any => Ok((None, true)),
+            types::LabelMatch::Type(t) => Ok((Some(t), true)),
+            types::LabelMatch::Nothing => Ok((None, false)),
         }
     }
 
+    fn resolve_label(&mut self, labels: &[String]) -> CResult<Option<i32>> {
+        let (tid, matchable) = self.resolve_label_match(labels)?;
+        if !matchable {
+            self.constrain("false".into());
+        }
+        Ok(tid)
+    }
+
     fn bind_node(&mut self, np: &NodePat, optional: bool) -> CResult<String> {
+        // Nothing can be LEFT JOINed onto an empty FROM list; the first
+        // relation in the query is always plain.
+        let optional = optional && !self.from.is_empty();
+        // A variable that arrived as jsonb — yielded by a procedure, or carried
+        // through an UNWIND — can still anchor a pattern. Join the node view on
+        // its identifier and it becomes an ordinary node binding from here on.
+        if let Some(v) = &np.var {
+            if let Some(Bind::Scalar { sql }) = self.binds.get(v).cloned() {
+                let alias = self.fresh("n");
+                let joiner = if self.from.is_empty() {
+                    ""
+                } else if self.optional.is_some() {
+                    "LEFT JOIN "
+                } else {
+                    "CROSS JOIN "
+                };
+                let on = if self.optional.is_some() { " ON true" } else { "" };
+                self.from.push(format!("{joiner}og_data.og_node {alias}{on}"));
+                self.note_optional_join(&alias);
+                self.constrain(format!("{alias}.id = (({sql}) ->> '_id')::int8"));
+                self.binds.insert(v.clone(), Bind::Node { alias: alias.clone(), tid: None });
+                if !np.labels.is_empty() {
+                    let (want, matchable) = self.resolve_label_match(&np.labels)?;
+                    if !matchable {
+                        self.constrain("false".into());
+                    } else if let Some(w) = want {
+                        self.constrain(format!(
+                            "og_is_subtype({alias}.type_id, {w})"
+                        ));
+                    }
+                }
+                self.push_prop_filters(&alias, None, &np.props)?;
+                return Ok(alias);
+            }
+        }
+
         // Re-using an existing variable: reuse its alias, do not join again.
         if let Some(v) = &np.var {
             if let Some(Bind::Node { alias, tid }) = self.binds.get(v).cloned() {
@@ -335,7 +630,7 @@ impl Compiler {
                     let want = self.resolve_label(&np.labels)?;
                     if let (Some(w), Some(t)) = (want, tid) {
                         if w != t && !crate::catalog::labeling::og_is_subtype(t, w) {
-                            self.wheres.push("false".into());
+                            self.constrain("false".into());
                         }
                     }
                 }
@@ -344,21 +639,31 @@ impl Compiler {
             }
         }
 
-        let tid = self.resolve_label(&np.labels)?;
+        let (tid, matchable) = self.resolve_label_match(&np.labels)?;
         let alias = self.fresh("n");
         let rel = match tid {
             Some(t) => views::ensure_view(t, false),
             None => "og_data.og_node".to_string(),
         };
 
+        // An unmatchable label empties this binding only. Under OPTIONAL MATCH
+        // that means NULLs on the join, not a query that returns nothing.
+        let on = if matchable { "true" } else { "false" };
         let join = if self.from.is_empty() {
+            if !matchable {
+                self.constrain("false".into());
+            }
             format!("{rel} {alias}")
         } else if optional {
-            format!("LEFT JOIN {rel} {alias} ON true")
+            format!("LEFT JOIN {rel} {alias} ON {on}")
         } else {
+            if !matchable {
+                self.constrain("false".into());
+            }
             format!("CROSS JOIN {rel} {alias}")
         };
         self.from.push(join);
+        self.note_optional_join(&alias);
 
         if let Some(v) = &np.var {
             self.binds.insert(v.clone(), Bind::Node { alias: alias.clone(), tid });
@@ -376,7 +681,7 @@ impl Compiler {
         for (k, v) in props {
             let (lhs, ty) = self.prop_sql(alias, tid, k);
             let rhs = self.expr(v, ty.as_deref())?;
-            self.wheres.push(format!("{lhs} = {rhs}"));
+            self.constrain(format!("{lhs} = {rhs}"));
         }
         Ok(())
     }
@@ -393,11 +698,15 @@ impl Compiler {
         let etypes = if rel.types.is_empty() {
             None
         } else {
+            // A relationship type nobody has written yet simply contributes no
+            // ids; the hop then finds no neighbours. That keeps an inner MATCH
+            // empty and leaves an OPTIONAL MATCH with its NULLs, which is what
+            // Cypher does — and is why this must not push a global `false`.
             let mut ids = Vec::new();
             for t in &rel.types {
-                let tid = self.resolve_label(std::slice::from_ref(t))?;
-                let tid = tid.unwrap();
-                ids.extend(crate::catalog::labeling::og_subtypes(tid));
+                if let Some(tid) = types::try_type_id(self.gid, t) {
+                    ids.extend(crate::catalog::labeling::og_subtypes(tid));
+                }
             }
             ids.sort_unstable();
             ids.dedup();
@@ -423,7 +732,8 @@ impl Compiler {
             self.from.push(format!(
                 "{joiner} og_vlp({from_alias}.id, {etype_pred}, {dir_lit}::\"char\", {min}, {max}) {w}{on}"
             ));
-            self.wheres.push(format!("{to_alias}.id = {w}.node"));
+            self.note_optional_join(&w);
+            self.constrain(format!("{to_alias}.id = {w}.node"));
             if let Some(v) = &rel.var {
                 self.binds.insert(
                     v.clone(),
@@ -450,11 +760,12 @@ impl Compiler {
              LATERAL unnest({a}.nbr, {a}.eid) AS u(nbr, eid) \
              WHERE {a}.src = {from_alias}.id AND {dir_pred}{type_pred}) {u}{on}"
         ));
-        self.wheres.push(format!("{to_alias}.id = {u}.nbr"));
+        self.note_optional_join(&u);
+        self.constrain(format!("{to_alias}.id = {u}.nbr"));
 
         if !optional {
             for other in std::mem::take(&mut self.rel_ids) {
-                self.wheres.push(format!("{u}.eid <> {other}"));
+                self.constrain(format!("{u}.eid <> {other}"));
                 self.rel_ids.push(other);
             }
             self.rel_ids.push(format!("{u}.eid"));
@@ -470,7 +781,9 @@ impl Compiler {
                 if let Some(t) = rtid {
                     let ev = views::ensure_view(t, true);
                     let ea = self.fresh("e");
-                    self.from.push(format!("JOIN {ev} {ea} ON {ea}.id = {u}.eid"));
+                    let ejoin = if optional { "LEFT JOIN" } else { "JOIN" };
+                    self.from.push(format!("{ejoin} {ev} {ea} ON {ea}.id = {u}.eid"));
+                    self.note_optional_join(&ea);
                     self.binds.insert(
                         v.clone(),
                         Bind::Rel { alias: Some(ea.clone()), tid: Some(t), id_expr: format!("{u}.eid") },
@@ -490,7 +803,9 @@ impl Compiler {
             if let Some(t) = rtid {
                 let ev = views::ensure_view(t, true);
                 let ea = self.fresh("e");
-                self.from.push(format!("JOIN {ev} {ea} ON {ea}.id = {u}.eid"));
+                let ejoin = if optional { "LEFT JOIN" } else { "JOIN" };
+                    self.from.push(format!("{ejoin} {ev} {ea} ON {ea}.id = {u}.eid"));
+                    self.note_optional_join(&ea);
                 self.push_rel_prop_filters(&ea, Some(t), &rel.props)?;
             }
         }
@@ -506,7 +821,7 @@ impl Compiler {
         for (k, v) in props {
             let (lhs, ty) = self.prop_sql(alias, tid, k);
             let rhs = self.expr(v, ty.as_deref())?;
-            self.wheres.push(format!("{lhs} = {rhs}"));
+            self.constrain(format!("{lhs} = {rhs}"));
         }
         Ok(())
     }
@@ -532,6 +847,93 @@ impl Compiler {
             Some(_) => (format!("({alias}.__ext->>{})", sql_str(prop)), None),
             // Untyped variable: resolve through the catalog at run time.
             None => (format!("(og_node_json({alias}.id)->>{})", sql_str(prop)), None),
+        }
+    }
+
+    /// SQL for a property access that must keep its JSON type.
+    ///
+    /// `->>` yields text, so a number stored as `20` comes back as the string
+    /// `"20"` — Neo4j returns an integer, and any client doing arithmetic on
+    /// the result sees the difference. `->` keeps the jsonb value as it was
+    /// written. Declared properties are real columns and already carry their
+    /// type, so they only need wrapping.
+    pub fn prop_sql_json(&self, alias: &str, tid: Option<i32>, prop: &str) -> String {
+        if prop == "id" || prop == "_id" {
+            return format!("to_jsonb({alias}.id)");
+        }
+        if let Some(t) = tid {
+            let props = views::view_properties(t);
+            if let Some((col, _)) = props.get(prop) {
+                return format!("to_jsonb({alias}.{col})");
+            }
+            return format!("({alias}.__ext -> {})", sql_str(prop));
+        }
+        format!("(og_node_json({alias}.id) -> {})", sql_str(prop))
+    }
+
+    /// An expression as it should appear in a result.
+    ///
+    /// Only property reads differ from `expr`: everything else already has a
+    /// SQL type that `jsonb_build_object` renders faithfully.
+    fn expr_for_output(&mut self, e: &Expr) -> CResult<String> {
+        if let Expr::Prop(base, prop) = e {
+            if let Expr::Var(v) = &**base {
+                match self.binds.get(v).cloned() {
+                    Some(Bind::Node { alias, tid }) => {
+                        return Ok(self.prop_sql_json(&alias, tid, prop))
+                    }
+                    Some(Bind::Rel { alias: Some(al), tid, .. }) => {
+                        return Ok(self.prop_sql_json(&al, tid, prop))
+                    }
+                    Some(Bind::Scalar { sql }) => {
+                        return Ok(format!("(({sql}) -> {})", sql_str(prop)))
+                    }
+                    _ => {}
+                }
+            }
+        }
+        self.expr(e, None)
+    }
+
+    /// The identifier of a bound element.
+    ///
+    /// A binding may be a pattern variable with a real column, or a scalar
+    /// holding the jsonb form of an element — that is what a procedure yields,
+    /// and what an UNWIND over collected nodes produces. Both are identifiable;
+    /// only the route to the number differs.
+    fn element_id_sql(&self, v: &str, fname: &str) -> CResult<String> {
+        match self.binds.get(v) {
+            Some(Bind::Node { alias, .. }) => Ok(format!("{alias}.id")),
+            Some(Bind::Rel { alias: Some(al), .. }) => Ok(format!("{al}.id")),
+            Some(Bind::Rel { id_expr, .. }) => Ok(id_expr.clone()),
+            Some(Bind::Scalar { sql }) => Ok(format!("(({sql}) ->> '_id')::int8")),
+            _ => Err(format!("{fname}() cannot be applied to '{v}'")),
+        }
+    }
+
+    /// The type id of a bound element, by the same reasoning as `element_id_sql`.
+    fn type_id_sql(&self, v: &str, fname: &str) -> CResult<String> {
+        match self.binds.get(v) {
+            Some(Bind::Node { alias, .. }) => Ok(format!("{alias}.type_id")),
+            Some(Bind::Rel { alias: Some(al), .. }) => Ok(format!("{al}.type_id")),
+            Some(Bind::Rel { id_expr, .. }) => Ok(format!("og_id_type({id_expr})")),
+            Some(Bind::Scalar { sql }) => {
+                Ok(format!("og_id_type((({sql}) ->> '_id')::int8)"))
+            }
+            _ => Err(format!("{fname}() cannot be applied to '{v}'")),
+        }
+    }
+
+    /// Put back whatever a comprehension binder shadowed, or remove the binder
+    /// if it shadowed nothing.
+    fn restore_bind(&mut self, var: &str, shadowed: Option<Bind>) {
+        match shadowed {
+            Some(b) => {
+                self.binds.insert(var.to_string(), b);
+            }
+            None => {
+                self.binds.remove(var);
+            }
         }
     }
 
@@ -616,7 +1018,19 @@ impl Compiler {
                     _ => base,
                 }
             }
-            Expr::Var(v) => self.var_value(v)?,
+            // A scalar binding — an UNWIND alias or a comprehension binder —
+            // holds jsonb. Compared against something with a known SQL type it
+            // has to be read out at that type first, or PostgreSQL sees
+            // `jsonb <> text` and refuses.
+            Expr::Var(v) => {
+                let sql = self.var_value(v)?;
+                match (hint, self.binds.get(v)) {
+                    (Some(t), Some(Bind::Scalar { .. })) if t != "jsonb" => {
+                        format!("(({sql}) #>> '{{}}')::{t}")
+                    }
+                    _ => sql,
+                }
+            }
             Expr::Prop(base, p) => {
                 let Expr::Var(v) = &**base else {
                     return Err("property access is only supported on pattern variables".into());
@@ -667,6 +1081,92 @@ impl Compiler {
                 }
                 format!("jsonb_build_object({})", pairs.join(", "))
             }
+            // `[x IN xs WHERE p | e]` — a scalar subquery over the unnested
+            // list. The binder is an ordinary scalar binding while the body
+            // compiles, then goes out of scope, so a comprehension cannot leak
+            // a variable into the enclosing query.
+            Expr::ListComp { var, source, filter, project } => {
+                let src = self.expr(source, None)?;
+                let a = self.fresh("lc");
+                let shadowed = self
+                    .binds
+                    .insert(var.clone(), Bind::Scalar { sql: format!("{a}.v") });
+                let body = (|slf: &mut Self| -> CResult<(String, String)> {
+                    let proj = match project {
+                        Some(p) => slf.jsonb_arg(p)?,
+                        None => format!("{a}.v"),
+                    };
+                    let cond = match filter {
+                        Some(f) => format!(" WHERE {}", slf.expr(f, Some("bool"))?),
+                        None => String::new(),
+                    };
+                    Ok((proj, cond))
+                })(self);
+                self.restore_bind(var, shadowed);
+                let (proj, cond) = body?;
+                format!(
+                    "(SELECT coalesce(jsonb_agg({proj}), '[]'::jsonb) \
+                       FROM jsonb_array_elements(({src})::jsonb) AS {a}(v){cond})"
+                )
+            }
+            Expr::ListPred { kind, var, source, filter } => {
+                let src = self.expr(source, None)?;
+                let a = self.fresh("lp");
+                let shadowed = self
+                    .binds
+                    .insert(var.clone(), Bind::Scalar { sql: format!("{a}.v") });
+                let cond = self.expr(filter, Some("bool"));
+                self.restore_bind(var, shadowed);
+                let cond = cond?;
+                let from =
+                    format!("FROM jsonb_array_elements(({src})::jsonb) AS {a}(v) WHERE {cond}");
+                match kind {
+                    ListPredKind::Any => format!("(EXISTS (SELECT 1 {from}))"),
+                    ListPredKind::None => format!("(NOT EXISTS (SELECT 1 {from}))"),
+                    ListPredKind::Single => format!("((SELECT count(*) {from}) = 1)"),
+                    // `all` is "no counterexample", which is also how it treats
+                    // the empty list — true, as Cypher says.
+                    ListPredKind::All => format!(
+                        "(NOT EXISTS (SELECT 1 FROM jsonb_array_elements(({src})::jsonb) \
+                          AS {a}(v) WHERE NOT coalesce({cond}, false)))"
+                    ),
+                }
+            }
+            // `n { .name, total: count(x), .* }` — a map built from an element.
+            // Neo4j's `.*` means "every property", which here is the element's
+            // json minus the identity fields the engine adds to it.
+            Expr::MapProjection { var, items } => {
+                let mut pairs: Vec<String> = Vec::new();
+                let mut base: Option<String> = None;
+                for item in items {
+                    match item {
+                        MapProjItem::All => {
+                            let whole = self.var_value(var)?;
+                            base = Some(format!(
+                                "(({whole}) - '_id' - '_type' - '_src' - '_dst')"
+                            ));
+                        }
+                        MapProjItem::Prop(p) => {
+                            let target = Expr::Prop(Box::new(Expr::Var(var.clone())), p.clone());
+                            let sql = self.expr_for_output(&target)?;
+                            pairs.push(format!("{}, {sql}", sql_str(p)));
+                        }
+                        MapProjItem::Entry(k, e) => {
+                            pairs.push(format!("{}, {}", sql_str(k), self.jsonb_arg(e)?));
+                        }
+                    }
+                }
+                let built = if pairs.is_empty() {
+                    "'{}'::jsonb".to_string()
+                } else {
+                    format!("jsonb_build_object({})", pairs.join(", "))
+                };
+                match base {
+                    // Explicit entries win over `.*`, as in Cypher.
+                    Some(b) => format!("({b} || {built})"),
+                    None => built,
+                }
+            }
             Expr::Case { operand, whens, else_ } => {
                 let head = match operand {
                     Some(o) => format!("CASE {} ", self.expr(o, None)?),
@@ -698,10 +1198,33 @@ impl Compiler {
         // Each side is compiled with the *other* side's type as the hint, so a
         // parameter compared against a typed column is cast to that column's
         // type and the index on it stays usable.
+        // `x IN xs` needs the right-hand side as jsonb whatever it came from —
+        // a parameter arrives as text and containment is a jsonb operator.
+        if op == BinOp::In {
+            let ls = self.expr(l, None)?;
+            let rs = self.expr(r, Some("jsonb"))?;
+            return Ok(format!("(({rs}) @> to_jsonb({ls}))"));
+        }
+
         let lhint = self.type_of(r);
         let rhint = self.type_of(l);
-        let ls = self.expr(l, lhint.as_deref())?;
-        let rs = self.expr(r, rhint.as_deref())?;
+        let mut ls = self.expr(l, lhint.as_deref())?;
+        let mut rs = self.expr(r, rhint.as_deref())?;
+
+        // An undeclared property reads out of jsonb as text. Compared against a
+        // number that is `text = integer`, which PostgreSQL rejects outright —
+        // so read the untyped side at the other side's type instead.
+        if let (None, Some(t)) = (&rhint, &lhint) {
+            if matches!(l, Expr::Prop(..)) && t.as_str() != "text" {
+                ls = format!("({ls})::{t}");
+            }
+        }
+        if let (None, Some(t)) = (&lhint, &rhint) {
+            if matches!(r, Expr::Prop(..)) && t.as_str() != "text" {
+                rs = format!("({rs})::{t}");
+            }
+        }
+
         Ok(match op {
             BinOp::Add => format!("({ls} + {rs})"),
             BinOp::Sub => format!("({ls} - {rs})"),
@@ -723,7 +1246,7 @@ impl Compiler {
             BinOp::EndsWith => format!("(({ls})::text LIKE '%' || ({rs})::text)"),
             BinOp::Contains => format!("(strpos(({ls})::text, ({rs})::text) > 0)"),
             BinOp::Regex => format!("(({ls})::text ~ ({rs})::text)"),
-            BinOp::In => format!("(({rs}) @> to_jsonb({ls}))"),
+            BinOp::In => unreachable!("handled above"),
         })
     }
 
@@ -785,23 +1308,38 @@ impl Compiler {
                 let Some(Expr::Var(v)) = args.first() else {
                     return Err("id() expects a pattern variable".into());
                 };
-                match self.binds.get(v) {
-                    Some(Bind::Node { alias, .. }) => format!("{alias}.id"),
-                    Some(Bind::Rel { alias: Some(al), .. }) => format!("{al}.id"),
-                    Some(Bind::Rel { id_expr, .. }) => id_expr.clone(),
-                    _ => return Err(format!("id() cannot be applied to '{v}'")),
-                }
+                self.element_id_sql(v, "id")?
             }
-            "labels" | "type" => {
+            // `elementId()` is Neo4j's stable string handle for an element.
+            // Ours is the int8 identifier; rendering it as text is the whole
+            // difference, and it round-trips through `id()` unchanged.
+            "elementid" => {
                 let Some(Expr::Var(v)) = args.first() else {
-                    return Err(format!("{lname}() expects a pattern variable"));
+                    return Err("elementId() expects a pattern variable".into());
                 };
-                match self.binds.get(v) {
-                    Some(Bind::Node { alias, .. }) => format!("og_type_name({alias}.type_id)"),
-                    Some(Bind::Rel { alias: Some(al), .. }) => format!("og_type_name({al}.type_id)"),
-                    Some(Bind::Rel { id_expr, .. }) => format!("og_type_name(og_id_type({id_expr}))"),
-                    _ => return Err(format!("{lname}() cannot be applied to '{v}'")),
-                }
+                let inner = self.element_id_sql(v, "elementId")?;
+                format!("({inner})::text")
+            }
+            // `type(r)` is one name. `labels(n)` is a *list* in Cypher, and here
+            // a node genuinely carries every name on its supertype chain — that
+            // is what the type hierarchy means. Returning the chain is what lets
+            // `'Foo' IN labels(n)` and `[l IN labels(n) …]` mean what they mean
+            // in Neo4j against a `(:Super:Sub)`-shaped graph.
+            "labels" => {
+                let Some(Expr::Var(v)) = args.first() else {
+                    return Err("labels() expects a pattern variable".into());
+                };
+                let tid = self.type_id_sql(v, "labels")?;
+                format!(
+                    "to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes({tid})) AS t))"
+                )
+            }
+            "type" => {
+                let Some(Expr::Var(v)) = args.first() else {
+                    return Err("type() expects a pattern variable".into());
+                };
+                let tid = self.type_id_sql(v, "type")?;
+                format!("og_type_name({tid})")
             }
             "length" | "size" => format!("jsonb_array_length({})", a[0]),
             "toupper" | "upper" => format!("upper(({})::text)", a[0]),
@@ -816,7 +1354,28 @@ impl Compiler {
             }
             "replace" => format!("replace(({})::text, ({})::text, ({})::text)", a[0], a[1], a[2]),
             "split" => format!("to_jsonb(string_to_array(({})::text, ({})::text))", a[0], a[1]),
-            "coalesce" => format!("coalesce({})", a.join(", ")),
+            // `coalesce(n.maybe_untyped, 0)` is ordinary Cypher, but SQL insists
+            // every branch have one type — and an undeclared property reads out
+            // as text. Pick the first branch whose type is known and read the
+            // untyped ones at that type.
+            "coalesce" => {
+                let want = args.iter().find_map(|x| self.type_of(x));
+                let branches: Vec<String> = match &want {
+                    Some(t) if t != "text" => args
+                        .iter()
+                        .zip(&a)
+                        .map(|(x, sql)| {
+                            if self.type_of(x).is_none() {
+                                format!("({sql})::{t}")
+                            } else {
+                                sql.clone()
+                            }
+                        })
+                        .collect(),
+                    _ => a.clone(),
+                };
+                format!("coalesce({})", branches.join(", "))
+            }
             "abs" => format!("abs({})", a[0]),
             "ceil" => format!("ceil(({})::float8)", a[0]),
             "floor" => format!("floor(({})::float8)", a[0]),
@@ -838,16 +1397,50 @@ impl Compiler {
             }
             "vector.distance" => format!("(({})::vector <=> ({})::vector)", a[0], a[1]),
             "vector.l2" => format!("(({})::vector <-> ({})::vector)", a[0], a[1]),
+            // Neo4j's `genai.vector.encode(resource, provider, configuration)`.
+            // Off by default, and the endpoint is configuration rather than an
+            // argument — see `compat::genai`.
+            "genai.vector.encode" => {
+                if a.is_empty() {
+                    return Err("genai.vector.encode(resource, provider, configuration) needs \
+                                the text to encode"
+                        .into());
+                }
+                let provider = a.get(1).cloned().unwrap_or_else(|| "NULL".into());
+                let config = a.get(2).cloned().unwrap_or_else(|| "'{}'".into());
+                format!(
+                    "og_genai_encode(({})::text, ({provider})::text, ({config})::jsonb)",
+                    a[0]
+                )
+            }
             other => {
                 return Err(format!(
                     "unknown function '{other}'. supported: count, sum, avg, min, max, collect, \
-                     id, labels, type, length, size, toUpper, toLower, trim, substring, replace, \
-                     split, coalesce, abs, ceil, floor, round, sqrt, rand, toString, toInteger, \
-                     toFloat, timestamp, exists, keys, vector.similarity, vector.distance"
+                     id, elementId, labels, type, length, size, toUpper, toLower, trim, substring, \
+                     replace, split, coalesce, abs, ceil, floor, round, sqrt, rand, toString, \
+                     toInteger, toFloat, timestamp, datetime, exists, keys, vector.similarity, \
+                     vector.distance, genai.vector.encode"
                 ))
             }
         })
     }
+}
+
+/// Does this SQL mention the alias as a whole word?
+///
+/// `n1` must not match inside `n10`, and aliases are always followed by `.` in
+/// generated SQL, so the check is anchored on both sides.
+fn mentions_alias(sql: &str, alias: &str) -> bool {
+    let needle = format!("{alias}.");
+    sql.match_indices(&needle).any(|(i, _)| {
+        i == 0 || !sql.as_bytes()[i - 1].is_ascii_alphanumeric() && sql.as_bytes()[i - 1] != b'_'
+    })
+}
+
+/// SQL identifier with proper quoting. Cypher names are case-sensitive and may
+/// contain anything a backtick allows, so they are always quoted.
+pub fn quote_ident(s: &str) -> String {
+    format!("\"{}\"", s.replace('"', "\"\""))
 }
 
 /// SQL string literal with proper escaping.

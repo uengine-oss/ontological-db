@@ -85,8 +85,38 @@ pub enum Expr {
     List(Vec<Expr>),
     Map(Vec<(String, Expr)>),
     Case { operand: Option<Box<Expr>>, whens: Vec<(Expr, Expr)>, else_: Option<Box<Expr>> },
+    /// `[x IN list WHERE pred | projection]` — the `WHERE` and the `|` half are
+    /// each optional, so this also covers the plain map form `[x IN list | e]`.
+    ListComp {
+        var: String,
+        source: Box<Expr>,
+        filter: Option<Box<Expr>>,
+        project: Option<Box<Expr>>,
+    },
+    /// `any(x IN list WHERE pred)` and its siblings.
+    ListPred { kind: ListPredKind, var: String, source: Box<Expr>, filter: Box<Expr> },
+    /// Map projection — `n { .name, .age, total: count(x), .* }`.
+    MapProjection { var: String, items: Vec<MapProjItem> },
     /// `labels(n)` style pseudo-property used by RETURN projection
     Star,
+}
+
+#[derive(Debug, Clone)]
+pub enum MapProjItem {
+    /// `.name` — that property of the projected element.
+    Prop(String),
+    /// `.*` — every property it has.
+    All,
+    /// `key: expr` — a computed entry.
+    Entry(String, Expr),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ListPredKind {
+    Any,
+    All,
+    None,
+    Single,
 }
 
 #[derive(Debug, Clone)]
@@ -131,6 +161,50 @@ pub enum Clause {
     Set(Vec<SetOp>),
     Remove(Vec<SetOp>),
     Delete { exprs: Vec<Expr>, detach: bool },
+    /// `CALL ns.proc(args) YIELD a, b AS c` — the Neo4j procedure surface.
+    /// Procedures are resolved by their Neo4j name against a fixed registry;
+    /// there is no user-defined procedure mechanism (see `compat::procs`).
+    Call { name: String, args: Vec<Expr>, yields: Vec<(String, String)> },
+    /// Index and constraint DDL. Cypher applications send these at startup, so
+    /// accepting them is part of speaking Cypher, not an extra.
+    Ddl(Ddl),
+}
+
+#[derive(Debug, Clone)]
+pub enum Ddl {
+    CreateIndex {
+        name: Option<String>,
+        kind: IndexKind,
+        /// `true` for `FOR ()-[r:T]-()`, the relationship form.
+        on_relationship: bool,
+        label: String,
+        props: Vec<String>,
+        options: Vec<(String, Expr)>,
+        if_not_exists: bool,
+    },
+    CreateConstraint {
+        name: Option<String>,
+        label: String,
+        props: Vec<String>,
+        kind: ConstraintKind,
+        if_not_exists: bool,
+    },
+    Drop { name: String, if_exists: bool, constraint: bool },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IndexKind {
+    /// Plain lookup index — Neo4j's `RANGE`/`TEXT`/`POINT`/default all land here.
+    Btree,
+    Vector,
+    Fulltext,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConstraintKind {
+    Unique,
+    NotNull,
+    NodeKey,
 }
 
 #[derive(Debug, Clone)]

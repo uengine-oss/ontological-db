@@ -1,0 +1,32 @@
+{
+  "_comment": [
+    "Point an MCP client at this database. The server is Neo4j's own,",
+    "installed from PyPI and not modified — `uvx mcp-neo4j-cypher` fetches it.",
+    "The only thing here that is specific to Ontological is the URI.",
+    "",
+    "Drop this in as `.mcp.json` (Claude Code), or copy the `mcpServers` object",
+    "into `claude_desktop_config.json` / `.cursor/mcp.json` / any other client",
+    "that speaks the same shape.",
+    "",
+    "--database is the *graph*, not a PostgreSQL database: a Bolt session's",
+    "database name maps to a graph here (spec 011).",
+    "",
+    "--schema-sample-size is not optional. Its help text claims a default of",
+    "1000 but the argparse default is None, which reaches the database as",
+    "apoc.meta.schema({sample: None}) and fails as a syntax error. This is an",
+    "upstream bug and it behaves the same against Neo4j."
+  ],
+  "mcpServers": {
+    "ontological": {
+      "command": "uvx",
+      "args": [
+        "mcp-neo4j-cypher",
+        "--db-url", "bolt://localhost:7687",
+        "--username", "dev",
+        "--password", "dev",
+        "--database", "meeting",
+        "--schema-sample-size", "1000"
+      ]
+    }
+  }
+}

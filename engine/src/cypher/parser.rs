@@ -6,6 +6,11 @@
 use super::ast::*;
 use super::lexer::{Lexer, Tok, Token};
 
+/// How many `.` segments a function name may carry: `genai.vector.encode` needs
+/// two, and the bound is what keeps a long property path from being scanned to
+/// the end of the query before it is ruled out as a call.
+const MAX_NAMESPACE_DEPTH: usize = 3;
+
 pub struct Parser {
     toks: Vec<Token>,
     i: usize,
@@ -96,10 +101,15 @@ impl Parser {
     }
 
     /// Identifier in a position where keywords are also acceptable names.
+    ///
+    /// A keyword's `tok` carries the lowercased spelling so keyword matching is
+    /// case-insensitive, but here the word is a *name* — `[r:CONTAINS]`,
+    /// `(n:Order)` — and names are case-sensitive. Take the source spelling.
     fn name(&mut self) -> PResult<String> {
+        let at = self.i.min(self.toks.len() - 1);
         match self.bump() {
             Tok::Ident(s) | Tok::QuotedIdent(s) => Ok(s),
-            Tok::Keyword(s) => Ok(s),
+            Tok::Keyword(_) => Ok(self.toks[at].raw.clone()),
             _ => {
                 self.i -= 1;
                 Err(self.err("expected a name"))
@@ -132,12 +142,8 @@ impl Parser {
                     "set" => clauses.push(self.parse_set()?),
                     "remove" => clauses.push(self.parse_remove()?),
                     "delete" | "detach" => clauses.push(self.parse_delete()?),
-                    "call" => {
-                        return Err(self.err(
-                            "CALL procedures are not supported yet; use the SQL function surface \
-                             (og_*) for administrative operations",
-                        ))
-                    }
+                    "call" => clauses.push(self.parse_call()?),
+                    "drop" => clauses.push(self.parse_drop()?),
                     "union" => break,
                     other => {
                         return Err(self.err(&format!("unexpected clause '{}'", other.to_uppercase())))
@@ -236,7 +242,276 @@ impl Parser {
         Ok(proj)
     }
 
+    // ----------------------------------------------------------------------
+    // Words that are not reserved
+    //
+    // DDL reads like English — INDEX, FOR, REQUIRE, OPTIONS — but reserving
+    // those spellings would take them away from anyone who wants a property
+    // called `text`. So they are matched here as ordinary words instead.
+    // ----------------------------------------------------------------------
+
+    fn word_at(&self, n: usize) -> Option<String> {
+        match self.peek_at(n) {
+            Tok::Ident(s) | Tok::QuotedIdent(s) => Some(s.to_ascii_lowercase()),
+            Tok::Keyword(s) => Some(s.clone()),
+            _ => None,
+        }
+    }
+
+    fn at_word(&self, w: &str) -> bool {
+        self.word_at(0).as_deref() == Some(w)
+    }
+
+    fn eat_word(&mut self, w: &str) -> bool {
+        if self.at_word(w) {
+            self.bump();
+            true
+        } else {
+            false
+        }
+    }
+
+    fn expect_word(&mut self, w: &str) -> PResult<()> {
+        if self.eat_word(w) {
+            Ok(())
+        } else {
+            Err(self.err(&format!("expected '{}'", w.to_uppercase())))
+        }
+    }
+
+    /// `IF NOT EXISTS` / `IF EXISTS`, both optional.
+    fn eat_if_exists(&mut self, negated: bool) -> bool {
+        let save = self.i;
+        if !self.eat_word("if") {
+            return false;
+        }
+        if negated && !self.eat_kw("not") {
+            self.i = save;
+            return false;
+        }
+        if !self.eat_kw("exists") {
+            self.i = save;
+            return false;
+        }
+        true
+    }
+
+    // ----------------------------------------------------------------------
+    // CALL
+    // ----------------------------------------------------------------------
+
+    fn parse_call(&mut self) -> PResult<Clause> {
+        self.expect_kw("call")?;
+        let mut name = self.name()?;
+        while self.eat_punct(".") {
+            name.push('.');
+            name.push_str(&self.name()?);
+        }
+        let mut args = Vec::new();
+        if self.eat_punct("(") {
+            if !self.at_punct(")") {
+                loop {
+                    args.push(self.parse_expr()?);
+                    if !self.eat_punct(",") {
+                        break;
+                    }
+                }
+            }
+            self.expect_punct(")")?;
+        }
+        let mut yields = Vec::new();
+        if self.eat_kw("yield") {
+            loop {
+                let col = self.name()?;
+                let alias = if self.eat_kw("as") { self.name()? } else { col.clone() };
+                yields.push((col, alias));
+                if !self.eat_punct(",") {
+                    break;
+                }
+            }
+        }
+        Ok(Clause::Call { name, args, yields })
+    }
+
+    // ----------------------------------------------------------------------
+    // Index / constraint DDL
+    // ----------------------------------------------------------------------
+
+    /// Is what follows `CREATE` a DDL statement rather than a pattern?
+    fn create_is_ddl(&self) -> bool {
+        match self.word_at(1).as_deref() {
+            Some("index" | "constraint" | "lookup") => true,
+            // `CREATE VECTOR INDEX`, `CREATE FULLTEXT INDEX`, `CREATE TEXT INDEX`…
+            Some("vector" | "fulltext" | "text" | "point" | "range") => {
+                self.word_at(2).as_deref() == Some("index")
+            }
+            _ => false,
+        }
+    }
+
+    fn parse_ddl_create(&mut self) -> PResult<Clause> {
+        self.expect_kw("create")?;
+        let kind = if self.eat_word("vector") {
+            IndexKind::Vector
+        } else if self.eat_word("fulltext") {
+            IndexKind::Fulltext
+        } else if self.eat_word("text") || self.eat_word("point") || self.eat_word("range") {
+            IndexKind::Btree
+        } else {
+            IndexKind::Btree
+        };
+
+        if self.eat_word("constraint") {
+            return self.parse_constraint_body();
+        }
+        self.eat_word("lookup");
+        self.expect_word("index")?;
+
+        // `CREATE INDEX name IF NOT EXISTS FOR …` — the name is optional.
+        let mut if_not_exists = self.eat_if_exists(true);
+        let name = if !self.at_word("for") && !if_not_exists {
+            let n = Some(self.name()?);
+            if_not_exists = self.eat_if_exists(true);
+            n
+        } else {
+            None
+        };
+
+        self.expect_word("for")?;
+        let (on_relationship, label) = self.parse_ddl_target()?;
+        self.expect_kw("on")?;
+        let props = self.parse_ddl_props()?;
+        let options = if self.eat_word("options") { self.parse_ddl_options()? } else { Vec::new() };
+
+        Ok(Clause::Ddl(Ddl::CreateIndex {
+            name,
+            kind,
+            on_relationship,
+            label,
+            props,
+            options,
+            if_not_exists,
+        }))
+    }
+
+    fn parse_constraint_body(&mut self) -> PResult<Clause> {
+        let mut if_not_exists = self.eat_if_exists(true);
+        let name = if !self.at_word("for") && !if_not_exists {
+            let n = Some(self.name()?);
+            if_not_exists = self.eat_if_exists(true);
+            n
+        } else {
+            None
+        };
+        self.expect_word("for")?;
+        let (_, label) = self.parse_ddl_target()?;
+        // Neo4j 5 says REQUIRE; Neo4j 4 said ASSERT. Both mean this.
+        if !self.eat_word("require") {
+            self.expect_word("assert")?;
+        }
+        let props = self.parse_ddl_props()?;
+        self.expect_kw("is")?;
+        let kind = if self.eat_word("unique") {
+            ConstraintKind::Unique
+        } else if self.eat_kw("not") {
+            self.expect_kw("null")?;
+            ConstraintKind::NotNull
+        } else if self.eat_word("node") || self.eat_word("relationship") {
+            self.expect_word("key")?;
+            ConstraintKind::NodeKey
+        } else {
+            return Err(self.err("expected UNIQUE, NOT NULL or NODE KEY"));
+        };
+        Ok(Clause::Ddl(Ddl::CreateConstraint { name, label, props, kind, if_not_exists }))
+    }
+
+    /// `(n:Label)` or `()-[r:TYPE]-()`. Returns (is_relationship, label).
+    fn parse_ddl_target(&mut self) -> PResult<(bool, String)> {
+        if self.at_punct("(") && self.peek_at(1) == &Tok::Punct(")".into()) {
+            // ()-[r:TYPE]-()
+            let pat = self.parse_pattern()?;
+            for elem in &pat.elems {
+                if let PatElem::Rel(rp) = elem {
+                    if let Some(t) = rp.types.first() {
+                        return Ok((true, t.clone()));
+                    }
+                }
+            }
+            return Err(self.err("expected a relationship type in the index target"));
+        }
+        self.expect_punct("(")?;
+        let _var = self.name()?;
+        self.expect_punct(":")?;
+        let label = self.name()?;
+        self.expect_punct(")")?;
+        Ok((false, label))
+    }
+
+    /// The property list of an index or constraint. Cypher writes it three
+    /// ways and all three mean the same thing:
+    ///   `(n.a, n.b)`        — index, and multi-property constraints
+    ///   `EACH [n.a, n.b]`   — full-text
+    ///   `n.a`               — a single-property constraint, no brackets
+    fn parse_ddl_props(&mut self) -> PResult<Vec<String>> {
+        let each = self.eat_word("each");
+        let close = if each || self.at_punct("[") {
+            self.expect_punct("[")?;
+            Some("]")
+        } else if self.at_punct("(") {
+            self.bump();
+            Some(")")
+        } else {
+            None
+        };
+        let mut props = Vec::new();
+        loop {
+            let _var = self.name()?;
+            self.expect_punct(".")?;
+            props.push(self.name()?);
+            if close.is_none() || !self.eat_punct(",") {
+                break;
+            }
+        }
+        if let Some(c) = close {
+            self.expect_punct(c)?;
+        }
+        Ok(props)
+    }
+
+    /// `OPTIONS {indexConfig: {`vector.dimensions`: 1536, …}}` — flattened, so
+    /// the caller reads `vector.dimensions` whatever nesting it arrived in.
+    fn parse_ddl_options(&mut self) -> PResult<Vec<(String, Expr)>> {
+        let kv = self.parse_prop_map()?;
+        let mut out = Vec::new();
+        fn flatten(kv: Vec<(String, Expr)>, out: &mut Vec<(String, Expr)>) {
+            for (k, v) in kv {
+                match v {
+                    Expr::Map(inner) => flatten(inner, out),
+                    other => out.push((k.to_ascii_lowercase(), other)),
+                }
+            }
+        }
+        flatten(kv, &mut out);
+        Ok(out)
+    }
+
+    fn parse_drop(&mut self) -> PResult<Clause> {
+        self.expect_kw("drop")?;
+        let constraint = if self.eat_word("constraint") {
+            true
+        } else {
+            self.expect_word("index")?;
+            false
+        };
+        let name = self.name()?;
+        let if_exists = self.eat_if_exists(false);
+        Ok(Clause::Ddl(Ddl::Drop { name, if_exists, constraint }))
+    }
+
     fn parse_create(&mut self) -> PResult<Clause> {
+        if self.create_is_ddl() {
+            return self.parse_ddl_create();
+        }
         self.expect_kw("create")?;
         let mut pats = vec![self.parse_pattern()?];
         while self.eat_punct(",") {
@@ -656,14 +931,18 @@ impl Parser {
                 Ok(Expr::Lit(Lit::Null))
             }
             Tok::Keyword(k) if k == "case" => self.parse_case(),
-            Tok::Keyword(k) if k == "count" => {
-                // COUNT is lexed as a keyword but behaves as a function.
+            // COUNT and EXISTS are lexed as keywords but behave as functions —
+            // *when called*. Without the parenthesis they are an ordinary name,
+            // which is how `RETURN count(*) AS count ORDER BY count DESC` gets
+            // to refer back to its own projection.
+            Tok::Keyword(k) if (k == "count" || k == "exists") => {
+                let name = k.clone();
                 self.bump();
-                self.parse_call_args("count")
-            }
-            Tok::Keyword(k) if k == "exists" => {
-                self.bump();
-                self.parse_call_args("exists")
+                if self.at_punct("(") {
+                    self.parse_call_args(&name)
+                } else {
+                    Ok(Expr::Var(name))
+                }
             }
             Tok::Punct(p) if p == "(" => {
                 self.bump();
@@ -673,6 +952,27 @@ impl Parser {
             }
             Tok::Punct(p) if p == "[" => {
                 self.bump();
+                // `[x IN xs …]` is a comprehension, `[a, b, c]` a literal list.
+                // One token of lookahead separates them: a bare name followed by
+                // IN can only be the comprehension's binder.
+                if matches!(self.peek(), Tok::Ident(_)) && self.peek_at(1) == &Tok::Keyword("in".into())
+                {
+                    let var = self.name()?;
+                    self.expect_kw("in")?;
+                    let source = Box::new(self.parse_expr()?);
+                    let filter = if self.eat_kw("where") {
+                        Some(Box::new(self.parse_expr()?))
+                    } else {
+                        None
+                    };
+                    let project = if self.eat_punct("|") {
+                        Some(Box::new(self.parse_expr()?))
+                    } else {
+                        None
+                    };
+                    self.expect_punct("]")?;
+                    return Ok(Expr::ListComp { var, source, filter, project });
+                }
                 let mut items = Vec::new();
                 if !self.at_punct("]") {
                     loop {
@@ -689,26 +989,111 @@ impl Parser {
                 let kv = self.parse_prop_map()?;
                 Ok(Expr::Map(kv))
             }
+            // any/all/none/single take a binder, not an argument list:
+            // `any(x IN xs WHERE p)`. `all` is a keyword, the rest are not.
+            Tok::Keyword(k) if k == "all" && self.list_pred_ahead() => {
+                self.bump();
+                self.parse_list_pred(ListPredKind::All)
+            }
+            Tok::Ident(name)
+                if matches!(name.to_ascii_lowercase().as_str(), "any" | "none" | "single")
+                    && self.list_pred_ahead() =>
+            {
+                let kind = match name.to_ascii_lowercase().as_str() {
+                    "any" => ListPredKind::Any,
+                    "none" => ListPredKind::None,
+                    _ => ListPredKind::Single,
+                };
+                self.bump();
+                self.parse_list_pred(kind)
+            }
             Tok::Ident(name) => {
                 self.bump();
-                // namespaced function: vector.similarity(...)
+                // Namespaced function: `vector.similarity(…)` — and namespaces
+                // nest, so `genai.vector.encode(…)` is one name rather than a
+                // property of a property of `genai`.
+                //
+                // Which one it is can only be known at the end of the run: a
+                // chain of `.name` is a function name if it arrives at `(`, and
+                // a property path otherwise. So the chain is measured first and
+                // consumed only once that is settled.
                 let mut full = name.clone();
-                while self.at_punct(".")
-                    && matches!(self.peek_at(1), Tok::Ident(_))
-                    && self.peek_at(2) == &Tok::Punct("(".into())
-                {
+                let mut segments = 0usize;
+                loop {
+                    let at = segments * 2;
+                    let is_segment = self.peek_at(at) == &Tok::Punct(".".into())
+                        && matches!(self.peek_at(at + 1), Tok::Ident(_));
+                    if !is_segment || segments >= MAX_NAMESPACE_DEPTH {
+                        segments = 0;
+                        break;
+                    }
+                    segments += 1;
+                    if self.peek_at(segments * 2) == &Tok::Punct("(".into()) {
+                        break;
+                    }
+                }
+                for _ in 0..segments {
                     self.bump();
                     full.push('.');
                     full.push_str(&self.name()?);
                 }
                 if self.at_punct("(") {
                     self.parse_call_args(&full)
+                } else if self.at_punct("{") {
+                    // `ds { .name }` in an expression is a map projection. The
+                    // same spelling inside a pattern is an inline property
+                    // filter, but patterns are parsed elsewhere, so there is no
+                    // ambiguity to resolve here.
+                    self.parse_map_projection(full)
                 } else {
                     Ok(Expr::Var(full))
                 }
             }
             _ => Err(self.err("expected an expression")),
         }
+    }
+
+    /// Does the call ahead look like `f(x IN …)` rather than `f(expr, …)`?
+    fn list_pred_ahead(&self) -> bool {
+        self.peek_at(1) == &Tok::Punct("(".into())
+            && matches!(self.peek_at(2), Tok::Ident(_))
+            && self.peek_at(3) == &Tok::Keyword("in".into())
+    }
+
+    fn parse_list_pred(&mut self, kind: ListPredKind) -> PResult<Expr> {
+        self.expect_punct("(")?;
+        let var = self.name()?;
+        self.expect_kw("in")?;
+        let source = Box::new(self.parse_expr()?);
+        self.expect_kw("where")?;
+        let filter = Box::new(self.parse_expr()?);
+        self.expect_punct(")")?;
+        Ok(Expr::ListPred { kind, var, source, filter })
+    }
+
+    fn parse_map_projection(&mut self, var: String) -> PResult<Expr> {
+        self.expect_punct("{")?;
+        let mut items = Vec::new();
+        if !self.at_punct("}") {
+            loop {
+                if self.eat_punct(".") {
+                    if self.eat_punct("*") {
+                        items.push(MapProjItem::All);
+                    } else {
+                        items.push(MapProjItem::Prop(self.name()?));
+                    }
+                } else {
+                    let key = self.name()?;
+                    self.expect_punct(":")?;
+                    items.push(MapProjItem::Entry(key, self.parse_expr()?));
+                }
+                if !self.eat_punct(",") {
+                    break;
+                }
+            }
+        }
+        self.expect_punct("}")?;
+        Ok(Expr::MapProjection { var, items })
     }
 
     fn parse_call_args(&mut self, name: &str) -> PResult<Expr> {

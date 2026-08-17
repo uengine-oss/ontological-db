@@ -110,6 +110,12 @@ flowchart LR
     end
 ```
 
+pgGraph reaches the same array-shaped adjacency from the other direction — it
+compiles a CSR out of your relational tables and holds it *outside* the heap, in
+a backend-local memory mapping. That trade (a pointer-free hot loop, at the cost
+of MVCC, row-level security and transactional visibility) is worked through in
+[`comparison.md`](comparison.md).
+
 ### Identifiers
 
 ```text
@@ -284,6 +290,12 @@ Stated plainly, with the reasoning in each `plan.md`:
   matters — is real.
 - **`WITH` and `UNION` are not implemented.** They fail loudly with a suggested
   alternative rather than silently doing something else.
+- **Deep traversal is the weak axis.** `og_vlp()` is a recursive SQL function:
+  trail semantics stop cycles and it does not rescan the way AGE's `*1..n` does,
+  but the frontier still materialises in a worktable and every step still pays
+  heap and MVCC cost. Three hops measure 33.86 ms, 11× behind Neo4j; ten and
+  twenty hops are unmeasured and currently unargued for. See
+  [`comparison.md`](comparison.md#where-pggraphs-design-beats-ours).
 - **Sharding is designed, not built.** Read replicas work today because every
   structure is a plain heap relation. Distributed writes without two-phase commit
   would violate principle IX quietly, so they wait.

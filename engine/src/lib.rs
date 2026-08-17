@@ -14,6 +14,7 @@
 //! | `interop`  | 005 — SQL bridge, relational mapping |
 //! | `adapters` | 006 — RDF / SPARQL |
 //! | `agent`    | 008 — introspection, provenance, guardrails |
+//! | `compat`   | Neo4j surface: named indexes, `db.*` / `apoc.*` procedures |
 
 use pgrx::prelude::*;
 
@@ -25,10 +26,12 @@ extension_sql_file!("../sql/access.sql", name = "access", finalize);
 pub mod adapters;
 pub mod agent;
 pub mod catalog;
+pub mod compat;
 pub mod cypher;
 pub mod spiu;
 pub mod id;
 pub mod interop;
+pub mod stats;
 pub mod storage;
 pub mod typeql;
 pub mod vector;

@@ -348,6 +348,13 @@ what it costs to get a graph in, not how fast each engine writes.
   a PostgreSQL with a larger `shared_buffers` would all move.
 - **Warm cache throughout.** Every number is steady-state on a warm cache; cold
   start is not measured.
+- **pgGraph is not in it.** It is a fourth PostgreSQL-resident answer to this
+  question, and its published figures (PANAMA and LDBC SNB, cold and hot) come
+  from a different dataset, a different machine and an undisclosed
+  configuration, with no correctness gate described. Putting them in a table
+  next to these would be exactly the advertisement this document is trying not
+  to be. What it does and where its design beats ours:
+  [`comparison.md`](comparison.md).
 - **Some systems were measured in separate runs** against the same generated
   graph, because the TypeDB load takes four minutes and its server had to be
   restarted after an OOM kill. Same machine, same seed, same edge list, same

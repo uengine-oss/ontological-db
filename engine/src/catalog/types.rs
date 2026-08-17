@@ -44,12 +44,20 @@ pub fn map_data_type(decl: &str) -> String {
 }
 
 /// Physical column name for a declared property. Deterministic and injection-safe.
+///
+/// Letters outside ASCII are kept rather than folded to `_`: a graph with
+/// Korean property names would otherwise map `이름` and `용량` to the same
+/// column and silently merge two properties. PostgreSQL accepts those
+/// characters in an unquoted identifier under UTF-8, so the name stays usable
+/// as written. ASCII mapping is unchanged, so existing columns keep their names.
 pub fn column_name(prop: &str) -> String {
     let mut s = String::with_capacity(prop.len() + 2);
     s.push_str("p_");
     for c in prop.chars() {
         if c.is_ascii_alphanumeric() || c == '_' {
             s.push(c.to_ascii_lowercase());
+        } else if c.is_alphanumeric() {
+            s.extend(c.to_lowercase());
         } else {
             s.push('_');
         }
@@ -63,6 +71,38 @@ pub fn node_table(type_id: i32) -> String {
 
 pub fn edge_table(type_id: i32) -> String {
     format!("og_data.e_{type_id}")
+}
+
+/// Create (or move) the human-readable view for a type.
+///
+/// Named exactly as the type, so `og_data."MeetingRoom"` works in psql and in
+/// any BI tool pointed at this database.
+pub fn try_type_name(tid: i32) -> Option<String> {
+    crate::spiu::one::<String>(
+        "SELECT name FROM og_catalog.type WHERE type_id = $1",
+        &[tid.into()],
+    )
+    .ok()
+    .flatten()
+}
+
+pub fn ensure_alias_view(tid: i32, name: &str, table: &str) {
+    let view = alias_view_name(name);
+    // A type name is user input; quoting is what makes that safe here.
+    let _ = Spi::run(&format!("DROP VIEW IF EXISTS {view}"));
+    if let Err(e) = Spi::run(&format!("CREATE VIEW {view} AS SELECT * FROM {table}")) {
+        // Never fatal: the view is a convenience, and a name that collides with
+        // something already in the schema must not stop a type from existing.
+        pgrx::log!("could not create the alias view for type {tid} ({name}): {e}");
+    }
+}
+
+pub fn drop_alias_view(name: &str) {
+    let _ = Spi::run(&format!("DROP VIEW IF EXISTS {}", alias_view_name(name)));
+}
+
+fn alias_view_name(name: &str) -> String {
+    format!("og_data.\"{}\"", name.replace('"', "\"\""))
 }
 
 // --------------------------------------------------------------------------
@@ -95,6 +135,99 @@ pub fn type_id(gid: i32, name: &str) -> i32 {
             error!("type '{name}' does not exist. did you mean: {}", hint.join(", "));
         }
     })
+}
+
+/// Resolve a Cypher label *set* — `(:A:B:C)` — to the single type that stands
+/// for it.
+///
+/// Neo4j lets a node carry several independent labels; here a node has one type
+/// and inherits the names above it. The two line up exactly when the labels in
+/// a pattern form a chain: `(:_Entity:Doc)` is the node whose type is `Doc`,
+/// because `Doc` already *is* an `_Entity`. So the label set resolves to its
+/// most specific member, and a set with no most-specific member — two unrelated
+/// labels — can match nothing, which is reported rather than guessed at.
+///
+/// Returns `Err(unmatchable)` for a set no node can satisfy, and `Err(unknown)`
+/// naming the first label that does not exist.
+pub fn resolve_label_set(gid: i32, graph: &str, labels: &[String]) -> Result<LabelMatch, String> {
+    if labels.is_empty() {
+        return Ok(LabelMatch::Any);
+    }
+    let mut ids = Vec::with_capacity(labels.len());
+    for name in labels {
+        match try_type_id(gid, name) {
+            Some(t) => ids.push(t),
+            None => {
+                // A label nothing has ever been written under is not an error —
+                // in Cypher it simply matches nothing, and a caller that probes
+                // for a label before creating it relies on that. The spelling
+                // hint still goes out, as a notice, so a typo stays findable
+                // (spec 008 FR-008) without turning a legal query into a failure.
+                let near = nearest_type_names(gid, name);
+                if !near.is_empty() {
+                    pgrx::notice!(
+                        "label '{name}' does not exist in graph '{graph}' — matching nothing. \
+                         did you mean: {}",
+                        near.join(", ")
+                    );
+                }
+                return Ok(LabelMatch::Nothing);
+            }
+        }
+    }
+    // The most specific label is the one that is a subtype of every other.
+    let most_specific = ids
+        .iter()
+        .copied()
+        .find(|c| ids.iter().all(|o| c == o || labeling::og_is_subtype(*c, *o)));
+    match most_specific {
+        Some(t) => Ok(LabelMatch::Type(t)),
+        // Unrelated labels: no node carries both, so the pattern matches
+        // nothing. Cypher would say the same, quietly.
+        None => Ok(LabelMatch::Nothing),
+    }
+}
+
+/// What a label set resolves to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LabelMatch {
+    /// No label written — every node qualifies.
+    Any,
+    /// One concrete type, subtypes included.
+    Type(i32),
+    /// Nothing can satisfy this label set. Not an error: an empty result.
+    Nothing,
+}
+
+/// Same resolution as `resolve_label_set`, but on the write path, where an
+/// unknown label is created instead of refused — that is what Neo4j does, and
+/// standing in for Neo4j is the point.
+///
+/// Labels are read as widening-to-narrowing left to right: writing
+/// `(:_Entity:Doc)` when `Doc` is new declares `Doc` as a subtype of `_Entity`.
+/// That is the only reading under which a label list carries a hierarchy, and it
+/// is the shape every `(:Super:Sub)` writer already uses.
+pub fn resolve_or_create_label_set(gid: i32, graph: &str, labels: &[String], kind: &str) -> i32 {
+    if labels.is_empty() {
+        error!("CREATE requires a label per new node");
+    }
+    let mut parents: Vec<String> = Vec::new();
+    for name in labels {
+        if try_type_id(gid, name).is_none() {
+            create_type_inner(graph, name, kind, &parents, false);
+        }
+        parents.push(name.clone());
+    }
+    match resolve_label_set(gid, graph, labels) {
+        Ok(LabelMatch::Type(t)) => t,
+        Ok(LabelMatch::Any) => error!("CREATE requires a label per new node"),
+        Ok(LabelMatch::Nothing) => error!(
+            "no node can carry the labels (:{}) at once — they are not on one \
+             inheritance chain, so there is no type to create",
+            labels.join(":")
+        ),
+        Err(e) => error!("{e}"),
+    }
 }
 
 /// Nearest type names by edit distance — feeds spec 008 FR-008 (correctable
@@ -220,6 +353,20 @@ fn og_create_type(
     parents: default!(Vec<Option<String>>, "'{}'"),
     is_abstract: default!(bool, false),
 ) -> i32 {
+    let parent_names: Vec<String> = parents.into_iter().flatten().collect();
+    create_type_inner(graph, name, kind, &parent_names, is_abstract)
+}
+
+/// The body of `og_create_type`, callable from Rust. The Cypher write path
+/// needs it: Neo4j creates a label the first time it is written, and a graph
+/// that refuses to do the same cannot stand in for one.
+pub fn create_type_inner(
+    graph: &str,
+    name: &str,
+    kind: &str,
+    parents: &[String],
+    is_abstract: bool,
+) -> i32 {
     let gid = graph_id(graph);
     if try_type_id(gid, name).is_some() {
         error!("type '{name}' already exists in graph '{graph}'");
@@ -233,7 +380,6 @@ fn og_create_type(
 
     let parent_ids: Vec<i32> = parents
         .iter()
-        .flatten()
         .map(|p| {
             let pid = type_id(gid, p);
             let pk = type_kind(pid);
@@ -273,6 +419,12 @@ fn og_create_type(
             )
         };
         Spi::run(&base).expect("type table creation failed");
+        // A view named after the type. The physical table is `n_<type_id>`
+        // because a type can be renamed in constant time and its identifier
+        // must not move; the cost is that `\dt` shows `n_45` and nothing about
+        // MeetingRoom. This view puts the name back where a person looking at
+        // the database can find it. It is a view, so it costs nothing to keep.
+        ensure_alias_view(tid, name, &table);
         if k == 'r' {
             Spi::run(&format!("CREATE INDEX ON {table} (src)")).expect("index failed");
             Spi::run(&format!("CREATE INDEX ON {table} (dst)")).expect("index failed");
@@ -401,6 +553,22 @@ fn og_add_property(
                 Spi::run(&format!("ALTER TABLE {table} ALTER COLUMN {col} SET NOT NULL"))
                     .expect("not-null failed");
             }
+            // Values written before the property was declared live in the
+            // extension payload. Declaring the property has to bring them into
+            // the column, or an index built on it would see nothing — which is
+            // exactly what "write first, index later" produces, and that is the
+            // ordinary order for an application coming from a schemaless graph.
+            Spi::run(&format!(
+                "UPDATE {table} SET {col} = (__ext ->> {}) ::{dtype}, __ext = __ext - {} \
+                  WHERE __ext ? {}",
+                crate::cypher::compile::sql_str(prop),
+                crate::cypher::compile::sql_str(prop),
+                crate::cypher::compile::sql_str(prop),
+            ))
+            .unwrap_or_else(|e| {
+                error!("failed to move existing '{prop}' values into its column: {e}")
+            });
+
             if is_key {
                 Spi::run(&format!(
                     "CREATE UNIQUE INDEX IF NOT EXISTS uq_{sub}_{col} ON {table} ({col})"
@@ -418,6 +586,14 @@ fn og_add_property(
                 )
                 .expect("descendant property record failed");
             }
+        }
+    }
+    // A view freezes its column list when it is created, so the type's
+    // human-readable view has to be rebuilt whenever the type gains a column —
+    // otherwise `og_data."Room"` keeps showing the shape it had on day one.
+    for sub in labeling::og_subtypes(tid) {
+        if let (Some(table), Some(sub_name)) = (storage_table(sub), try_type_name(sub)) {
+            ensure_alias_view(sub, &sub_name, &table);
         }
     }
     labeling::bump_schema_version(gid, &format!("add property {type_name}.{prop}"));

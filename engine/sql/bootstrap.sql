@@ -285,6 +285,26 @@ CREATE TABLE og_data.og_embedding_state (
 );
 
 -- ---------------------------------------------------------------------------
+-- Neo4j compatibility: named indexes and constraints.
+--
+-- Cypher written for Neo4j creates indexes by name and then *queries them by
+-- that name* — `db.index.vector.queryNodes('entity_embedding_vector', …)`. The
+-- underlying index here is an ordinary PostgreSQL one on a typed column, which
+-- has no such name, so this table is the directory that turns a Neo4j index
+-- name back into the (type, property) pair it stands for.
+-- ---------------------------------------------------------------------------
+CREATE TABLE og_catalog.compat_index (
+    name        text NOT NULL,
+    graph_id    int4 NOT NULL REFERENCES og_catalog.graph(graph_id) ON DELETE CASCADE,
+    kind        text NOT NULL,   -- 'btree'|'vector'|'fulltext'|'text'|'range'|'point'
+    entity      "char" NOT NULL DEFAULT 'e',  -- 'e' node index | 'r' relationship
+    type_name   text NOT NULL,
+    props       text[] NOT NULL,
+    options     jsonb NOT NULL DEFAULT '{}'::jsonb,
+    PRIMARY KEY (graph_id, name)
+);
+
+-- ---------------------------------------------------------------------------
 -- Provenance & temporal support (spec 008)
 -- ---------------------------------------------------------------------------
 CREATE TABLE og_data.og_history (
@@ -390,6 +410,7 @@ SELECT pg_catalog.pg_extension_config_dump('og_catalog.og_constraint', '');
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.rule', '');
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.schema_version', '');
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.embedding', '');
+SELECT pg_catalog.pg_extension_config_dump('og_catalog.compat_index', '');
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.prefix', '');
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.mapping', '');
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.agent_role', '');

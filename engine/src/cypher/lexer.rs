@@ -19,7 +19,12 @@ pub const KEYWORDS: &[&str] = &[
     "detach", "order", "by", "skip", "limit", "distinct", "as", "and", "or", "not", "xor", "in",
     "is", "null", "true", "false", "unwind", "union", "all", "asc", "desc", "starts", "ends",
     "contains", "case", "when", "then", "else", "end", "exists", "count", "on", "call", "yield",
+    "drop",
 ];
+// Deliberately absent: INDEX, CONSTRAINT, FOR, REQUIRE, UNIQUE, OPTIONS, EACH,
+// IF, VECTOR, FULLTEXT, RANGE, TEXT, POINT, KEY. They appear only in DDL, where
+// the parser matches them by spelling — reserving them would stop anyone from
+// having a property called `text` or a label called `Range`.
 
 pub struct Lexer<'a> {
     src: &'a [u8],
@@ -30,6 +35,11 @@ pub struct Lexer<'a> {
 pub struct Token {
     pub tok: Tok,
     pub pos: usize,
+    /// The word exactly as it appeared in the source. Keywords are lowercased
+    /// in `tok` so matching stays case-insensitive, but a keyword can also sit
+    /// in a name position — `[r:CONTAINS]`, `(n:Order)` — and there the original
+    /// spelling is the type name. Empty for tokens that are not words.
+    pub raw: String,
 }
 
 impl<'a> Lexer<'a> {
@@ -74,10 +84,11 @@ impl<'a> Lexer<'a> {
             self.skip_trivia();
             let start = self.pos;
             let Some(c) = self.peek_byte() else {
-                out.push(Token { tok: Tok::Eof, pos: start });
+                out.push(Token { tok: Tok::Eof, pos: start, raw: String::new() });
                 return Ok(out);
             };
 
+            let mut raw = String::new();
             let tok = match c {
                 b'`' => {
                     self.pos += 1;
@@ -97,9 +108,10 @@ impl<'a> Lexer<'a> {
                     Tok::Param(name)
                 }
                 c if c.is_ascii_digit() => self.take_number()?,
-                c if c.is_ascii_alphabetic() || c == b'_' => {
+                _ if self.at_word_start() => {
                     let w = self.take_word();
                     let lw = w.to_ascii_lowercase();
+                    raw = w.clone();
                     if KEYWORDS.contains(&lw.as_str()) {
                         Tok::Keyword(lw)
                     } else {
@@ -108,15 +120,31 @@ impl<'a> Lexer<'a> {
                 }
                 _ => self.take_punct()?,
             };
-            out.push(Token { tok, pos: start });
+            out.push(Token { tok, pos: start, raw });
         }
+    }
+
+    /// The next character as UTF-8, and how many bytes it occupies.
+    ///
+    /// Identifiers are not ASCII-only. A graph whose classes are named in
+    /// Korean — `(:회의실)` — is an ordinary graph, and Neo4j accepts those
+    /// names, so scanning bytes would make this database reject queries it has
+    /// no reason to reject.
+    fn peek_char(&self) -> Option<(char, usize)> {
+        let rest = std::str::from_utf8(&self.src[self.pos..]).ok()?;
+        let c = rest.chars().next()?;
+        Some((c, c.len_utf8()))
+    }
+
+    fn at_word_start(&self) -> bool {
+        matches!(self.peek_char(), Some((c, _)) if c.is_alphabetic() || c == '_')
     }
 
     fn take_word(&mut self) -> String {
         let start = self.pos;
-        while let Some(c) = self.peek_byte() {
-            if c.is_ascii_alphanumeric() || c == b'_' {
-                self.pos += 1;
+        while let Some((c, n)) = self.peek_char() {
+            if c.is_alphanumeric() || c == '_' {
+                self.pos += n;
             } else {
                 break;
             }

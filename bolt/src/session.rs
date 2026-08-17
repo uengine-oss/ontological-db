@@ -55,6 +55,10 @@ struct Session<'a> {
     pending: Vec<Value>,
     fields: Vec<String>,
     cursor: usize,
+    /// What the open result is: `"r"` or `"w"`, reported as the summary's
+    /// `type`. Drivers expose it as `ResultSummary.query_type`, and tools built
+    /// on the driver read it to decide whether a statement is allowed to run.
+    qtype: &'static str,
 }
 
 pub fn serve(mut stream: TcpStream, config: &Config) -> io::Result<()> {
@@ -71,6 +75,7 @@ pub fn serve(mut stream: TcpStream, config: &Config) -> io::Result<()> {
         pending: Vec::new(),
         fields: Vec::new(),
         cursor: 0,
+        qtype: "r",
     };
     sess.run(&mut stream)
 }
@@ -248,6 +253,31 @@ impl Session<'_> {
 
         let params_json = to_json(&params).to_string();
 
+        // `EXPLAIN` / `PROFILE` prefix a query to ask what it *would* do. Neo4j
+        // answers with a plan and no records; the one field of that answer that
+        // clients act on is the summary's `type`, which is how a driver-side
+        // tool tells a read from a write before it runs anything. The official
+        // Neo4j MCP server gates both of its query tools on exactly that.
+        //
+        // The gateway still parses nothing: it asks `og_cypher_check()`, so the
+        // read/write verdict is spec 003's, reached through a second transport
+        // rather than reimplemented behind one.
+        let (body, plan_only) = split_plan_prefix(&query);
+        let write = self.is_write(body)?;
+        self.qtype = if write { "w" } else { "r" };
+
+        if plan_only {
+            self.fields = Vec::new();
+            self.pending = Vec::new();
+            self.cursor = 0;
+            self.state = State::Streaming;
+            return Ok(map(vec![
+                ("fields", Value::List(Vec::new())),
+                ("t_first", Value::Int(0)),
+                ("qid", Value::Int(-1)),
+            ]));
+        }
+
         // Field order comes from the parser, not from the row: jsonb sorts its
         // keys, so the row cannot tell us what the query asked for (FR-010).
         let columns: Vec<String> = {
@@ -334,7 +364,17 @@ impl Session<'_> {
             self.state = State::Ready;
             self.pending.clear();
             self.cursor = 0;
-            meta.push(("type", string("r")));
+            meta.push(("type", string(self.qtype)));
+            // A driver exposes this as `ResultSummary.counters`. It is asked for
+            // only after a write, on the same connection that performed it —
+            // `og_cypher_stats()` reports what the previous call on this
+            // backend changed, and there is no other window in which that is
+            // the right answer.
+            if self.qtype == "w" {
+                if let Some(stats) = self.write_stats() {
+                    meta.push(("stats", stats));
+                }
+            }
             meta.push(("db", string(self.graph.clone())));
             if !self.in_tx {
                 meta.push(("bookmark", string("ontological:0")));
@@ -381,6 +421,64 @@ impl Session<'_> {
         let pg = self.client()?;
         pg.batch_execute(stmt).map_err(|e| Failure::from_pg(&e))
     }
+
+    /// The change counts of the write that just ran, as a Bolt map.
+    ///
+    /// Best effort on purpose: a summary is not worth failing a successful
+    /// write over, so a connection that cannot answer simply reports no
+    /// counters — which is what it did before there were any.
+    fn write_stats(&mut self) -> Option<Value> {
+        let pg = self.pg.as_mut()?;
+        let row = pg.query_one("SELECT og_cypher_stats()::text", &[]).ok()?;
+        let raw: String = row.get(0);
+        let parsed: serde_json::Value = serde_json::from_str(&raw).ok()?;
+        Some(to_bolt(&parsed))
+    }
+
+    /// Does this query write? Answered by the engine's own parser, never by a
+    /// keyword scan here — `CREATE` inside a string literal is not a write, and
+    /// only the parser knows that.
+    ///
+    /// A query that does not parse gets its syntax error now rather than after
+    /// `EXPLAIN` has silently reported it as a read.
+    fn is_write(&mut self, query: &str) -> Result<bool, Failure> {
+        let pg = self.client()?;
+        let row = pg
+            .query_one("SELECT og_cypher_check($1::text)::text", &[&query])
+            .map_err(|e| Failure::from_pg(&e))?;
+        let raw: String = row.get(0);
+        let check: serde_json::Value =
+            serde_json::from_str(&raw).unwrap_or(serde_json::Value::Null);
+        if check.get("ok").and_then(|v| v.as_bool()) != Some(true) {
+            let msg = check
+                .get("error")
+                .and_then(|v| v.as_str())
+                .unwrap_or("query did not parse")
+                .to_string();
+            return Err(Failure::client("Neo.ClientError.Statement.SyntaxError", msg));
+        }
+        Ok(check.get("write").and_then(|v| v.as_bool()).unwrap_or(false))
+    }
+}
+
+/// Strip a leading `EXPLAIN` or `PROFILE`, returning the query underneath and
+/// whether one was there.
+///
+/// Both are planning prefixes in Cypher, not clauses: what follows is an
+/// ordinary query. `PROFILE` additionally means "execute and instrument"; there
+/// are no plan statistics to instrument here, so it is treated as `EXPLAIN` —
+/// the summary is honest about the query type and carries no invented plan.
+fn split_plan_prefix(query: &str) -> (&str, bool) {
+    let trimmed = query.trim_start();
+    for kw in ["explain", "profile"] {
+        if trimmed.len() > kw.len()
+            && trimmed[..kw.len()].eq_ignore_ascii_case(kw)
+            && trimmed.as_bytes()[kw.len()].is_ascii_whitespace()
+        {
+            return (trimmed[kw.len()..].trim_start(), true);
+        }
+    }
+    (query, false)
 }
 
 // ------------------------------------------------------------------ values

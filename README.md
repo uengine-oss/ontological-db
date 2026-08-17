@@ -33,12 +33,13 @@ follow, and they are structural rather than incidental:
 
 - **Every hop costs `degree` index probes plus `degree` random heap fetches**,
   and every property read costs a JSON parse.
-- **The planner cannot see inside the pattern.** Join order, statistics,
-  parameter binding and plan caching are all forfeited at the function boundary.
+- **The optimiser cannot cost the pattern.** AGE does rewrite `cypher()` into a
+  query tree, but `agtype` leaves it without column statistics or ordinary
+  indexes, so join order is chosen from defaults rather than from the data.
 
-Measurement puts almost all of the observed cost on the second of those: a
-single indexed hop through AGE reads about as many pages as we do, while its
-variable-length path operator reads the entire edge table at every depth. See
+Measurement puts almost all of the observed cost somewhere narrower than either
+bullet: a single indexed hop through AGE reads about as many pages as we do,
+while its variable-length path operator rescans at every depth. See
 [`docs/benchmark.md`](docs/benchmark.md) before quoting the first bullet.
 
 Ontological answers both:
@@ -51,6 +52,14 @@ Ontological answers both:
 | Cypher | string argument to `cypher()` | parsed → compiled to plain SQL the planner optimises |
 | inheritance | multi-label bookkeeping by hand | interval-indexed type hierarchy, constant-time subtype tests |
 | vectors | — | pgvector on nodes **and relationships** |
+
+A third project, **pgGraph**, answers the same question from the other side: it
+stores no graph at all, compiling the topology of your existing relational
+tables into an in-memory CSR array. That buys a pointer-free hot loop for deep
+traversal and gives up patterns, types, transactional visibility and row-level
+security to get it. Both comparisons — how each one declares its tables, how
+each one traverses, and what their published numbers do and do not show — are in
+[`docs/comparison.md`](docs/comparison.md).
 
 Measured on identical data on one machine, with **every system's answers checked
 for equality before any timing is reported**, and with each system given the
@@ -99,7 +108,7 @@ plainly; partial means partial.
 |---|------|--------|
 | [001](specs/001-graph-storage-engine/) | Native graph storage engine | **working** — adjacency segments, typed property tables, bulk load, reorg, integrity checker |
 | [002](specs/002-ontology-type-system/) | Ontology type system & inheritance indexing | **working** — entity/relation/attribute types, multiple inheritance, roles, constraints, interval labels |
-| [003](specs/003-cypher-query-engine/) | Native Cypher engine | **working** — lexer, parser, compiler to SQL, read + write paths. `WITH`, `UNION` not yet |
+| [003](specs/003-cypher-query-engine/) | Native Cypher engine | **working** — lexer, parser, compiler to SQL, read + write paths, `WITH`, list comprehensions, `CALL`. `UNION` not yet |
 | [004](specs/004-vector-hybrid-search/) | Vector & hybrid semantic search | **working** — node *and relationship* embeddings, filter push-down, hybrid RRF ranking, recall harness |
 | [005](specs/005-postgres-supabase-interop/) | PostgreSQL / Supabase interop | **working** — relational views, RLS helper, PostgREST RPC, table mapping |
 | [006](specs/006-semantic-web-adapters/) | RDF / OWL / SPARQL / SHACL | **partial** — RDF load & dump, OWL→type-hierarchy mapping, overflow fidelity. SPARQL not yet |
@@ -107,7 +116,7 @@ plainly; partial means partial.
 | [008](specs/008-agent-native-interface/) | Agent-native interface | **working** — schema introspection with token budget, correctable errors, dry-run estimates, history, audit, roles |
 | [009](specs/009-benchmark-conformance/) | Benchmark & conformance harness | **working** — AGE/CTE comparison with a correctness gate, integrity checks, regression compare |
 | [010](specs/010-typeql-query-surface/) | TypeQL query surface | **partial** — TypeDB 3.x `define`/`insert`/`put`/`match`/`fetch`/pipeline/`delete`/`update`, verified against the upstream TypeDB bookstore example. User-defined functions parse and round-trip but do not evaluate |
-| [011](specs/011-bolt-protocol-gateway/) | Bolt protocol gateway | **working** — Bolt 4.4: a Neo4j driver connects with only its URI changed. `Node`/`Relationship`, transactions, PostgreSQL roles as authentication. Bolt 5.x, `Path` and TLS not yet |
+| [011](specs/011-bolt-protocol-gateway/) | Bolt protocol gateway | **working** — Bolt 4.4: a Neo4j driver connects with only its URI changed. `Node`/`Relationship`, transactions, change counters, `EXPLAIN`, PostgreSQL roles as authentication. **Neo4j's own MCP server runs against it unmodified** ([`examples/meeting-rooms/`](examples/meeting-rooms/)). Bolt 5.x, `Path` and TLS not yet |
 
 Governance lives in [`.specify/memory/constitution.md`](.specify/memory/constitution.md).
 Every deviation from it is recorded in the relevant `plan.md` under *Complexity
@@ -265,11 +274,13 @@ functions, so two of four run today. That is the honest number.
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — how the pieces fit, with diagrams
+- [`docs/comparison.md`](docs/comparison.md) — Apache AGE and pgGraph: storage, traversal, and what their numbers show
 - [`docs/cypher.md`](docs/cypher.md) — supported syntax, precisely, including what is not
 - [`docs/typeql.md`](docs/typeql.md) — the TypeQL surface, the storage mapping, and what is not supported
 - [`docs/api.md`](docs/api.md) — every SQL function
 - [`docs/agents.md`](docs/agents.md) — using this from an LLM agent
 - [`bolt/README.md`](bolt/README.md) — the Bolt gateway: how to run it, and its support matrix
+- [`examples/meeting-rooms/`](examples/meeting-rooms/) — Neo4j's own MCP server, unmodified, answering a Korean question against this database
 - [`tests/neo4j-movies/README.md`](tests/neo4j-movies/README.md) — the official Neo4j Movie sample, run on all three paths
 - [`bench/README.md`](bench/README.md) — benchmark method and how to reproduce
 

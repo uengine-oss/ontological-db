@@ -58,7 +58,7 @@ Stated precisely, because "supported" without a matrix is not a claim
 | | State |
 |---|---|
 | **Bolt 4.4** | supported — the version every current driver can negotiate |
-| Bolt 3.x, 5.x | **not supported**; negotiation fails cleanly rather than half-working |
+| Bolt 3.x, 5.x | **not spoken**. This is not the limit it sounds like: a driver proposes a *range*, so the current Python driver (6.2) settles on 4.4 and connects. Negotiation fails cleanly for anything that cannot |
 | Messages | `HELLO` `RUN` `PULL` `DISCARD` `BEGIN` `COMMIT` `ROLLBACK` `RESET` `GOODBYE` `ROUTE` |
 | PackStream | null, bool, int (all widths), float, string, list, dictionary, structure |
 | Graph types | `Node`, `Relationship` |
@@ -66,10 +66,26 @@ Stated precisely, because "supported" without a matrix is not a claim
 | Temporal / spatial types | **not supported** — a parameter carrying one is rejected, not silently mangled |
 | Routing (`neo4j://`) | answers with this single server; a real routing table belongs to spec 007 |
 | TLS | not terminated here; put a TLS proxy in front |
-| `CALL {}`, APOC, GDS | not supported — spec 003 does not support them, and the transport does not add semantics |
+| `EXPLAIN` / `PROFILE` | accepted: the query is classified, not run, and the summary's `type` is `r` or `w`. No plan — see `docs/cypher.md` |
+| `summary.counters` | nodes/relationships created and deleted, properties set, labels added, indexes and constraints added and removed |
+| `CALL {}`, GDS | not supported — spec 003 does not support them, and the transport does not add semantics |
+| `CALL` procedures, APOC | whatever spec 003 supports; `docs/cypher.md` has the registry |
 
 Cypher coverage is spec 003's, unchanged: `docs/cypher.md` is the authority, and
-`WITH`, `UNION` and `shortestPath` fail here exactly as they fail over psql.
+`UNION` and `shortestPath` fail here exactly as they fail over psql.
+
+`EXPLAIN` is the one place the gateway looks at a query at all, and it still
+does not parse one: it asks `og_cypher_check()` whether the statement writes, so
+the read/write verdict a client acts on is the engine's, reached through a
+second transport rather than reimplemented behind it.
+
+## Driving it from an MCP server
+
+Neo4j's published MCP server, `mcp-neo4j-cypher`, runs against this gateway
+unmodified — it is only a Neo4j driver plus three tools. What that takes, and
+where it still falls short, is worked end to end in
+[`examples/meeting-rooms/`](../examples/meeting-rooms/), whose `verify_mcp.py`
+prints the compatibility matrix as a test.
 
 ## Tests
 

@@ -411,17 +411,25 @@ def driver_checks(bolt, og):
         assert len(rows) == 12, f"{len(rows)} rows for Tom Hanks"
         return f"{len(rows)} rows for $name='Tom Hanks'"
 
+    def unknown_label_is_empty_not_an_error():
+        # Cypher has no schema to violate: a label nothing carries matches
+        # nothing. Neo4j answers with zero rows, so we do too — an application
+        # that probes for a label before creating it depends on that.
+        rows = bolt.run("MATCH (x:NoSuchLabel) RETURN x")
+        assert rows == [], f"expected no rows, got {len(rows)}"
+        return "unknown label matched nothing, as in Neo4j"
+
     def failure_then_reset():
         with bolt.session() as s:
             try:
-                s.run("MATCH (x:NoSuchLabel) RETURN x").data()
-                raise AssertionError("a bad label did not fail")
+                s.run("MATCH (x:Movie) RETURN nosuchfunction(x)").data()
+                raise AssertionError("a bad function did not fail")
             except Exception as e:
                 msg = str(e)
-                assert "NoSuchLabel" in msg, f"error lost the label: {msg[:60]}"
+                assert "nosuchfunction" in msg.lower(), f"error lost the name: {msg[:60]}"
             # the driver RESETs the connection; the session must go on working
             assert s.run("RETURN 1 AS n").single()["n"] == 1
-        return "error carried the label, session recovered"
+        return "error carried the name, session recovered"
 
     def rollback_is_invisible():
         with bolt.session() as s:
@@ -471,6 +479,7 @@ def driver_checks(bolt, og):
         ("relationships hydrate as Relationship", relationships_hydrate),
         ("fields keep RETURN order", fields_keep_return_order),
         ("parameters bind", parameters_bind),
+        ("unknown label matches nothing", unknown_label_is_empty_not_an_error),
         ("failure carries the message, RESET recovers", failure_then_reset),
         ("explicit transaction rollback", rollback_is_invisible),
         ("explicit transaction commit", commit_is_visible),

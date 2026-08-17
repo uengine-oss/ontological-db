@@ -39,6 +39,7 @@ fn is_write(q: &Query) -> bool {
                 | Clause::Set(_)
                 | Clause::Remove(_)
                 | Clause::Delete { .. }
+                | Clause::Ddl(_)
         )
     })
 }
@@ -86,6 +87,9 @@ fn og_cypher(
     params: default!(JsonB, "'{}'"),
 ) -> SetOfIterator<'static, JsonB> {
     let started = std::time::Instant::now();
+    // Each call reports what *it* changed, so the count starts here rather than
+    // accumulating over the connection. See `crate::stats`.
+    crate::stats::reset();
     let ast = match parser::parse(query) {
         Ok(a) => a,
         Err(e) => {
@@ -102,6 +106,17 @@ fn og_cypher(
 
     audit(graph, query, rows.len() as i64, started, None);
     SetOfIterator::new(rows.into_iter().map(JsonB))
+}
+
+/// What the last `og_cypher()` on this connection changed.
+///
+/// Volatile and connection-scoped by construction: it reads state the previous
+/// call left behind, so it must be asked on the same connection and before the
+/// next query. The Bolt gateway asks it between finishing a write and writing
+/// the summary, which is the only window in which the answer means anything.
+#[pg_extern(volatile, parallel_unsafe)]
+fn og_cypher_stats() -> JsonB {
+    JsonB(crate::stats::snapshot())
 }
 
 fn audit(graph: &str, query: &str, rows: i64, started: std::time::Instant, err: Option<&str>) {
@@ -141,6 +156,15 @@ fn exec_json(sql: &str, params: &Value) -> Vec<Value> {
 // --------------------------------------------------------------------------
 
 fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
+    // Schema commands stand alone — Cypher does not let them share a statement
+    // with a pattern, so they are handled before any binding work.
+    if let Some(Clause::Ddl(stmt)) = q.clauses.first() {
+        if q.clauses.len() > 1 {
+            error!("a schema command cannot be combined with other clauses");
+        }
+        return crate::compat::ddl::run(graph, stmt, params);
+    }
+
     let gid = crate::catalog::types::graph_id(graph);
 
     // 1. Evaluate the read part (if any) to produce bindings.
@@ -172,7 +196,15 @@ fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
                         }
                     }
                 }
-                Clause::Unwind { .. } => error!("UNWIND is not supported before a write clause"),
+                Clause::Unwind { expr, alias } => {
+                    // `UNWIND $rows AS row MATCH (n) WHERE … SET …` is the
+                    // standard way a Neo4j application writes a batch. The
+                    // compiler has always been able to produce the rows; only
+                    // this path refused them.
+                    if let Err(e) = c.compile_unwind(expr, alias) {
+                        error!("cypher error: {e}");
+                    }
+                }
                 _ => {}
             }
         }
@@ -210,13 +242,23 @@ fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
         .skip(read_clauses.len())
         .collect();
 
+    // `REMOVE n:Old SET n:New` — renaming a class. Recognised across the two
+    // clauses and applied once to the catalog, before the per-row loop, because
+    // it is a schema change and not a per-node one. See `rename_label`.
+    let renamed = rename_label(gid, &write_clauses);
+
     let mut out = Vec::new();
     for env in envs.iter_mut() {
         for clause in &write_clauses {
+            if renamed && matches!(clause, Clause::Set(items) | Clause::Remove(items)
+                if items.iter().all(|i| matches!(i, SetOp::Label { .. })))
+            {
+                continue;
+            }
             match clause {
                 Clause::Create(pats) => {
                     for p in pats {
-                        create_pattern(gid, p, env, params);
+                        create_pattern(graph, gid, p, env, params);
                     }
                 }
                 Clause::Merge { pattern, on_create, on_match } => {
@@ -257,10 +299,19 @@ fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
                     for item in &proj.items {
                         let name =
                             item.alias.clone().unwrap_or_else(|| item.expr.default_alias());
-                        obj.insert(
-                            name,
-                            eval::eval(&item.expr, env, params).unwrap_or(Value::Null),
-                        );
+                        // An aggregate cannot be evaluated one row at a time.
+                        // Keep its *argument* per row; `fold_aggregates` folds
+                        // the column once every row has been produced.
+                        let value = match &item.expr {
+                            Expr::Func { args, .. } if item.expr.is_aggregate() => {
+                                match args.first() {
+                                    None | Some(Expr::Star) => json!(true),
+                                    Some(a) => eval::eval(a, env, params).unwrap_or(Value::Null),
+                                }
+                            }
+                            e => eval::eval(e, env, params).unwrap_or(Value::Null),
+                        };
+                        obj.insert(name, value);
                     }
                     out.push(Value::Object(obj));
                 }
@@ -268,10 +319,78 @@ fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
             }
         }
     }
+    // `… RETURN count(n)` after a write is how an application asks how much it
+    // changed. The write path walks bindings one row at a time and cannot see
+    // across them, so the aggregate is folded here, over the rows it produced.
+    if let Some(Clause::Return(proj)) = write_clauses.iter().find_map(|c| match c {
+        Clause::Return(_) => Some(*c),
+        _ => None,
+    }) {
+        if proj.items.iter().any(|i| i.expr.is_aggregate()) {
+            return vec![fold_aggregates(proj, &out)];
+        }
+    }
     out
 }
 
-fn create_pattern(gid: i32, p: &Pattern, env: &mut eval::Env, params: &Value) {
+/// Fold a projection containing aggregates over the rows a write produced.
+///
+/// Only the aggregates Cypher's write path realistically ends with are folded —
+/// counting and collecting what changed. A non-aggregate item takes its value
+/// from the first row, which is what grouping by nothing means.
+fn fold_aggregates(proj: &Projection, rows: &[Value]) -> Value {
+    let mut obj = Map::new();
+    for item in &proj.items {
+        let name = item.alias.clone().unwrap_or_else(|| item.expr.default_alias());
+        let value = match &item.expr {
+            Expr::Func { name: f, args, distinct } => {
+                let f = f.to_ascii_lowercase();
+                let mut values: Vec<Value> = rows
+                    .iter()
+                    .filter_map(|r| r.get(&name).cloned())
+                    .filter(|v| !v.is_null())
+                    .collect();
+                if *distinct {
+                    values.dedup();
+                }
+                match f.as_str() {
+                    // `count(*)` counts rows; `count(x)` counts non-null x. The
+                    // per-row pass already evaluated x into this column.
+                    "count" if matches!(args.first(), Some(Expr::Star)) => json!(rows.len()),
+                    "count" => json!(values.len()),
+                    "collect" => Value::Array(values),
+                    "sum" | "avg" => {
+                        let nums: Vec<f64> =
+                            values.iter().filter_map(serde_json::Value::as_f64).collect();
+                        let total: f64 = nums.iter().sum();
+                        if f == "sum" {
+                            json!(total)
+                        } else if nums.is_empty() {
+                            Value::Null
+                        } else {
+                            json!(total / nums.len() as f64)
+                        }
+                    }
+                    "min" => values.into_iter().min_by(cmp_json).unwrap_or(Value::Null),
+                    "max" => values.into_iter().max_by(cmp_json).unwrap_or(Value::Null),
+                    _ => Value::Null,
+                }
+            }
+            _ => rows.first().and_then(|r| r.get(&name).cloned()).unwrap_or(Value::Null),
+        };
+        obj.insert(name, value);
+    }
+    Value::Object(obj)
+}
+
+fn cmp_json(a: &Value, b: &Value) -> std::cmp::Ordering {
+    match (a.as_f64(), b.as_f64()) {
+        (Some(x), Some(y)) => x.partial_cmp(&y).unwrap_or(std::cmp::Ordering::Equal),
+        _ => a.to_string().cmp(&b.to_string()),
+    }
+}
+
+fn create_pattern(graph: &str, gid: i32, p: &Pattern, env: &mut eval::Env, params: &Value) {
     let mut prev: Option<i64> = None;
     let mut pending: Option<&RelPat> = None;
 
@@ -281,17 +400,15 @@ fn create_pattern(gid: i32, p: &Pattern, env: &mut eval::Env, params: &Value) {
                 let id = match np.var.as_ref().and_then(|v| env.get(v)) {
                     Some(v) if v.get("_id").is_some() => v["_id"].as_i64().unwrap(),
                     _ => {
-                        if np.labels.len() != 1 {
-                            error!("CREATE requires exactly one label per new node");
-                        }
-                        let tid = crate::catalog::types::type_id(gid, &np.labels[0]);
-                        let props = props_json(&np.props, env, params);
-                        let id = crate::storage::create_node_inner(
+                        let tid = crate::catalog::types::resolve_or_create_label_set(
                             gid,
-                            tid,
-                            &np.labels[0],
-                            props,
+                            graph,
+                            &np.labels,
+                            "entity",
                         );
+                        let label = np.labels.last().map(String::as_str).unwrap_or("");
+                        let props = props_json(&np.props, env, params);
+                        let id = crate::storage::create_node_inner(gid, tid, label, props);
                         if let Some(v) = &np.var {
                             env.insert(v.clone(), node_json(id));
                         }
@@ -299,7 +416,7 @@ fn create_pattern(gid: i32, p: &Pattern, env: &mut eval::Env, params: &Value) {
                     }
                 };
                 if let (Some(src), Some(rel)) = (prev, pending.take()) {
-                    create_rel(gid, rel, src, id, env, params);
+                    create_rel(graph, gid, rel, src, id, env, params);
                 }
                 prev = Some(id);
             }
@@ -308,7 +425,7 @@ fn create_pattern(gid: i32, p: &Pattern, env: &mut eval::Env, params: &Value) {
     }
 }
 
-fn create_rel(gid: i32, rel: &RelPat, a: i64, b: i64, env: &mut eval::Env, params: &Value) {
+fn create_rel(graph: &str, gid: i32, rel: &RelPat, a: i64, b: i64, env: &mut eval::Env, params: &Value) {
     if rel.types.len() != 1 {
         error!("CREATE requires exactly one relationship type");
     }
@@ -316,7 +433,14 @@ fn create_rel(gid: i32, rel: &RelPat, a: i64, b: i64, env: &mut eval::Env, param
         Dir::In => (b, a),
         _ => (a, b),
     };
-    let tid = crate::catalog::types::type_id(gid, &rel.types[0]);
+    // Same rule as node labels: a relationship type written for the first time
+    // is declared, not refused.
+    let tid = crate::catalog::types::resolve_or_create_label_set(
+        gid,
+        graph,
+        &rel.types[..1],
+        "relation",
+    );
     let props = props_json(&rel.props, env, params);
     let eid = crate::storage::create_edge_inner(gid, tid, &rel.types[0], src, dst, props);
     if let Some(v) = &rel.var {
@@ -375,8 +499,78 @@ fn merge_pattern(
             }
         }
     }
-    create_pattern(gid, p, env, params);
+    create_pattern(graph, gid, p, env, params);
     apply_set(on_create, env, params);
+}
+
+/// Recognise `REMOVE n:Old SET n:New` and carry it out as a rename.
+///
+/// A node's type is encoded in its identifier here, so a node cannot change
+/// type without changing identity — and changing identity would invalidate
+/// every adjacency entry pointing at it. Renaming the *type* achieves what this
+/// query means, for every instance at once, in constant time and with all
+/// identifiers intact.
+///
+/// The narrow shape is deliberate: it applies only when the removed label is a
+/// real type and the added one is free. Anything else is a genuine retype and is
+/// refused by `apply_set` with that said plainly.
+fn rename_label(gid: i32, clauses: &[&Clause]) -> bool {
+    let mut removed: Option<(&str, &str)> = None; // (var, label)
+    let mut added: Option<(&str, &str)> = None;
+
+    for clause in clauses {
+        let (items, is_remove) = match clause {
+            Clause::Remove(items) => (items, true),
+            Clause::Set(items) => (items, false),
+            _ => continue,
+        };
+        for item in items {
+            if let SetOp::Label { var, labels } = item {
+                if labels.len() != 1 {
+                    return false;
+                }
+                let slot = if is_remove { &mut removed } else { &mut added };
+                if slot.is_some() {
+                    return false;
+                }
+                *slot = Some((var.as_str(), labels[0].as_str()));
+            }
+        }
+    }
+
+    let (Some((rv, old)), Some((av, new))) = (removed, added) else { return false };
+    if rv != av {
+        return false;
+    }
+    let Some(old_id) = crate::catalog::types::try_type_id(gid, old) else {
+        // Already renamed — a repeat of the same statement, which must not fail.
+        return crate::catalog::types::try_type_id(gid, new).is_some();
+    };
+    if crate::catalog::types::try_type_id(gid, new).is_some() {
+        // Both exist: this is a move between types, not a rename.
+        return false;
+    }
+
+    Spi::run_with_args(
+        "UPDATE og_catalog.type SET name = $2 WHERE type_id = $1",
+        &[old_id.into(), new.into()],
+    )
+    .unwrap_or_else(|e| error!("failed to rename label '{old}' to '{new}': {e}"));
+    // The human-readable view is named after the type, so it moves with it.
+    crate::catalog::types::drop_alias_view(old);
+    if let Some(table) = crate::catalog::types::storage_table(old_id) {
+        crate::catalog::types::ensure_alias_view(old_id, new, &table);
+    }
+    // Named indexes point at the label by name. Leaving them behind would keep
+    // the name resolvable while what it names no longer exists.
+    Spi::run_with_args(
+        "UPDATE og_catalog.compat_index SET type_name = $3
+          WHERE graph_id = $1 AND type_name = $2",
+        &[gid.into(), old.into(), new.into()],
+    )
+    .unwrap_or_else(|e| error!("failed to move indexes from '{old}' to '{new}': {e}"));
+    crate::catalog::labeling::bump_schema_version(gid, &format!("rename {old} -> {new}"));
+    true
 }
 
 fn apply_set(items: &[SetOp], env: &mut eval::Env, params: &Value) {
@@ -407,11 +601,36 @@ fn apply_set(items: &[SetOp], env: &mut eval::Env, params: &Value) {
                 }
                 write_props(id, entity.get("_src").is_some(), v);
             }
-            SetOp::Label { .. } => {
-                error!(
-                    "SET/REMOVE of labels is not supported: a node's type is part of its identity \
-                     in this database (spec 002). create a node of the target type instead"
-                );
+            SetOp::Label { var, labels } => {
+                // Adding a label the node already carries — its own type or one
+                // above it — is what `SET n:Label` usually means in code that
+                // re-tags on every write. That is a no-op here, not an error.
+                let Some(entity) = env.get(var).cloned() else {
+                    error!("SET/REMOVE refers to unbound variable '{var}'");
+                };
+                let Some(id) = entity.get("_id").and_then(|x| x.as_i64()) else { continue };
+                let tid = crate::id::id_type(id);
+                let gid = crate::spiu::one::<i32>(
+                    "SELECT graph_id FROM og_catalog.type WHERE type_id = $1",
+                    &[tid.into()],
+                )
+                .ok()
+                .flatten()
+                .unwrap_or(0);
+
+                for l in labels {
+                    let already = crate::catalog::types::try_type_id(gid, l)
+                        .is_some_and(|want| crate::catalog::labeling::og_is_subtype(tid, want));
+                    if already {
+                        continue;
+                    }
+                    error!(
+                        "cannot add label '{l}' to this node: a node's type is part of its \
+                         identifier here, so it cannot gain one after creation. To rename a \
+                         class, write `REMOVE n:Old SET n:New` — that is applied to the type. \
+                         To move a node between types, create it under the target type."
+                    );
+                }
             }
         }
     }
