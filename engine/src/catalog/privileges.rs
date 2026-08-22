@@ -98,6 +98,13 @@ fn og_grant(role: &str, level: default!(&str, "'read'")) {
         "GRANT SELECT ON ALL TABLES IN SCHEMA og_catalog, og_data TO {r}"
     ))
     .unwrap_or_else(|e| error!("select grant failed: {e}"));
+    // SELECT, not USAGE: reading a sequence's `last_value` is not permission to
+    // draw from it. Every Cypher read needs this one — the plan cache is keyed
+    // on the schema counter, and that counter is a sequence.
+    Spi::run(&format!(
+        "GRANT SELECT ON ALL SEQUENCES IN SCHEMA og_catalog TO {r}"
+    ))
+    .unwrap_or_else(|e| error!("catalog sequence read grant failed: {e}"));
 
     if rank >= 2 {
         // Writers touch og_data only. Promotion of an undeclared property is a

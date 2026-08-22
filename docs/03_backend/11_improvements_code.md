@@ -1,5 +1,10 @@
 # 코드 개선 포인트
 
+> ⚠️ **이 문서는 감사 커밋 `7d60c82` 의 스냅샷이다.** 조용히 틀린 답을 내던 다섯
+> 항목(ARCH-01, ARCH-02/CODE-01, CODE-33, CODE-34, PERF-20)은 이후 수정되었다.
+> 현재 상태는 [`03_backend/12_fixed_correctness.md`](12_fixed_correctness.md) 를 볼 것.
+
+
 > **이 문서가 답하는 질문**
 > - 지금 코드에서 무엇이 문제이고, 얼마나 심각한가?
 > - 각 문제의 근거는 어느 파일 몇 줄인가?
@@ -43,9 +48,9 @@ $ 1,000줄 초과 파일: cypher/compile.rs(1591), cypher/parser.rs(1177), typeq
 
 | ID | 제목 | 심각도 | 근거 (파일:라인) | 현상 | 제안 | 예상 효과 | 리스크 |
 |---|---|---|---|---|---|---|---|
-| CODE-01 | 플랜 캐시가 스키마 변경에 무효화되지 않음 | **High** | `engine/src/cypher/mod.rs:26-31,47-67`; `engine/src/catalog/labeling.rs:172-182`; `engine/src/cypher/views.rs:91-97` | 캐시 키가 `(graph, query)`뿐이다. 컴파일 산출물은 타입 id·생성 뷰 이름(`og_data.v_5`)을 담고 있고, 스키마가 바뀌면 `bump_schema_version`이 `drop_all_views()`로 뷰를 전부 지운다. 같은 백엔드에서 캐시된 SQL을 재실행하면 없는 뷰를 참조한다 | 캐시 키에 그래프의 `max(schema_version)`을 포함하거나, `bump_schema_version`에서 `PLAN_CACHE.clear()`를 호출 | 세션 중 스키마가 바뀌어도 질의가 계속 동작 | 버전 조회가 질의마다 1회 SPI. 캐시 히트 경로가 무료가 아니게 됨 → `schema_version_seq`의 `currval`을 백엔드-로컬로 캐싱해 완화 |
-| CODE-33 | 쓰기 질의에서 `WITH` / `CALL` 절이 조용히 무시됨 | **High** | `engine/src/cypher/mod.rs:171-176, 239-243, 258-319` | 읽기 부분은 `take_while(Match \| Unwind)`로만 모으고, 나머지는 per-row 루프의 `_ => {}`(라인 318)에 떨어진다. 따라서 `MATCH (n) WITH n LIMIT 1 DELETE n`은 `WITH`를 무시하고 매치된 **전부**를 지운다 | `run_write` 진입 시 지원하지 않는 절 조합을 명시적으로 거절(`error!`)하거나, `WITH`를 읽기 부분에 포함시켜 컴파일 | 데이터 손실 위험 제거 | 기존에 (잘못) 동작하던 질의가 오류가 됨 — 그것이 올바른 동작 |
-| CODE-34 | 쓰기 경로 `count(DISTINCT x)`가 `Vec::dedup()`만 사용 | **High** | `engine/src/cypher/mod.rs:346-355` | `values.dedup()`은 **연속된** 중복만 제거한다. 정렬하지 않으므로 `[a,b,a]`에서 3을 센다. `CREATE … RETURN count(DISTINCT x)`가 틀린 수를 돌려준다 | 정렬 후 `dedup()` 하거나 `HashSet`/`BTreeSet`으로 교체 (`cmp_json`이 이미 있다) | 쓰기 질의의 DISTINCT 집계가 정확해짐 | JSON 값 전순서 정의 필요 — `cmp_json`(`mod.rs:386-391`)을 재사용 |
+| CODE-01 | 플랜 캐시가 스키마 변경에 무효화되지 않음 | **High** · **fixed** | `engine/src/cypher/mod.rs:26-31,47-67`; `engine/src/catalog/labeling.rs:172-182`; `engine/src/cypher/views.rs:91-97` | 캐시 키가 `(graph, query)`뿐이다. 컴파일 산출물은 타입 id·생성 뷰 이름(`og_data.v_5`)을 담고 있고, 스키마가 바뀌면 `bump_schema_version`이 `drop_all_views()`로 뷰를 전부 지운다. 같은 백엔드에서 캐시된 SQL을 재실행하면 없는 뷰를 참조한다 | 캐시 키에 그래프의 `max(schema_version)`을 포함하거나, `bump_schema_version`에서 `PLAN_CACHE.clear()`를 호출 | 세션 중 스키마가 바뀌어도 질의가 계속 동작 | 버전 조회가 질의마다 1회 SPI. 캐시 히트 경로가 무료가 아니게 됨 → `schema_version_seq`의 `currval`을 백엔드-로컬로 캐싱해 완화 |
+| CODE-33 | 쓰기 질의에서 `WITH` / `CALL` 절이 조용히 무시됨 | **High** · **fixed** | `engine/src/cypher/mod.rs:171-176, 239-243, 258-319` | 읽기 부분은 `take_while(Match \| Unwind)`로만 모으고, 나머지는 per-row 루프의 `_ => {}`(라인 318)에 떨어진다. 따라서 `MATCH (n) WITH n LIMIT 1 DELETE n`은 `WITH`를 무시하고 매치된 **전부**를 지운다 | `run_write` 진입 시 지원하지 않는 절 조합을 명시적으로 거절(`error!`)하거나, `WITH`를 읽기 부분에 포함시켜 컴파일 | 데이터 손실 위험 제거 | 기존에 (잘못) 동작하던 질의가 오류가 됨 — 그것이 올바른 동작 |
+| CODE-34 | 쓰기 경로 `count(DISTINCT x)`가 `Vec::dedup()`만 사용 | **High** · **fixed** | `engine/src/cypher/mod.rs:346-355` | `values.dedup()`은 **연속된** 중복만 제거한다. 정렬하지 않으므로 `[a,b,a]`에서 3을 센다. `CREATE … RETURN count(DISTINCT x)`가 틀린 수를 돌려준다 | 정렬 후 `dedup()` 하거나 `HashSet`/`BTreeSet`으로 교체 (`cmp_json`이 이미 있다) | 쓰기 질의의 DISTINCT 집계가 정확해짐 | JSON 값 전순서 정의 필요 — `cmp_json`(`mod.rs:386-391`)을 재사용 |
 | CODE-06 | 정수 프로퍼티에 실수를 쓰면 `float8`이 아니라 `text`로 확장 | **High** | `engine/src/storage/mod.rs:53-60, 62-73, 127-153` | `infer_column_type(1.5) = "float8"`, 기존 컬럼은 `int8`. `type_accepts("int8","float8")`은 `false`이고 `int8`은 `WIDENABLE`이므로 **`text`로 확장**된다. `SET n.score = 1` 다음 `SET n.score = 1.5`면 그 컬럼의 숫자 비교·범위 인덱스가 사라진다 | `type_accepts`에 `("int8","float8")` 승격 경로를 추가하고, `declare_new_props`가 `text` 대신 `float8`로 `ALTER`하도록 분기 | 흔한 패턴에서 인덱스와 타입이 보존됨 | `ALTER COLUMN TYPE float8`도 전체 재작성이다. 정밀도 손실은 없음(int8→float8은 2^53 초과에서 손실 가능) |
 | CODE-02 | `#[pg_extern(stable)]` 함수가 DDL을 실행 | **High** | `engine/src/cypher/mod.rs:74-80` → `engine/src/cypher/views.rs:135`; `engine/src/typeql/mod.rs:82-96` → `engine/src/typeql/schema.rs:526-552` | `og_cypher_sql`은 `views::ensure_view`로 `CREATE OR REPLACE VIEW`를, `og_typeql_sql`은 `ensure_has_type`로 `INSERT` + `CREATE TABLE`을 실행한다. `STABLE`은 "데이터베이스를 수정하지 않는다"는 계약이다 | 두 함수를 `volatile`로 바꾸거나, 컴파일 경로에서 뷰 생성을 분리해 `ensure_view`가 필요할 때 `error!`로 안내 | 읽기 전용 트랜잭션·스탠바이·`og_apply_role(read_only)`에서 동작 | `volatile`로 바꾸면 플래너가 이 함수를 상수 접기하지 않음 — 진단용 함수라 영향 미미 |
 | CODE-07 | 타입 확장 DDL이 `let _ =`로 결과를 버림 | **High** | `engine/src/storage/mod.rs:138-140, 147-151` | `ALTER TABLE … ALTER COLUMN … TYPE text`가 실패해도 바로 다음 `UPDATE og_catalog.property SET data_type='text'`가 실행된다. 두 문장 모두 `let _ =`다. 실패하면 **카탈로그는 text, 컬럼은 int8**이 되고, 이후 `plan_props`가 `($2->>'k')::text`를 int8 컬럼에 넣으려 한다 | `unwrap_or_else(|e| error!("failed to widen '{key}' on {table}: {e}"))`로 바꾸고, 카탈로그 갱신을 ALTER 성공 뒤로 이동 | 카탈로그/물리 스키마 불일치 제거 | 이전에 조용히 넘어가던 케이스가 오류가 됨 — 그것이 올바른 동작 |

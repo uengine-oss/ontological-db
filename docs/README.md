@@ -73,21 +73,30 @@
 아래 항목은 문서 작성 중 발견되어 **코드에서 직접 재확인한 것들**입니다.
 정답성을 해치는 것부터 나열합니다.
 
+> **정답성 5건은 전부 수정되었고, 보안 항목도 일부 수정되었습니다.**
+> 정답성은 [03_backend/12_fixed_correctness.md](03_backend/12_fixed_correctness.md),
+> 보안은 [07_security/10_fixed.md](07_security/10_fixed.md) 가 현재 상태입니다.
+>
 > **보안 항목 일부는 이미 수정되었습니다.** Critical 5건은 전부, High 13건은
 > 4건 수정 · 4건 부분 수정이고, 아래 보안 표에 상태를 표시했습니다. 무엇이 어떻게 바뀌었고 무엇이
 > 남았는지는 [07_security/10_fixed.md](07_security/10_fixed.md) 에 있습니다.
 > 설계 근거는 [ADR-025](99_decisions/ADR-025-privilege-model-default-deny.md).
 > **정답성·운영 항목은 손대지 않았습니다.**
 
-### 정답성 (조용히 틀린 답이 나온다)
+### 정답성 — 다섯 건 모두 수정됨
 
-| 항목 | 근거 | 증상 |
-|---|---|---|
-| `UNION`이 무시된다 | [parser.rs:161](../engine/src/cypher/parser.rs#L161)이 `Query.union`을 채우지만 `grep -rn "\.union" engine/src` **소비자 0건** | 오류 없이 **첫 분기 행만** 반환. [bolt/README.md:75](../bolt/README.md#L75)는 "실패한다"고 적혀 있으나 실패하지 않는다 |
-| 쓰기 질의의 `WITH` 무시 | [cypher/mod.rs:171-176](../engine/src/cypher/mod.rs#L171-L176)의 `take_while(Match\|Unwind)` | `MATCH (n) WITH n LIMIT 1 DELETE n` 이 **전부 삭제** |
-| `count(DISTINCT)` 오답 | [cypher/mod.rs:355](../engine/src/cypher/mod.rs#L355)의 `values.dedup()` — 정렬 없이 호출 | 연속 중복만 제거되어 **틀린 수** |
-| `*min..max`의 `min > 1` 발산 | [compile.rs:865](../engine/src/cypher/compile.rs#L865)의 `prefer_reachability(max)`가 `min`을 보지 않음. [traverse.rs:144](../engine/src/storage/traverse.rs#L144)의 방문집합은 **최단 거리**만 방출 | `og_vlp`(트레일 길이)와 `og_reach`(최단 거리)가 다른 답. 회귀 스위트가 `*1..k`만 써서 **본 적이 없다** |
-| 플랜 캐시가 스키마 변경에 무효화 안 됨 | 캐시 키가 `(graph, query)`뿐 ([cypher/mod.rs:26-31](../engine/src/cypher/mod.rs#L26-L31)). `bump_schema_version()`은 `og_data.v_*`를 DROP | 캐시 히트 시 **폐기된 뷰를 참조하는 SQL 실행**. 프로퍼티 자동 승격조차 이 경로를 탄다 |
+상태는 [03_backend/12_fixed_correctness.md](03_backend/12_fixed_correctness.md)
+기준입니다. "증상" 열은 **감사 시점(`7d60c82`)의 기록**이며, 회귀 테스트는
+[`engine/tests/sql/06_correctness_regressions.sql`](../engine/tests/sql/06_correctness_regressions.sql)
+에 있으며, **수정 전 코드에서 다섯 단언이 전부 실패하는 것을 확인**했습니다.
+
+| 항목 | 상태 | 근거 | 감사 시점의 증상 |
+|---|---|---|---|
+| `UNION`이 무시된다 | **수정** | [parser.rs:161](../engine/src/cypher/parser.rs#L161)이 `Query.union`을 채우지만 `grep -rn "\.union" engine/src` **소비자 0건** | 오류 없이 **첫 분기 행만** 반환. [bolt/README.md:75](../bolt/README.md#L75)는 "실패한다"고 적혀 있으나 실패하지 않는다 |
+| 쓰기 질의의 `WITH` 무시 | **수정** | [cypher/mod.rs:171-176](../engine/src/cypher/mod.rs#L171-L176)의 `take_while(Match\|Unwind)` | `MATCH (n) WITH n LIMIT 1 DELETE n` 이 **전부 삭제** |
+| `count(DISTINCT)` 오답 | **수정** | [cypher/mod.rs:355](../engine/src/cypher/mod.rs#L355)의 `values.dedup()` — 정렬 없이 호출 | 연속 중복만 제거되어 **틀린 수** |
+| `*min..max`의 `min > 1` 발산 | **수정** | [compile.rs:865](../engine/src/cypher/compile.rs#L865)의 `prefer_reachability(max)`가 `min`을 보지 않음. [traverse.rs:144](../engine/src/storage/traverse.rs#L144)의 방문집합은 **최단 거리**만 방출 | `og_vlp`(트레일 길이)와 `og_reach`(최단 거리)가 다른 답. 회귀 스위트가 `*1..k`만 써서 **본 적이 없다** |
+| 플랜 캐시가 스키마 변경에 무효화 안 됨 | **수정** | 캐시 키가 `(graph, query)`뿐 ([cypher/mod.rs:26-31](../engine/src/cypher/mod.rs#L26-L31)). `bump_schema_version()`은 `og_data.v_*`를 DROP | 캐시 히트 시 **폐기된 뷰를 참조하는 SQL 실행**. 프로퍼티 자동 승격조차 이 경로를 탄다 |
 
 ### 보안 — 대부분 수정됨
 

@@ -82,6 +82,14 @@ docker exec ontological-dev bash -lc 'cd /work && ./tests/run.sh'
 PGHOST=localhost PGPORT=28816 ./tests/run.sh
 ```
 
+> **적혀 있지 않은 전제: 데이터베이스 로케일.** `initdb` 가 C 로케일로 돈
+> 클러스터에서는 `04_neo4j_compat.sql` 이 실패한다. `to_tsvector('simple', …)`
+> 가 한글을 토큰화하지 못해 `db.index.fulltext.queryNodes` 가 0행을 내고,
+> 그 파일의 단언이 걸린다. 코드 문제가 아니라 환경 문제이고, UTF-8 로케일
+> (`initdb --encoding=UTF8 --locale=C.UTF-8`)이면 통과한다.
+> `tests/run.sh` 는 이 의존성을 확인하지도, 알려주지도 않는다 —
+> 실패했을 때 원인을 찾는 데 시간이 걸리는 종류다.
+
 환경변수 (`tests/run.sh:6-8`):
 
 | 변수 | 기본값 | 의미 |

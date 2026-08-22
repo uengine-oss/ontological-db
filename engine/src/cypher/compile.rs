@@ -348,7 +348,47 @@ impl Compiler {
         exprs().any(|e| e.is_aggregate()) && exprs().all(blind_expr)
     }
 
+    /// Compile a read query, including any `UNION` continuation.
+    ///
+    /// The parser has always built `Query.union`; nothing read it, so a query
+    /// with `UNION` returned its first branch and no error — the worst shape a
+    /// bug can take, because the answer looks like an answer.
+    ///
+    /// Each branch is wrapped in its own subquery rather than concatenated.
+    /// `build_select` may emit a leading `WITH`, and `WITH … SELECT … UNION
+    /// WITH … SELECT …` is not a thing PostgreSQL parses; a subquery in `FROM`
+    /// may carry its own `WITH`, so wrapping is what makes the composition
+    /// legal. It also keeps each branch's generated aliases to itself.
     pub fn compile_read(&mut self, q: &Query) -> CResult<Compiled> {
+        let head = self.compile_branch(q)?;
+        let Some((all, tail)) = &q.union else { return Ok(head) };
+
+        // A fresh compiler per branch: alias counters and bindings are
+        // per-branch state, and sharing them across a UNION would leak names
+        // from one side into the other.
+        let mut c = Compiler::new(&self.graph);
+        let rest = c.compile_read(tail)?;
+        self.notes.append(&mut c.notes);
+
+        if head.columns != rest.columns {
+            return Err(format!(
+                "all branches of a UNION must return the same columns in the same order —                  left returns ({}), right returns ({})",
+                head.columns.join(", "),
+                rest.columns.join(", ")
+            ));
+        }
+
+        let keyword = if *all { "UNION ALL" } else { "UNION" };
+        Ok(Compiled {
+            sql: format!(
+                "SELECT * FROM (\n{}\n) AS ub_l\n{keyword}\nSELECT * FROM (\n{}\n) AS ub_r",
+                head.sql, rest.sql
+            ),
+            columns: head.columns,
+        })
+    }
+
+    fn compile_branch(&mut self, q: &Query) -> CResult<Compiled> {
         self.reachability_only = Self::multiplicity_blind(q);
         let mut projection: Option<&Projection> = None;
 
@@ -862,7 +902,20 @@ impl Compiler {
             // or relationship variable, and a projection that collapses
             // duplicates — the same answer comes out of a BFS that visits each
             // node once, and the cost stops being exponential in the depth.
-            let f = if rel.var.is_none() && self.reachability_only && prefer_reachability(max) {
+            // `min > 1` is where the two functions stop meaning the same thing.
+            // `og_vlp` enumerates trails, so it answers "is there a walk whose
+            // length falls in [min, max]". `og_reach` visits each node once and
+            // emits it at its *shortest* distance, so a node one hop away that
+            // is also reachable in three is marked visited at depth 1, never
+            // emitted, and never reconsidered — the rewrite silently drops it.
+            // The regression suite only ever writes `*1..k`, which is why this
+            // has never been observed. Reachability is an optimisation, and an
+            // optimisation that changes the answer is not one.
+            let f = if rel.var.is_none()
+                && min <= 1
+                && self.reachability_only
+                && prefer_reachability(max)
+            {
                 self.notes.push(format!(
                     "variable-length hop compiled as reachability (og_reach): \
                      no path is observable, so trails are not enumerated"
