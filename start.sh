@@ -55,11 +55,16 @@ fi
 # Optional by design: nothing on the PostgreSQL path depends on it running.
 if [ "${OG_BOLT:-1}" = "1" ]; then
     if ! docker exec "$CONTAINER" bash -lc "pgrep -f ontological-bolt >/dev/null"; then
+        # The gateway defaults to loopback, because Bolt authenticates in the
+        # clear. Here it binds every interface on purpose: it is inside the
+        # container, and what decides exposure is the -p mapping above — which
+        # publishes the container's 7687, not $BOLTPORT.
         say "starting Bolt gateway on localhost:$BOLTPORT"
         docker exec "$CONTAINER" bash -lc \
             "cd /work/bolt && cargo build --release -q" >/dev/null 2>&1 || true
         docker exec -d "$CONTAINER" bash -lc \
             "OG_BOLT_PGPORT=$PGPORT OG_BOLT_PGDATABASE=$DB OG_BOLT_ADVERTISED=localhost:$BOLTPORT \
+             OG_BOLT_LISTEN=0.0.0.0:7687 \
              /work/bolt/target/release/ontological-bolt > /tmp/ontological-bolt.log 2>&1"
     fi
 fi

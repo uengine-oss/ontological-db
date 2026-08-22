@@ -23,9 +23,9 @@
 | [04_frontend/](04_frontend/00_index.md) | UI는 왜 이렇게 동작하는가? | 8 |
 | [05_llm/](05_llm/00_index.md) | 에이전트/RAG는 이 DB를 어떻게 쓰는가? | 11 |
 | [06_data/](06_data/00_index.md) | 데이터는 무엇을 의미하는가? | 11 |
-| [07_security/](07_security/00_index.md) | 어디가 깨지는가? | 10 |
+| [07_security/](07_security/00_index.md) | 어디가 깨지는가? | 11 |
 | [08_operations/](08_operations/00_index.md) | 어떻게 띄우고 고치는가? | 11 |
-| [99_decisions/](99_decisions/00_index.md) | 왜 그렇게 했는가? (ADR 24건) | 25 |
+| [99_decisions/](99_decisions/00_index.md) | 왜 그렇게 했는가? (ADR 25건) | 26 |
 
 기존 영문 문서 — [architecture.md](architecture.md), [api.md](api.md),
 [cypher.md](cypher.md), [typeql.md](typeql.md), [benchmark.md](benchmark.md),
@@ -73,6 +73,12 @@
 아래 항목은 문서 작성 중 발견되어 **코드에서 직접 재확인한 것들**입니다.
 정답성을 해치는 것부터 나열합니다.
 
+> **보안 항목 일부는 이미 수정되었습니다.** Critical 5건은 전부, High 13건은
+> 4건 수정 · 4건 부분 수정이고, 아래 보안 표에 상태를 표시했습니다. 무엇이 어떻게 바뀌었고 무엇이
+> 남았는지는 [07_security/10_fixed.md](07_security/10_fixed.md) 에 있습니다.
+> 설계 근거는 [ADR-025](99_decisions/ADR-025-privilege-model-default-deny.md).
+> **정답성·운영 항목은 손대지 않았습니다.**
+
 ### 정답성 (조용히 틀린 답이 나온다)
 
 | 항목 | 근거 | 증상 |
@@ -83,16 +89,23 @@
 | `*min..max`의 `min > 1` 발산 | [compile.rs:865](../engine/src/cypher/compile.rs#L865)의 `prefer_reachability(max)`가 `min`을 보지 않음. [traverse.rs:144](../engine/src/storage/traverse.rs#L144)의 방문집합은 **최단 거리**만 방출 | `og_vlp`(트레일 길이)와 `og_reach`(최단 거리)가 다른 답. 회귀 스위트가 `*1..k`만 써서 **본 적이 없다** |
 | 플랜 캐시가 스키마 변경에 무효화 안 됨 | 캐시 키가 `(graph, query)`뿐 ([cypher/mod.rs:26-31](../engine/src/cypher/mod.rs#L26-L31)). `bump_schema_version()`은 `og_data.v_*`를 DROP | 캐시 히트 시 **폐기된 뷰를 참조하는 SQL 실행**. 프로퍼티 자동 승격조차 이 경로를 탄다 |
 
-### 보안
+### 보안 — 대부분 수정됨
 
-| 항목 | 근거 | 증상 |
+상태는 [07_security/10_fixed.md](07_security/10_fixed.md) 기준입니다. "증상" 열은
+**감사 시점(`7d60c82`)에 무엇이 잘못돼 있었는지**의 기록입니다.
+
+| 항목 | 상태 | 감사 시점의 증상 |
 |---|---|---|
-| `GRANT`/`REVOKE` 0줄 | `bootstrap.sql`·`access.sql` 전수 grep 0건 | 모든 함수가 PUBLIC EXECUTE. `og_set_setting`으로 누구나 `genai.endpoint` 변경 → DB 백엔드발 SSRF |
-| 생성 뷰에 `security_invoker` 없음 | 저장소 전체 0건. [views.rs:135](../engine/src/cypher/views.rs#L135) | 라벨 `MATCH`가 지나는 뷰에서 **RLS가 뷰 소유자 기준으로 평가** |
-| `FORCE ROW LEVEL SECURITY` 없음 | [interop/mod.rs:24](../engine/src/interop/mod.rs#L24)가 `ENABLE`만 | 테이블 소유자로 접속한 앱은 정책을 받지 않음 |
-| Studio 무인증 + 전 인터페이스 바인드 | [index.js:296](../portal/server/index.js#L296) `pool.query(sql)`, [:368](../portal/server/index.js#L368) `listen(PORT)` 호스트 인자 없음 | 임의 SQL이 네트워크에 노출. 바로 다음 줄 로그는 `http://localhost`라고 표시 |
-| SQL 문자열 보간 3곳 | [vector/mod.rs:116](../engine/src/vector/mod.rs#L116) `AND ({f})`, [:338](../engine/src/vector/mod.rs#L338) `s.prop = '{prop}'`, [interop/mod.rs:27](../engine/src/interop/mod.rs#L27) | Cypher 경로의 "단일 `$1` 바인딩" 보증에서 벗어난 예외 |
-| Bolt가 인증 전 신뢰 없는 입력 파싱 | [session.rs:113](../bolt/src/session.rs#L113), [packstream.rs:224](../bolt/src/packstream.rs#L224) `Vec::with_capacity(n)` | 길이·재귀 깊이 상한 없음 |
+| `GRANT`/`REVOKE` 0줄 | **수정** | 모든 함수가 PUBLIC EXECUTE 인데 테이블에는 GRANT 가 하나도 없어, 닫혀야 할 곳이 열리고 열려야 할 곳이 닫혀 있었다. 이제 기본 거부 + `og_grant(role, level)` |
+| `og_set_setting` 경유 SSRF | **수정** | `genai.endpoint` 를 바꿔 DB 백엔드가 임의 주소로 요청. 이제 admin 전용 |
+| 생성 뷰에 `security_invoker` 없음 | **수정** (pg15+) | 라벨 `MATCH` 가 지나는 뷰에서 RLS 가 뷰 소유자 기준으로 평가. **pg13/pg14 에는 옵션 자체가 없어 그대로 남는다** |
+| `FORCE ROW LEVEL SECURITY` 없음 | **수정** | `ENABLE` 단독은 테이블 소유자를 면제하는데, 저장 테이블 소유자가 곧 확장 설치자였다 |
+| Studio 무인증 + 전 인터페이스 바인드 | **수정** | 임의 SQL 이 네트워크에 노출되면서 로그는 `http://localhost` 라고 표시. 이제 루프백 기본, raw SQL 은 옵트인, `/api/*` 에 동일 출처·content-type 검사 |
+| Bolt 인증 전 입력 파싱 | **수정** | 길이 필드 기반 선할당, 메시지 길이 무제한, 재귀 깊이 무제한. 회귀 테스트 4건 추가 |
+| Bolt `0.0.0.0` 기본 바인드 | **수정** | 평문 인증이 전 인터페이스에 노출. 이제 `127.0.0.1` 기본 |
+| SQL 문자열 보간 3곳 | **부분** | [:338](../engine/src/vector/mod.rs#L338) `s.prop = '{prop}'` 은 바인딩으로 교체. `AND ({f})` 는 설계상 SQL 조각이고, `og_map_table` 의 표현식도 마찬가지 — 둘 다 권한으로 축소했을 뿐이다 |
+| Bolt TLS 없음 | **미수정** | 자격증명이 평문으로 오간다. 루프백 기본이 완화일 뿐 해결이 아니다 |
+| 레지스트리 테이블 RLS 없음 | **미수정** | 순회 계획이 바뀌므로 측정 없이 넣을 변경이 아니다 |
 
 ### 운영
 
@@ -129,7 +142,7 @@
 | [api.md:178](api.md#L178) | `og_apply_role`의 row caps | `max_rows`를 읽는 코드가 없다 |
 | [api.md:132](api.md#L132) | `og_similar(graph, …)` | [vector/mod.rs:173](../engine/src/vector/mod.rs#L173) `let _ = graph;` |
 | [api.md:113](api.md#L113) | `og_typeql(…, params)` | [typeql/mod.rs:52](../engine/src/typeql/mod.rs#L52) `_params`, 미사용 |
-| [architecture.md:264](architecture.md#L264) | "RLS가 순회 중간에 적용된다" | 생성 뷰에 `security_invoker`가 없어 성립하지 않는다 |
+| [architecture.md:264](architecture.md#L264) | "RLS가 순회 중간에 적용된다" | 감사 시점에는 생성 뷰에 `security_invoker` 가 없어 성립하지 않았다. **수정 후 pg15 이상에서는 성립하고, pg13/pg14 에서는 여전히 성립하지 않는다** |
 | [benchmark.md:397](benchmark.md#L397) | 출처 `bench-50000-20260806T052220Z` | `bench/results/`에 없다 |
 | [benchmark.md:325](benchmark.md#L325) | 124,580 edges/s | [harness.py:322](../bench/harness.py#L322)의 `og_data.*` 직접 INSERT 경로. **쓰기 API 수치가 아니다** |
 | [deep-traversal.md](deep-traversal.md) | 전환 규칙 `Σ degreeⁱ > \|V\|`, "Depth ≥ 12" 분기 | 실제는 고정 `WALKS = 512`, 해당 분기 없음 |

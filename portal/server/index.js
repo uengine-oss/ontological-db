@@ -15,6 +15,18 @@ const path = require('node:path');
 const { Pool } = require('pg');
 
 const PORT = Number(process.env.PORT || 7474);
+
+// `server.listen(PORT, cb)` binds every interface, and the startup line said
+// "localhost" while doing it — so a laptop on a shared network was serving
+// unauthenticated SQL to that network and reporting otherwise. Loopback is the
+// default now, and reaching further is something you have to ask for twice.
+const HOST = process.env.OG_STUDIO_HOST || '127.0.0.1';
+const ALLOW_REMOTE = process.env.OG_STUDIO_ALLOW_REMOTE === '1';
+const LOOPBACK = new Set(['127.0.0.1', '::1', 'localhost']);
+
+// The raw-SQL escape hatch is a development convenience that happens to be a
+// remote shell into the database. Off unless asked for.
+const ALLOW_RAW_SQL = process.env.OG_STUDIO_ALLOW_RAW_SQL === '1';
 const WEB_DIR = path.join(__dirname, '..', 'web');
 const BENCH_DIR = process.env.OG_BENCH_DIR || path.join(__dirname, '..', '..', 'bench', 'results');
 
@@ -27,6 +39,47 @@ const pool = new Pool({
   max: 8,
   idleTimeoutMillis: 30_000,
 });
+
+/**
+ * Refuse anything that did not come from this page.
+ *
+ * There is no CORS handler here, so a cross-origin script cannot read a reply —
+ * but it can still send one. A form POST with a `text/plain` body is a "simple
+ * request": no preflight, and the old `readBody` parsed it as JSON regardless.
+ * That is a blind write against the database of whoever visits the wrong page,
+ * and binding to loopback does not stop it, because the browser making the
+ * request is already inside.
+ *
+ * Two checks close it. `Sec-Fetch-Site` is set by the browser and cannot be
+ * spoofed from script; `Origin` is sent on every cross-origin write. A request
+ * carrying neither is not from a browser — curl and psql-style clients keep
+ * working, and they were never the ones being tricked.
+ */
+function sameOrigin(req) {
+  const site = req.headers['sec-fetch-site'];
+  if (site && site !== 'same-origin' && site !== 'none') return false;
+  const origin = req.headers.origin;
+  if (origin) {
+    try {
+      if (new URL(origin).host !== req.headers.host) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * A body has to be declared as JSON to be read as JSON.
+ *
+ * This is the other half of the CSRF fix: `application/json` is not a content
+ * type a simple request can carry, so requiring it forces a preflight, and
+ * there is nothing here to answer one.
+ */
+function declaresJson(req) {
+  const ct = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+  return ct === 'application/json';
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -292,8 +345,18 @@ const routes = {
     }
   },
 
-  /** Raw SQL escape hatch — this is still PostgreSQL underneath. */
+  /**
+   * Raw SQL escape hatch — this is still PostgreSQL underneath.
+   *
+   * Which is exactly why it is off by default: the pool holds credentials, so
+   * this route is the pool's privileges handed to whoever can reach the port.
+   */
   async 'POST /api/sql'(req, res) {
+    if (!ALLOW_RAW_SQL) {
+      return json(res, 403, {
+        error: 'raw SQL is disabled — start the server with OG_STUDIO_ALLOW_RAW_SQL=1 to enable it',
+      });
+    }
     const { sql = '' } = await readBody(req);
     try {
       const r = await pool.query(sql);
@@ -345,6 +408,15 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const key = `${req.method} ${url.pathname}`;
 
+  if (url.pathname.startsWith('/api/')) {
+    if (!sameOrigin(req)) {
+      return json(res, 403, { error: 'cross-origin request refused' });
+    }
+    if (req.method !== 'GET' && req.method !== 'HEAD' && !declaresJson(req)) {
+      return json(res, 415, { error: 'content-type must be application/json' });
+    }
+  }
+
   if (routes[key]) {
     try {
       await routes[key](req, res, url);
@@ -365,10 +437,28 @@ const server = http.createServer(async (req, res) => {
   fs.createReadStream(full).pipe(res);
 });
 
-server.listen(PORT, () => {
-  process.stdout.write(
-    `Ontological Studio on http://localhost:${PORT}  (postgres ${pool.options.host}:${pool.options.port}/${pool.options.database})\n`
+if (!LOOPBACK.has(HOST) && !ALLOW_REMOTE) {
+  process.stderr.write(
+    `refusing to bind ${HOST}: this server has no authentication, and the pool it holds ` +
+      `can do anything its database role can.\nSet OG_STUDIO_ALLOW_REMOTE=1 if that is ` +
+      `genuinely what you want, and put something in front of it that asks who is calling.\n`
   );
+  process.exit(1);
+}
+
+server.listen(PORT, HOST, () => {
+  // Print where it actually bound. The previous line said localhost no matter
+  // what, which is how a public bind goes unnoticed.
+  process.stdout.write(
+    `Ontological Studio on http://${HOST}:${PORT}  ` +
+      `(postgres ${pool.options.host}:${pool.options.port}/${pool.options.database})\n`
+  );
+  if (ALLOW_RAW_SQL) {
+    process.stdout.write('  POST /api/sql is ENABLED — anyone who can reach this port can run any SQL\n');
+  }
+  if (!LOOPBACK.has(HOST)) {
+    process.stdout.write(`  bound to ${HOST}, and nothing here authenticates\n`);
+  }
 });
 
 process.on('SIGINT', () => {

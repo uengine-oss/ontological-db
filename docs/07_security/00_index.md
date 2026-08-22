@@ -1,5 +1,10 @@
 # 07_security — 보안
 
+> ⚠️ **이 문서는 감사 커밋 `7d60c82` 시점의 스냅샷이다.** 이후 Critical 5건과
+> High 8건(4건 수정 · 4건 부분)이 반영되었으므로, 여기 서술된 결함 중 일부는 **현재 코드에 더 이상
+> 존재하지 않는다.** 현재 상태는 [10_fixed.md](10_fixed.md) 를 볼 것.
+
+
 > **이 문서가 답하는 질문**
 > - 이 카테고리에는 무엇이 들어 있고, 어떤 순서로 읽어야 하는가?
 > - 이 시스템의 보안 표면은 왜 일반적인 웹 애플리케이션과 다른가?
@@ -21,7 +26,7 @@
 | 이 시스템을 **배포**하려는 사람 | [`08_secure_deployment.md`](08_secure_deployment.md) → [`06_network_exposure.md`](06_network_exposure.md) |
 | 이 시스템을 **수정**하려는 사람 | [`04_injection_surface.md`](04_injection_surface.md) → [`05_process_safety.md`](05_process_safety.md) |
 | 이 시스템을 **평가**하려는 사람 | [`01_threat_model.md`](01_threat_model.md) → [`09_improvements_security.md`](09_improvements_security.md) |
-| **LLM 에이전트** | [`09_improvements_security.md`](09_improvements_security.md) 의 표가 단일 진실 원천 |
+| **LLM 에이전트** | [`10_fixed.md`](10_fixed.md) 로 현재 상태를 먼저 확인한 뒤 [`09_improvements_security.md`](09_improvements_security.md) 의 표를 볼 것 |
 
 ---
 
@@ -68,7 +73,8 @@
 | [`06_network_exposure.md`](06_network_exposure.md) | Bolt 포트/TLS, genai 아웃바운드, SSRF, 비밀 관리 |
 | [`07_audit_and_history.md`](07_audit_and_history.md) | 감사 로그, 히스토리 캡처, 시점 조회의 보안적 한계 |
 | [`08_secure_deployment.md`](08_secure_deployment.md) | 복사-붙여넣기 가능한 안전 배포 설정 |
-| [`09_improvements_security.md`](09_improvements_security.md) | **SEC-01 ~ SEC-33 개선 포인트 (단일 진실 원천)** |
+| [`09_improvements_security.md`](09_improvements_security.md) | **SEC-01 ~ SEC-33 개선 포인트 (감사 시점 단일 진실 원천)** |
+| [`10_fixed.md`](10_fixed.md) | **실제로 수정된 것과 남은 것 — 현재 코드 상태** |
 
 ---
 

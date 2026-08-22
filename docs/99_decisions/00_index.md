@@ -53,6 +53,7 @@
 | [022](ADR-022-typedb-example-as-conformance-gate.md) | TypeDB 공식 예제를 무수정으로 통과시키는 것을 적합성 기준으로 삼는다 | Accepted | 2026-08-06 | typeql, testing, docs |
 | [023](ADR-023-benchmark-correctness-gate.md) | 벤치마크에 정확성 게이트를 두고, 불일치 시 성능 수치를 무효 처리한다 | Accepted | 2026-08-06 | testing, docs, performance |
 | [024](ADR-024-rdf-overflow-table-for-lossless-mapping.md) | RDF 매핑 불가 구문을 `og_triple_overflow`에 원형 보존한다 | Accepted | 2026-08-06 | adapters, data, catalog |
+| [025](ADR-025-privilege-model-default-deny.md) | 함수 권한은 기본 거부하고, 역할은 확장이 만들지 않는다 | Accepted | 2026-08-23 | security, api, data, operations |
 
 **Superseded / Deprecated 항목은 현재 없다.** 대체된 결정이 발생하면 상태 열을
 `Superseded by ADR-0NN`으로 바꾸고, 대체 ADR에 근거를 남긴다.

@@ -132,8 +132,13 @@ pub fn ensure_view(tid: i32, is_edge: bool) -> String {
         selects.push(format!("SELECT {} WHERE false", cols.join(", ")));
     }
 
-    Spi::run(&format!("CREATE OR REPLACE VIEW {view} AS {}", selects.join("\nUNION ALL\n")))
+    Spi::run(&format!(
+        "CREATE OR REPLACE VIEW {view}{} AS {}",
+        crate::spiu::VIEW_SECURITY,
+        selects.join("\nUNION ALL\n")
+    ))
         .unwrap_or_else(|e| error!("failed to build type view for type {tid}: {e}"));
+    crate::catalog::privileges::apply_to_view(&view);
     view
 }
 

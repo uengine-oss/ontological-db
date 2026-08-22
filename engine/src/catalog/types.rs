@@ -90,10 +90,15 @@ pub fn ensure_alias_view(tid: i32, name: &str, table: &str) {
     let view = alias_view_name(name);
     // A type name is user input; quoting is what makes that safe here.
     let _ = Spi::run(&format!("DROP VIEW IF EXISTS {view}"));
-    if let Err(e) = Spi::run(&format!("CREATE VIEW {view} AS SELECT * FROM {table}")) {
+    if let Err(e) = Spi::run(&format!(
+        "CREATE VIEW {view}{} AS SELECT * FROM {table}",
+        crate::spiu::VIEW_SECURITY
+    )) {
         // Never fatal: the view is a convenience, and a name that collides with
         // something already in the schema must not stop a type from existing.
         pgrx::log!("could not create the alias view for type {tid} ({name}): {e}");
+    } else {
+        crate::catalog::privileges::apply_to_view(&view);
     }
 }
 
@@ -419,6 +424,7 @@ pub fn create_type_inner(
             )
         };
         Spi::run(&base).expect("type table creation failed");
+        crate::catalog::privileges::apply_to_table(&table);
         // A view named after the type. The physical table is `n_<type_id>`
         // because a type can be renamed in constant time and its identifier
         // must not move; the cost is that `\dt` shows `n_45` and nothing about

@@ -218,6 +218,13 @@ SET statement_timeout = '30s';
 | `PGUSER` | `dev` | 역할 | `:25` |
 | `PGPASSWORD` | `undefined` | 비밀번호. 미설정이면 `pg`가 무인증/`.pgpass` 등에 의존 | `:26` |
 | `OG_BENCH_DIR` | `<repo>/bench/results` | 벤치마크 리포트가 읽을 디렉터리 | `:19` |
+| `OG_STUDIO_HOST` | `127.0.0.1` | 바인드 주소. **루프백이 아니면 `OG_STUDIO_ALLOW_REMOTE=1` 없이는 기동을 거부한다** | `portal/server/index.js` |
+| `OG_STUDIO_ALLOW_REMOTE` | 미설정 | `1` 이면 루프백 외 바인드를 허용. 이 서버에는 인증이 없다 | `portal/server/index.js` |
+| `OG_STUDIO_ALLOW_RAW_SQL` | 미설정 | `1` 이 아니면 `POST /api/sql` 이 403 | `portal/server/index.js` |
+
+> **변경 이력**: 이 세 변수는 [SEC-01/SEC-02](../07_security/10_fixed.md) 수정으로
+> 추가되었다. 그 전에는 `server.listen(PORT, cb)` 가 모든 인터페이스에 바인드하면서
+> 기동 로그는 `http://localhost` 라고 출력했고, `POST /api/sql` 에 게이트가 없었다.
 
 풀 설정은 환경변수가 아니라 **하드코딩**되어 있다 (`portal/server/index.js:27-28`):
 
@@ -245,7 +252,8 @@ idleTimeoutMillis: 30_000,
 
 | 변수 | 기본값 | 의미 | 근거 |
 |---|---|---|---|
-| `OG_BOLT_LISTEN` | `0.0.0.0:7687` | Bolt 연결을 받을 주소 | `bolt/src/main.rs:37` |
+| `OG_BOLT_LISTEN` | **`127.0.0.1:7687`** | Bolt 연결을 받을 주소. Bolt 는 비밀번호를 평문으로 받으므로 기본이 루프백이다 ([SEC-15](../07_security/10_fixed.md)). `start.sh` 는 컨테이너 안이라 `0.0.0.0:7687` 을 명시적으로 넘긴다 | `bolt/src/main.rs` |
+| `OG_BOLT_MAX_SESSIONS` | `256` | 동시 세션 상한. 초과분은 연결을 끊는다 ([SEC-16](../07_security/10_fixed.md)) | `bolt/src/main.rs` |
 | `OG_BOLT_PGHOST` | `localhost` | PostgreSQL 호스트 | `bolt/src/main.rs:39` |
 | `OG_BOLT_PGPORT` | `5432` | PostgreSQL 포트. **파싱 실패 시 조용히 5432로 되돌아간다** (`.parse().unwrap_or(5432)`) | `bolt/src/main.rs:40` |
 | `OG_BOLT_PGDATABASE` | `og` | 데이터베이스 | `bolt/src/main.rs:41` |

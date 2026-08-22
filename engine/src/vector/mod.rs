@@ -332,16 +332,20 @@ fn og_stale_embeddings(graph: &str) -> TableIterator<
             let ids: Vec<i64> = Spi::connect(|client| {
                 client
                     .select(
+                        // {table}/{scol}/{ecol} are generated names — column_name
+                        // maps every character outside [a-z0-9_] to an underscore.
+                        // `prop` is the raw property name the user declared, so it
+                        // is bound rather than pasted.
                         &format!(
                             "SELECT x.id FROM {table} x
                               LEFT JOIN og_data.og_embedding_state s
-                                ON s.entity_id = x.id AND s.prop = '{prop}'
+                                ON s.entity_id = x.id AND s.prop = $1
                               WHERE x.{scol} IS NOT NULL
                                 AND (x.{ecol} IS NULL
                                      OR s.source_hash IS DISTINCT FROM md5(x.{scol}::text))"
                         ),
                         None,
-                        &[],
+                        &[prop.as_str().into()],
                     )
                     .map(|rows| rows.filter_map(|r| r.get::<i64>(1).ok().flatten()).collect())
                     .unwrap_or_default()
