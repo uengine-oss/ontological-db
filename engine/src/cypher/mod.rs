@@ -26,11 +26,38 @@ pub const MAX_VAR_LENGTH: u32 = 8;
 thread_local! {
     /// Compiled-SQL cache. Parsing and compiling is the expensive part of a
     /// repeated query; PostgreSQL caches the resulting plan itself.
-    static PLAN_CACHE: RefCell<HashMap<(String, String), (String, Vec<String>)>> =
+    static PLAN_CACHE: RefCell<HashMap<(String, String, i64), (String, Vec<String>)>> =
         RefCell::new(HashMap::new());
 }
 
+/// The schema counter, as a cache-key component.
+///
+/// The cache used to be keyed on `(graph, query)` alone, so a compiled plan
+/// outlived the schema it was compiled against. The visible failure is worse
+/// than a stale view name: when a property is promoted out of `__ext` into its
+/// own column, a cached plan keeps reading `__ext ->> 'x'` while new writes go
+/// to `p_x`, and the query returns rows with the value silently missing.
+/// Property promotion happens on an ordinary write, so this needs no DDL to
+/// trigger.
+///
+/// Clearing the cache from `bump_schema_version` would only fix the backend
+/// that ran the DDL — the cache is thread-local, one per backend — so the
+/// version belongs in the key. Reading it costs one lookup of a sequence's
+/// `last_value`, which is O(1) and does not grow with the number of schema
+/// changes the way `max(version)` over the table would.
+fn schema_epoch() -> i64 {
+    crate::spiu::one::<i64>("SELECT last_value FROM og_catalog.schema_version_seq", &[])
+        .ok()
+        .flatten()
+        .unwrap_or(0)
+}
+
 fn is_write(q: &Query) -> bool {
+    if let Some((_, tail)) = &q.union {
+        if is_write(tail) {
+            return true;
+        }
+    }
     q.clauses.iter().any(|c| {
         matches!(
             c,
@@ -45,7 +72,7 @@ fn is_write(q: &Query) -> bool {
 }
 
 fn compile_cached(graph: &str, query: &str) -> Result<(String, Vec<String>), String> {
-    let key = (graph.to_string(), query.to_string());
+    let key = (graph.to_string(), query.to_string(), schema_epoch());
     if let Some(hit) = PLAN_CACHE.with(|c| c.borrow().get(&key).cloned()) {
         return Ok(hit);
     }
@@ -165,17 +192,30 @@ fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
         return crate::compat::ddl::run(graph, stmt, params);
     }
 
+    if q.union.is_some() {
+        error!("UNION cannot be combined with a write clause");
+    }
+
     let gid = crate::catalog::types::graph_id(graph);
 
     // 1. Evaluate the read part (if any) to produce bindings.
+    //
+    // `WITH` belongs here. It used to stop the `take_while` and then fall
+    // through the write loop's catch-all, which meant `MATCH (n) WITH n LIMIT 1
+    // DELETE n` dropped the `LIMIT` and deleted the whole label. A clause that
+    // changes which rows are written cannot be ignored — either it is honoured
+    // or the query is refused.
     let read_clauses: Vec<Clause> = q
         .clauses
         .iter()
-        .take_while(|c| matches!(c, Clause::Match { .. } | Clause::Unwind { .. }))
+        .take_while(|c| {
+            matches!(c, Clause::Match { .. } | Clause::Unwind { .. } | Clause::With { .. })
+        })
         .cloned()
         .collect();
 
     let mut envs: Vec<eval::Env> = Vec::new();
+    let mut with_proj: Option<Projection> = None;
     if read_clauses.is_empty() {
         envs.push(HashMap::new());
     } else {
@@ -205,16 +245,56 @@ fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
                         error!("cypher error: {e}");
                     }
                 }
+                Clause::With { proj, where_ } => {
+                    // What is honoured here is the part of `WITH` that decides
+                    // *which rows* reach the write: DISTINCT, ORDER BY, SKIP,
+                    // LIMIT, and a trailing WHERE. What is refused is the part
+                    // that would re-shape the bindings — expressions, aliases
+                    // and aggregates — because the write clauses that follow
+                    // address pattern variables, and a projection that renames
+                    // or computes them leaves nothing for `DELETE n` to mean.
+                    //
+                    // Refusing is the point. Every one of these used to be
+                    // dropped on the floor along with the LIMIT beside it.
+                    if with_proj.is_some() {
+                        error!("only one WITH is supported before a write clause");
+                    }
+                    if !proj.items.iter().all(|i| {
+                        matches!(&i.expr, Expr::Var(v) if i.alias.as_deref().unwrap_or(v) == v)
+                    }) {
+                        error!(
+                            "WITH before a write clause may only carry plain variables —                              expressions, aliases and aggregates are not supported here"
+                        );
+                    }
+                    if let Some(w) = where_ {
+                        match c.expr(w, None) {
+                            Ok(sql) => c.push_where(sql),
+                            Err(e) => error!("cypher error: {e}"),
+                        }
+                    }
+                    with_proj = Some(proj.clone());
+                }
                 _ => {}
             }
         }
-        let proj = Projection {
-            items: c
-                .bound_vars()
-                .into_iter()
-                .map(|v| ReturnItem { expr: Expr::Var(v.clone()), alias: Some(v) })
-                .collect(),
-            ..Default::default()
+        // A WITH that is not last would mean a second scoping horizon, and the
+        // clauses after it were compiled against the first. Refuse rather than
+        // compile something that means neither.
+        if with_proj.is_some()
+            && !matches!(read_clauses.last(), Some(Clause::With { .. }))
+        {
+            error!("WITH must be the last read clause before a write clause");
+        }
+        let proj = match &with_proj {
+            Some(p) => p.clone(),
+            None => Projection {
+                items: c
+                    .bound_vars()
+                    .into_iter()
+                    .map(|v| ReturnItem { expr: Expr::Var(v.clone()), alias: Some(v) })
+                    .collect(),
+                ..Default::default()
+            },
         };
         if proj.items.is_empty() {
             envs.push(HashMap::new());
@@ -351,7 +431,17 @@ fn fold_aggregates(proj: &Projection, rows: &[Value]) -> Value {
                     .filter(|v| !v.is_null())
                     .collect();
                 if *distinct {
-                    values.dedup();
+                    // `Vec::dedup` removes *consecutive* duplicates, and these
+                    // rows arrive in whatever order the plan produced — so
+                    // `count(DISTINCT x)` counted runs, not values. serde_json's
+                    // map is a BTreeMap unless `preserve_order` is on, so a
+                    // value's serialisation is canonical and usable as identity;
+                    // `Value` implements neither `Hash` nor `Ord`, which is why
+                    // this goes through the text form rather than a set of
+                    // values. Order of first appearance is preserved, which is
+                    // what `collect(DISTINCT x)` should return.
+                    let mut seen = std::collections::HashSet::new();
+                    values.retain(|v| seen.insert(v.to_string()));
                 }
                 match f.as_str() {
                     // `count(*)` counts rows; `count(x)` counts non-null x. The

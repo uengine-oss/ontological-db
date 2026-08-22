@@ -1,5 +1,10 @@
 # 성능 개선 포인트 (PERF-01 ~ PERF-30)
 
+> ⚠️ **이 문서는 감사 커밋 `7d60c82` 의 스냅샷이다.** 조용히 틀린 답을 내던 다섯
+> 항목(ARCH-01, ARCH-02/CODE-01, CODE-33, CODE-34, PERF-20)은 이후 수정되었다.
+> 현재 상태는 [`03_backend/12_fixed_correctness.md`](../../03_backend/12_fixed_correctness.md) 를 볼 것.
+
+
 > **이 문서가 답하는 질문**
 > - 지금 이 코드에서 성능을 가장 크게 되찾을 수 있는 지점은 어디인가?
 > - 각 제안의 근거는 어느 파일 몇 번째 줄인가?
@@ -46,7 +51,7 @@
 | PERF-17 | PackStream 경로가 레코드마다 clone·flush·시스템 콜 | Med | `session.rs:353`, `packstream.rs:254-262`, `session.rs:291-299` | `pending[i].clone()` 깊은 복사, 레코드마다 `flush()`, 무버퍼 `TcpStream`, `::text` 캐스트 | `BufWriter` 로 감싸고 PULL 끝에서만 flush, `into_iter()` 로 소유권 이동, 바이너리 jsonb 전송 | 대량 결과의 시스템 콜 1/N (추정) | Bolt 프레이밍 규칙 준수 확인 필요 |
 | PERF-18 | Studio 서버가 전체 결과를 메모리에 적재 | **High** | `portal/server/index.js:188-215,317-342,39-45` | `pg.query()` 버퍼링 → `map` → `projectGraph` → `JSON.stringify`. 행 상한·타임아웃 없음 | 커서(`pg-cursor`) 스트리밍 + 행 상한 + `statement_timeout` | Node 프로세스 OOM 제거 | UI가 부분 결과를 다뤄야 함 |
 | PERF-19 | 회귀 스위트가 단언 값을 검사하지 않는다 | **High** | `tests/run.sh:14-36`, `engine/tests/sql/05_reachability.sql` | `ERROR` 개수만 센다. `f` 를 출력해도 통과 | `pg_regress` 기대 출력 도입 또는 `\if`/`ASSERT` 로 실패시키기 | 전환 판정 회귀가 실제로 잡힘 | 기대 출력 유지 비용 |
-| PERF-20 | `minhop > 1` 에서 재작성이 다른 답을 낸다 | **High** | `traverse.rs:143-153`, `compile.rs:865,874-876` | `og_vlp` 는 트레일 길이, `og_reach` 는 최단 거리 | `min > 1` 이면 재작성 금지, 또는 `og_reach` 에 최단-거리 아닌 의미 추가 | 정확성 확보 (성능은 소폭 손해) | 그만큼 열거 경로로 돌아감 |
+| PERF-20 | `minhop > 1` 에서 재작성이 다른 답을 낸다 | **High** · **fixed** | `traverse.rs:143-153`, `compile.rs:865,874-876` | `og_vlp` 는 트레일 길이, `og_reach` 는 최단 거리 | `min > 1` 이면 재작성 금지, 또는 `og_reach` 에 최단-거리 아닌 의미 추가 | 정확성 확보 (성능은 소폭 손해) | 그만큼 열거 경로로 돌아감 |
 | PERF-21 | `ROWS` 고정 추정치가 계획을 왜곡한다 | Med | `access.sql:140,171,197` | 계획에 실제로 쓰이는 두 개(`og_vlp` 100, `og_reach` 100)가 최대 67만 배 빗나감 | `maxhop`·`reltuples` 기반의 `support function`(`SUPPORT`)으로 동적 추정 | 상위 조인이 해시/머지로 바뀔 여지 | 추정이 커지면 다른 계획이 더 나빠질 수 있음 |
 | PERF-22 | 벡터 검색이 뷰 위에서 실행되고 `ef_search` 를 설정하지 않는다 | Med | `vector/mod.rs:112,126-132,115-118` | `UNION ALL` 뷰 위 `ORDER BY … LIMIT k`. `filter` 는 텍스트 보간. `hnsw.ef_search` 미설정 | 서브타입이 1개면 구체 테이블 직접 지정, `SET LOCAL hnsw.ef_search`, 필터 선택도에 따른 경로 분기 | HNSW 인덱스 유지 + recall 제어 | pgvector 버전별 동작 차이 |
 | PERF-23 | `og_hybrid_search` 가 근접도를 `og_vlp` 로 계산한다 | Med | `vector/mod.rs:251-256` | 양방향·전 타입·깊이 3 트레일 열거 | `og_reach` 로 교체 (다중도가 관측되지 않음) | 3홉 6.85 → 1.61 ms 비율 (**측정**, 단방향 dense 기준) | 없음 — `min(depth)` 로 그룹핑하므로 의미 동일 |
@@ -651,7 +656,7 @@
   # 현재는 "ok" 가 나온다. 고친 뒤에는 05_reachability.sql 이 FAIL 이어야 한다.
   ```
 
-### PERF-20 — `minhop > 1` 에서 재작성이 다른 답을 낸다
+### PERF-20 — [수정됨] `minhop > 1` 에서 재작성이 다른 답을 낸다
 
 - **심각도**: High (정확성, 성능 재작성이 원인)
 - **근거**: [`traverse.rs:143-153`](../../../engine/src/storage/traverse.rs) (방문집합이 최단 거리를 강제),

@@ -117,7 +117,7 @@ VECTOR  FULLTEXT  RANGE  TEXT  POINT  KEY
 | `DELETE` / `DETACH DELETE` | ✅ | `parse_delete` `parser.rs:600` | `Clause::Delete` |
 | `CALL … YIELD` | ✅ | `parse_call` `parser.rs:303` | `Clause::Call` |
 | `CREATE INDEX/CONSTRAINT`, `DROP …` | ✅ | `parse_ddl_create` `parser.rs:352`, `parse_drop` `parser.rs:498` | `Clause::Ddl` |
-| `UNION` / `UNION ALL` | **파싱만** | `parser.rs:161-166` → `Query.union` | 컴파일러가 무시 |
+| `UNION` / `UNION ALL` | **지원** | `parser.rs:161-166` → `Query.union` → `compile.rs` `compile_read` | 분기마다 서브쿼리로 감싸 `UNION [ALL]` 로 잇는다. 컬럼 이름·순서가 다르면 오류. [수정 경위](12_fixed_correctness.md#1-union--arch-01) |
 | `FOREACH` | ❌ | — | 파싱 오류 (`parser.rs:1167-1171` 테스트) |
 | `CALL { … }` (서브쿼리) | ❌ | — | 파싱 오류 |
 | `LOAD CSV` | ❌ | — | 파싱 오류 |

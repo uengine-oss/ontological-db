@@ -31,9 +31,15 @@
 
 ## 미구현 항목의 정확한 경계
 
-### ⚠️ 003 — `UNION`: **파싱은 되고, 조용히 무시된다**
+### ✅ 003 — `UNION`: **수정됨 (이전에는 조용히 무시되었다)**
 
-이것은 "명시적 오류"가 아니라 **조용한 오답**이다. 다른 미구현 항목과 성격이 다르다.
+> 아래 서술은 감사 커밋 `7d60c82` 의 기록이다. **현재는 두 분기가 모두
+> 반환된다** — 각 분기를 서브쿼리로 감싸 `UNION [ALL]` 로 잇고, 분기 간 컬럼
+> 이름·순서가 다르면 오류를 낸다. 경위는
+> [`../03_backend/12_fixed_correctness.md`](../03_backend/12_fixed_correctness.md),
+> 회귀 테스트는 `engine/tests/sql/06_correctness_regressions.sql`.
+
+이것은 "명시적 오류"가 아니라 **조용한 오답**이었다. 다른 미구현 항목과 성격이 달랐다.
 
 - 파서가 `UNION` / `UNION ALL` 을 받아들이고 `Query.union: Option<(bool, Box<Query>)>` 에
   저장한다 ([`engine/src/cypher/parser.rs:147, 161-168`](../../engine/src/cypher/parser.rs),
@@ -41,7 +47,7 @@
 - **`engine/src/` 전체에서 `Query.union` 필드를 읽는 코드가 없다.**
   `compile_read()` 는 `q.clauses` 만 순회한다
   ([`engine/src/cypher/compile.rs:351-370`](../../engine/src/cypher/compile.rs)).
-- 결과: `MATCH … RETURN … UNION MATCH … RETURN …` 은 **오류 없이 첫 분기의 행만 돌려준다.**
+- 결과: `MATCH … RETURN … UNION MATCH … RETURN …` 은 **오류 없이 첫 분기의 행만 돌려주었다.**
 
 헌법 원칙 VIII("오류 메시지는 결정적이고 교정 가능해야")과 003 plan.md의
 "조용히 잘못 해석하는 것보다 명시적 오류가 낫다"에 정면으로 어긋난다.
