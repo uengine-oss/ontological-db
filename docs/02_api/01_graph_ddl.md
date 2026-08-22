@@ -477,7 +477,57 @@ SELECT * FROM og_role_view     WHERE graph = 'default';
 
 ---
 
-## 8. 금지 / 필수
+## 8. 권한 — `og_grant` / `og_revoke`
+
+> 이 절은 [SEC-01~SEC-17 수정](../07_security/10_fixed.md)으로 추가되었다.
+> 설계 근거는 [ADR-025](../99_decisions/ADR-025-privilege-model-default-deny.md).
+
+확장은 설치 시 자신의 모든 `og_*` 함수에서 **PUBLIC 의 EXECUTE 를 회수한다.**
+따라서 설치 직후에는 소유자만 쓸 수 있고, 배분은 명시적으로 한다.
+
+```sql
+-- 롤은 직접 만든다. 확장은 만들어 주지 않는다.
+CREATE ROLE analytics LOGIN PASSWORD '...';
+
+SELECT og_grant('analytics', 'read');    -- 조회·인트로스펙션·통계
+SELECT og_grant('analytics', 'write');   -- + 노드/엣지 DML, 임베딩
+SELECT og_grant('analytics', 'admin');   -- + DDL, 설정, 매핑, RLS
+
+SELECT og_revoke('analytics');           -- 전부 회수
+```
+
+| 함수 | 인자 | 동작 |
+|---|---|---|
+| `og_grant(role, level)` | `level` 기본 `'read'` | 스키마 USAGE, 테이블·시퀀스 권한, 해당 레벨의 함수 EXECUTE 를 부여하고 `og_catalog.grantee` 에 기록 |
+| `og_revoke(role)` | — | `og_catalog`/`og_data` 전체와 확장 함수 전체에서 회수하고 기록 삭제 |
+
+레벨은 중첩된다: `read` ⊂ `write` ⊂ `admin`.
+
+**롤이 없으면 오류다.** 롤은 클러스터 전역이고 `DROP EXTENSION` 이후에도 남으므로
+확장이 만들지 않는다.
+
+**기록해 두는 이유.** 저장 테이블은 구체 타입마다 런타임에 생기므로, 지금 준 권한이
+아직 존재하지 않는 테이블에 닿아야 한다. `ALTER DEFAULT PRIVILEGES` 는 **객체를 만든
+롤** 기준이라 이 경우에 동작하지 않는다 — 이 테이블들은 `og_create_type` 을 호출한
+아무나가 만든다. 그래서 `og_catalog.grantee` 에 남기고 생성 시점에 재부여한다.
+
+### 읽기 롤이 `og_cypher` 를 가지는 것에 대해
+
+`og_cypher` 는 `read` 레벨에 포함된다. Cypher 로 `CREATE`/`DELETE` 를 쓸 수 있는데도
+그렇다. **컴파일된 질의는 평범한 테이블을 읽고 쓰기 때문이다.** `og_data` 에 `SELECT`
+만 가진 롤은 쓰기 문장 자체에서 권한 오류를 받는다. 경계는 함수가 아니라 테이블이며,
+그쪽이 우리가 질의를 정확히 파싱하는 데 의존하지 않는다.
+
+### 쓰기 롤의 한계
+
+선언되지 않은 프로퍼티를 쓰면 컬럼 승격이 일어나는데, 이건 DDL 이므로 `write` 롤에서는
+실패한다. 스키마 변경을 admin 쪽에 남기는 건 의도한 선이지만, 현재 `declare_new_props`
+는 실패를 `is_ok()` 로만 확인하므로 **SPI 오류가 트랜잭션을 중단시키는 경로가 남아
+있다.** 미해결 사항으로 [10_fixed.md](../07_security/10_fixed.md) 4절에 기록돼 있다.
+
+---
+
+## 9. 금지 / 필수
 
 - **필수**: 프로퍼티는 인덱스를 만들기 **전에** `og_add_property`로 선언할 것.
   `og_create_index`는 컬럼 존재를 확인하지 않는다.
@@ -491,7 +541,7 @@ SELECT * FROM og_role_view     WHERE graph = 'default';
 
 ---
 
-## 9. 관련 문서
+## 10. 관련 문서
 
 - 데이터 쓰기 → [02_data_dml.md](02_data_dml.md)
 - Neo4j `CREATE INDEX` / `CREATE CONSTRAINT` 경로 → [09_neo4j_compat.md](09_neo4j_compat.md)

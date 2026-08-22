@@ -336,3 +336,48 @@ CREATE VIEW og_typeql_role AS
 
 COMMENT ON VIEW og_typeql_role IS
   'Spec 010 FR-043: TypeQL role assignments. Relations are reified as nodes, so relation_id is a node id and a relation may carry three or more roles.';
+
+
+-- ============================================================================
+-- Privileges
+--
+-- PostgreSQL grants EXECUTE on a new function to PUBLIC unless told otherwise,
+-- and nothing here ever told it otherwise. That handed every role in the
+-- cluster og_set_setting (which chooses the endpoint the embedding pipeline
+-- sends text to), og_enable_rls, og_map_table and og_drop_graph. Meanwhile no
+-- table carried a grant at all, so the same roles could not run a query — the
+-- extension was open where it should have been shut and shut where it should
+-- have been open.
+--
+-- So: deny by default at the function boundary, and hand access back through
+-- og_grant(role, level), which also records the grant so that storage tables
+-- created later inherit it. A function added after this runs is denied until
+-- someone puts it in a list, which is the direction this should fail in.
+-- ============================================================================
+
+DO $$
+DECLARE
+    f record;
+    n int := 0;
+BEGIN
+    FOR f IN
+        SELECT p.oid::regprocedure AS sig
+          FROM pg_proc p
+          JOIN pg_namespace ns ON ns.oid = p.pronamespace
+         WHERE ns.nspname = current_schema()
+           AND p.proname LIKE 'og\_%'
+    LOOP
+        EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC', f.sig);
+        n := n + 1;
+    END LOOP;
+    RAISE NOTICE
+        'ontological: EXECUTE revoked from PUBLIC on % functions. Grant access with og_grant(''role'', ''read''|''write''|''admin'').',
+        n;
+END
+$$;
+
+COMMENT ON FUNCTION og_grant(text, text) IS
+  'Grant a role standing privileges on og_catalog and og_data. Levels nest: write includes read, admin includes both. The role must already exist — roles are cluster-wide and outlive DROP EXTENSION, so this does not create one. The grant is recorded in og_catalog.grantee and replayed onto storage tables created later.';
+
+COMMENT ON FUNCTION og_revoke(text) IS
+  'Take back everything og_grant handed out, and forget the record. The role itself is left alone.';

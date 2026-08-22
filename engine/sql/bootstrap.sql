@@ -253,6 +253,18 @@ CREATE TABLE og_catalog.setting (
     key   text PRIMARY KEY,
     value text NOT NULL
 );
+
+-- Who has been handed standing privileges, and at which level.
+--
+-- Storage tables are created at runtime, one per concrete type, so a GRANT
+-- issued today has to be re-applied to a table that does not exist yet.
+-- ALTER DEFAULT PRIVILEGES cannot do it: it keys on the role that creates the
+-- object, and these are created by whoever calls og_create_type. Remembering
+-- the grant is what lets og_create_type re-issue it.
+CREATE TABLE og_catalog.grantee (
+    role  text PRIMARY KEY,
+    level text NOT NULL CHECK (level IN ('read', 'write', 'admin'))
+);
 INSERT INTO og_catalog.setting (key, value) VALUES
     ('chunk_size',        '256'),
     ('supernode_threshold','4096'),
@@ -428,6 +440,7 @@ SELECT pg_catalog.pg_extension_config_dump('og_data.og_id_alloc', '');
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_role_player', '');
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_history', '');
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_source', '');
+SELECT pg_catalog.pg_extension_config_dump('og_catalog.grantee', '');
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_audit', '');
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_embedding_state', '');
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_iri', '');
