@@ -21,8 +21,14 @@ fn og_enable_rls(graph: &str, type_name: &str, policy_expr: &str) {
     let tid = types::type_id(gid, type_name);
     for sub in labeling::og_subtypes(tid) {
         let Some(table) = types::storage_table(sub) else { continue };
+        // ENABLE on its own exempts the table's owner, and the storage tables
+        // are owned by whoever installed the extension — so a policy without
+        // FORCE is not evaluated for the one role most likely to be running the
+        // query. Both statements, or the isolation claim is not true.
         Spi::run(&format!("ALTER TABLE {table} ENABLE ROW LEVEL SECURITY"))
             .unwrap_or_else(|e| error!("failed to enable RLS on {table}: {e}"));
+        Spi::run(&format!("ALTER TABLE {table} FORCE ROW LEVEL SECURITY"))
+            .unwrap_or_else(|e| error!("failed to force RLS on {table}: {e}"));
         Spi::run(&format!("DROP POLICY IF EXISTS og_policy ON {table}")).ok();
         Spi::run(&format!(
             "CREATE POLICY og_policy ON {table} USING ({policy_expr})"
@@ -96,10 +102,13 @@ fn og_map_table(
         .unwrap_or_else(|| error!("'{type_name}' is abstract and cannot back a mapping"));
     Spi::run(&format!("DROP TABLE IF EXISTS {table} CASCADE")).ok();
     Spi::run(&format!(
-        "CREATE VIEW {table} AS SELECT {} FROM {source_table}",
-        cols.join(", ")
+        "CREATE VIEW {table}{} AS SELECT {} FROM {}",
+        crate::spiu::VIEW_SECURITY,
+        cols.join(", "),
+        crate::spiu::qname(source_table)
     ))
     .unwrap_or_else(|e| error!("failed to create mapping view: {e}"));
+    crate::catalog::privileges::apply_to_view(&table);
 
     Spi::run_with_args(
         "INSERT INTO og_catalog.mapping (type_id, source_table, id_column, property_map, writable)
