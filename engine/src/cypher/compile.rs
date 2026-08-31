@@ -251,6 +251,11 @@ impl Compiler {
     /// only one where it filters the optional side without dropping the row.
     fn close_optional(&mut self) {
         let Some(scope) = self.optional.take() else { return };
+
+        if self.regroup_optional(&scope) {
+            return;
+        }
+
         for pred in scope.preds {
             let target = scope
                 .joins
@@ -272,6 +277,199 @@ impl Compiler {
                 None => self.wheres.push(pred),
             }
         }
+    }
+
+    /// Collapse a multi-join OPTIONAL MATCH into ONE left join.
+    ///
+    /// Placing each predicate on the join that introduced its last alias is
+    /// correct only while the clause adds a single relation. With two or more,
+    /// the leading one keeps `ON true` and never becomes correlated to the
+    /// outer row:
+    ///
+    /// ```text
+    /// A LEFT JOIN B ON true LEFT JOIN E ON (E.src = B.id AND E.dst = A.id)
+    /// ```
+    ///
+    /// Every `B` survives for every `A`, so a row with no match still binds a
+    /// `B` — an unrelated one. The clause has to be optional *as a whole*: the
+    /// joins inside it are inner, and only its boundary to the outer query is
+    /// left.
+    ///
+    /// ```text
+    /// A LEFT JOIN (B CROSS JOIN LATERAL E) ON (E.dst = A.id)
+    /// ```
+    ///
+    /// Returns false when the shape is not one this can rewrite, leaving the
+    /// caller's per-join placement in charge.
+    fn regroup_optional(&mut self, scope: &OptionalScope) -> bool {
+        if scope.joins.len() < 2 {
+            return false;
+        }
+        // The group must be the trailing run of `from`, or the entries cannot
+        // be lifted into parentheses without reordering the rest.
+        let mut idxs: Vec<usize> = scope.joins.iter().map(|(_, i)| *i).collect();
+        idxs.sort_unstable();
+        idxs.dedup();
+        let start = idxs[0];
+        if idxs.len() != scope.joins.len()
+            || idxs[idxs.len() - 1] != self.from.len() - 1
+            || idxs.iter().enumerate().any(|(k, i)| *i != start + k)
+            || start == 0
+        {
+            return false;
+        }
+
+        // The group becomes a parenthesised join tree, whose first item must be
+        // a plain relation. A LATERAL cannot lead one.
+        if self.from[start].contains("LATERAL") {
+            return false;
+        }
+
+        let group: Vec<&str> = scope.joins.iter().map(|(a, _)| a.as_str()).collect();
+        let in_group = |sql: &str| -> bool { group.iter().any(|a| mentions_alias(sql, a)) };
+        // A parenthesised join cannot see the outer query's aliases; only a
+        // LATERAL could, and that would need the group's columns re-exported.
+        if self.from[start..].iter().any(|e| self.mentions_outside(e, &group)) {
+            return false;
+        }
+
+        let mut boundary: Vec<String> = Vec::new();
+        let mut inner: Vec<(usize, String)> = Vec::new();
+        for pred in &scope.preds {
+            if self.mentions_outside(pred, &group) {
+                boundary.push(pred.clone());
+            } else if in_group(pred) {
+                let idx = scope
+                    .joins
+                    .iter()
+                    .filter(|(alias, _)| mentions_alias(pred, alias))
+                    .max_by_key(|(_, i)| *i)
+                    .map(|(_, i)| *i)
+                    .unwrap();
+                inner.push((idx, pred.clone()));
+            } else {
+                // Mentions nothing at all — a constant like `false`.
+                inner.push((start, pred.clone()));
+            }
+        }
+        if boundary.is_empty() {
+            // Uncorrelated to the outer row; the existing placement is fine.
+            return false;
+        }
+        let mut boundary = boundary;
+
+        let mut entries: Vec<String> = self.from[start..].to_vec();
+        for (idx, pred) in inner {
+            let e = &mut entries[idx - start];
+            if let Some(stripped) = e.strip_suffix(" ON true") {
+                *e = format!("{stripped} ON ({pred})");
+            } else {
+                *e = format!("{e} AND ({pred})");
+            }
+        }
+
+        // Inside the group nothing is optional: strip the outer-facing join
+        // keywords so the parenthesised expression is an inner join tree.
+        // The head becomes a bare relation, so its own ON has to move out.
+        // `ON false` is how an unmatchable label is expressed; under OPTIONAL
+        // MATCH that must still yield NULLs, so it belongs on the left join's
+        // boundary rather than being dropped.
+        let head_raw = strip_join_prefix(&entries[0]);
+        let head = if let Some(h) = head_raw.strip_suffix(" ON true") {
+            h.to_string()
+        } else if let Some(h) = head_raw.strip_suffix(" ON false") {
+            boundary.push("false".into());
+            h.to_string()
+        } else if let Some(i) = head_raw.rfind(" ON ") {
+            boundary.push(head_raw[i + 4..].to_string());
+            head_raw[..i].to_string()
+        } else {
+            head_raw
+        };
+        let mut body = vec![head];
+        for e in &entries[1..] {
+            body.push(
+                // `JOIN LATERAL … ON true`, not CROSS: a CROSS JOIN takes no
+                // ON clause, and these entries carry one.
+                e.replacen("LEFT JOIN LATERAL", "JOIN LATERAL", 1)
+                    .replacen("LEFT JOIN", "JOIN", 1),
+            );
+        }
+
+        self.from.truncate(start);
+        self.from.push(format!(
+            "LEFT JOIN (\n    {}\n  ) ON ({})",
+            body.join("\n    "),
+            boundary.join(" AND ")
+        ));
+        true
+    }
+
+    /// Compile a pattern into `EXISTS (SELECT 1 FROM … WHERE …)`.
+    ///
+    /// The pattern is compiled with the normal machinery, then the joins and
+    /// predicates it added are lifted out of the enclosing query. Bindings it
+    /// introduced are discarded — a predicate must not leak variables.
+    fn pattern_exists(&mut self, pat: &Pattern) -> CResult<String> {
+        let from_mark = self.from.len();
+        let where_mark = self.wheres.len();
+        let saved_binds = self.binds.clone();
+        let saved_rel_ids = std::mem::take(&mut self.rel_ids);
+        // Inside a predicate nothing is optional, and the enclosing OPTIONAL
+        // scope must not swallow these predicates.
+        let saved_optional = self.optional.take();
+
+        let res = self.compile_pattern(pat, false);
+
+        let new_from: Vec<String> = self.from.drain(from_mark..).collect();
+        let new_wheres: Vec<String> = self.wheres.drain(where_mark..).collect();
+        self.binds = saved_binds;
+        self.rel_ids = saved_rel_ids;
+        self.optional = saved_optional;
+        res?;
+
+        if new_from.is_empty() {
+            // Every node was already bound and no hop was added — nothing to
+            // test. This only happens for a degenerate pattern.
+            return Ok("true".into());
+        }
+
+        // `(SELECT 1) _pp` anchors the list so the first entry may keep its
+        // join keyword — a LATERAL cannot open a FROM clause.
+        let mut parts = Vec::with_capacity(new_from.len());
+        for (i, e) in new_from.iter().enumerate() {
+            let has_kw = e.starts_with("JOIN ")
+                || e.starts_with("CROSS JOIN ")
+                || e.starts_with("LEFT JOIN ");
+            parts.push(if i == 0 && !has_kw { format!("CROSS JOIN {e}") } else { e.clone() });
+        }
+        let cond = if new_wheres.is_empty() { "true".to_string() } else { new_wheres.join(" AND ") };
+        Ok(format!(
+            "EXISTS (SELECT 1 FROM (SELECT 1) _pp {} WHERE {})",
+            parts.join(" "),
+            cond
+        ))
+    }
+
+    /// True when `sql` names a *bound* alias this clause did not introduce.
+    ///
+    /// Only Cypher variables can correlate a clause to the outer query, so the
+    /// test is against the bindings — not against every `x.` in the fragment.
+    /// A join's own scratch aliases (`adj3`, the `unnest` output) are internal
+    /// and must not be mistaken for an outer reference.
+    fn mentions_outside(&self, sql: &str, group: &[&str]) -> bool {
+        let refs = alias_refs(sql);
+        self.binds.values().any(|b| {
+            let a = match b {
+                Bind::Node { alias, .. } => Some(alias.as_str()),
+                Bind::Rel { alias: Some(alias), .. } => Some(alias.as_str()),
+                _ => None,
+            };
+            match a {
+                Some(a) => !group.contains(&a) && refs.iter().any(|r| r == a),
+                None => false,
+            }
+        })
     }
 
     /// Start a new MATCH clause.
@@ -1642,6 +1840,47 @@ fn mentions_alias(sql: &str, alias: &str) -> bool {
     sql.match_indices(&needle).any(|(i, _)| {
         i == 0 || !sql.as_bytes()[i - 1].is_ascii_alphanumeric() && sql.as_bytes()[i - 1] != b'_'
     })
+}
+
+/// Aliases referenced as `alias.` in a SQL fragment.
+fn alias_refs(sql: &str) -> Vec<String> {
+    let b = sql.as_bytes();
+    let mut out = Vec::new();
+    for (i, _) in sql.match_indices('.') {
+        if i + 1 >= b.len() || !(b[i + 1].is_ascii_alphabetic() || b[i + 1] == b'_') {
+            continue;
+        }
+        let mut j = i;
+        while j > 0 && (b[j - 1].is_ascii_alphanumeric() || b[j - 1] == b'_') {
+            j -= 1;
+        }
+        if j == i {
+            continue;
+        }
+        // Schema-qualified names (`og_data.og_node`) are not aliases.
+        if j > 0 && (b[j - 1] == b'.' || b[j - 1] == b'"') {
+            continue;
+        }
+        let name = &sql[j..i];
+        if name.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+            continue;
+        }
+        if !out.iter().any(|x: &String| x == name) {
+            out.push(name.to_string());
+        }
+    }
+    out
+}
+
+/// Drop a leading `LEFT JOIN` / `CROSS JOIN` / `JOIN` (with `LATERAL`).
+fn strip_join_prefix(entry: &str) -> String {
+    for p in ["LEFT JOIN LATERAL ", "CROSS JOIN LATERAL ", "JOIN LATERAL ",
+              "LEFT JOIN ", "CROSS JOIN ", "JOIN "] {
+        if let Some(rest) = entry.strip_prefix(p) {
+            return if p.ends_with("LATERAL ") { format!("LATERAL {rest}") } else { rest.to_string() };
+        }
+    }
+    entry.to_string()
 }
 
 /// SQL identifier with proper quoting. Cypher names are case-sensitive and may
