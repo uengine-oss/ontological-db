@@ -92,7 +92,8 @@ fn blind_expr(e: &Expr) -> bool {
             ok && args.iter().all(blind_expr)
         }
         Expr::Binary(_, a, b) => blind_expr(a) && blind_expr(b),
-        Expr::Not(a) | Expr::Neg(a) | Expr::IsNull(a, _) => blind_expr(a),
+        Expr::Not(a) | Expr::Neg(a) | Expr::IsNull(a, _) | Expr::HasLabel(a, _) => blind_expr(a),
+        Expr::PatternPred(_) => false,
         Expr::List(xs) => xs.iter().all(blind_expr),
         Expr::Map(kv) => kv.iter().all(|(_, v)| blind_expr(v)),
         _ => !e.is_aggregate(),
@@ -1463,6 +1464,33 @@ impl Compiler {
                     format!("({s} IS NOT NULL)")
                 }
             }
+            // `n:Label` in an expression. Same subtype test the pattern form
+            // uses, but as a boolean instead of a join constraint.
+            Expr::HasLabel(base, labels) => {
+                let Expr::Var(v) = &**base else {
+                    return Err("label predicate needs a variable".into());
+                };
+                // A node carried through a WITH arrives as jsonb, not as a
+                // join alias; resolve its type through the node table then.
+                let type_id = match self.binds.get(v).cloned() {
+                    Some(Bind::Node { alias, .. }) => format!("{alias}.type_id"),
+                    Some(Bind::Scalar { sql }) => format!(
+                        "(SELECT _lp.type_id FROM og_data.og_node _lp \
+                          WHERE _lp.id = (({sql}) ->> '_id')::int8)"
+                    ),
+                    _ => return Err(format!("unknown node variable '{v}' in label predicate")),
+                };
+                let (want, matchable) = self.resolve_label_match(labels)?;
+                match (matchable, want) {
+                    (false, _) => "false".to_string(),
+                    (true, Some(w)) => format!("og_is_subtype({type_id}, {w})"),
+                    (true, None) => "true".to_string(),
+                }
+            }
+            // A pattern in predicate position becomes a correlated EXISTS.
+            // Nodes already bound outside keep their alias, so the subquery
+            // references the outer row — which is what makes it correlated.
+            Expr::PatternPred(pat) => self.pattern_exists(pat)?,
             Expr::Binary(op, l, r) => self.binary(*op, l, r)?,
             // Against an array column the list is that array, not a jsonb one:
             // `MERGE (a)-[:ACTED_IN {roles:['Neo']}]->(m)` has to compare

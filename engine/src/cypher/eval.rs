@@ -42,6 +42,9 @@ pub fn eval(e: &Expr, env: &Env, params: &Value) -> Result<Value, String> {
         },
         Expr::Not(a) => json!(!truthy(&eval(a, env, params)?)),
         Expr::IsNull(a, want) => json!(eval(a, env, params)?.is_null() == *want),
+        // 라벨 판정은 타입 카탈로그가 필요하므로 상수 평가 경로에서는 답할 수 없다.
+        Expr::HasLabel(..) => return Err("label predicate is not constant-foldable".into()),
+        Expr::PatternPred(..) => return Err("pattern predicate is not constant-foldable".into()),
         Expr::Binary(op, l, r) => {
             let a = eval(l, env, params)?;
             let b = eval(r, env, params)?;
