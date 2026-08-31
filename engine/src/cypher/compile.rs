@@ -1056,7 +1056,11 @@ impl Compiler {
     ) -> CResult<()> {
         for (k, v) in props {
             let (lhs, ty) = self.prop_sql(alias, tid, k);
-            let rhs = self.expr(v, ty.as_deref())?;
+            // An undeclared property is read with `->>`, which is text. Saying
+            // so lets a jsonb-carried value (one that came through a WITH) be
+            // read out at that type, instead of reaching PostgreSQL as
+            // `text = jsonb` — an operator that does not exist.
+            let rhs = self.expr(v, Some(ty.as_deref().unwrap_or("text")))?;
             self.constrain(format!("{lhs} = {rhs}"));
         }
         Ok(())
@@ -1223,7 +1227,11 @@ impl Compiler {
     ) -> CResult<()> {
         for (k, v) in props {
             let (lhs, ty) = self.prop_sql(alias, tid, k);
-            let rhs = self.expr(v, ty.as_deref())?;
+            // An undeclared property is read with `->>`, which is text. Saying
+            // so lets a jsonb-carried value (one that came through a WITH) be
+            // read out at that type, instead of reaching PostgreSQL as
+            // `text = jsonb` — an operator that does not exist.
+            let rhs = self.expr(v, Some(ty.as_deref().unwrap_or("text")))?;
             self.constrain(format!("{lhs} = {rhs}"));
         }
         Ok(())
@@ -1668,6 +1676,12 @@ impl Compiler {
         }
 
         Ok(match op {
+            // Cypher `+` is list concatenation when either side is a list.
+            // PostgreSQL spells that `||` for jsonb — `+` has no such operator,
+            // so `collect(a) + collect(b)` fails outright without this.
+            BinOp::Add if self.is_jsonb_valued(l) || self.is_jsonb_valued(r) => {
+                format!("(to_jsonb({ls}) || to_jsonb({rs}))")
+            }
             BinOp::Add => format!("({ls} + {rs})"),
             BinOp::Sub => format!("({ls} - {rs})"),
             BinOp::Mul => format!("({ls} * {rs})"),
@@ -1694,6 +1708,24 @@ impl Compiler {
 
     /// The SQL type of an expression when we can determine it — used to drive
     /// parameter coercion.
+    /// True when the expression's SQL value is jsonb rather than a scalar.
+    fn is_jsonb_valued(&self, e: &Expr) -> bool {
+        match e {
+            Expr::List(_) | Expr::Map(_) | Expr::MapProjection { .. } => true,
+            // 리스트를 만드는 함수들 — `collect(a) + collect(b)` 가 대표적이다.
+            Expr::Func { name, .. } => matches!(
+                name.to_ascii_lowercase().as_str(),
+                "collect" | "labels" | "keys" | "split" | "nodes" | "relationships"
+            ),
+            Expr::ListComp { .. } => true,
+            Expr::Var(v) => matches!(
+                self.binds.get(v),
+                Some(Bind::Node { .. }) | Some(Bind::Rel { .. }) | Some(Bind::Scalar { .. })
+            ),
+            _ => false,
+        }
+    }
+
     fn type_of(&self, e: &Expr) -> Option<String> {
         match e {
             Expr::Prop(base, p) => {
@@ -1731,7 +1763,10 @@ impl Compiler {
             }
             "collect" => {
                 let a = self.expr(&args[0], None)?;
-                return Ok(format!("jsonb_agg({d}{a})"));
+                // Cypher 의 collect 는 대상이 없으면 빈 리스트를 낸다.
+                // `jsonb_agg` 는 NULL 을 내므로 그대로 두면 호출부가
+                // `[]` 를 기대하는 자리에서 None 을 받는다.
+                return Ok(format!("coalesce(jsonb_agg({d}{a}), '[]'::jsonb)"));
             }
             "stdev" => {
                 let a = self.expr(&args[0], None)?;
@@ -1801,9 +1836,26 @@ impl Compiler {
             // as text. Pick the first branch whose type is known and read the
             // untyped ones at that type.
             "coalesce" => {
+                // `coalesce(us.tags, [])` mixes a property — which reads out as
+                // text — with a jsonb literal, and SQL has no operator for the
+                // pair. When any branch is jsonb-valued the answer is jsonb, so
+                // every branch is compiled that way; the property gets its `->`
+                // reading instead of `->>`.
+                if args.iter().any(|x| self.is_jsonb_valued(x)) {
+                    let mut branches = Vec::with_capacity(args.len());
+                    for x in args {
+                        let sql = self.expr_for_output(x)?;
+                        branches.push(if self.is_jsonb_valued(x) || matches!(x, Expr::Prop(..)) {
+                            sql
+                        } else {
+                            format!("to_jsonb({sql})")
+                        });
+                    }
+                    return Ok(format!("coalesce({})", branches.join(", ")));
+                }
                 let want = args.iter().find_map(|x| self.type_of(x));
                 let branches: Vec<String> = match &want {
-                    Some(t) if t != "text" => args
+                    Some(t) => args
                         .iter()
                         .zip(&a)
                         .map(|(x, sql)| {
@@ -1814,7 +1866,7 @@ impl Compiler {
                             }
                         })
                         .collect(),
-                    _ => a.clone(),
+                    None => a.clone(),
                 };
                 format!("coalesce({})", branches.join(", "))
             }
