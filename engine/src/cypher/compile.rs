@@ -1010,7 +1010,16 @@ impl Compiler {
         let alias = self.fresh("n");
         let rel = match tid {
             Some(t) => views::ensure_view(t, false),
-            None => "og_data.og_node".to_string(),
+            // An unlabelled scan still belongs to one graph. `og_node` is shared
+            // across graphs — the graph lives in `type_id` — so without this the
+            // pattern reads every graph's nodes, and `session(database=…)`
+            // stops isolating anything.
+            None => format!(
+                "(SELECT _n.* FROM og_data.og_node _n \
+                  JOIN og_catalog.type _t ON _t.type_id = _n.type_id \
+                  WHERE _t.graph_id = {})",
+                self.gid
+            ),
         };
 
         // An unmatchable label empties this binding only. Under OPTIONAL MATCH
