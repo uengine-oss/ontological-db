@@ -1824,6 +1824,16 @@ impl Compiler {
             "round" => format!("round(({})::numeric)", a[0]),
             "sqrt" => format!("sqrt(({})::float8)", a[0]),
             "rand" => "random()".into(),
+            // Neo4j 의 randomUUID(). PostgreSQL 13+ 는 gen_random_uuid() 를
+            // 내장으로 제공한다. 없으면 SET 안에서 조용히 null 이 되어
+            // "만들었는데 id 가 비어 있는" 노드가 생긴다.
+            "randomuuid" => "gen_random_uuid()::text".into(),
+            // jsonb 로 실려 온 값에 `::text` 를 씌우면 JSON 표현이 나온다 —
+            // 문자열이면 따옴표까지 붙어 `"2026-08-31T…"` 가 된다.
+            // 스칼라를 꺼내는 `#>> '{}'` 이어야 Neo4j 와 같은 값이 된다.
+            "tostring" if self.is_jsonb_valued(&args[0]) => {
+                format!("(({}) #>> '{{}}')", a[0])
+            }
             "tostring" => format!("({})::text", a[0]),
             "tointeger" => format!("({})::int8", a[0]),
             "tofloat" => format!("({})::float8", a[0]),

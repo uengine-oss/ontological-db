@@ -259,11 +259,18 @@ fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
                     if with_proj.is_some() {
                         error!("only one WITH is supported before a write clause");
                     }
-                    if !proj.items.iter().all(|i| {
-                        matches!(&i.expr, Expr::Var(v) if i.alias.as_deref().unwrap_or(v) == v)
+                    // 쓰기 절은 패턴 변수를 *이름으로* 지목한다. 따라서 위험한
+                    // 것은 이름을 바꾸는 투영뿐이다. 계산된 항목은 새 이름으로
+                    // env 에 실릴 뿐 기존 변수를 가리지 않으므로,
+                    // `WITH bc, count(x) AS n MERGE …` 같은 형태는 허용한다.
+                    if !proj.items.iter().all(|i| match &i.expr {
+                        Expr::Var(v) => i.alias.as_deref().unwrap_or(v) == v,
+                        _ => i.alias.is_some(),
                     }) {
                         error!(
-                            "WITH before a write clause may only carry plain variables —                              expressions, aliases and aggregates are not supported here"
+                            "WITH before a write clause may not rename a variable, and every \
+                             computed item needs an alias — the write clauses that follow \
+                             address pattern variables by name"
                         );
                     }
                     if let Some(w) = where_ {
