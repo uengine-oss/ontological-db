@@ -1160,12 +1160,18 @@ impl Compiler {
                 for (name, (col, _)) in &props {
                     pairs.push(format!("{}, to_jsonb({alias}.{col})", sql_str(name)));
                 }
+                // OPTIONAL MATCH 가 매치하지 못하면 조인 컬럼이 전부 NULL 이 된다.
+                // 그대로 두면 jsonb_strip_nulls 가 `{{}}` 로 접어서 SQL NULL 이
+                // 아니게 되고, `x IS NULL` 과 `count(x)` 가 틀린 답을 낸다.
                 format!(
-                    "(jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb))",
+                    "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE \
+                       (jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb)) END)",
                     pairs.join(", ")
                 )
             }
-            None => format!("og_node_json({alias}.id)"),
+            None => format!(
+                "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE og_node_json({alias}.id) END)"
+            ),
         }
     }
 
@@ -1180,8 +1186,10 @@ impl Compiler {
         for (name, (col, _)) in &props {
             pairs.push(format!("{}, to_jsonb({alias}.{col})", sql_str(name)));
         }
+        // node_json 과 같은 이유 — 미매치 관계는 `{{}}` 가 아니라 NULL 이어야 한다.
         format!(
-            "(jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb))",
+            "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE \
+               (jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb)) END)",
             pairs.join(", ")
         )
     }
