@@ -1027,7 +1027,11 @@ impl Compiler {
 
     /// SQL for a property access, plus the column's SQL type when known.
     pub fn prop_sql(&self, alias: &str, tid: Option<i32>, prop: &str) -> (String, Option<String>) {
-        if prop == "id" || prop == "_id" {
+        // `_id` is the internal identifier. `id` is NOT: Neo4j exposes the
+        // internal one as `id(n)` and treats `n.id` as an ordinary user
+        // property, so short-circuiting it here silently shadows a stored
+        // `id` — the read returns the int8 while the write kept the string.
+        if prop == "_id" {
             return (format!("{alias}.id"), Some("int8".into()));
         }
         if let Some(t) = tid {
@@ -1053,7 +1057,7 @@ impl Compiler {
     /// written. Declared properties are real columns and already carry their
     /// type, so they only need wrapping.
     pub fn prop_sql_json(&self, alias: &str, tid: Option<i32>, prop: &str) -> String {
-        if prop == "id" || prop == "_id" {
+        if prop == "_id" {
             return format!("to_jsonb({alias}.id)");
         }
         if let Some(t) = tid {
