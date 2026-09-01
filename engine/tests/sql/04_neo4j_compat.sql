@@ -247,3 +247,5 @@ SELECT og_cypher('compat', $$DROP INDEX doc_text IF EXISTS$$);
 -- file on the first failure, so the marker is what distinguishes "all passed"
 -- from "stopped early".
 \echo '=== COMPAT SUITE COMPLETE ==='
+
+\echo 'OG_TEST_END'

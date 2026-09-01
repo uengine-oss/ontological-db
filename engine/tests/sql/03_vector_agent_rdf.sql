@@ -71,3 +71,5 @@ SELECT og_cypher('onto', $$MATCH (p:Person)-[:owns]->(v) RETURN p.name AS owner,
 
 \echo '=== 006: round trip ==='
 SELECT left(og_dump_rdf('onto'), 700);
+
+\echo 'OG_TEST_END'

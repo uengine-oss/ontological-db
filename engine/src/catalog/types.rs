@@ -98,7 +98,7 @@ pub fn ensure_alias_view(tid: i32, name: &str, table: &str) {
         // something already in the schema must not stop a type from existing.
         pgrx::log!("could not create the alias view for type {tid} ({name}): {e}");
     } else {
-        crate::catalog::privileges::apply_to_view(&view);
+        crate::catalog::privileges::apply_to_view(tid, &view);
     }
 }
 
@@ -424,7 +424,7 @@ pub fn create_type_inner(
             )
         };
         Spi::run(&base).expect("type table creation failed");
-        crate::catalog::privileges::apply_to_table(&table);
+        crate::catalog::privileges::apply_to_table(tid, &table);
         // A view named after the type. The physical table is `n_<type_id>`
         // because a type can be renamed in constant time and its identifier
         // must not move; the cost is that `\dt` shows `n_45` and nothing about

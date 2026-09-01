@@ -42,6 +42,9 @@ pub fn eval(e: &Expr, env: &Env, params: &Value) -> Result<Value, String> {
         },
         Expr::Not(a) => json!(!truthy(&eval(a, env, params)?)),
         Expr::IsNull(a, want) => json!(eval(a, env, params)?.is_null() == *want),
+        // 라벨 판정은 타입 카탈로그가 필요하므로 상수 평가 경로에서는 답할 수 없다.
+        Expr::HasLabel(..) => return Err("label predicate is not constant-foldable".into()),
+        Expr::PatternPred(..) => return Err("pattern predicate is not constant-foldable".into()),
         Expr::Binary(op, l, r) => {
             let a = eval(l, env, params)?;
             let b = eval(r, env, params)?;
@@ -241,7 +244,10 @@ fn as_str(v: &Value) -> String {
 /// Transaction time as ISO-8601, read from PostgreSQL rather than the wall
 /// clock so a write clause and the surrounding SQL agree on "now".
 fn now_iso() -> String {
-    crate::spiu::one::<String>("SELECT now()::text", &[])
+    // Neo4j 의 datetime() 은 ISO 8601 이고, 읽기 경로도 그렇게 낸다.
+    // `now()::text` 는 `2026-08-31 06:09:44+00` 처럼 공백 구분이라
+    // 같은 함수가 쓰기냐 읽기냐에 따라 다른 형식을 내게 된다.
+    crate::spiu::one::<String>("SELECT to_jsonb(now()) #>> '{}'", &[])
         .ok()
         .flatten()
         .unwrap_or_default()
@@ -252,6 +258,13 @@ fn now_epoch() -> i64 {
         .ok()
         .flatten()
         .unwrap_or(0)
+}
+
+fn random_uuid() -> String {
+    crate::spiu::one::<String>("SELECT gen_random_uuid()::text", &[])
+        .ok()
+        .flatten()
+        .unwrap_or_default()
 }
 
 fn func(name: &str, a: &[Value]) -> Result<Value, String> {
@@ -290,6 +303,9 @@ fn func(name: &str, a: &[Value]) -> Result<Value, String> {
         // function there is. Returning null here — which is what happened before
         // — loses the value silently, which is worse than refusing it.
         "timestamp" => json!(now_epoch()),
+        // 쓰기 절의 SET 값은 SQL 로 컴파일되지 않고 여기서 평가된다.
+        // 없으면 `ON CREATE SET n.id = randomUUID()` 가 조용히 null 이 된다.
+        "randomuuid" => json!(random_uuid()),
         "datetime" => json!(now_iso()),
         other => return Err(format!("function '{other}' is not available in a write clause")),
     })

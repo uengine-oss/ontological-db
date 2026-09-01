@@ -888,6 +888,14 @@ impl Parser {
                 self.bump();
                 let p = self.name()?;
                 e = Expr::Prop(Box::new(e), p);
+            } else if self.at_punct(":") {
+                // `n:Label` as a predicate. Map literals parse their keys as
+                // names, so a `:` reaching here is always a label test.
+                let mut labels = Vec::new();
+                while self.eat_punct(":") {
+                    labels.push(self.name()?);
+                }
+                e = Expr::HasLabel(Box::new(e), labels);
             } else if self.at_punct("[") {
                 self.bump();
                 let idx = self.parse_expr()?;
@@ -945,6 +953,19 @@ impl Parser {
                 }
             }
             Tok::Punct(p) if p == "(" => {
+                // `(us)-[:IMPLEMENTS]->(:BC)` is a pattern predicate; `(a + b)`
+                // is a parenthesised expression. They start the same, so try the
+                // pattern first and rewind if it did not turn out to be one.
+                // Only a pattern with a relationship qualifies — a bare `(x)`
+                // stays an expression.
+                let save = self.i;
+                if let Ok(pat) = self.parse_pattern() {
+                    let has_rel = pat.elems.iter().any(|e| matches!(e, PatElem::Rel(_)));
+                    if has_rel && pat.path_var.is_none() {
+                        return Ok(Expr::PatternPred(Box::new(pat)));
+                    }
+                }
+                self.i = save;
                 self.bump();
                 let e = self.parse_expr()?;
                 self.expect_punct(")")?;

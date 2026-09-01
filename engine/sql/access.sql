@@ -355,6 +355,17 @@ COMMENT ON VIEW og_typeql_role IS
 -- someone puts it in a list, which is the direction this should fail in.
 -- ============================================================================
 
+-- Building a type view is the owner's job, not the reader's.
+--
+-- The view is materialised lazily, on the first query that mentions the label,
+-- and it is dropped wholesale whenever the schema changes. That put `CREATE ON
+-- SCHEMA og_data` on the read path: a role holding only SELECT could not run
+-- the query that would have built the view, so any read-only role broke after
+-- every schema change. Running the build as the owner costs nothing in
+-- containment — the view is `security_invoker`, so its reader is still checked
+-- against the storage tables it selects from.
+ALTER FUNCTION og_build_view(int4, bool) SECURITY DEFINER;
+
 DO $$
 DECLARE
     f record;
@@ -371,13 +382,13 @@ BEGIN
         n := n + 1;
     END LOOP;
     RAISE NOTICE
-        'ontological: EXECUTE revoked from PUBLIC on % functions. Grant access with og_grant(''role'', ''read''|''write''|''admin'').',
+        'ontological: EXECUTE revoked from PUBLIC on % functions. Grant access with og_grant(''role'', ''read''|''write''|''admin'', ''graph''|''*'').',
         n;
 END
 $$;
 
-COMMENT ON FUNCTION og_grant(text, text) IS
-  'Grant a role standing privileges on og_catalog and og_data. Levels nest: write includes read, admin includes both. The role must already exist — roles are cluster-wide and outlive DROP EXTENSION, so this does not create one. The grant is recorded in og_catalog.grantee and replayed onto storage tables created later.';
+COMMENT ON FUNCTION og_grant(text, text, text) IS
+  'Grant a role standing privileges on og_catalog and og_data. Levels nest: write includes read, admin includes both. The third argument scopes the grant to one graph; the default ''*'' means every graph. The role must already exist — roles are cluster-wide and outlive DROP EXTENSION, so this does not create one. The grant is recorded in og_catalog.grantee and replayed onto storage tables created later, but only onto tables in a graph the grant actually names.';
 
-COMMENT ON FUNCTION og_revoke(text) IS
-  'Take back everything og_grant handed out, and forget the record. The role itself is left alone.';
+COMMENT ON FUNCTION og_revoke(text, text) IS
+  'Take back what og_grant handed out. Naming a graph takes back that project alone and leaves the role''s other access in place; ''*'' clears the role out entirely. The role itself is left alone either way.';

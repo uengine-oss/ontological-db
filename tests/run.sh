@@ -22,12 +22,24 @@ for f in "$ROOT"/engine/tests/sql/*.sql; do
     # Files that deliberately end in an expected error mark it with EXPECT_ERROR.
     expected="$(grep -c 'EXPECT_ERROR' "$f" || true)"
     actual="$(printf '%s' "$out" | grep -c '^ERROR\|^psql.*ERROR' || true)"
+    # Counting errors is not enough on its own. `ON_ERROR_STOP` means a file that
+    # fails on its first statement produces exactly one error and stops, which is
+    # indistinguishable by count from a file that ran to the end and hit its one
+    # expected error — so a broken build passed the suite while testing nothing.
+    # Each file therefore says out loud that it got as far as it meant to.
+    reached=1
+    if grep -q 'OG_TEST_END' "$f" && ! printf '%s' "$out" | grep -q 'OG_TEST_END'; then
+        reached=0
+    fi
 
-    if [ "$actual" -le "$expected" ]; then
+    if [ "$actual" -le "$expected" ] && [ "$reached" -eq 1 ]; then
         echo "ok"
         pass=$((pass+1))
     else
         echo "FAIL"
+        if [ "$reached" -eq 0 ]; then
+            echo "    stopped before the end of the file" | sed 's/^/    /'
+        fi
         printf '%s\n' "$out" | grep -A2 'ERROR' | head -12 | sed 's/^/    /'
         fail=$((fail+1)); failed+=("$name")
     fi

@@ -37,7 +37,8 @@ use pgrx::prelude::*;
 /// Introspection, query and statistics. Read privileges on the tables are what
 /// make these safe; see the module note on `og_cypher`.
 const READ: &[&str] = &[
-    "og_apoc_meta_schema", "og_as_of", "og_check_integrity", "og_csr_hops",
+    "og_apoc_meta_schema", "og_as_of", "og_build_view", "og_check_integrity",
+    "og_csr_hops",
     "og_csr_reach", "og_csr_stats", "og_cypher", "og_cypher_check",
     "og_cypher_columns", "og_cypher_explain", "og_cypher_json", "og_cypher_sql",
     "og_cypher_stats", "og_degree", "og_degree_all", "og_degree_distribution",
@@ -67,6 +68,40 @@ const WRITE: &[&str] = &[
 /// anything that rewrites or drops storage. Not enumerated — a function absent
 /// from `READ` and `WRITE` lands here, so a new one is admin-only until someone
 /// decides otherwise.
+/// The graph name that means "every graph" — what `og_grant` did before it
+/// could be scoped, and what an unscoped grant still records.
+pub const ALL_GRAPHS: &str = "*";
+
+/// Every storage table and view backing one graph's types, schema-qualified and
+/// ready to interpolate.
+///
+/// Both shapes are here on purpose. The storage table holds the rows; the views
+/// (`v_<tid>`, and the alias view named after the type) are what a compiled
+/// query actually reads, and `security_invoker` means the caller needs SELECT on
+/// each of them in its own right.
+fn graph_storage(graph: &str) -> Vec<String> {
+    Spi::connect(|client| {
+        client
+            .select(
+                "SELECT 'og_data.' || quote_ident(c.relname)
+                   FROM og_catalog.type t
+                   JOIN og_catalog.graph g ON g.graph_id = t.graph_id
+                   JOIN pg_class c
+                     ON c.relname IN (split_part(t.storage_table, '.', 2),
+                                      'v_'  || t.type_id,
+                                      've_' || t.type_id,
+                                      t.name)
+                   JOIN pg_namespace n
+                     ON n.oid = c.relnamespace AND n.nspname = 'og_data'
+                  WHERE g.name = $1 AND c.relkind IN ('r', 'v')",
+                None,
+                &[graph.into()],
+            )
+            .map(|rows| rows.filter_map(|r| r.get::<String>(1).ok().flatten()).collect())
+            .unwrap_or_default()
+    })
+}
+
 fn level_rank(level: &str) -> i32 {
     match level {
         "read" => 1,
@@ -81,8 +116,26 @@ fn level_rank(level: &str) -> i32 {
 /// The role must already exist; this deliberately does not create it. Levels
 /// nest: `write` includes `read`, `admin` includes both.
 #[pg_extern]
-fn og_grant(role: &str, level: default!(&str, "'read'")) {
+fn og_grant(
+    role: &str,
+    level: default!(&str, "'read'"),
+    graph: default!(&str, "'*'"),
+) {
     let rank = level_rank(level);
+    // '*' is every graph — the behaviour this function had before it could be
+    // scoped. Any other value must name a graph that exists, because a typo
+    // would otherwise record a grant that silently covers nothing.
+    if graph != ALL_GRAPHS
+        && spiu::one::<i32>(
+            "SELECT 1 FROM og_catalog.graph WHERE name = $1",
+            &[graph.into()],
+        )
+        .ok()
+        .flatten()
+        .is_none()
+    {
+        error!("graph '{graph}' does not exist");
+    }
     if spiu::one::<i32>("SELECT 1 FROM pg_roles WHERE rolname = $1", &[role.into()])
         .ok()
         .flatten()
@@ -94,10 +147,29 @@ fn og_grant(role: &str, level: default!(&str, "'read'")) {
 
     Spi::run(&format!("GRANT USAGE ON SCHEMA og_catalog, og_data TO {r}"))
         .unwrap_or_else(|e| error!("schema usage grant failed: {e}"));
-    Spi::run(&format!(
-        "GRANT SELECT ON ALL TABLES IN SCHEMA og_catalog, og_data TO {r}"
-    ))
-    .unwrap_or_else(|e| error!("select grant failed: {e}"));
+    // The catalog is handed over whole: the compiler reads it to resolve every
+    // label and property, so a scoped role still needs all of it. That means a
+    // role scoped to one graph can enumerate another graph's label names —
+    // metadata, never rows. Closing that gap is an RLS policy on og_catalog,
+    // not a GRANT.
+    Spi::run(&format!("GRANT SELECT ON ALL TABLES IN SCHEMA og_catalog TO {r}"))
+        .unwrap_or_else(|e| error!("catalog select grant failed: {e}"));
+    if graph == ALL_GRAPHS {
+        Spi::run(&format!("GRANT SELECT ON ALL TABLES IN SCHEMA og_data TO {r}"))
+            .unwrap_or_else(|e| error!("select grant failed: {e}"));
+    } else {
+        // Shared spines. og_node carries (id, type_id) and og_adj the edge
+        // arrays, neither of which is per-graph, so both are handed over whole;
+        // the rows themselves live in the per-type tables below and stay shut.
+        Spi::run(&format!(
+            "GRANT SELECT ON og_data.og_node, og_data.og_adj, og_data.og_edge TO {r}"
+        ))
+        .unwrap_or_else(|e| error!("spine select grant failed: {e}"));
+        for t in graph_storage(graph) {
+            Spi::run(&format!("GRANT SELECT ON {t} TO {r}"))
+                .unwrap_or_else(|e| error!("select grant on {t} failed: {e}"));
+        }
+    }
     // SELECT, not USAGE: reading a sequence's `last_value` is not permission to
     // draw from it. Every Cypher read needs this one — the plan cache is keyed
     // on the schema counter, and that counter is a sequence.
@@ -105,15 +177,41 @@ fn og_grant(role: &str, level: default!(&str, "'read'")) {
         "GRANT SELECT ON ALL SEQUENCES IN SCHEMA og_catalog TO {r}"
     ))
     .unwrap_or_else(|e| error!("catalog sequence read grant failed: {e}"));
+    // Every query — a read included — appends a row to og_audit, and the insert
+    // runs inside the caller's transaction. Without this a `read` role cannot
+    // run one statement: the audit write aborts first and the query never gets
+    // to report its own result. Auditing is the extension's own bookkeeping,
+    // not the caller's data, so it belongs at the lowest level rather than
+    // behind `write`.
+    Spi::run(&format!(
+        "GRANT INSERT ON og_data.og_audit TO {r}"
+    ))
+    .unwrap_or_else(|e| error!("audit insert grant failed: {e}"));
+    Spi::run(&format!(
+        "GRANT USAGE, SELECT ON SEQUENCE og_data.og_audit_audit_id_seq TO {r}"
+    ))
+    .unwrap_or_else(|e| error!("audit sequence grant failed: {e}"));
 
     if rank >= 2 {
         // Writers touch og_data only. Promotion of an undeclared property is a
         // schema change and stays on the admin side of the line; the write path
         // already falls back to the `__ext` column when it cannot promote.
-        Spi::run(&format!(
-            "GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA og_data TO {r}"
-        ))
-        .unwrap_or_else(|e| error!("dml grant failed: {e}"));
+        if graph == ALL_GRAPHS {
+            Spi::run(&format!(
+                "GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA og_data TO {r}"
+            ))
+            .unwrap_or_else(|e| error!("dml grant failed: {e}"));
+        } else {
+            Spi::run(&format!(
+                "GRANT INSERT, UPDATE, DELETE ON og_data.og_node, og_data.og_adj, \
+                 og_data.og_edge TO {r}"
+            ))
+            .unwrap_or_else(|e| error!("spine dml grant failed: {e}"));
+            for t in graph_storage(graph) {
+                Spi::run(&format!("GRANT INSERT, UPDATE, DELETE ON {t} TO {r}"))
+                    .unwrap_or_else(|e| error!("dml grant on {t} failed: {e}"));
+            }
+        }
         Spi::run(&format!(
             "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA og_data TO {r}"
         ))
@@ -133,9 +231,9 @@ fn og_grant(role: &str, level: default!(&str, "'read'")) {
     grant_functions(&r, rank);
 
     Spi::run_with_args(
-        "INSERT INTO og_catalog.grantee (role, level) VALUES ($1, $2)
-         ON CONFLICT (role) DO UPDATE SET level = EXCLUDED.level",
-        &[role.into(), level.into()],
+        "INSERT INTO og_catalog.grantee (role, level, graph) VALUES ($1, $2, $3)
+         ON CONFLICT (role, graph) DO UPDATE SET level = EXCLUDED.level",
+        &[role.into(), level.into(), graph.into()],
     )
     .unwrap_or_else(|e| error!("could not record the grant: {e}"));
 }
@@ -145,8 +243,22 @@ fn og_grant(role: &str, level: default!(&str, "'read'")) {
 /// The role itself is left alone, for the same reason `og_grant` does not
 /// create it: its lifetime is the DBA's business, not ours.
 #[pg_extern]
-fn og_revoke(role: &str) {
+fn og_revoke(role: &str, graph: default!(&str, "'*'")) {
     let r = spiu::ident(role);
+    // Scoped revoke takes back one project and leaves the rest of the role's
+    // access — and the function grants — alone. Only '*' clears the role out.
+    if graph != ALL_GRAPHS {
+        for t in graph_storage(graph) {
+            Spi::run(&format!("REVOKE ALL ON {t} FROM {r}"))
+                .unwrap_or_else(|e| error!("revoke on {t} failed: {e}"));
+        }
+        Spi::run_with_args(
+            "DELETE FROM og_catalog.grantee WHERE role = $1 AND graph = $2",
+            &[role.into(), graph.into()],
+        )
+        .unwrap_or_else(|e| error!("could not clear the grant record: {e}"));
+        return;
+    }
     for stmt in [
         format!("REVOKE ALL ON ALL TABLES IN SCHEMA og_catalog, og_data FROM {r}"),
         format!("REVOKE ALL ON ALL SEQUENCES IN SCHEMA og_catalog, og_data FROM {r}"),
@@ -234,10 +346,16 @@ fn grant_functions(quoted_role: &str, rank: i32) {
 /// Called from every site that creates storage at runtime. Failures are logged
 /// rather than raised: a missing grant must not be the reason a type cannot be
 /// created, and `og_grant` re-run repairs it.
-pub fn apply_to_table(table: &str) {
-    for (role, level) in recorded() {
+pub fn apply_to_table(tid: i32, table: &str) {
+    for (role, level) in reaching(tid) {
         let r = spiu::ident(&role);
-        let t = spiu::qname(table);
+        // Interpolated as given, not re-quoted. Every caller builds its own DDL
+        // from this same string, and one of them — the alias view named after
+        // the type — hands over a name that is already quoted. Running it
+        // through `qname` a second time produced `"og_data"."""Name"""`,
+        // and because the failed GRANT aborts the surrounding transaction, that
+        // turned "a grant is recorded" into "no new label can be created".
+        let t = table;
         if let Err(e) = Spi::run(&format!("GRANT SELECT ON {t} TO {r}")) {
             pgrx::log!("could not grant SELECT on {table} to {role}: {e}");
         }
@@ -250,19 +368,47 @@ pub fn apply_to_table(table: &str) {
 }
 
 /// A view is read-only from the caller's side, so only `SELECT` is replayed.
-pub fn apply_to_view(view: &str) {
-    for (role, _) in recorded() {
+pub fn apply_to_view(tid: i32, view: &str) {
+    for (role, _) in reaching(tid) {
         let r = spiu::ident(&role);
-        if let Err(e) = Spi::run(&format!("GRANT SELECT ON {} TO {r}", spiu::qname(view))) {
+        if let Err(e) = Spi::run(&format!("GRANT SELECT ON {view} TO {r}")) {
             pgrx::log!("could not grant SELECT on {view} to {role}: {e}");
         }
     }
 }
 
+/// The recorded grants that reach a newly created type: the unscoped ones, plus
+/// the ones naming that type's own graph.
+///
+/// Replaying every recorded grant onto every new table — which is what this used
+/// to do — is what made graph scoping decay. A role confined to one project
+/// stayed confined only until the next label was created anywhere.
+fn reaching(tid: i32) -> Vec<(String, String)> {
+    Spi::connect(|client| {
+        client
+            .select(
+                "SELECT gr.role, gr.level
+                   FROM og_catalog.grantee gr
+                  WHERE gr.graph = $1
+                     OR gr.graph = (SELECT g.name
+                                      FROM og_catalog.type t
+                                      JOIN og_catalog.graph g ON g.graph_id = t.graph_id
+                                     WHERE t.type_id = $2)",
+                None,
+                &[ALL_GRAPHS.into(), tid.into()],
+            )
+            .map(|rows| {
+                rows.filter_map(|r| Some((r.get::<String>(1).ok()??, r.get::<String>(2).ok()??)))
+                    .collect()
+            })
+            .unwrap_or_default()
+    })
+}
+
 fn recorded() -> Vec<(String, String)> {
     Spi::connect(|client| {
         client
-            .select("SELECT role, level FROM og_catalog.grantee", None, &[])
+            .select("SELECT role, level FROM og_catalog.grantee ORDER BY role, graph", None, &[])
             .map(|rows| {
                 rows.filter_map(|r| {
                     Some((r.get::<String>(1).ok()??, r.get::<String>(2).ok()??))

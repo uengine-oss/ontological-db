@@ -50,5 +50,7 @@ SELECT og_cypher('social', $$MATCH (p:Person) WHERE p.name = 'Cleo' RETURN p.age
 SELECT og_cypher_sql('social', $$MATCH (a:Person)-[:KNOWS]->(b:Person) WHERE a.age > 30 RETURN b.name$$);
 
 \echo '=== error quality: unknown label ==='
+\echo 'OG_TEST_END'
+
 -- EXPECT_ERROR: unknown label, with a spelling suggestion
 SELECT og_cypher('social', $$MATCH (p:Persn) RETURN p$$);

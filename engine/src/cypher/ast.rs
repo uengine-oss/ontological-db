@@ -81,6 +81,12 @@ pub enum Expr {
     Not(Box<Expr>),
     Neg(Box<Expr>),
     IsNull(Box<Expr>, bool),
+    /// `n:Label` used as a predicate — `WHERE (n:Aggregate AND …)`.
+    /// Distinct from a pattern's label, which constrains the match itself.
+    HasLabel(Box<Expr>, Vec<String>),
+    /// A pattern used as a predicate — `WHERE NOT (us)-[:IMPLEMENTS]->(:BC)`.
+    /// True when at least one match exists, correlated to the enclosing query.
+    PatternPred(Box<Pattern>),
     Func { name: String, args: Vec<Expr>, distinct: bool },
     List(Vec<Expr>),
     Map(Vec<(String, Expr)>),
@@ -224,7 +230,8 @@ impl Expr {
                     || args.iter().any(|a| a.is_aggregate())
             }
             Expr::Binary(_, a, b) => a.is_aggregate() || b.is_aggregate(),
-            Expr::Not(a) | Expr::Neg(a) | Expr::IsNull(a, _) => a.is_aggregate(),
+            Expr::Not(a) | Expr::Neg(a) | Expr::IsNull(a, _) | Expr::HasLabel(a, _) => a.is_aggregate(),
+            Expr::PatternPred(_) => false,
             Expr::List(xs) => xs.iter().any(|x| x.is_aggregate()),
             Expr::Map(kv) => kv.iter().any(|(_, v)| v.is_aggregate()),
             Expr::Case { operand, whens, else_ } => {

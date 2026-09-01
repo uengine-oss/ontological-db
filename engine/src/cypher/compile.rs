@@ -92,7 +92,8 @@ fn blind_expr(e: &Expr) -> bool {
             ok && args.iter().all(blind_expr)
         }
         Expr::Binary(_, a, b) => blind_expr(a) && blind_expr(b),
-        Expr::Not(a) | Expr::Neg(a) | Expr::IsNull(a, _) => blind_expr(a),
+        Expr::Not(a) | Expr::Neg(a) | Expr::IsNull(a, _) | Expr::HasLabel(a, _) => blind_expr(a),
+        Expr::PatternPred(_) => false,
         Expr::List(xs) => xs.iter().all(blind_expr),
         Expr::Map(kv) => kv.iter().all(|(_, v)| blind_expr(v)),
         _ => !e.is_aggregate(),
@@ -251,6 +252,11 @@ impl Compiler {
     /// only one where it filters the optional side without dropping the row.
     fn close_optional(&mut self) {
         let Some(scope) = self.optional.take() else { return };
+
+        if self.regroup_optional(&scope) {
+            return;
+        }
+
         for pred in scope.preds {
             let target = scope
                 .joins
@@ -272,6 +278,199 @@ impl Compiler {
                 None => self.wheres.push(pred),
             }
         }
+    }
+
+    /// Collapse a multi-join OPTIONAL MATCH into ONE left join.
+    ///
+    /// Placing each predicate on the join that introduced its last alias is
+    /// correct only while the clause adds a single relation. With two or more,
+    /// the leading one keeps `ON true` and never becomes correlated to the
+    /// outer row:
+    ///
+    /// ```text
+    /// A LEFT JOIN B ON true LEFT JOIN E ON (E.src = B.id AND E.dst = A.id)
+    /// ```
+    ///
+    /// Every `B` survives for every `A`, so a row with no match still binds a
+    /// `B` — an unrelated one. The clause has to be optional *as a whole*: the
+    /// joins inside it are inner, and only its boundary to the outer query is
+    /// left.
+    ///
+    /// ```text
+    /// A LEFT JOIN (B CROSS JOIN LATERAL E) ON (E.dst = A.id)
+    /// ```
+    ///
+    /// Returns false when the shape is not one this can rewrite, leaving the
+    /// caller's per-join placement in charge.
+    fn regroup_optional(&mut self, scope: &OptionalScope) -> bool {
+        if scope.joins.len() < 2 {
+            return false;
+        }
+        // The group must be the trailing run of `from`, or the entries cannot
+        // be lifted into parentheses without reordering the rest.
+        let mut idxs: Vec<usize> = scope.joins.iter().map(|(_, i)| *i).collect();
+        idxs.sort_unstable();
+        idxs.dedup();
+        let start = idxs[0];
+        if idxs.len() != scope.joins.len()
+            || idxs[idxs.len() - 1] != self.from.len() - 1
+            || idxs.iter().enumerate().any(|(k, i)| *i != start + k)
+            || start == 0
+        {
+            return false;
+        }
+
+        // The group becomes a parenthesised join tree, whose first item must be
+        // a plain relation. A LATERAL cannot lead one.
+        if self.from[start].contains("LATERAL") {
+            return false;
+        }
+
+        let group: Vec<&str> = scope.joins.iter().map(|(a, _)| a.as_str()).collect();
+        let in_group = |sql: &str| -> bool { group.iter().any(|a| mentions_alias(sql, a)) };
+        // A parenthesised join cannot see the outer query's aliases; only a
+        // LATERAL could, and that would need the group's columns re-exported.
+        if self.from[start..].iter().any(|e| self.mentions_outside(e, &group)) {
+            return false;
+        }
+
+        let mut boundary: Vec<String> = Vec::new();
+        let mut inner: Vec<(usize, String)> = Vec::new();
+        for pred in &scope.preds {
+            if self.mentions_outside(pred, &group) {
+                boundary.push(pred.clone());
+            } else if in_group(pred) {
+                let idx = scope
+                    .joins
+                    .iter()
+                    .filter(|(alias, _)| mentions_alias(pred, alias))
+                    .max_by_key(|(_, i)| *i)
+                    .map(|(_, i)| *i)
+                    .unwrap();
+                inner.push((idx, pred.clone()));
+            } else {
+                // Mentions nothing at all — a constant like `false`.
+                inner.push((start, pred.clone()));
+            }
+        }
+        if boundary.is_empty() {
+            // Uncorrelated to the outer row; the existing placement is fine.
+            return false;
+        }
+        let mut boundary = boundary;
+
+        let mut entries: Vec<String> = self.from[start..].to_vec();
+        for (idx, pred) in inner {
+            let e = &mut entries[idx - start];
+            if let Some(stripped) = e.strip_suffix(" ON true") {
+                *e = format!("{stripped} ON ({pred})");
+            } else {
+                *e = format!("{e} AND ({pred})");
+            }
+        }
+
+        // Inside the group nothing is optional: strip the outer-facing join
+        // keywords so the parenthesised expression is an inner join tree.
+        // The head becomes a bare relation, so its own ON has to move out.
+        // `ON false` is how an unmatchable label is expressed; under OPTIONAL
+        // MATCH that must still yield NULLs, so it belongs on the left join's
+        // boundary rather than being dropped.
+        let head_raw = strip_join_prefix(&entries[0]);
+        let head = if let Some(h) = head_raw.strip_suffix(" ON true") {
+            h.to_string()
+        } else if let Some(h) = head_raw.strip_suffix(" ON false") {
+            boundary.push("false".into());
+            h.to_string()
+        } else if let Some(i) = head_raw.rfind(" ON ") {
+            boundary.push(head_raw[i + 4..].to_string());
+            head_raw[..i].to_string()
+        } else {
+            head_raw
+        };
+        let mut body = vec![head];
+        for e in &entries[1..] {
+            body.push(
+                // `JOIN LATERAL … ON true`, not CROSS: a CROSS JOIN takes no
+                // ON clause, and these entries carry one.
+                e.replacen("LEFT JOIN LATERAL", "JOIN LATERAL", 1)
+                    .replacen("LEFT JOIN", "JOIN", 1),
+            );
+        }
+
+        self.from.truncate(start);
+        self.from.push(format!(
+            "LEFT JOIN (\n    {}\n  ) ON ({})",
+            body.join("\n    "),
+            boundary.join(" AND ")
+        ));
+        true
+    }
+
+    /// Compile a pattern into `EXISTS (SELECT 1 FROM … WHERE …)`.
+    ///
+    /// The pattern is compiled with the normal machinery, then the joins and
+    /// predicates it added are lifted out of the enclosing query. Bindings it
+    /// introduced are discarded — a predicate must not leak variables.
+    fn pattern_exists(&mut self, pat: &Pattern) -> CResult<String> {
+        let from_mark = self.from.len();
+        let where_mark = self.wheres.len();
+        let saved_binds = self.binds.clone();
+        let saved_rel_ids = std::mem::take(&mut self.rel_ids);
+        // Inside a predicate nothing is optional, and the enclosing OPTIONAL
+        // scope must not swallow these predicates.
+        let saved_optional = self.optional.take();
+
+        let res = self.compile_pattern(pat, false);
+
+        let new_from: Vec<String> = self.from.drain(from_mark..).collect();
+        let new_wheres: Vec<String> = self.wheres.drain(where_mark..).collect();
+        self.binds = saved_binds;
+        self.rel_ids = saved_rel_ids;
+        self.optional = saved_optional;
+        res?;
+
+        if new_from.is_empty() {
+            // Every node was already bound and no hop was added — nothing to
+            // test. This only happens for a degenerate pattern.
+            return Ok("true".into());
+        }
+
+        // `(SELECT 1) _pp` anchors the list so the first entry may keep its
+        // join keyword — a LATERAL cannot open a FROM clause.
+        let mut parts = Vec::with_capacity(new_from.len());
+        for (i, e) in new_from.iter().enumerate() {
+            let has_kw = e.starts_with("JOIN ")
+                || e.starts_with("CROSS JOIN ")
+                || e.starts_with("LEFT JOIN ");
+            parts.push(if i == 0 && !has_kw { format!("CROSS JOIN {e}") } else { e.clone() });
+        }
+        let cond = if new_wheres.is_empty() { "true".to_string() } else { new_wheres.join(" AND ") };
+        Ok(format!(
+            "EXISTS (SELECT 1 FROM (SELECT 1) _pp {} WHERE {})",
+            parts.join(" "),
+            cond
+        ))
+    }
+
+    /// True when `sql` names a *bound* alias this clause did not introduce.
+    ///
+    /// Only Cypher variables can correlate a clause to the outer query, so the
+    /// test is against the bindings — not against every `x.` in the fragment.
+    /// A join's own scratch aliases (`adj3`, the `unnest` output) are internal
+    /// and must not be mistaken for an outer reference.
+    fn mentions_outside(&self, sql: &str, group: &[&str]) -> bool {
+        let refs = alias_refs(sql);
+        self.binds.values().any(|b| {
+            let a = match b {
+                Bind::Node { alias, .. } => Some(alias.as_str()),
+                Bind::Rel { alias: Some(alias), .. } => Some(alias.as_str()),
+                _ => None,
+            };
+            match a {
+                Some(a) => !group.contains(&a) && refs.iter().any(|r| r == a),
+                None => false,
+            }
+        })
     }
 
     /// Start a new MATCH clause.
@@ -811,7 +1010,16 @@ impl Compiler {
         let alias = self.fresh("n");
         let rel = match tid {
             Some(t) => views::ensure_view(t, false),
-            None => "og_data.og_node".to_string(),
+            // An unlabelled scan still belongs to one graph. `og_node` is shared
+            // across graphs — the graph lives in `type_id` — so without this the
+            // pattern reads every graph's nodes, and `session(database=…)`
+            // stops isolating anything.
+            None => format!(
+                "(SELECT _n.* FROM og_data.og_node _n \
+                  JOIN og_catalog.type _t ON _t.type_id = _n.type_id \
+                  WHERE _t.graph_id = {})",
+                self.gid
+            ),
         };
 
         // An unmatchable label empties this binding only. Under OPTIONAL MATCH
@@ -848,7 +1056,11 @@ impl Compiler {
     ) -> CResult<()> {
         for (k, v) in props {
             let (lhs, ty) = self.prop_sql(alias, tid, k);
-            let rhs = self.expr(v, ty.as_deref())?;
+            // An undeclared property is read with `->>`, which is text. Saying
+            // so lets a jsonb-carried value (one that came through a WITH) be
+            // read out at that type, instead of reaching PostgreSQL as
+            // `text = jsonb` — an operator that does not exist.
+            let rhs = self.expr(v, Some(ty.as_deref().unwrap_or("text")))?;
             self.constrain(format!("{lhs} = {rhs}"));
         }
         Ok(())
@@ -1015,7 +1227,11 @@ impl Compiler {
     ) -> CResult<()> {
         for (k, v) in props {
             let (lhs, ty) = self.prop_sql(alias, tid, k);
-            let rhs = self.expr(v, ty.as_deref())?;
+            // An undeclared property is read with `->>`, which is text. Saying
+            // so lets a jsonb-carried value (one that came through a WITH) be
+            // read out at that type, instead of reaching PostgreSQL as
+            // `text = jsonb` — an operator that does not exist.
+            let rhs = self.expr(v, Some(ty.as_deref().unwrap_or("text")))?;
             self.constrain(format!("{lhs} = {rhs}"));
         }
         Ok(())
@@ -1027,7 +1243,11 @@ impl Compiler {
 
     /// SQL for a property access, plus the column's SQL type when known.
     pub fn prop_sql(&self, alias: &str, tid: Option<i32>, prop: &str) -> (String, Option<String>) {
-        if prop == "id" || prop == "_id" {
+        // `_id` is the internal identifier. `id` is NOT: Neo4j exposes the
+        // internal one as `id(n)` and treats `n.id` as an ordinary user
+        // property, so short-circuiting it here silently shadows a stored
+        // `id` — the read returns the int8 while the write kept the string.
+        if prop == "_id" {
             return (format!("{alias}.id"), Some("int8".into()));
         }
         if let Some(t) = tid {
@@ -1053,7 +1273,7 @@ impl Compiler {
     /// written. Declared properties are real columns and already carry their
     /// type, so they only need wrapping.
     pub fn prop_sql_json(&self, alias: &str, tid: Option<i32>, prop: &str) -> String {
-        if prop == "id" || prop == "_id" {
+        if prop == "_id" {
             return format!("to_jsonb({alias}.id)");
         }
         if let Some(t) = tid {
@@ -1156,12 +1376,18 @@ impl Compiler {
                 for (name, (col, _)) in &props {
                     pairs.push(format!("{}, to_jsonb({alias}.{col})", sql_str(name)));
                 }
+                // OPTIONAL MATCH 가 매치하지 못하면 조인 컬럼이 전부 NULL 이 된다.
+                // 그대로 두면 jsonb_strip_nulls 가 `{{}}` 로 접어서 SQL NULL 이
+                // 아니게 되고, `x IS NULL` 과 `count(x)` 가 틀린 답을 낸다.
                 format!(
-                    "(jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb))",
+                    "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE \
+                       (jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb)) END)",
                     pairs.join(", ")
                 )
             }
-            None => format!("og_node_json({alias}.id)"),
+            None => format!(
+                "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE og_node_json({alias}.id) END)"
+            ),
         }
     }
 
@@ -1176,8 +1402,10 @@ impl Compiler {
         for (name, (col, _)) in &props {
             pairs.push(format!("{}, to_jsonb({alias}.{col})", sql_str(name)));
         }
+        // node_json 과 같은 이유 — 미매치 관계는 `{{}}` 가 아니라 NULL 이어야 한다.
         format!(
-            "(jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb))",
+            "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE \
+               (jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb)) END)",
             pairs.join(", ")
         )
     }
@@ -1253,6 +1481,33 @@ impl Compiler {
                     format!("({s} IS NOT NULL)")
                 }
             }
+            // `n:Label` in an expression. Same subtype test the pattern form
+            // uses, but as a boolean instead of a join constraint.
+            Expr::HasLabel(base, labels) => {
+                let Expr::Var(v) = &**base else {
+                    return Err("label predicate needs a variable".into());
+                };
+                // A node carried through a WITH arrives as jsonb, not as a
+                // join alias; resolve its type through the node table then.
+                let type_id = match self.binds.get(v).cloned() {
+                    Some(Bind::Node { alias, .. }) => format!("{alias}.type_id"),
+                    Some(Bind::Scalar { sql }) => format!(
+                        "(SELECT _lp.type_id FROM og_data.og_node _lp \
+                          WHERE _lp.id = (({sql}) ->> '_id')::int8)"
+                    ),
+                    _ => return Err(format!("unknown node variable '{v}' in label predicate")),
+                };
+                let (want, matchable) = self.resolve_label_match(labels)?;
+                match (matchable, want) {
+                    (false, _) => "false".to_string(),
+                    (true, Some(w)) => format!("og_is_subtype({type_id}, {w})"),
+                    (true, None) => "true".to_string(),
+                }
+            }
+            // A pattern in predicate position becomes a correlated EXISTS.
+            // Nodes already bound outside keep their alias, so the subquery
+            // references the outer row — which is what makes it correlated.
+            Expr::PatternPred(pat) => self.pattern_exists(pat)?,
             Expr::Binary(op, l, r) => self.binary(*op, l, r)?,
             // Against an array column the list is that array, not a jsonb one:
             // `MERGE (a)-[:ACTED_IN {roles:['Neo']}]->(m)` has to compare
@@ -1421,6 +1676,12 @@ impl Compiler {
         }
 
         Ok(match op {
+            // Cypher `+` is list concatenation when either side is a list.
+            // PostgreSQL spells that `||` for jsonb — `+` has no such operator,
+            // so `collect(a) + collect(b)` fails outright without this.
+            BinOp::Add if self.is_jsonb_valued(l) || self.is_jsonb_valued(r) => {
+                format!("(to_jsonb({ls}) || to_jsonb({rs}))")
+            }
             BinOp::Add => format!("({ls} + {rs})"),
             BinOp::Sub => format!("({ls} - {rs})"),
             BinOp::Mul => format!("({ls} * {rs})"),
@@ -1447,6 +1708,24 @@ impl Compiler {
 
     /// The SQL type of an expression when we can determine it — used to drive
     /// parameter coercion.
+    /// True when the expression's SQL value is jsonb rather than a scalar.
+    fn is_jsonb_valued(&self, e: &Expr) -> bool {
+        match e {
+            Expr::List(_) | Expr::Map(_) | Expr::MapProjection { .. } => true,
+            // 리스트를 만드는 함수들 — `collect(a) + collect(b)` 가 대표적이다.
+            Expr::Func { name, .. } => matches!(
+                name.to_ascii_lowercase().as_str(),
+                "collect" | "labels" | "keys" | "split" | "nodes" | "relationships"
+            ),
+            Expr::ListComp { .. } => true,
+            Expr::Var(v) => matches!(
+                self.binds.get(v),
+                Some(Bind::Node { .. }) | Some(Bind::Rel { .. }) | Some(Bind::Scalar { .. })
+            ),
+            _ => false,
+        }
+    }
+
     fn type_of(&self, e: &Expr) -> Option<String> {
         match e {
             Expr::Prop(base, p) => {
@@ -1484,7 +1763,10 @@ impl Compiler {
             }
             "collect" => {
                 let a = self.expr(&args[0], None)?;
-                return Ok(format!("jsonb_agg({d}{a})"));
+                // Cypher 의 collect 는 대상이 없으면 빈 리스트를 낸다.
+                // `jsonb_agg` 는 NULL 을 내므로 그대로 두면 호출부가
+                // `[]` 를 기대하는 자리에서 None 을 받는다.
+                return Ok(format!("coalesce(jsonb_agg({d}{a}), '[]'::jsonb)"));
             }
             "stdev" => {
                 let a = self.expr(&args[0], None)?;
@@ -1554,9 +1836,26 @@ impl Compiler {
             // as text. Pick the first branch whose type is known and read the
             // untyped ones at that type.
             "coalesce" => {
+                // `coalesce(us.tags, [])` mixes a property — which reads out as
+                // text — with a jsonb literal, and SQL has no operator for the
+                // pair. When any branch is jsonb-valued the answer is jsonb, so
+                // every branch is compiled that way; the property gets its `->`
+                // reading instead of `->>`.
+                if args.iter().any(|x| self.is_jsonb_valued(x)) {
+                    let mut branches = Vec::with_capacity(args.len());
+                    for x in args {
+                        let sql = self.expr_for_output(x)?;
+                        branches.push(if self.is_jsonb_valued(x) || matches!(x, Expr::Prop(..)) {
+                            sql
+                        } else {
+                            format!("to_jsonb({sql})")
+                        });
+                    }
+                    return Ok(format!("coalesce({})", branches.join(", ")));
+                }
                 let want = args.iter().find_map(|x| self.type_of(x));
                 let branches: Vec<String> = match &want {
-                    Some(t) if t != "text" => args
+                    Some(t) => args
                         .iter()
                         .zip(&a)
                         .map(|(x, sql)| {
@@ -1567,7 +1866,7 @@ impl Compiler {
                             }
                         })
                         .collect(),
-                    _ => a.clone(),
+                    None => a.clone(),
                 };
                 format!("coalesce({})", branches.join(", "))
             }
@@ -1577,6 +1876,16 @@ impl Compiler {
             "round" => format!("round(({})::numeric)", a[0]),
             "sqrt" => format!("sqrt(({})::float8)", a[0]),
             "rand" => "random()".into(),
+            // Neo4j 의 randomUUID(). PostgreSQL 13+ 는 gen_random_uuid() 를
+            // 내장으로 제공한다. 없으면 SET 안에서 조용히 null 이 되어
+            // "만들었는데 id 가 비어 있는" 노드가 생긴다.
+            "randomuuid" => "gen_random_uuid()::text".into(),
+            // jsonb 로 실려 온 값에 `::text` 를 씌우면 JSON 표현이 나온다 —
+            // 문자열이면 따옴표까지 붙어 `"2026-08-31T…"` 가 된다.
+            // 스칼라를 꺼내는 `#>> '{}'` 이어야 Neo4j 와 같은 값이 된다.
+            "tostring" if self.is_jsonb_valued(&args[0]) => {
+                format!("(({}) #>> '{{}}')", a[0])
+            }
             "tostring" => format!("({})::text", a[0]),
             "tointeger" => format!("({})::int8", a[0]),
             "tofloat" => format!("({})::float8", a[0]),
@@ -1630,6 +1939,47 @@ fn mentions_alias(sql: &str, alias: &str) -> bool {
     sql.match_indices(&needle).any(|(i, _)| {
         i == 0 || !sql.as_bytes()[i - 1].is_ascii_alphanumeric() && sql.as_bytes()[i - 1] != b'_'
     })
+}
+
+/// Aliases referenced as `alias.` in a SQL fragment.
+fn alias_refs(sql: &str) -> Vec<String> {
+    let b = sql.as_bytes();
+    let mut out = Vec::new();
+    for (i, _) in sql.match_indices('.') {
+        if i + 1 >= b.len() || !(b[i + 1].is_ascii_alphabetic() || b[i + 1] == b'_') {
+            continue;
+        }
+        let mut j = i;
+        while j > 0 && (b[j - 1].is_ascii_alphanumeric() || b[j - 1] == b'_') {
+            j -= 1;
+        }
+        if j == i {
+            continue;
+        }
+        // Schema-qualified names (`og_data.og_node`) are not aliases.
+        if j > 0 && (b[j - 1] == b'.' || b[j - 1] == b'"') {
+            continue;
+        }
+        let name = &sql[j..i];
+        if name.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+            continue;
+        }
+        if !out.iter().any(|x: &String| x == name) {
+            out.push(name.to_string());
+        }
+    }
+    out
+}
+
+/// Drop a leading `LEFT JOIN` / `CROSS JOIN` / `JOIN` (with `LATERAL`).
+fn strip_join_prefix(entry: &str) -> String {
+    for p in ["LEFT JOIN LATERAL ", "CROSS JOIN LATERAL ", "JOIN LATERAL ",
+              "LEFT JOIN ", "CROSS JOIN ", "JOIN "] {
+        if let Some(rest) = entry.strip_prefix(p) {
+            return if p.ends_with("LATERAL ") { format!("LATERAL {rest}") } else { rest.to_string() };
+        }
+    }
+    entry.to_string()
 }
 
 /// SQL identifier with proper quoting. Cypher names are case-sensitive and may
