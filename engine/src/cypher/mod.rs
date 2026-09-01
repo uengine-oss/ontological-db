@@ -545,6 +545,72 @@ fn create_rel(graph: &str, gid: i32, rel: &RelPat, a: i64, b: i64, env: &mut eva
     }
 }
 
+/// Freeze a MERGE pattern's inline properties into literals, using the bindings
+/// the write path already has.
+///
+/// The lookup below compiles the pattern to SQL and runs it with `params`. But
+/// `MERGE (f:F {fid: item.fid})` under an `UNWIND` names `item`, and an UNWIND
+/// row lives in `env`, not in the compiled read scope — so `item.fid` resolved
+/// to nothing, the key never matched, and MERGE created a row every time. With
+/// a unique constraint on that property the second call did not merely duplicate,
+/// it failed outright:
+///
+/// ```text
+/// duplicate key value violates unique constraint "uq_1058_function_id"
+/// ```
+///
+/// Evaluating the property expressions here — where `env` is in hand — and
+/// handing the compiler plain literals is what makes the key mean the same thing
+/// on both sides. Expressions that do not resolve are left alone: they may be
+/// parameter references the compiler handles on its own, and replacing those
+/// with NULL would turn a working lookup into a broken one.
+fn freeze_pattern_props(p: &Pattern, env: &eval::Env, params: &Value) -> Pattern {
+    fn lit_of(v: &Value) -> Option<Expr> {
+        match v {
+            Value::String(s) => Some(Expr::Lit(Lit::Str(s.clone()))),
+            Value::Bool(b) => Some(Expr::Lit(Lit::Bool(*b))),
+            Value::Number(n) => n
+                .as_i64()
+                .map(|i| Expr::Lit(Lit::Int(i)))
+                .or_else(|| n.as_f64().map(|f| Expr::Lit(Lit::Float(f)))),
+            // Null and containers are deliberately not frozen. A null key would
+            // match everything with that column unset, and a list or map is not
+            // a scalar the pattern compiler can compare against a column.
+            _ => None,
+        }
+    }
+    fn freeze(props: &[(String, Expr)], env: &eval::Env, params: &Value) -> Vec<(String, Expr)> {
+        props
+            .iter()
+            .map(|(k, e)| {
+                let frozen = match e {
+                    // Already a literal — nothing to resolve.
+                    Expr::Lit(_) => None,
+                    _ => eval::eval(e, env, params).ok().as_ref().and_then(lit_of),
+                };
+                (k.clone(), frozen.unwrap_or_else(|| e.clone()))
+            })
+            .collect()
+    }
+    Pattern {
+        path_var: p.path_var.clone(),
+        elems: p
+            .elems
+            .iter()
+            .map(|el| match el {
+                PatElem::Node(n) => PatElem::Node(NodePat {
+                    props: freeze(&n.props, env, params),
+                    ..n.clone()
+                }),
+                PatElem::Rel(r) => PatElem::Rel(RelPat {
+                    props: freeze(&r.props, env, params),
+                    ..r.clone()
+                }),
+            })
+            .collect(),
+    }
+}
+
 fn merge_pattern(
     graph: &str,
     gid: i32,
@@ -555,6 +621,10 @@ fn merge_pattern(
     params: &Value,
 ) {
     // Try to find it first, with the pattern's inline properties as the key.
+    // The key has to be resolved against `env` before compiling — see
+    // `freeze_pattern_props`.
+    let frozen = freeze_pattern_props(p, env, params);
+    let p = &frozen;
     let mut c = compile::Compiler::new(graph);
     if c.compile_pattern(p, false).is_ok() {
         let vars = c.bound_vars();

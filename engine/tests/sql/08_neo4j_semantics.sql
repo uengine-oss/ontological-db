@@ -277,4 +277,44 @@ BEGIN
         'CREATE INDEX fresh2_lang IF NOT EXISTS FOR (f:Fresh2) ON (f.lang)');
 END $$;
 
+\echo '--- 15. MERGE driven by an UNWIND row matches what is already there ---'
+-- MERGE looks the pattern up by compiling it to SQL and running it with the
+-- query parameters. But `MERGE (f:F {id: item.id})` under an UNWIND names a row
+-- variable, and an UNWIND row lives in the write-path environment, not in the
+-- compiled read scope — so the key resolved to nothing, nothing ever matched,
+-- and MERGE created a row per call. Standalone MERGE was fine, which is why this
+-- looked like it worked.
+--
+-- Where the property carries a unique constraint it did not merely duplicate:
+--   duplicate key value violates unique constraint "uq_<n>_<name>"
+-- and that is how it surfaced — a legacy analysis run that writes every node
+-- through UNWIND + MERGE died partway.
+SELECT og_create_type('sem', 'Merged', 'entity');
+SELECT og_add_property('sem', 'Merged', 'key', 'string');
+SELECT og_add_property('sem', 'Merged', 'hits', 'int');
+
+DO $$
+DECLARE n int;
+BEGIN
+    -- Same key twice in one batch: Neo4j collapses these into one node.
+    PERFORM og_cypher('sem',
+        $q$UNWIND $items AS item MERGE (m:Merged {key: item.key})$q$,
+        '{"items":[{"key":"k1"},{"key":"k1"}]}');
+    SELECT count(*) INTO n FROM og_cypher('sem',
+        $q$MATCH (m:Merged) WHERE m.key = 'k1' RETURN m.key AS k$q$);
+    IF n <> 1 THEN
+        RAISE EXCEPTION 'MERGE over a repeated UNWIND key: expected 1 node, got %', n;
+    END IF;
+
+    -- And a second statement must match the node the first one made.
+    PERFORM og_cypher('sem',
+        $q$UNWIND $items AS item MERGE (m:Merged {key: item.key})$q$,
+        '{"items":[{"key":"k1"}]}');
+    SELECT count(*) INTO n FROM og_cypher('sem',
+        $q$MATCH (m:Merged) WHERE m.key = 'k1' RETURN m.key AS k$q$);
+    IF n <> 1 THEN
+        RAISE EXCEPTION 'MERGE against an existing node: expected 1 node, got %', n;
+    END IF;
+END $$;
+
 \echo 'OG_TEST_END'
