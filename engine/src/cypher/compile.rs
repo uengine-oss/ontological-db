@@ -1750,6 +1750,15 @@ impl Compiler {
         if op == BinOp::In {
             let ls = self.expr(l, None)?;
             let rs = self.expr(r, Some("jsonb"))?;
+            // A bare string literal has no type in PostgreSQL, and `to_jsonb`
+            // is polymorphic — so `'T' IN labels(n)` failed to compile at all
+            // with "could not determine polymorphic type". Numbers were fine
+            // (they carry a type) and so were parameters, which is why this
+            // showed up only for the literal form.
+            let ls = match l {
+                Expr::Lit(Lit::Str(_)) => format!("({ls})::text"),
+                _ => ls,
+            };
             return Ok(format!("(({rs}) @> to_jsonb({ls}))"));
         }
 

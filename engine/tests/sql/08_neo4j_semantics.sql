@@ -404,4 +404,25 @@ BEGIN
     END IF;
 END $$;
 
+\echo '--- 18. a string literal on the left of IN ---'
+-- `'Doc' IN labels(n)` is how a query that handles several kinds of node checks
+-- which one it has. A bare string literal has no type in PostgreSQL and
+-- `to_jsonb` is polymorphic, so this did not compile at all:
+--   could not determine polymorphic type because input has type unknown
+-- Numbers carried a type and parameters were bound, so only the literal form
+-- broke — and it broke loudly, in the middle of a write.
+DO $$
+DECLARE n int;
+BEGIN
+    SELECT count(*) INTO n FROM og_cypher('sem',
+        $q$MATCH (d:Doc) WHERE 'Doc' IN labels(d) RETURN d.title AS t$q$);
+    IF n < 1 THEN
+        RAISE EXCEPTION 'string literal IN labels(): expected rows, got %', n;
+    END IF;
+    SELECT count(*) INTO n FROM og_cypher('sem', $q$RETURN 'b' IN ['a','b'] AS hit$q$);
+    IF n <> 1 THEN
+        RAISE EXCEPTION 'string literal IN a list literal did not compile';
+    END IF;
+END $$;
+
 \echo 'OG_TEST_END'
