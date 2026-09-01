@@ -261,9 +261,15 @@ CREATE TABLE og_catalog.setting (
 -- ALTER DEFAULT PRIVILEGES cannot do it: it keys on the role that creates the
 -- object, and these are created by whoever calls og_create_type. Remembering
 -- the grant is what lets og_create_type re-issue it.
+-- `graph` scopes the grant to one project. '*' means every graph, which is what
+-- an unscoped og_grant records and what this table held before the column
+-- existed. It is part of the key because one role may hold different levels on
+-- different projects — that is the whole point of sharing by GRANT.
 CREATE TABLE og_catalog.grantee (
-    role  text PRIMARY KEY,
-    level text NOT NULL CHECK (level IN ('read', 'write', 'admin'))
+    role  text NOT NULL,
+    level text NOT NULL CHECK (level IN ('read', 'write', 'admin')),
+    graph text NOT NULL DEFAULT '*',
+    PRIMARY KEY (role, graph)
 );
 INSERT INTO og_catalog.setting (key, value) VALUES
     ('chunk_size',        '256'),

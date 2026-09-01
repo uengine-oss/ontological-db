@@ -90,7 +90,36 @@ fn view_exists(name: &str) -> bool {
 
 /// Create the union view for a type if it does not exist yet. Views are dropped
 /// wholesale whenever the schema changes, so "exists" is a valid freshness test.
+///
+/// The build goes through `og_build_view`, which is `SECURITY DEFINER`. Reading
+/// a label is what triggers it, and a reader has no `CREATE` on `og_data` — so
+/// before this indirection existed, the first query touching any label after a
+/// schema change failed with `permission denied for schema og_data` and stayed
+/// broken until someone with rights happened to run it. Building as the owner
+/// hands out nothing: the view carries `security_invoker`, so the caller is
+/// still checked against the storage tables underneath it.
 pub fn ensure_view(tid: i32, is_edge: bool) -> String {
+    let view = if is_edge { edge_view(tid) } else { node_view(tid) };
+    if view_exists(&view) {
+        return view;
+    }
+    crate::spiu::one::<String>(
+        "SELECT og_build_view($1, $2)",
+        &[tid.into(), is_edge.into()],
+    )
+    .ok()
+    .flatten()
+    .unwrap_or_else(|| build_view(tid, is_edge))
+}
+
+/// The view build itself. Reached through `og_build_view` so that it runs with
+/// the extension owner's rights; see `ensure_view`.
+#[pg_extern]
+fn og_build_view(tid: i32, is_edge: bool) -> String {
+    build_view(tid, is_edge)
+}
+
+fn build_view(tid: i32, is_edge: bool) -> String {
     let view = if is_edge { edge_view(tid) } else { node_view(tid) };
     if view_exists(&view) {
         return view;
@@ -138,7 +167,7 @@ pub fn ensure_view(tid: i32, is_edge: bool) -> String {
         selects.join("\nUNION ALL\n")
     ))
         .unwrap_or_else(|e| error!("failed to build type view for type {tid}: {e}"));
-    crate::catalog::privileges::apply_to_view(&view);
+    crate::catalog::privileges::apply_to_view(tid, &view);
     view
 }
 

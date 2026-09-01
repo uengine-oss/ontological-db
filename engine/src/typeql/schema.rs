@@ -232,7 +232,7 @@ fn ensure_instance_storage(tid: i32, is_abstract: bool) {
         "CREATE TABLE IF NOT EXISTS {table} (id int8 PRIMARY KEY, __ext jsonb)"
     ))
     .expect("instance table creation failed");
-    crate::catalog::privileges::apply_to_table(&table);
+    crate::catalog::privileges::apply_to_table(tid, &table);
     set_storage_table(tid, &table);
 }
 
@@ -276,7 +276,7 @@ fn ensure_attr_storage(
          (id int8 PRIMARY KEY, val {sql_ty} NOT NULL UNIQUE, __ext jsonb)"
     ))
     .map_err(|e| format!("attribute storage for '{name}' failed: {e}"))?;
-    crate::catalog::privileges::apply_to_table(&table);
+    crate::catalog::privileges::apply_to_table(tid, &table);
     set_storage_table(tid, &table);
     // Declaring `val` as a property makes the attribute's value visible through
     // the Cypher surface without a second projection path.
@@ -541,7 +541,7 @@ pub fn ensure_has_type(gid: i32) -> i32 {
         "CREATE TABLE IF NOT EXISTS {table} (id int8 PRIMARY KEY, src int8 NOT NULL, dst int8 NOT NULL)"
     ))
     .expect("$has table creation failed");
-    crate::catalog::privileges::apply_to_table(&table);
+    crate::catalog::privileges::apply_to_table(tid, &table);
     Spi::run(&format!("CREATE INDEX IF NOT EXISTS e_{tid}_src ON {table} (src)")).ok();
     Spi::run(&format!("CREATE INDEX IF NOT EXISTS e_{tid}_dst ON {table} (dst)")).ok();
     set_storage_table(tid, &table);

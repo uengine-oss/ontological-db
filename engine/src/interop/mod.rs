@@ -108,7 +108,7 @@ fn og_map_table(
         crate::spiu::qname(source_table)
     ))
     .unwrap_or_else(|e| error!("failed to create mapping view: {e}"));
-    crate::catalog::privileges::apply_to_view(&table);
+    crate::catalog::privileges::apply_to_view(tid, &table);
 
     Spi::run_with_args(
         "INSERT INTO og_catalog.mapping (type_id, source_table, id_column, property_map, writable)
