@@ -452,6 +452,86 @@ impl Compiler {
         ))
     }
 
+    /// `[(r)-[:HAS_EXAMPLE]->(e:EXAMPLE) WHERE p | e {.*}]` — collect a
+    /// projection over every match, correlated to the enclosing row.
+    ///
+    /// The match is compiled exactly as `pattern_exists` compiles it; the only
+    /// difference is what comes back. The projection and the filter are compiled
+    /// **while the pattern's bindings are still in scope**, because they name the
+    /// variables the pattern just introduced. Empty gives `[]`, not NULL —
+    /// Cypher's answer, and the one a caller that iterates the result needs.
+    fn pattern_collect(
+        &mut self,
+        pat: &Pattern,
+        filter: Option<&Expr>,
+        project: Option<&Expr>,
+    ) -> CResult<String> {
+        let from_mark = self.from.len();
+        let where_mark = self.wheres.len();
+        let saved_binds = self.binds.clone();
+        let saved_rel_ids = std::mem::take(&mut self.rel_ids);
+        let saved_optional = self.optional.take();
+
+        let res = self.compile_pattern(pat, false);
+
+        // Compile the projection and filter here, inside the pattern's scope.
+        // Default to the last node the pattern bound — that is what Cypher
+        // yields for `[(a)-[:R]->(b)]` with no `|`.
+        let proj_sql = if res.is_ok() {
+            let e = match project {
+                Some(e) => Some(e.clone()),
+                None => pat.elems.iter().rev().find_map(|el| match el {
+                    PatElem::Node(n) => n.var.clone().map(Expr::Var),
+                    _ => None,
+                }),
+            };
+            match e {
+                Some(e) => self.expr(&e, Some("jsonb")).map(Some),
+                None => Ok(None),
+            }
+        } else {
+            Ok(None)
+        };
+        let filter_sql = match (res.is_ok(), filter) {
+            (true, Some(f)) => self.expr(f, None).map(Some),
+            _ => Ok(None),
+        };
+
+        let new_from: Vec<String> = self.from.drain(from_mark..).collect();
+        let mut new_wheres: Vec<String> = self.wheres.drain(where_mark..).collect();
+        self.binds = saved_binds;
+        self.rel_ids = saved_rel_ids;
+        self.optional = saved_optional;
+        res?;
+        let proj_sql = proj_sql?;
+        if let Some(f) = filter_sql? {
+            new_wheres.push(f);
+        }
+
+        let Some(proj) = proj_sql else {
+            // Nothing to project — a degenerate pattern with no named node.
+            return Ok("'[]'::jsonb".into());
+        };
+        if new_from.is_empty() {
+            return Ok("'[]'::jsonb".into());
+        }
+
+        let mut parts = Vec::with_capacity(new_from.len());
+        for (i, e) in new_from.iter().enumerate() {
+            let has_kw = e.starts_with("JOIN ")
+                || e.starts_with("CROSS JOIN ")
+                || e.starts_with("LEFT JOIN ");
+            parts.push(if i == 0 && !has_kw { format!("CROSS JOIN {e}") } else { e.clone() });
+        }
+        let cond = if new_wheres.is_empty() { "true".to_string() } else { new_wheres.join(" AND ") };
+        Ok(format!(
+            "(SELECT coalesce(jsonb_agg({proj}), '[]'::jsonb) \
+              FROM (SELECT 1) _pc {} WHERE {})",
+            parts.join(" "),
+            cond
+        ))
+    }
+
     /// True when `sql` names a *bound* alias this clause did not introduce.
     ///
     /// Only Cypher variables can correlate a clause to the outer query, so the
@@ -1508,6 +1588,9 @@ impl Compiler {
             // Nodes already bound outside keep their alias, so the subquery
             // references the outer row — which is what makes it correlated.
             Expr::PatternPred(pat) => self.pattern_exists(pat)?,
+            Expr::PatternComp { pattern, filter, project } => {
+                self.pattern_collect(pattern, filter.as_deref(), project.as_deref())?
+            }
             Expr::Binary(op, l, r) => self.binary(*op, l, r)?,
             // Against an array column the list is that array, not a jsonb one:
             // `MERGE (a)-[:ACTED_IN {roles:['Neo']}]->(m)` has to compare

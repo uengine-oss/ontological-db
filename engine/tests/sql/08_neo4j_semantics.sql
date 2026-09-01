@@ -317,4 +317,53 @@ BEGIN
     END IF;
 END $$;
 
+\echo '--- 16. pattern comprehension collects a projection per match ---'
+-- `[(r)-[:HAS_TAG]->(t:Tag) | t.name]` is how a query gathers a node's
+-- neighbours into one column without fanning the row out. It did not parse at
+-- all, and the caller wrapped the query in `except Exception` — so a legacy
+-- analysis produced rules and the screen showed nothing, with a WARN line as
+-- the only trace.
+--
+-- Empty must be `[]`, not NULL: the caller iterates the result.
+DO $$
+DECLARE v text; n int;
+BEGIN
+    SELECT (og_cypher('sem',
+        $q$MATCH (d:Doc) WHERE d.title = 'counted'
+           RETURN [(d)-[:HAS_TAG]->(t:Tag) | t.name] AS tags$q$)->>'tags') INTO v;
+    IF v IS DISTINCT FROM '["blue"]' THEN
+        RAISE EXCEPTION 'pattern comprehension: expected ["blue"], got %', coalesce(v, 'NULL');
+    END IF;
+
+    -- No match yields an empty list, not NULL.
+    SELECT (og_cypher('sem',
+        $q$MATCH (d:Doc) WHERE d.title = 'plain'
+           RETURN [(d)-[:HAS_TAG]->(t:Tag) | t.name] AS tags$q$)->>'tags') INTO v;
+    IF v IS DISTINCT FROM '[]' THEN
+        RAISE EXCEPTION 'pattern comprehension over no match: expected [], got %', coalesce(v, 'NULL');
+    END IF;
+
+    -- A projected map, which is the shape the rule extractor actually uses.
+    SELECT (og_cypher('sem',
+        $q$MATCH (d:Doc) WHERE d.title = 'counted'
+           RETURN [(d)-[:HAS_TAG]->(t:Tag) | {name: t.name}] AS tags$q$)->>'tags') INTO v;
+    IF v NOT LIKE '%blue%' THEN
+        RAISE EXCEPTION 'pattern comprehension with a map projection: got %', coalesce(v, 'NULL');
+    END IF;
+
+    -- And the filtered form.
+    SELECT (og_cypher('sem',
+        $q$MATCH (d:Doc) WHERE d.title = 'counted'
+           RETURN [(d)-[:HAS_TAG]->(t:Tag) WHERE t.name = 'nope' | t.name] AS tags$q$)->>'tags') INTO v;
+    IF v IS DISTINCT FROM '[]' THEN
+        RAISE EXCEPTION 'filtered pattern comprehension: expected [], got %', coalesce(v, 'NULL');
+    END IF;
+
+    -- A list literal that merely starts with a parenthesis is still a list.
+    SELECT count(*) INTO n FROM og_cypher('sem', $q$RETURN [(1 + 2), 4] AS l$q$);
+    IF n <> 1 THEN
+        RAISE EXCEPTION 'parenthesised list literal was mistaken for a pattern';
+    END IF;
+END $$;
+
 \echo 'OG_TEST_END'

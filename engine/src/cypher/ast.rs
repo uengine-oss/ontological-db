@@ -87,6 +87,11 @@ pub enum Expr {
     /// A pattern used as a predicate — `WHERE NOT (us)-[:IMPLEMENTS]->(:BC)`.
     /// True when at least one match exists, correlated to the enclosing query.
     PatternPred(Box<Pattern>),
+    /// `[(r)-[:HAS_EXAMPLE]->(e:EXAMPLE) WHERE p | e.name]` — a pattern
+    /// comprehension. Same correlated match as `PatternPred`, but it collects a
+    /// projection per match instead of answering yes or no. `project` defaults to
+    /// the last node the pattern bound, which is what Cypher does.
+    PatternComp { pattern: Box<Pattern>, filter: Option<Box<Expr>>, project: Option<Box<Expr>> },
     Func { name: String, args: Vec<Expr>, distinct: bool },
     List(Vec<Expr>),
     Map(Vec<(String, Expr)>),
@@ -232,6 +237,7 @@ impl Expr {
             Expr::Binary(_, a, b) => a.is_aggregate() || b.is_aggregate(),
             Expr::Not(a) | Expr::Neg(a) | Expr::IsNull(a, _) | Expr::HasLabel(a, _) => a.is_aggregate(),
             Expr::PatternPred(_) => false,
+            Expr::PatternComp { .. } => false,
             Expr::List(xs) => xs.iter().any(|x| x.is_aggregate()),
             Expr::Map(kv) => kv.iter().any(|(_, v)| v.is_aggregate()),
             Expr::Case { operand, whens, else_ } => {

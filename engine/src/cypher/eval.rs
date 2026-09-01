@@ -45,6 +45,10 @@ pub fn eval(e: &Expr, env: &Env, params: &Value) -> Result<Value, String> {
         // 라벨 판정은 타입 카탈로그가 필요하므로 상수 평가 경로에서는 답할 수 없다.
         Expr::HasLabel(..) => return Err("label predicate is not constant-foldable".into()),
         Expr::PatternPred(..) => return Err("pattern predicate is not constant-foldable".into()),
+        // Both need the graph, and this evaluator has only the row it was given.
+        Expr::PatternComp { .. } => {
+            return Err("pattern comprehension is not constant-foldable".into())
+        }
         Expr::Binary(op, l, r) => {
             let a = eval(l, env, params)?;
             let b = eval(r, env, params)?;

@@ -994,6 +994,36 @@ impl Parser {
                     self.expect_punct("]")?;
                     return Ok(Expr::ListComp { var, source, filter, project });
                 }
+                // `[(a)-[:R]->(b) | b.name]` is a pattern comprehension. Like
+                // the pattern predicate above, it starts the same as a list
+                // literal whose first element is parenthesised — so try the
+                // pattern and rewind if it was not one. A relationship is again
+                // what distinguishes it: `[(1+2)]` stays a list.
+                if self.at_punct("(") {
+                    let save = self.i;
+                    if let Ok(pat) = self.parse_pattern() {
+                        let has_rel = pat.elems.iter().any(|e| matches!(e, PatElem::Rel(_)));
+                        if has_rel && (self.at_punct("|") || self.at_kw("where")) {
+                            let filter = if self.eat_kw("where") {
+                                Some(Box::new(self.parse_expr()?))
+                            } else {
+                                None
+                            };
+                            let project = if self.eat_punct("|") {
+                                Some(Box::new(self.parse_expr()?))
+                            } else {
+                                None
+                            };
+                            self.expect_punct("]")?;
+                            return Ok(Expr::PatternComp {
+                                pattern: Box::new(pat),
+                                filter,
+                                project,
+                            });
+                        }
+                    }
+                    self.i = save;
+                }
                 let mut items = Vec::new();
                 if !self.at_punct("]") {
                     loop {
