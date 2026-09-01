@@ -239,6 +239,14 @@ fn create_index(
         }
         IndexKind::Btree => {
             for p in props {
+                // Same reason as the full-text and constraint paths: there has
+                // to be a column before there can be an index on it, and an
+                // application that declares its indexes at startup — before it
+                // has written a single node — is doing the ordinary thing. Only
+                // this branch was missing the call, so `CREATE INDEX … ON
+                // (f.file_path)` failed with `column "p_file_path" does not
+                // exist` until something happened to write that property first.
+                ensure_property(graph, tid, label, p);
                 Spi::run_with_args(
                     "SELECT og_create_index($1, $2, $3)",
                     &[graph.into(), label.into(), p.as_str().into()],

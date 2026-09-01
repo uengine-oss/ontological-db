@@ -252,4 +252,29 @@ BEGIN
     END IF;
 END $$;
 
+\echo '--- 14. CREATE INDEX works on a property nothing has written yet ---'
+-- Declaring indexes at startup, before the first node exists, is what an
+-- application does. Only the b-tree branch skipped the "declare the property so
+-- there is a column to index" step that the full-text and constraint paths both
+-- take, so this failed with `column "p_lang" does not exist` until something
+-- happened to write that property first — which made it look like an ordering
+-- quirk rather than a missing call.
+SELECT og_create_type('sem', 'Fresh2', 'entity');
+
+DO $$
+DECLARE n int;
+BEGIN
+    PERFORM og_cypher('sem',
+        'CREATE INDEX fresh2_lang IF NOT EXISTS FOR (f:Fresh2) ON (f.lang)');
+    SELECT count(*) INTO n FROM og_catalog.property p
+      JOIN og_catalog.type t ON t.type_id = p.type_id
+     WHERE t.name = 'Fresh2' AND p.name = 'lang';
+    IF n <> 1 THEN
+        RAISE EXCEPTION 'CREATE INDEX did not declare the property: got % rows', n;
+    END IF;
+    -- A second call must pass quietly under IF NOT EXISTS.
+    PERFORM og_cypher('sem',
+        'CREATE INDEX fresh2_lang IF NOT EXISTS FOR (f:Fresh2) ON (f.lang)');
+END $$;
+
 \echo 'OG_TEST_END'
