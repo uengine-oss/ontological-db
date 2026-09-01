@@ -98,3 +98,5 @@ SELECT og_cypher_sql('r', $$MATCH (x:N {name:'a'})-[:E*1..2]->(y:N) RETURN count
 SELECT og_cypher('r', $$MATCH (x:N {name:'a'})-[:E*1..12]->(y:N) RETURN count(DISTINCT y)$$) AS via_reach;
 SELECT og_cypher('r', $$MATCH (x:N {name:'a'})-[e:E*1..12]->(y:N) RETURN count(DISTINCT y)$$) AS via_vlp;
 SELECT og_cypher('r', $$MATCH (x:N {name:'a'})-[:E*1..3]->(y:N)  RETURN count(y)$$) AS trail_count;
+
+\echo 'OG_TEST_END'

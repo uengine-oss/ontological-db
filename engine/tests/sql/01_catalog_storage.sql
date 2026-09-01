@@ -59,5 +59,7 @@ SELECT nbr, eid FROM og_expand(:p1, NULL, 'o') ORDER BY nbr;
 SELECT og_degree_all(:p1, 'o') AS out_degree;
 
 \echo '--- role constraint is enforced ---'
+\echo 'OG_TEST_END'
+
 -- EXPECT_ERROR: an EV cannot play the 'owner' role
 SELECT og_create_edge('demo','OWNS', :ev1, :p1, '{}');

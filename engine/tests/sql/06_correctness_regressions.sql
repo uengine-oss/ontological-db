@@ -143,6 +143,8 @@ END
 $$;
 
 \echo '--- and what cannot be honoured is refused, not ignored ---'
+\echo 'OG_TEST_END'
+
 -- EXPECT_ERROR: an aggregate in a WITH before a write reshapes the bindings,
 -- so it is refused rather than dropped.
 SELECT og_cypher('reg', 'MATCH (p:P) WITH count(p) AS c DELETE p');
