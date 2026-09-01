@@ -1555,7 +1555,21 @@ impl Compiler {
             Expr::Neg(a) => format!("(- {})", self.expr(a, None)?),
             Expr::IsNull(a, want_null) => {
                 let s = self.expr(a, None)?;
-                if *want_null {
+                // JSON `null` is a value in jsonb, not SQL NULL — so an element
+                // that Cypher considers null answered `IS NULL` with false. That
+                // is how `[x IN collect(t.name) WHERE x IS NOT NULL]` kept the
+                // nulls an OPTIONAL MATCH had put there: the idiom for dropping
+                // them stopped dropping anything.
+                //
+                // Same reading as defect 3 — what Cypher calls null must test as
+                // null however it happens to be carried.
+                if self.is_jsonb_valued(a) {
+                    if *want_null {
+                        format!("({s} IS NULL OR jsonb_typeof({s}) = 'null')")
+                    } else {
+                        format!("({s} IS NOT NULL AND jsonb_typeof({s}) <> 'null')")
+                    }
+                } else if *want_null {
                     format!("({s} IS NULL)")
                 } else {
                     format!("({s} IS NOT NULL)")
@@ -1758,6 +1772,34 @@ impl Compiler {
             }
         }
 
+        // A property compared against a value that crossed `UNWIND` or `WITH`.
+        // The property reads as text (or its declared type); the other side is
+        // jsonb. PostgreSQL has no operator for that pair:
+        //
+        //     operator does not exist: text = jsonb
+        //
+        // `UNWIND $rows AS row … WHERE f.key = row.key` is the shape, and it is
+        // how a batch looks something up — so this is not a corner.
+        //
+        // The jsonb side gives up its scalar and is read at the property's type.
+        // Only this pairing is touched: a jsonb-to-jsonb comparison is already
+        // right, and an expression that some other rule has already coerced must
+        // not be coerced twice.
+        //
+        // Only when the jsonb side was compiled **without** a hint. A hint means
+        // the other side had a declared type and the coercion already happened
+        // above; extracting again produces `text #>> unknown`. The gap is the
+        // undeclared property, which reads out of `__ext` and offers no type to
+        // hint with — so both sides stayed as they were and met as text = jsonb.
+        {
+            let prop = |e: &Expr| matches!(e, Expr::Prop(..));
+            if prop(l) && !prop(r) && rhint.is_none() && self.is_jsonb_valued(r) {
+                rs = format!("(({rs}) #>> '{{}}')");
+            } else if prop(r) && !prop(l) && lhint.is_none() && self.is_jsonb_valued(l) {
+                ls = format!("(({ls}) #>> '{{}}')");
+            }
+        }
+
         Ok(match op {
             // Cypher `+` is list concatenation when either side is a list.
             // PostgreSQL spells that `||` for jsonb — `+` has no such operator,
@@ -1902,6 +1944,10 @@ impl Compiler {
                 format!("og_type_name({tid})")
             }
             "length" | "size" => format!("jsonb_array_length({})", a[0]),
+            // First and last of a list. Out of range is NULL, not an error —
+            // `head([])` is null in Cypher and callers lean on that.
+            "head" => format!("({} -> 0)", a[0]),
+            "last" => format!("({} -> -1)", a[0]),
             "toupper" | "upper" => format!("upper(({})::text)", a[0]),
             "tolower" | "lower" => format!("lower(({})::text)", a[0]),
             "trim" => format!("btrim(({})::text)", a[0]),
@@ -2003,7 +2049,8 @@ impl Compiler {
             other => {
                 return Err(format!(
                     "unknown function '{other}'. supported: count, sum, avg, min, max, collect, \
-                     id, elementId, labels, type, length, size, toUpper, toLower, trim, substring, \
+                     id, elementId, labels, type, length, size, head, last, toUpper, toLower, trim, \
+                     substring, \
                      replace, split, coalesce, abs, ceil, floor, round, sqrt, rand, toString, \
                      toInteger, toFloat, timestamp, datetime, exists, keys, vector.similarity, \
                      vector.distance, genai.vector.encode"

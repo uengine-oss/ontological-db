@@ -366,4 +366,42 @@ BEGIN
     END IF;
 END $$;
 
+\echo '--- 17. head/last, a property against an UNWIND value, and jsonb null ---'
+-- Three things a batch lookup needs, each of which failed on its own.
+DO $$
+DECLARE v text; n int;
+BEGIN
+    -- head/last were simply missing.
+    SELECT (og_cypher('sem', $q$RETURN head([3,2,1]) AS h$q$)->>'h') INTO v;
+    IF v IS DISTINCT FROM '3' THEN
+        RAISE EXCEPTION 'head(): expected 3, got %', coalesce(v, 'NULL');
+    END IF;
+    SELECT (og_cypher('sem', $q$RETURN last([3,2,1]) AS h$q$)->>'h') INTO v;
+    IF v IS DISTINCT FROM '1' THEN
+        RAISE EXCEPTION 'last(): expected 1, got %', coalesce(v, 'NULL');
+    END IF;
+    -- Out of range is null, not an error.
+    PERFORM og_cypher('sem', $q$RETURN head([]) AS h$q$);
+
+    -- A property compared against a value that came through UNWIND. The property
+    -- is text, the row value is jsonb, and PostgreSQL has no operator for the
+    -- pair — `operator does not exist: text = jsonb`. This is how every batch
+    -- lookup is written.
+    SELECT count(*) INTO n FROM og_cypher('sem',
+        $q$UNWIND $names AS nm MATCH (d:Doc) WHERE d.title = nm RETURN d.title AS t$q$,
+        '{"names":["plain"]}');
+    IF n <> 1 THEN
+        RAISE EXCEPTION 'property = UNWIND value: expected 1 row, got %', n;
+    END IF;
+
+    -- JSON null is a value in jsonb, not SQL NULL. `IS NOT NULL` said true for
+    -- it, so the idiom that strips the nulls an OPTIONAL MATCH left behind
+    -- stripped nothing.
+    SELECT (og_cypher('sem',
+        $q$RETURN [x IN [1, null, 2] WHERE x IS NOT NULL] AS kept$q$)->>'kept') INTO v;
+    IF v IS DISTINCT FROM '[1, 2]' AND v IS DISTINCT FROM '[1,2]' THEN
+        RAISE EXCEPTION 'IS NOT NULL over a jsonb null: expected [1,2], got %', coalesce(v, 'NULL');
+    END IF;
+END $$;
+
 \echo 'OG_TEST_END'
