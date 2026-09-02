@@ -387,6 +387,22 @@ BEGIN
 END
 $$;
 
+-- …with one exception. Views are built lazily, and the first read of a label
+-- after any schema change is what builds one. That read can come from any role,
+-- so gating the builder behind a grant makes a reader fail with
+-- `permission denied for function og_build_view` at an arbitrary later moment —
+-- and only sometimes, since whoever reads first rebuilds it for everyone.
+--
+-- `og_grant` does list og_build_view, but function grants are issued once at
+-- grant time and never replayed. A role granted before an engine upgrade that
+-- adds a function therefore never receives it. Table grants do not have this
+-- problem: `apply_to_table` replays them onto storage created later.
+--
+-- Handing this one out costs nothing in containment, for the same reason it is
+-- SECURITY DEFINER above: the view it builds carries `security_invoker`, so the
+-- caller is still checked against the storage tables underneath it.
+GRANT EXECUTE ON FUNCTION og_build_view(int4, bool) TO PUBLIC;
+
 COMMENT ON FUNCTION og_grant(text, text, text) IS
   'Grant a role standing privileges on og_catalog and og_data. Levels nest: write includes read, admin includes both. The third argument scopes the grant to one graph; the default ''*'' means every graph. The role must already exist — roles are cluster-wide and outlive DROP EXTENSION, so this does not create one. The grant is recorded in og_catalog.grantee and replayed onto storage tables created later, but only onto tables in a graph the grant actually names.';
 

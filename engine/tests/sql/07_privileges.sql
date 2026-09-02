@@ -176,6 +176,35 @@ BEGIN
     END IF;
 END $$;
 
+\echo '--- a reader can build a view that a schema change invalidated ---'
+-- Views are built on first read after a schema change, and that first read can
+-- come from any role. `og_build_view` was gated behind a grant, so a reader hit
+-- `permission denied for function og_build_view` at an arbitrary later moment.
+-- The grant list does name it, but function grants are issued once and never
+-- replayed — so a role granted before an engine upgrade never receives a
+-- function the upgrade added. Reproduced here the way it actually happens: the
+-- label is created *after* the grant, and the view is dropped by that very
+-- schema change.
+-- The stale-grant state, made explicit: the role holds its table grants but not
+-- EXECUTE on the builder — exactly where an upgrade that adds a function leaves
+-- every role granted before it.
+REVOKE EXECUTE ON FUNCTION og_build_view(int4, bool) FROM og_test_alpha;
+
+DO $$
+DECLARE n int;
+BEGIN
+    PERFORM og_cypher('alpha', 'CREATE (:LateLabel {title:"built later"})');
+
+    SET LOCAL ROLE og_test_alpha;
+    SELECT count(*) INTO n
+      FROM og_cypher('alpha', 'MATCH (l:LateLabel) RETURN l.title AS t');
+    RESET ROLE;
+
+    IF n <> 1 THEN
+        RAISE EXCEPTION 'reader saw % rows of a label created after its grant', n;
+    END IF;
+END $$;
+
 \echo '--- og_grant refuses a graph that does not exist ---'
 \echo 'OG_TEST_END'
 
