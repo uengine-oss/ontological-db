@@ -142,6 +142,50 @@ BEGIN
 END
 $$;
 
+\echo '--- a list-valued property can be indexed ---'
+-- An undeclared property is read with `->>`, which is text, and jsonb has no
+-- operator against text: `hr.tags[0]` reached PostgreSQL as `text -> integer`
+-- and the whole query died. The relationship here has no view alias either,
+-- so it also covers the `og_edge_json` reading of the same defect.
+DO $$
+DECLARE got jsonb;
+BEGIN
+    PERFORM og_cypher('reg',
+        'MATCH (a:P {name:"a"}), (b:P {name:"b"})
+         CREATE (a)-[:L {tags:["x","y"]}]->(b)');
+
+    SELECT og_cypher INTO got FROM og_cypher('reg',
+        'MATCH ()-[r:L]->() RETURN r.tags[0] AS t, head(r.tags) AS h, size(r.tags) AS n');
+    IF got IS NULL OR got->>'t' <> 'x' OR got->>'h' <> 'x' OR (got->>'n')::int <> 2 THEN
+        RAISE EXCEPTION 'indexing a list property gave %', got;
+    END IF;
+END
+$$;
+
+\echo '--- coalesce over a list element keeps it a value, not its JSON text ---'
+-- `head`/`last`/`element_at` yield jsonb, but is_jsonb_valued did not say so,
+-- so coalesce took the text route and cast the jsonb with `::text`. The caller
+-- got the JSON *representation* — `"x"`, quotes included — instead of `x`.
+DO $$
+DECLARE got jsonb;
+BEGIN
+    SELECT og_cypher INTO got FROM og_cypher('reg',
+        'RETURN coalesce(["x","y"][0], "") AS a,
+                coalesce([][0], "fallback")  AS b,
+                coalesce([10,20][1], 0)      AS c');
+    IF got->>'a' <> 'x' THEN
+        RAISE EXCEPTION 'coalesce(list[0], "") gave %, want x', got->>'a';
+    END IF;
+    -- An empty list indexes to NULL, so the second branch has to be reached.
+    IF got->>'b' <> 'fallback' THEN
+        RAISE EXCEPTION 'coalesce([][0], "fallback") gave %', got->>'b';
+    END IF;
+    IF (got->>'c')::int <> 20 THEN
+        RAISE EXCEPTION 'coalesce([10,20][1], 0) gave %', got->>'c';
+    END IF;
+END
+$$;
+
 \echo '--- and what cannot be honoured is refused, not ignored ---'
 \echo 'OG_TEST_END'
 

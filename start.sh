@@ -54,7 +54,10 @@ fi
 # --- bolt gateway (spec 011) ------------------------------------------------
 # Optional by design: nothing on the PostgreSQL path depends on it running.
 if [ "${OG_BOLT:-1}" = "1" ]; then
-    if ! docker exec "$CONTAINER" bash -lc "pgrep -f ontological-bolt >/dev/null"; then
+    # `pgrep -f ontological-bolt` matches the `bash -lc "pgrep -f …"` command
+    # line it runs inside, so it always reported the gateway as up and the
+    # block below never ran. The bracket keeps the pattern from matching itself.
+    if ! docker exec "$CONTAINER" bash -lc "pgrep -f '[o]ntological-bolt' >/dev/null"; then
         # The gateway defaults to loopback, because Bolt authenticates in the
         # clear. Here it binds every interface on purpose: it is inside the
         # container, and what decides exposure is the -p mapping above — which

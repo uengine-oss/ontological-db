@@ -1380,6 +1380,13 @@ impl Compiler {
                     Some(Bind::Rel { alias: Some(al), tid, .. }) => {
                         return Ok(self.prop_sql_json(&al, tid, prop))
                     }
+                    // A relationship reached through the adjacency segments has
+                    // no view alias — its properties come out of `og_edge_json`.
+                    // That path needs the same `->` reading as the others, or a
+                    // list-valued property arrives here as text.
+                    Some(Bind::Rel { id_expr, .. }) => {
+                        return Ok(format!("(og_edge_json({id_expr}) -> {})", sql_str(prop)))
+                    }
                     Some(Bind::Scalar { sql }) => {
                         return Ok(format!("(({sql}) -> {})", sql_str(prop)))
                     }
@@ -1846,10 +1853,21 @@ impl Compiler {
     fn is_jsonb_valued(&self, e: &Expr) -> bool {
         match e {
             Expr::List(_) | Expr::Map(_) | Expr::MapProjection { .. } => true,
-            // 리스트를 만드는 함수들 — `collect(a) + collect(b)` 가 대표적이다.
+            // 값이 jsonb 로 나오는 함수들. 리스트를 만드는 쪽(`collect(a) + collect(b)`)과
+            // 리스트에서 원소를 꺼내는 쪽이 함께 온다 — 꺼낸 원소도 jsonb 라서,
+            // 여기 빠지면 `coalesce(xs[0], '')` 가 jsonb 를 `::text` 로 캐스팅해
+            // 따옴표가 남은 JSON 표현(`"payment"`)을 돌려준다(결함 13 과 같은 자리).
             Expr::Func { name, .. } => matches!(
                 name.to_ascii_lowercase().as_str(),
-                "collect" | "labels" | "keys" | "split" | "nodes" | "relationships"
+                "collect"
+                    | "labels"
+                    | "keys"
+                    | "split"
+                    | "nodes"
+                    | "relationships"
+                    | "head"
+                    | "last"
+                    | "element_at"
             ),
             Expr::ListComp { .. } => true,
             Expr::Var(v) => matches!(
@@ -1906,6 +1924,26 @@ impl Compiler {
                 let a = self.expr(&args[0], None)?;
                 return Ok(format!("stddev_samp(({a})::float8)"));
             }
+            // Functions that consume a *list*. An undeclared property is read
+            // with `->>`, which is text, and jsonb has no operator against
+            // text — `hr.coupled_domains[0]` reached PostgreSQL as
+            // `text -> integer`. Reading the container the way a result is
+            // read keeps it jsonb; a declared column gets wrapped. Both
+            // shapes then arrive as the array they actually are.
+            "head" | "last" | "element_at" | "size" | "length" => {
+                let c = self.expr_for_output(&args[0])?;
+                // Out of range is NULL, not an error — `head([])` is null in
+                // Cypher and callers lean on that.
+                return Ok(match lname.as_str() {
+                    "head" => format!("({c} -> 0)"),
+                    "last" => format!("({c} -> -1)"),
+                    "size" | "length" => format!("jsonb_array_length({c})"),
+                    _ => {
+                        let i = self.expr(&args[1], None)?;
+                        format!("({c} -> ({i})::int)")
+                    }
+                });
+            }
             _ => {}
         }
 
@@ -1952,11 +1990,6 @@ impl Compiler {
                 let tid = self.type_id_sql(v, "type")?;
                 format!("og_type_name({tid})")
             }
-            "length" | "size" => format!("jsonb_array_length({})", a[0]),
-            // First and last of a list. Out of range is NULL, not an error —
-            // `head([])` is null in Cypher and callers lean on that.
-            "head" => format!("({} -> 0)", a[0]),
-            "last" => format!("({} -> -1)", a[0]),
             "toupper" | "upper" => format!("upper(({})::text)", a[0]),
             "tolower" | "lower" => format!("lower(({})::text)", a[0]),
             "trim" => format!("btrim(({})::text)", a[0]),
@@ -1986,7 +2019,14 @@ impl Compiler {
                         branches.push(if self.is_jsonb_valued(x) || matches!(x, Expr::Prop(..)) {
                             sql
                         } else {
-                            format!("to_jsonb({sql})")
+                            // A bare literal reaches SQL with no type, and
+                            // `to_jsonb('')` cannot resolve its polymorphic
+                            // argument. Naming the type the literal already has
+                            // settles it.
+                            match self.type_of(x) {
+                                Some(t) => format!("to_jsonb(({sql})::{t})"),
+                                None => format!("to_jsonb({sql})"),
+                            }
                         });
                     }
                     return Ok(format!("coalesce({})", branches.join(", ")));
@@ -2031,7 +2071,6 @@ impl Compiler {
             "datetime" => "now()".into(),
             "exists" => format!("({} IS NOT NULL)", a[0]),
             "keys" => format!("to_jsonb(ARRAY(SELECT jsonb_object_keys({})))", a[0]),
-            "element_at" => format!("({} -> ({})::int)", a[0], a[1]),
             "nodes" | "relationships" => a[0].clone(),
             // spec 004 — vector surface
             "vector.similarity" | "similarity" => {
