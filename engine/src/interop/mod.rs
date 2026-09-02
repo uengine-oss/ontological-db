@@ -120,7 +120,9 @@ fn og_map_table(
     )
     .expect("mapping registration failed");
 
-    crate::cypher::views::drop_all_views();
+    if let Some(gid) = crate::cypher::views::graph_of_type(tid) {
+        crate::cypher::views::drop_views_for_graph(gid);
+    }
 }
 
 /// Materialise a mapped type into native storage — spec 005 FR-010.
@@ -172,7 +174,9 @@ fn og_materialize_mapping(graph: &str, type_name: &str) -> i64 {
         &[tid.into()],
     )
     .ok();
-    crate::cypher::views::drop_all_views();
+    if let Some(gid) = crate::cypher::views::graph_of_type(tid) {
+        crate::cypher::views::drop_views_for_graph(gid);
+    }
     n
 }
 

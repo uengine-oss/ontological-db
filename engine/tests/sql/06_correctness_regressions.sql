@@ -186,6 +186,45 @@ BEGIN
 END
 $$;
 
+\echo '--- a schema change invalidates only its own graph views ---'
+-- Generated views were dropped globally on every schema change, so a write in
+-- one graph broke concurrent reads in another: the reader had already compiled
+-- `og_data.v_<tid>` into its SQL and got `relation … does not exist`. Views are
+-- rebuilt lazily, so the next attempt worked — a one-shot error pointing
+-- nowhere near its cause. An inheritance chain never leaves its graph, so the
+-- invalidation is scoped to the graph that changed.
+DO $$
+DECLARE tid int; other_graph int; v text;
+BEGIN
+    PERFORM og_create_graph('reg_other');
+    PERFORM og_cypher('reg_other', 'CREATE (:Other {name:"x"})');
+
+    -- Reading a property is what builds the view.
+    PERFORM og_cypher('reg', 'MATCH (p:P) RETURN p.name AS n');
+    SELECT t.type_id INTO tid
+      FROM og_catalog.type t JOIN og_catalog.graph g USING (graph_id)
+     WHERE g.name = 'reg' AND t.name = 'P';
+    v := 'og_data.v_' || tid;
+    IF to_regclass(v) IS NULL THEN
+        RAISE EXCEPTION 'setup: reading a property did not build %', v;
+    END IF;
+
+    -- A new label in ANOTHER graph must leave it alone.
+    PERFORM og_cypher('reg_other', 'CREATE (:BrandNewOverThere {name:"y"})');
+    IF to_regclass(v) IS NULL THEN
+        RAISE EXCEPTION '% was dropped by a schema change in another graph', v;
+    END IF;
+
+    -- A new label in the SAME graph must still invalidate it.
+    PERFORM og_cypher('reg', 'CREATE (:BrandNewHere {name:"z"})');
+    IF to_regclass(v) IS NOT NULL THEN
+        RAISE EXCEPTION '% survived a schema change in its own graph', v;
+    END IF;
+
+    PERFORM og_drop_graph('reg_other');
+END
+$$;
+
 \echo '--- and what cannot be honoured is refused, not ignored ---'
 \echo 'OG_TEST_END'
 

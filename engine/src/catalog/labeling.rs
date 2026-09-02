@@ -171,8 +171,9 @@ pub fn relabel_graph(graph_id: i32) {
 
 pub fn bump_schema_version(graph_id: i32, description: &str) {
     // Generated per-type union views encode the descendant set, so any schema
-    // change invalidates them (spec 003 / cypher::views).
-    crate::cypher::views::drop_all_views();
+    // change invalidates them (spec 003 / cypher::views) — but only this
+    // graph's, since an inheritance chain never leaves its graph.
+    crate::cypher::views::drop_views_for_graph(graph_id);
     Spi::run_with_args(
         "INSERT INTO og_catalog.schema_version (version, graph_id, description)
          VALUES (nextval('og_catalog.schema_version_seq'), $1, $2)",

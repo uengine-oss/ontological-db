@@ -189,17 +189,32 @@ fn own_columns(table: &str) -> Vec<String> {
     })
 }
 
-/// Invalidate every generated view. Called on any schema change.
-pub fn drop_all_views() {
+/// Invalidate the generated views of one graph. Called on any schema change.
+///
+/// Scoped on purpose. A generated view encodes its type's descendant set, so a
+/// schema change does invalidate it — but only within the graph that changed:
+/// `og_create_type` resolves parents with `type_id(gid, name)`, so an
+/// inheritance chain never leaves its graph.
+///
+/// Dropping every view instead made one graph's writes break another graph's
+/// reads. Views are rebuilt lazily, so a reader that had already compiled a
+/// reference to `og_data.v_<tid>` failed with `relation … does not exist` and
+/// the next attempt succeeded — a one-shot error that points nowhere near its
+/// cause.
+pub fn drop_views_for_graph(graph_id: i32) {
     let views: Vec<String> = Spi::connect(|client| {
         client
             .select(
-                "SELECT 'og_data.' || c.relname FROM pg_class c
+                "SELECT 'og_data.' || c.relname
+                   FROM pg_class c
                    JOIN pg_namespace n ON n.oid = c.relnamespace
+                   JOIN og_catalog.type t
+                     ON c.relname = 'v_'  || t.type_id::text
+                     OR c.relname = 've_' || t.type_id::text
                   WHERE n.nspname = 'og_data' AND c.relkind = 'v'
-                    AND (c.relname LIKE 'v\\_%' OR c.relname LIKE 've\\_%')",
+                    AND t.graph_id = $1",
                 None,
-                &[],
+                &[graph_id.into()],
             )
             .expect("view scan failed")
             .filter_map(|r| r.get::<String>(1).ok().flatten())
@@ -208,4 +223,12 @@ pub fn drop_all_views() {
     for v in views {
         Spi::run(&format!("DROP VIEW IF EXISTS {v} CASCADE")).ok();
     }
+}
+
+/// The graph a type belongs to, for callers that hold a `type_id` rather than a
+/// graph.
+pub fn graph_of_type(tid: i32) -> Option<i32> {
+    crate::spiu::one::<i32>("SELECT graph_id FROM og_catalog.type WHERE type_id = $1", &[tid.into()])
+        .ok()
+        .flatten()
 }
