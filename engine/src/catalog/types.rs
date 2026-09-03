@@ -216,6 +216,13 @@ pub fn resolve_or_create_label_set(gid: i32, graph: &str, labels: &[String], kin
     if labels.is_empty() {
         error!("CREATE requires a label per new node");
     }
+    // Hold the graph's catalog lock across the whole look-then-create loop.
+    // Taking it only inside `create_type_inner` would still let two writers of
+    // the *same* new label both read "absent" here, and the loser would fail
+    // with "type already exists" — a spurious error for a write that is legal
+    // in Neo4j. The lock is re-entrant within a transaction, so the nested take
+    // inside `create_type_inner` costs nothing.
+    labeling::lock_graph_catalog(gid);
     let mut parents: Vec<String> = Vec::new();
     for name in labels {
         if try_type_id(gid, name).is_none() {
@@ -373,6 +380,14 @@ pub fn create_type_inner(
     is_abstract: bool,
 ) -> i32 {
     let gid = graph_id(graph);
+    // Serialise catalog mutation for this graph before looking: the existence
+    // check and the insert have to be one step. Two writers creating the first
+    // node of the same label otherwise both see "absent" and both insert, and
+    // two writers creating *different* labels both relabel the whole graph and
+    // collide on `type_label_pkey`. Cypher creates labels on first write, so
+    // any parallel ingestion hits this — the legacy analyzer did, halfway
+    // through loading an AST.
+    labeling::lock_graph_catalog(gid);
     if try_type_id(gid, name).is_some() {
         error!("type '{name}' already exists in graph '{graph}'");
     }
