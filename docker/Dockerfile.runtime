@@ -1,0 +1,120 @@
+# Ontological — 배포용 런타임 이미지 (개발용 `Dockerfile.dev` 와 별개)
+#
+# `Dockerfile.dev` 는 **작업 환경**이다. Rust 툴체인과 cargo-pgrx 가 들어 있고,
+# 소스를 `/work` 에 마운트해 컨테이너 안에서 빌드한다. 엔트리포인트는
+# `sleep infinity` 이고 Postgres 와 Bolt 는 `start.sh` 가 손으로 띄운다.
+# **설치본에 그대로 못 쓴다** — 소스가 없고, 툴체인만 수 GB 이고, 스스로 뜨지 않는다.
+#
+# 이 파일은 그 반대다. 빌드는 builder 단계에서 끝내고, 런타임에는 **산출물 둘만**
+# 옮긴다.
+#
+#     ontological.so + .control + .sql   Postgres 확장
+#     ontological-bolt                   Bolt 프로토콜 게이트웨이 (단일 바이너리)
+#
+# ## 왜 이미지를 둘로 나누나
+#
+# Bolt 게이트웨이는 **상태를 갖지 않는다** — 받은 질의를 전부 `og_cypher()` 로 넘길
+# 뿐이다(`docs` §4). 그래서 Postgres 와 한 컨테이너에 묶을 이유가 없고, 묶으면 손해다.
+#
+#   - 공식 postgres 이미지의 엔트리포인트를 그대로 쓸 수 있다 — initdb·PGDATA·
+#     `docker-entrypoint-initdb.d` 훅·시그널 처리를 우리가 다시 만들지 않는다.
+#   - **Bolt 의 수명을 compose 가 쥔다.** 이 저장소가 실제로 밟은 함정이 여기다:
+#     엔진을 다시 깔고 Bolt 를 안 띄워서 **psql 은 되는데 앱만 죽는** 상태가 반복됐다.
+#     `start.sh` 의 `pgrep` 이 자기 명령줄에 매치돼 "이미 떠 있다"로 판정하던 것도
+#     같은 뿌리다. 별도 서비스로 두면 그 부류가 구조적으로 안 생긴다.
+#   - 게이트웨이만 따로 재기동할 수 있다.
+#
+# ## 타깃
+#
+#     docker build --target runtime-db   -t ontological-db:<태그>   -f docker/Dockerfile.runtime .
+#     docker build --target runtime-bolt -t ontological-bolt:<태그> -f docker/Dockerfile.runtime .
+
+# =============================================================================
+# builder — 여기서만 Rust 를 쓴다. 산출물 외에는 아무것도 다음 단계로 안 넘어간다.
+# =============================================================================
+FROM debian:bookworm-slim AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# PGDG 저장소 — 공식 postgres 이미지와 **같은 출처의 PostgreSQL 16** 을 쓴다.
+# 확장은 서버 ABI 에 묶이므로, 빌드한 쪽과 실행하는 쪽의 major 와 빌드가 맞아야 한다.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates curl gnupg lsb-release \
+    && install -d /usr/share/postgresql-common/pgdg \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+         -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+         > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update && apt-get install -y --no-install-recommends \
+        postgresql-16 postgresql-server-dev-16 \
+        build-essential pkg-config git \
+        libssl-dev libclang-dev clang libreadline-dev zlib1g-dev flex bison \
+    && rm -rf /var/lib/apt/lists/*
+
+# pgrx 는 root 로 Postgres 를 띄우기를 거부한다. 빌드만 할 것이라 `package` 로 충분하지만
+# init 이 서버를 만지므로 비root 사용자를 둔다.
+RUN useradd -m -s /bin/bash build
+USER build
+ENV RUSTUP_HOME=/home/build/.rustup CARGO_HOME=/home/build/.cargo
+ENV PATH=/home/build/.cargo/bin:/usr/lib/postgresql/16/bin:$PATH
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+      | sh -s -- -y --default-toolchain stable --profile minimal
+# 버전을 고정한다 — engine/Cargo.toml 이 pgrx 를 `=0.19.2` 로 못 박고 있어서,
+# cargo-pgrx 가 그보다 앞서면 빌드가 갈린다.
+RUN cargo install cargo-pgrx --version 0.19.2 --locked
+RUN cargo pgrx init --pg16 /usr/lib/postgresql/16/bin/pg_config
+
+WORKDIR /src
+COPY --chown=build:build engine ./engine
+COPY --chown=build:build bolt ./bolt
+
+# `package` 는 설치 트리를 그대로 만들어 준다:
+#   target/release/ontological-pg16/usr/lib/postgresql/16/lib/ontological.so
+#   target/release/ontological-pg16/usr/share/postgresql/16/extension/*.{control,sql}
+RUN cd engine && cargo pgrx package --pg-config /usr/lib/postgresql/16/bin/pg_config
+RUN cd bolt && cargo build --release
+
+# =============================================================================
+# runtime-db — Postgres + ontological + pgvector
+# =============================================================================
+FROM postgres:16-bookworm AS runtime-db
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# `CREATE EXTENSION ontological CASCADE` 가 pgvector 를 끌어온다. 없으면 그 자리에서
+# 실패하는데, 실패 시점이 initdb 훅 안이라 **조용히 넘어가기 쉽다** — 미리 깐다.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        postgresql-16-pgvector \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /src/engine/target/release/ontological-pg16/usr/lib/postgresql/16/lib/ \
+                    /usr/lib/postgresql/16/lib/
+COPY --from=builder /src/engine/target/release/ontological-pg16/usr/share/postgresql/16/extension/ \
+                    /usr/share/postgresql/16/extension/
+
+# initdb 훅 — **PGDATA 가 비어 있을 때만** 돈다(공식 엔트리포인트 규약).
+# 볼륨이 이미 있으면 안 돈다. 그래서 여기서 하는 일은 전부 멱등이어야 한다.
+COPY docker/runtime/10-ontological-init.sh /docker-entrypoint-initdb.d/10-ontological-init.sh
+
+# 공식 엔트리포인트를 그대로 쓴다 — initdb·PGDATA·시그널 처리를 다시 만들지 않는다.
+
+# =============================================================================
+# runtime-bolt — 게이트웨이 단일 바이너리
+# =============================================================================
+FROM debian:bookworm-slim AS runtime-bolt
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates libssl3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -r -s /usr/sbin/nologin bolt
+
+COPY --from=builder /src/bolt/target/release/ontological-bolt /usr/local/bin/ontological-bolt
+
+USER bolt
+# 게이트웨이는 컨테이너 안에서 모든 인터페이스에 연다. **밖으로 나가는지는 compose 의
+# 포트 매핑이 정한다** — 설치본은 루프백에만 매핑한다(Bolt 는 평문 인증이다).
+ENV OG_BOLT_LISTEN=0.0.0.0:7687
+EXPOSE 7687
+ENTRYPOINT ["/usr/local/bin/ontological-bolt"]
