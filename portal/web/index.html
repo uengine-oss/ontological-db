@@ -20,6 +20,9 @@
   <button class="rail-btn" data-panel="audit" title="Query log">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
   </button>
+  <button class="rail-btn" data-panel="evolve" title="Schema changes — rename, re-parent, retype without a migration">
+    <svg viewBox="0 0 24 24"><path d="M4 7h10"/><path d="M4 12h7"/><path d="M4 17h10"/><path d="M17 5l3 3-3 3"/><path d="M20 8h-6"/><path d="M17 13l3 3-3 3"/><path d="M20 16h-6"/></svg>
+  </button>
   <button class="rail-btn" data-panel="help" title="Help">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.8-.9 1.4v.6"/><circle cx="12" cy="17" r=".8" fill="currentColor"/></svg>
   </button>
@@ -64,6 +67,32 @@
     <div id="audit-list"></div>
   </div>
 
+  <!-- schema designer (spec 012) -->
+  <div class="panel hidden" data-panel="evolve">
+    <header><h2>Schema designer</h2><span class="hint" id="dz-graph"></span></header>
+    <h3>Ask <span class="hint">plain words → checked proposals</span></h3>
+    <textarea id="dz-prompt" rows="4" spellcheck="false"
+      placeholder="e.g. Put a DerivativeLinkedSecurity type between Product and ELS, and rename Trade.amount to notional"></textarea>
+    <div class="dz-row"><button class="mini primary" id="dz-ask">Propose changes</button><span class="hint">⌘/Ctrl + Enter</span></div>
+    <div id="dz-ai-out" class="ai-out empty"></div>
+
+    <h3>Change plan <span class="hint">nothing runs until you press Run</span></h3>
+    <div id="dz-plan"></div>
+    <div class="dz-row">
+      <button class="mini" id="dz-review">Review impact</button>
+      <button class="mini primary" id="dz-run">Run</button>
+      <button class="mini" id="dz-clear">Clear</button>
+      <span class="hint">batch <input id="dz-batch" value="100000" size="7"></span>
+    </div>
+    <details class="dz-json"><summary>Add as JSON</summary>
+      <textarea id="dz-json" rows="4" spellcheck="false">{"kind":"rename_property","type":"Person","property":"name","new_name":"fullName"}</textarea>
+      <button class="mini" id="dz-json-add">Add to plan</button>
+    </details>
+
+    <h3>History <span class="hint">og_schema_changes</span> <button id="evo-refresh" class="mini">refresh</button></h3>
+    <div id="evo-list"></div>
+  </div>
+
   <!-- help -->
   <div class="panel hidden" data-panel="help">
     <header><h2>Help</h2></header>
@@ -83,6 +112,15 @@ ORDER BY score DESC LIMIT 10</pre>
       <p>Every read query compiles to plain SQL that PostgreSQL plans itself.
          Open the <b>SQL</b> tab on any result frame, or run:</p>
       <pre class="snippet" data-run=":sql SELECT og_cypher_sql('default', 'MATCH (n) RETURN n')">:sql SELECT og_cypher_sql('default','MATCH (n) RETURN n')</pre>
+      <h3>Time travel</h3>
+      <p>Open the clock next to Run, set <b>valid at</b> and/or <b>as known at</b>, and run
+         the same query. The instant is a session setting — the compiled SQL is identical,
+         which the fingerprint in each frame's status shows.</p>
+      <h3>Schema changes</h3>
+      <p>The ⇄ designer draws the schema as a map. Click a property or a type, drag a card onto a
+         new parent, or describe the change in plain words — changes are staged, drawn on the map,
+         reviewed for impact, then run phase by phase. Renames and re-parenting edit the catalog
+         and rewrite no rows; each change reports the rows it rewrote.</p>
       <h3>How fast is it?</h3>
       <p>The <a href="/benchmark.html">benchmark report</a> compares this
          database with Neo4j, Apache AGE and TypeDB on one machine — answers
@@ -93,6 +131,8 @@ ORDER BY score DESC LIMIT 10</pre>
         <li><code>:sql &lt;statement&gt;</code> — run raw SQL</li>
         <li><code>:explain &lt;cypher&gt;</code> — compiled SQL + plan</li>
         <li><code>:why &lt;cypher&gt;</code> — diagnose an empty result</li>
+        <li><code>:changes</code> — recorded schema changes</li>
+        <li><code>:snapshot [version | instant]</code> — the catalog as it stood then</li>
         <li><code>:clear</code> — clear the stream</li>
       </ul>
     </div>
@@ -105,13 +145,33 @@ ORDER BY score DESC LIMIT 10</pre>
     <textarea id="editor" spellcheck="false" rows="1"
       placeholder="MATCH (n) RETURN n LIMIT 25          —  ⌘/Ctrl + Enter to run"></textarea>
     <div class="editor-actions">
+      <button id="time-btn" class="ghost" title="Time travel — run the same query as of another instant">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/><path d="M3 4v4h4"/></svg>
+      </button>
       <button id="run-btn" title="Run (Ctrl/Cmd + Enter)">
         <svg viewBox="0 0 24 24"><path d="M7 4l12 8-12 8z" fill="currentColor" stroke="none"/></svg>
       </button>
     </div>
   </div>
 
+  <div id="time-bar" class="hidden">
+    <span class="tb-label">Time travel</span>
+    <label>valid at <input id="tb-valid" placeholder="now — e.g. 2026-08-15"></label>
+    <label>as known at <select id="tb-system"><option value="">now</option></select></label>
+    <span class="tb-note" id="tb-note">the query text does not change — the instant is a session setting</span>
+    <button class="mini" id="tb-clear">clear</button>
+  </div>
+
   <div id="stream"></div>
+
+  <section id="designer">
+    <div class="dz-bar">
+      <b>Schema map</b><span id="dz-version" class="hint"></span>
+      <span class="dz-legend"><i class="l-cur"></i>extends <i class="l-add"></i>staged <i class="l-rm"></i>to remove
+        <span class="pk">name · type · column</span> click a property or a type · drag a card onto a new parent</span>
+    </div>
+    <div id="dz-scroll"><div id="dz-canvas"></div></div>
+  </section>
 </main>
 
 <div id="inspector" class="hidden">
@@ -120,5 +180,6 @@ ORDER BY score DESC LIMIT 10</pre>
 </div>
 
 <script src="/app.js"></script>
+<script src="/designer.js"></script>
 </body>
 </html>
