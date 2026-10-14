@@ -35,6 +35,22 @@
 
 ---
 
+## 기능 가이드 · 튜토리얼
+
+사용자 매뉴얼은 개념과 레퍼런스를, 튜토리얼은 처음부터 끝까지 따라 하는 이야기를 담습니다.
+튜토리얼의 SQL 은 `examples/tutorials/` 에 실행 가능한 스크립트로 있고, 문서의 출력은 그
+스크립트를 실제로 돌린 결과입니다.
+
+| 기능 | 답하는 질문 | 매뉴얼 | 튜토리얼 | 스크립트 |
+|---|---|---|---|---|
+| 스키마 진화 (spec 012) | 데이터가 든 그래프의 스키마를 멈추지 않고 어떻게 바꾸는가? | [guides/schema-evolution.md](guides/schema-evolution.md) | [tutorials/schema-evolution-tutorial.md](tutorials/schema-evolution-tutorial.md) | [schema_evolution.sql](../examples/tutorials/schema_evolution.sql) |
+| 바이템포럴 질의 (spec 013) + 쓰기 문맥 (spec 014 일부) | "그때 사실"과 "그때 믿음"을 어떻게 따로 묻고, 누가 썼는지 어떻게 남기는가? | [guides/temporal.md](guides/temporal.md) | [tutorials/temporal-tutorial.md](tutorials/temporal-tutorial.md) | [temporal.sql](../examples/tutorials/temporal.sql) |
+
+스키마 변경 비용의 실측치는 [schema-evolution-benchmark.md](schema-evolution-benchmark.md) 에 있습니다.
+시간 그래프 DB AeonG 를 직접 빌드해 같은 이야기로 비교한 결과는 [aeong-temporal-comparison.md](aeong-temporal-comparison.md) 에 있습니다.
+
+---
+
 ## 역할별 진입점
 
 | 당신이 | 여기부터 |

@@ -1,0 +1,14 @@
+[package]
+name = "ontological-sql"
+version = "0.1.0"
+edition = "2021"
+description = "PostgreSQL-protocol gateway for Ontological: fabric statements and Cypher from any PostgreSQL client"
+
+[[bin]]
+name = "ontological-sql"
+path = "src/main.rs"
+
+[dependencies]
+
+[profile.release]
+opt-level = 3

@@ -12,6 +12,10 @@
 
 CREATE SCHEMA og_catalog;
 CREATE SCHEMA og_data;
+-- One SECURITY DEFINER function per Action (spec 014), owned by the role the
+-- action runs as. Kept apart so granting an action's owner CREATE here grants
+-- it nothing anywhere else.
+CREATE SCHEMA og_action;
 
 COMMENT ON SCHEMA og_catalog IS 'Ontological type system catalog (spec 002)';
 COMMENT ON SCHEMA og_data    IS 'Ontological graph storage (spec 001)';
@@ -379,6 +383,42 @@ CREATE TABLE og_catalog.mapping (
 );
 
 -- ---------------------------------------------------------------------------
+-- Virtual fabric (experiment): external data sources and key-join relationships.
+--
+-- A datasource is a foreign server. Its credentials live in a user mapping,
+-- which only a superuser can read; this table records what is safe to show.
+-- ---------------------------------------------------------------------------
+CREATE TABLE og_catalog.datasource (
+    name        text PRIMARY KEY,
+    engine      text NOT NULL,          -- 'postgres' | 'mysql' | 'mindsdb'
+    server_name text NOT NULL,
+    options     jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+-- The fabric reads sources; it does not write to them. A foreign table would
+-- pass an INSERT, UPDATE, DELETE or TRUNCATE on to its source if the source
+-- account allowed it, so every table a datasource brings in carries a trigger
+-- that refuses first. This holds for plain SQL as well as for Cypher.
+CREATE FUNCTION og_catalog.og_refuse_source_write() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    RAISE EXCEPTION 'datasource table %.% is read-only: the fabric does not write to source systems',
+        TG_TABLE_SCHEMA, TG_TABLE_NAME
+        USING HINT = 'Write through the source system itself, or MATERIALIZE the node type and write to the copy.';
+END $$;
+
+-- A virtual relationship is a join predicate, not stored adjacency:
+-- (a:src_type)-[:R]->(b:dst_type) holds when a.src_prop = b.dst_prop.
+CREATE TABLE og_catalog.virtual_rel (
+    type_id   int4 PRIMARY KEY REFERENCES og_catalog.type(type_id) ON DELETE CASCADE,
+    src_type  int4 NOT NULL REFERENCES og_catalog.type(type_id) ON DELETE CASCADE,
+    src_prop  text NOT NULL,
+    dst_type  int4 NOT NULL REFERENCES og_catalog.type(type_id) ON DELETE CASCADE,
+    dst_prop  text NOT NULL
+);
+
+-- ---------------------------------------------------------------------------
 -- Agent roles & resource limits (spec 008 FR-024..FR-029)
 -- ---------------------------------------------------------------------------
 CREATE TABLE og_catalog.agent_role (
@@ -400,6 +440,104 @@ CREATE TABLE og_data.og_audit (
     error_code  text
 );
 CREATE INDEX og_audit_at_idx ON og_data.og_audit (at DESC);
+
+-- Who wrote the row, as the database knows it and as the application claims it
+-- (spec 014 FR-010). `principal` above is `session_user`, which is the pooler's
+-- login under PostgREST or the Studio, not the role the statement ran as.
+ALTER TABLE og_data.og_audit
+    ADD COLUMN db_user        text,   -- current_user of the caller
+    ADD COLUMN actor          text,   -- og.actor, application-asserted
+    ADD COLUMN source         text,   -- og.source
+    ADD COLUMN reason         text,   -- og.reason — why, in the caller's words
+    ADD COLUMN request_id     text,   -- og.request_id
+    ADD COLUMN schema_version int8,
+    ADD COLUMN action         text;   -- the Action a write came through, if any
+
+-- ---------------------------------------------------------------------------
+-- Fine-grained write grants — spec 014 FR-001..FR-006.
+--
+-- The intent behind og_grant_write(), kept so that storage created later (a new
+-- subtype, a new property column) receives the same privileges. The privileges
+-- themselves are ordinary PostgreSQL table and column grants: that is what
+-- makes them hold for raw SQL as well as for Cypher.
+--   op    : 'create' | 'set' | 'delete'
+--   props : NULL = every property, including undeclared ones in __ext
+-- ---------------------------------------------------------------------------
+CREATE TABLE og_catalog.write_grant (
+    role     text NOT NULL,
+    type_id  int4 NOT NULL REFERENCES og_catalog.type(type_id) ON DELETE CASCADE,
+    op       text NOT NULL CHECK (op IN ('create', 'set', 'delete')),
+    props    text[],
+    PRIMARY KEY (role, type_id, op)
+);
+
+-- ---------------------------------------------------------------------------
+-- Actions — spec 014 FR-011..FR-016.
+--
+-- A named, parameterised write. Each one is backed by its own SECURITY DEFINER
+-- function owned by `run_as`, so "may this caller run this action?" is answered
+-- by PostgreSQL's EXECUTE check against the caller, and "what may the action
+-- touch?" by the grants `run_as` holds. Neither answer depends on us.
+-- ---------------------------------------------------------------------------
+CREATE TABLE og_catalog.action (
+    action_id    serial PRIMARY KEY,
+    graph_id     int4 NOT NULL REFERENCES og_catalog.graph(graph_id) ON DELETE CASCADE,
+    name         text NOT NULL,
+    lang         text NOT NULL DEFAULT 'cypher' CHECK (lang IN ('cypher', 'typeql')),
+    body         text NOT NULL,
+    params       jsonb NOT NULL DEFAULT '{}'::jsonb,   -- {"name": "string", ...} required keys
+    precondition text,                                 -- Cypher returning one row {ok: bool}
+    run_as       text NOT NULL,
+    fn_name      text NOT NULL,
+    description  text,
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (graph_id, name)
+);
+
+-- ---------------------------------------------------------------------------
+-- Schema changes as first-class, versioned objects — spec 012.
+--
+-- A change moves through planned → expanded → migrating → validated →
+-- contracted (or aborted). Each phase is a separate call, so a change on a large
+-- graph can be expanded today, backfilled in batches, validated, and contracted
+-- when the data is ready — and the record says where it stands.
+-- ---------------------------------------------------------------------------
+CREATE TABLE og_catalog.schema_change (
+    change_id    serial PRIMARY KEY,
+    graph_id     int4 NOT NULL REFERENCES og_catalog.graph(graph_id) ON DELETE CASCADE,
+    kind         text NOT NULL,
+    spec         jsonb NOT NULL,
+    phase        text NOT NULL DEFAULT 'planned'
+                 CHECK (phase IN ('planned','expanded','migrating','validated','contracted','aborted')),
+    from_version int8,
+    to_version   int8,
+    created_by   text NOT NULL DEFAULT current_user,
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    updated_at   timestamptz NOT NULL DEFAULT now(),
+    report       jsonb NOT NULL DEFAULT '{}'::jsonb
+);
+CREATE INDEX schema_change_graph_idx ON og_catalog.schema_change (graph_id, change_id DESC);
+
+-- What the schema looked like at each version — "what structure was this
+-- written under?" (spec 012 FR-009).
+ALTER TABLE og_catalog.schema_version ADD COLUMN snapshot jsonb;
+
+-- ---------------------------------------------------------------------------
+-- Bitemporal types — spec 013.
+--
+-- A type listed here keeps valid time and system time on every row of its
+-- storage tables, and a history table `og_data.h_<type_id>` beside each one.
+-- Subtypes created later inherit the setting.
+-- ---------------------------------------------------------------------------
+CREATE TABLE og_catalog.temporal (
+    type_id    int4 PRIMARY KEY REFERENCES og_catalog.type(type_id) ON DELETE CASCADE,
+    enabled_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Types whose rows carry system-managed stamps (spec 014 FR-007..FR-009).
+CREATE TABLE og_catalog.stamped (
+    type_id    int4 PRIMARY KEY REFERENCES og_catalog.type(type_id) ON DELETE CASCADE
+);
 
 -- ---------------------------------------------------------------------------
 -- Backup registration — spec 001 FR-010, spec 005 FR-024.
@@ -425,8 +563,17 @@ SELECT pg_catalog.pg_extension_config_dump('og_catalog.embedding', '');
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.compat_index', '');
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.prefix', '');
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.mapping', '');
+SELECT pg_catalog.pg_extension_config_dump('og_catalog.datasource', '');
+SELECT pg_catalog.pg_extension_config_dump('og_catalog.virtual_rel', '');
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.agent_role', '');
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.typeql_function', '');
+SELECT pg_catalog.pg_extension_config_dump('og_catalog.write_grant', '');
+SELECT pg_catalog.pg_extension_config_dump('og_catalog.action', '');
+SELECT pg_catalog.pg_extension_config_dump('og_catalog.schema_change', '');
+SELECT pg_catalog.pg_extension_config_dump('og_catalog.temporal', '');
+SELECT pg_catalog.pg_extension_config_dump('og_catalog.stamped', '');
+SELECT pg_catalog.pg_extension_config_dump('og_catalog.action_action_id_seq', '');
+SELECT pg_catalog.pg_extension_config_dump('og_catalog.schema_change_change_id_seq', '');
 
 -- The extension script seeds these keys, so restoring them again would collide.
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.setting',

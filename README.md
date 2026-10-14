@@ -135,8 +135,10 @@ that applied it unconditionally made two-hop queries *slower*.
 
 ## What is built
 
-Eleven specifications, planned and implemented in order. Status is stated
-plainly; partial means partial.
+Fourteen specifications. 001–011 were planned and implemented in order;
+012–014 came afterwards, from an operations review of schema change, time and
+write security on a graph that already holds data. Status is stated plainly;
+partial means partial.
 
 | # | Spec | Status |
 |---|------|--------|
@@ -151,6 +153,9 @@ plainly; partial means partial.
 | [009](specs/009-benchmark-conformance/) | Benchmark & conformance harness | **working** — AGE/CTE comparison with a correctness gate, integrity checks, regression compare |
 | [010](specs/010-typeql-query-surface/) | TypeQL query surface | **partial** — TypeDB 3.x `define`/`insert`/`put`/`match`/`fetch`/pipeline/`delete`/`update`, verified against the upstream TypeDB bookstore example. User-defined functions parse and round-trip but do not evaluate |
 | [011](specs/011-bolt-protocol-gateway/) | Bolt protocol gateway | **working** — Bolt 4.4: a Neo4j driver connects with only its URI changed. `Node`/`Relationship`, transactions, change counters, `EXPLAIN`, PostgreSQL roles as authentication. **Neo4j's own MCP server runs against it unmodified** ([`examples/meeting-rooms/`](examples/meeting-rooms/)). Bolt 5.x, `Path` and TLS not yet |
+| [012](specs/012-schema-evolution/) | Schema evolution | **working, partial** — schema changes as recorded objects moving through expand → migrate (batched, resumable) → validate → contract, with a catalog snapshot per schema version. Ten kinds; renames, re-parenting and drops are catalog edits that rewrite no rows, a column type change is migrated in batches, with a trigger dual-writing the new column so raw SQL writes are held to the new type too. Splitting/merging types, TypeQL `redefine`, and hierarchy-wide uniqueness not yet |
+| [013](specs/013-bitemporal-graph/) | Bitemporal graph | **working, partial** — per-type valid time and system time; the same Cypher answers at any instant set by `og.valid_at` / `og.system_at` (or Bolt `tx_metadata`), with identical compiled SQL. Variable-length paths, unlabelled scans and TypeQL refuse an instant instead of answering from the present. A change dated in the future leaves the current value visible until it takes effect. Retention not yet |
+| [014](specs/014-write-security-context/) | Write-time security context | **working, partial** — per-type/operation/property write grants as PostgreSQL column grants (they hold for raw SQL), row-level security on the shared registries for writes, unforgeable stamps, Actions as `SECURITY DEFINER` functions with parameter contracts and preconditions, `tx_metadata` (including `reason`) → audit. Registry reads are still unrestricted; TypeQL actions take no parameters |
 
 Governance lives in [`.specify/memory/constitution.md`](.specify/memory/constitution.md).
 Every deviation from it is recorded in the relevant `plan.md` under *Complexity
@@ -310,6 +315,8 @@ functions, so two of four run today. That is the honest number.
 - [`docs/architecture.md`](docs/architecture.md) — how the pieces fit, with diagrams
 - [`docs/comparison.md`](docs/comparison.md) — Apache AGE and pgGraph: storage, traversal, and what their numbers show
 - [`docs/benchmark.md`](docs/benchmark.md) — the 1/2/3-hop workload against Neo4j, AGE and TypeDB, and the method
+- [`docs/schema-evolution-benchmark.md`](docs/schema-evolution-benchmark.md) — seven schema changes on a loaded graph (10k–1M nodes): catalog-level changes against a physical migration, Neo4j and AGE, including the two where Neo4j is faster
+- [`docs/guides/schema-evolution.md`](docs/guides/schema-evolution.md), [`docs/guides/temporal.md`](docs/guides/temporal.md) — manuals for schema change and point-in-time queries; hands-on tutorials in [`docs/tutorials/`](docs/tutorials/)
 - [`docs/deep-traversal.md`](docs/deep-traversal.md) — past three hops: what trail enumeration cost, what replaced it, and the same question measured against Neo4j, AGE and a source-built pgGraph
 - [`docs/cypher.md`](docs/cypher.md) — supported syntax, precisely, including what is not
 - [`docs/typeql.md`](docs/typeql.md) — the TypeQL surface, the storage mapping, and what is not supported
@@ -325,9 +332,11 @@ functions, so two of four run today. That is the honest number.
 ```bash
 docker exec og bash -lc 'cd /work/engine && cargo test'          # parser, lexer, RDF, ids
 docker exec og bash -lc 'cd /work && ./tests/run.sh'             # SQL regression suite
+./tests/tutorials.sh                                         # every tutorial's examples, run as tests (FABRIC=1 adds the fabric one)
 docker exec og bash -lc 'cd /work && python3 tests/typeql/run.py'  # TypeQL vs the TypeDB example
 docker exec og bash -lc 'cd /work/bolt && cargo test'            # PackStream round trips
 docker exec og bash -lc 'cd /work && python3 tests/neo4j-movies/run.py'  # Neo4j sample, postgres + bolt + neo4j
+docker exec og bash -lc 'cd /work && python3 tests/bolt-context/run.py'  # tx_metadata → stamps, audit, valid time
 docker exec og bash -lc 'cd /work && python3 bench/harness.py'   # benchmark + integrity
 ```
 

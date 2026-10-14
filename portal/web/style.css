@@ -347,3 +347,15 @@ body.designing #editor-wrap, body.designing #stream, body.designing #time-bar { 
 #evo-list .row .p.aborted { color: var(--err); }
 
 body.designing { grid-template-columns: 56px 400px 1fr; }
+
+/* :timeline — validity slices on a time axis (release.js) */
+.tl { padding: 14px 16px 8px; position: relative; }
+.tl-axis { position: relative; height: 18px; border-bottom: 1px solid var(--border, #333); margin-bottom: 10px; font-size: 11px; opacity: .75; }
+.tl-axis span { position: absolute; transform: translateX(-50%); top: 0; }
+.tl-row { position: relative; height: 34px; margin: 6px 0 18px; }
+.tl-bar { position: absolute; top: 0; height: 30px; border-radius: 6px; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; box-sizing: border-box; }
+.tl-bar b { font-weight: 700; margin-right: 6px; }
+.tl-c0 { background: #3b6fd8; } .tl-c1 { background: #1f9d6b; } .tl-c2 { background: #c9782b; } .tl-c3 { background: #8a5cd0; }
+.tl-cur { box-shadow: 0 0 0 2px #fff inset; }
+.tl-meta { position: absolute; top: 31px; left: 0; font-size: 11px; opacity: .7; white-space: nowrap; }
+.tl-empty { opacity: .7; padding: 12px; }

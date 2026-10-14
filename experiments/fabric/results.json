@@ -1,0 +1,173 @@
+[
+ {
+  "id": "Q1",
+  "title": "Single source, filter",
+  "cypher": "MATCH (s:Supplier) WHERE s.country = 'China' RETURN s.supplier_id AS a, s.supplier_name AS b",
+  "a_rows": 4,
+  "a_ms": 1.1,
+  "compiled_sql": "SELECT jsonb_build_object('a', t.c0, 'b', t.c1) AS row FROM (\nSELECT to_jsonb(n1.p_supplier_id) AS c0, to_jsonb(n1.p_supplier_name) AS c1 FROM og_data.v_1 n1\n WHERE (n1.p_country = 'China')\n) t",
+  "remote": [
+   "[Foreign Scan on og_ext_erp__erp.mst_supplier]",
+   "SELECT supplier_id, supplier_name FROM erp.mst_supplier WHERE ((country::text = 'China'::text))"
+  ],
+  "fetched": 4,
+  "sql": "SELECT supplier_id, supplier_name FROM scm_erp.mst_supplier WHERE country = 'China'",
+  "m_rows": 4,
+  "m_ms": 9.0,
+  "equal": true
+ },
+ {
+  "id": "Q2",
+  "title": "Same-source hop + aggregate (PG·PG)",
+  "cypher": "MATCH (po:PurchaseOrder)-[:ORDERED_FROM]->(s:Supplier) WHERE po.total_amount_usd > 50000 RETURN s.supplier_id AS a, count(po) AS b",
+  "a_rows": 3,
+  "a_ms": 1.6,
+  "compiled_sql": "SELECT jsonb_build_object('a', t.c0, 'b', t.c1) AS row FROM (\nSELECT to_jsonb(n2.p_supplier_id) AS c0, count((jsonb_strip_nulls(jsonb_build_object('_id', n1.id, '_type', og_type_name(n1.type_id), 'buyer', to_jsonb(n1.p_buyer), 'contract_id', to_jsonb(n1.p_contract_id), 'order_date', to_jsonb(n1.p_order_date), 'po_id', to_jsonb(n1.p_po_id), 'priority', to_jsonb(n1.p_priority), 'promised_date', to_jsonb(n1.p_promised_date), 'status', to_jsonb(n1.p_status), 'supplier_id', to_jsonb(n1.p_supplier_id), 'total_amount_usd', to_jsonb(n1.p_total_amount_usd))) || COALESCE(n1.__ext,'{}'::jsonb))) AS c1 FROM og_data.v_3 n1\n  CROSS JOIN og_data.v_1 n2\n WHERE n1.p_supplier_id = n2.p_supplier_id\n   AND (n1.p_total_amount_usd > 50000)\n GROUP BY to_jsonb(n2.p_supplier_id)\n) t",
+  "remote": [
+   "[Foreign Scan]",
+   "SELECT r7.supplier_id, r5.po_id, r5.buyer, r5.contract_id, r5.order_date, r5.priority, r5.promised_date, r5.status, r5.supplier_id, r5.total_amount_usd FROM (erp.doc_purchase_order r5 INNER JOIN erp.mst_supplier r7 ON (((r5.supplier_id::text = r7.supplier_id::text)) AND ((r5.total_amount_usd::numeric > 50000::numeric))))"
+  ],
+  "fetched": 5,
+  "sql": "SELECT s.supplier_id, count(*) FROM scm_erp.doc_purchase_order po JOIN scm_erp.mst_supplier s ON po.supplier_id = s.supplier_id WHERE po.total_amount_usd > 50000 GROUP BY s.supplier_id",
+  "m_rows": 3,
+  "m_ms": 11.2,
+  "equal": true
+ },
+ {
+  "id": "Q3",
+  "title": "Cross-source 2 hops (MySQL→PG→PG)",
+  "cypher": "MATCH (sh:Shipment)-[:SHIPS]->(po:PurchaseOrder)-[:ORDERED_FROM]->(s:Supplier) WHERE sh.delay_days >= 5 RETURN sh.shipment_no AS a, po.po_id AS b, s.supplier_name AS c",
+  "a_rows": 2,
+  "a_ms": 3.3,
+  "compiled_sql": "SELECT jsonb_build_object('a', t.c0, 'b', t.c1, 'c', t.c2) AS row FROM (\nSELECT to_jsonb(n1.p_shipment_no) AS c0, to_jsonb(n2.p_po_id) AS c1, to_jsonb(n3.p_supplier_name) AS c2 FROM og_data.v_6 n1\n  CROSS JOIN og_data.v_3 n2\n  CROSS JOIN og_data.v_1 n3\n WHERE n1.p_ref_po_no = n2.p_po_id\n   AND n2.p_supplier_id = n3.p_supplier_id\n   AND (n1.p_delay_days >= 5)\n) t",
+  "remote": [
+   "[Foreign Scan on og_ext_wms__wms.shipment]",
+   "SELECT `shipment_no`, `ref_po_no` FROM `wms`.`shipment` WHERE ((`delay_days` >= 5)) ORDER BY `ref_po_no` IS NULL, `ref_po_no` ASC",
+   "[Foreign Scan]",
+   "SELECT r10.po_id, r12.supplier_name FROM (erp.doc_purchase_order r10 INNER JOIN erp.mst_supplier r12 ON (((r10.supplier_id::text = r12.supplier_id::text))))"
+  ],
+  "fetched": 121,
+  "sql": "SELECT sh.shipment_no, po.po_id, s.supplier_name FROM scm_wms.shipment sh JOIN scm_erp.doc_purchase_order po ON sh.ref_po_no = po.po_id JOIN scm_erp.mst_supplier s ON po.supplier_id = s.supplier_id WHERE sh.delay_days >= 5",
+  "m_rows": 2,
+  "m_ms": 45.6,
+  "equal": true
+ },
+ {
+  "id": "Q4",
+  "title": "Three systems (customs PG → WMS MySQL → ERP PG)",
+  "cypher": "MATCH (d:Declaration)-[:DECLARES]->(sh:Shipment)-[:SHIPPED_BY]->(s:Supplier) WHERE d.status IN ['HOLD','REJECTED'] RETURN d.decl_id AS a, sh.shipment_no AS b, s.supplier_id AS c",
+  "a_rows": 3,
+  "a_ms": 3.4,
+  "compiled_sql": "SELECT jsonb_build_object('a', t.c0, 'b', t.c1, 'c', t.c2) AS row FROM (\nSELECT to_jsonb(n1.p_decl_id) AS c0, to_jsonb(n2.p_shipment_no) AS c1, to_jsonb(n3.p_supplier_id) AS c2 FROM og_data.v_5 n1\n  CROSS JOIN og_data.v_6 n2\n  CROSS JOIN og_data.v_1 n3\n WHERE n1.p_ref_shipment_no = n2.p_shipment_no\n   AND n2.p_vendor_code = n3.p_supplier_id\n   AND (n1.p_status IN ('HOLD', 'REJECTED'))\n) t",
+  "remote": [
+   "[Foreign Scan on og_ext_wms__wms.shipment]",
+   "SELECT `shipment_no`, `vendor_code` FROM `wms`.`shipment` ORDER BY `vendor_code` IS NULL, `vendor_code` ASC",
+   "[Foreign Scan on og_ext_erp__erp.mst_supplier]",
+   "SELECT supplier_id FROM erp.mst_supplier",
+   "[Foreign Scan on og_ext_erp__customs.decl_header]",
+   "SELECT decl_id, ref_shipment_no FROM customs.decl_header WHERE ((status::text = ANY ('{HOLD,REJECTED}'::text[])))"
+  ],
+  "fetched": 133,
+  "sql": "SELECT d.decl_id, sh.shipment_no, s.supplier_id FROM scm_customs.decl_header d JOIN scm_wms.shipment sh ON d.ref_shipment_no = sh.shipment_no JOIN scm_erp.mst_supplier s ON sh.vendor_code = s.supplier_id WHERE d.status IN ('HOLD','REJECTED')",
+  "m_rows": 3,
+  "m_ms": 44.6,
+  "equal": true
+ },
+ {
+  "id": "Q5",
+  "title": "Branching pattern over CRM (MySQL) and ERP (PG)",
+  "cypher": "MATCH (cu:Customer)<-[:PLACED_BY]-(so:SalesOrder)<-[:ABOUT_ORDER]-(c:Claim {severity:'HIGH'}), (so)-[:ORDERS_ITEM]->(i:Item) RETURN c.ticket_no AS a, cu.cust_name AS b, i.item_name AS c",
+  "a_rows": 9,
+  "a_ms": 3.1,
+  "compiled_sql": "SELECT jsonb_build_object('a', t.c0, 'b', t.c1, 'c', t.c2) AS row FROM (\nSELECT to_jsonb(n3.p_ticket_no) AS c0, to_jsonb(n1.p_cust_name) AS c1, to_jsonb(n4.p_item_name) AS c2 FROM og_data.v_7 n1\n  CROSS JOIN og_data.v_8 n2\n  CROSS JOIN og_data.v_9 n3\n  CROSS JOIN og_data.v_2 n4\n WHERE n2.p_cust_no = n1.p_cust_no\n   AND n3.p_severity = 'HIGH'\n   AND n3.p_so_no = n2.p_so_no\n   AND n2.p_sku_code = n4.p_item_id\n) t",
+  "remote": [
+   "[Foreign Scan]",
+   "SELECT r10.`cust_name`, r12.`sku_code`, r14.`ticket_no` FROM ((`crm_scm`.`customer` r10 INNER JOIN `crm_scm`.`sales_order` r12 ON (((r10.`cust_no` = r12.`cust_no`)))) INNER JOIN `crm_scm`.`claim_ticket` r14 ON (((r12.`so_no` = r14.`so_no`)))) WHERE ((r14.`severity` = 'HIGH')) ORDER BY r12.`sku_code` IS NULL, r12.`sku_code` ASC",
+   "[Foreign Scan on og_ext_erp__erp.mst_item]",
+   "SELECT item_id, item_name FROM erp.mst_item"
+  ],
+  "fetched": 45,
+  "sql": "SELECT c.ticket_no, cu.cust_name, i.item_name FROM scm_crm.claim_ticket c JOIN scm_crm.sales_order so ON c.so_no = so.so_no JOIN scm_crm.customer cu ON so.cust_no = cu.cust_no JOIN scm_erp.mst_item i ON so.sku_code = i.item_id WHERE c.severity = 'HIGH'",
+  "m_rows": 9,
+  "m_ms": 61.6,
+  "equal": true
+ },
+ {
+  "id": "Q7",
+  "title": "Four hops, three systems, mixed directions (customs → WMS → ERP)",
+  "cypher": "MATCH (d:Declaration)-[:DECLARES]->(sh:Shipment)-[:SHIPS]->(po:PurchaseOrder)<-[:LINE_OF]-(l:POLine)-[:FOR_ITEM]->(i:Item) WHERE d.fta_applied = false RETURN i.item_id AS a, count(DISTINCT d.decl_id) AS b",
+  "a_rows": 5,
+  "a_ms": 5.0,
+  "compiled_sql": "SELECT jsonb_build_object('a', t.c0, 'b', t.c1) AS row FROM (\nSELECT to_jsonb(n5.p_item_id) AS c0, count(DISTINCT n1.p_decl_id) AS c1 FROM og_data.v_5 n1\n  CROSS JOIN og_data.v_6 n2\n  CROSS JOIN og_data.v_3 n3\n  CROSS JOIN og_data.v_4 n4\n  CROSS JOIN og_data.v_2 n5\n WHERE n1.p_ref_shipment_no = n2.p_shipment_no\n   AND n2.p_ref_po_no = n3.p_po_id\n   AND n4.p_po_id = n3.p_po_id\n   AND n4.p_item_id = n5.p_item_id\n   AND (n1.p_fta_applied = false)\n GROUP BY to_jsonb(n5.p_item_id)\n) t",
+  "remote": [
+   "[Foreign Scan on og_ext_wms__wms.shipment]",
+   "SELECT `shipment_no`, `ref_po_no` FROM `wms`.`shipment` ORDER BY `shipment_no` IS NULL, `shipment_no` ASC",
+   "[Foreign Scan on og_ext_erp__customs.decl_header]",
+   "SELECT decl_id, ref_shipment_no FROM customs.decl_header WHERE ((NOT fta_applied))",
+   "[Foreign Scan]",
+   "SELECT r15.po_id, r17.po_id, r19.item_id FROM ((erp.doc_purchase_order r15 INNER JOIN erp.doc_po_line r17 ON (((r15.po_id::text = r17.po_id::text)))) INNER JOIN erp.mst_item r19 ON (((r17.item_id::text = r19.item_id::text))))"
+  ],
+  "fetched": 334,
+  "sql": "SELECT i.item_id, count(DISTINCT d.decl_id) FROM scm_customs.decl_header d JOIN scm_wms.shipment sh ON d.ref_shipment_no = sh.shipment_no JOIN scm_erp.doc_purchase_order po ON sh.ref_po_no = po.po_id JOIN scm_erp.doc_po_line l ON l.po_id = po.po_id JOIN scm_erp.mst_item i ON l.item_id = i.item_id WHERE d.fta_applied = false GROUP BY i.item_id",
+  "m_rows": 5,
+  "m_ms": 74.1,
+  "equal": true
+ },
+ {
+  "id": "Q8",
+  "title": "Virtual view with a composite key (WMS stock × ERP item)",
+  "cypher": "MATCH (st:StockDaily)-[:STOCK_OF]->(i:Item) WHERE st.snapshot_date >= '2026-08-20' AND st.on_hand_qty < i.safety_stock RETURN st.sku_code AS a, st.warehouse_cd AS b, st.on_hand_qty AS c",
+  "a_rows": 127,
+  "a_ms": 19.7,
+  "compiled_sql": "SELECT jsonb_build_object('a', t.c0, 'b', t.c1, 'c', t.c2) AS row FROM (\nSELECT to_jsonb(n1.p_sku_code) AS c0, to_jsonb(n1.p_warehouse_cd) AS c1, to_jsonb(n1.p_on_hand_qty) AS c2 FROM og_data.v_19 n1\n  CROSS JOIN og_data.v_2 n2\n WHERE n1.p_sku_code = n2.p_item_id\n   AND ((n1.p_snapshot_date >= '2026-08-20'::date) AND (n1.p_on_hand_qty < n2.p_safety_stock))\n) t",
+  "remote": [
+   "[Foreign Scan on og_ext_wms__wms.stock_daily]",
+   "SELECT `sku_code`, `warehouse_cd`, `on_hand_qty` FROM `wms`.`stock_daily` WHERE ((`snapshot_date` >= '2026-08-20')) ORDER BY `sku_code` IS NULL, `sku_code` ASC",
+   "[Foreign Scan on og_ext_erp__erp.mst_item]",
+   "SELECT item_id, safety_stock FROM erp.mst_item"
+  ],
+  "fetched": 180,
+  "sql": "SELECT st.sku_code, st.warehouse_cd, st.on_hand_qty FROM scm_wms.stock_daily st JOIN scm_erp.mst_item i ON st.sku_code = i.item_id WHERE st.snapshot_date >= '2026-08-20' AND st.on_hand_qty < i.safety_stock",
+  "m_rows": 127,
+  "m_ms": 50.3,
+  "equal": true
+ },
+ {
+  "id": "Q9",
+  "title": "Same as Q8 with LIMIT 20 — a limit above a cross-source predicate",
+  "cypher": "MATCH (st:StockDaily)-[:STOCK_OF]->(i:Item) WHERE st.snapshot_date >= '2026-08-20' AND st.on_hand_qty < i.safety_stock RETURN st.sku_code AS a ORDER BY a LIMIT 20",
+  "a_rows": 20,
+  "a_ms": 17.8,
+  "compiled_sql": "SELECT jsonb_build_object('a', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_sku_code) AS c0, to_jsonb(n1.p_sku_code) AS o0 FROM og_data.v_19 n1\n  CROSS JOIN og_data.v_2 n2\n WHERE n1.p_sku_code = n2.p_item_id\n   AND ((n1.p_snapshot_date >= '2026-08-20'::date) AND (n1.p_on_hand_qty < n2.p_safety_stock))\n) t\n ORDER BY t.o0\n LIMIT 20",
+  "remote": [
+   "[Foreign Scan on og_ext_wms__wms.stock_daily]",
+   "SELECT `sku_code`, `on_hand_qty` FROM `wms`.`stock_daily` WHERE ((`snapshot_date` >= '2026-08-20')) ORDER BY `sku_code` IS NULL, `sku_code` ASC",
+   "[Foreign Scan on og_ext_erp__erp.mst_item]",
+   "SELECT item_id, safety_stock FROM erp.mst_item"
+  ],
+  "fetched": 180,
+  "sql": "SELECT st.sku_code FROM scm_wms.stock_daily st JOIN scm_erp.mst_item i ON st.sku_code = i.item_id WHERE st.snapshot_date >= '2026-08-20' AND st.on_hand_qty < i.safety_stock ORDER BY st.sku_code LIMIT 20",
+  "m_rows": 15,
+  "m_ms": 56.4,
+  "equal": false
+ },
+ {
+  "id": "Q6",
+  "title": "Graph-only knowledge → virtual rows (native RiskEvent → Supplier ← Shipment)",
+  "cypher": "MATCH (:Region {name:'East Asia'})<-[:IN_REGION]-(e:RiskEvent)-[:AFFECTS]->(s:Supplier)<-[:SHIPPED_BY]-(sh:Shipment) WHERE sh.ship_status <> 'DELIVERED' RETURN e.title AS a, sh.shipment_no AS b",
+  "a_rows": 2,
+  "a_ms": 4.2,
+  "compiled_sql": "SELECT jsonb_build_object('a', t.c0, 'b', t.c1) AS row FROM (\nSELECT to_jsonb(n2.p_title) AS c0, to_jsonb(n6.p_shipment_no) AS c1 FROM og_data.v_21 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'i'::\"char\" AND adj3.etype = ANY(ARRAY[24]::int4[])) u4\n  CROSS JOIN og_data.v_22 n2\n  CROSS JOIN og_data.v_1 n5\n  CROSS JOIN og_data.v_6 n6\n WHERE n1.p_name = 'East Asia'\n   AND n2.id = u4.nbr\n   AND n2.p_supplier_code = n5.p_supplier_id\n   AND n6.p_vendor_code = n5.p_supplier_id\n   AND (n6.p_ship_status <> 'DELIVERED')\n) t",
+  "remote": [
+   "[Foreign Scan on og_ext_erp__erp.mst_supplier]",
+   "SELECT supplier_id FROM erp.mst_supplier",
+   "[Foreign Scan on og_ext_wms__wms.shipment]",
+   "SELECT `shipment_no`, `vendor_code` FROM `wms`.`shipment` WHERE ((`ship_status` <> 'DELIVERED')) ORDER BY `vendor_code` IS NULL, `vendor_code` ASC"
+  ],
+  "fetched": 48,
+  "sql": "(two steps) MATCH (:Region {name:'East Asia'})<-[:IN_REGION]-(e:RiskEvent) RETURN e.title AS t, e.supplier_code AS k  ⟶  SELECT vendor_code, shipment_no FROM scm_wms.shipment WHERE ship_status <> 'DELIVERED' AND vendor_code IN ({keys})",
+  "c_rows": 2,
+  "c_ms": 11.7,
+  "equal": true
+ }
+]

@@ -21,6 +21,7 @@ use pgrx::prelude::*;
 ::pgrx::pg_module_magic!(name, version);
 
 extension_sql_file!("../sql/bootstrap.sql", name = "bootstrap", bootstrap);
+extension_sql_file!("../sql/release.sql", name = "release", requires = ["bootstrap"]);
 extension_sql_file!("../sql/access.sql", name = "access", finalize);
 
 pub mod adapters;
@@ -28,11 +29,14 @@ pub mod agent;
 pub mod catalog;
 pub mod compat;
 pub mod cypher;
+pub mod fabric;
 pub mod spiu;
 pub mod id;
 pub mod interop;
+pub mod security;
 pub mod stats;
 pub mod storage;
+pub mod temporal;
 pub mod typeql;
 pub mod vector;
 

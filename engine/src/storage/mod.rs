@@ -37,6 +37,11 @@ struct PropPlan {
     columns: Vec<String>,
     exprs: Vec<String>,
     declared: Vec<String>,
+    /// Does the payload carry anything that is not a declared column? Only
+    /// then does a write touch `__ext` — which matters now that writing it is
+    /// a privilege of its own (spec 014: a writer granted named properties
+    /// holds no privilege on the overflow payload).
+    ext_needed: bool,
 }
 
 /// Build the column list / value expressions for a property payload.
@@ -86,6 +91,20 @@ fn type_accepts(declared: &str, wanted: &str) -> bool {
 /// them, and widening is one-way so it cannot oscillate.
 fn declare_new_props(type_id: i32, props: &Value, existing: &[(String, String, String)]) -> bool {
     let Some(obj) = props.as_object() else { return false };
+    // Only a key that is new, or whose column must widen, needs anything done —
+    // and only then is it worth asking whether this role may do it.
+    let needs_work = obj.iter().any(|(key, value)| match infer_column_type(value) {
+        None => false,
+        Some(want) => match existing.iter().find(|(n, _, _)| n == key) {
+            None => true,
+            Some((_, _, dtype)) => WIDENABLE.contains(&dtype.as_str()) && !type_accepts(dtype, want),
+        },
+    });
+    if !needs_work || !crate::security::can_change_schema() {
+        // A writer may not change the schema. Undeclared values stay in
+        // `__ext`, which is what ADR-025 always said happened here.
+        return false;
+    }
 
     let Some((graph, type_name)) = Spi::connect(|client| -> Option<(String, String)> {
         let mut rows = client
@@ -138,6 +157,7 @@ fn declare_new_props(type_id: i32, props: &Value, existing: &[(String, String, S
                         let _ = Spi::run(&format!(
                             "ALTER TABLE {table} ALTER COLUMN {col} TYPE text USING {col}::text"
                         ));
+                        crate::temporal::sync_history(sub);
                         if let Some(n) = types::try_type_name(sub) {
                             types::ensure_alias_view(sub, &n, &table);
                         }
@@ -158,6 +178,7 @@ fn declare_new_props(type_id: i32, props: &Value, existing: &[(String, String, S
 }
 
 fn plan_props(type_id: i32, props: &Value, param: &str) -> PropPlan {
+    crate::security::check_reserved_keys(props);
     let rows: Vec<(String, String, String)> = Spi::connect(|client| {
         client
             .select(
@@ -199,7 +220,7 @@ fn plan_props(type_id: i32, props: &Value, param: &str) -> PropPlan {
         rows
     };
 
-    let mut plan = PropPlan { columns: vec![], exprs: vec![], declared: vec![] };
+    let mut plan = PropPlan { columns: vec![], exprs: vec![], declared: vec![], ext_needed: false };
     for (name, col, dtype) in rows {
         plan.declared.push(name.clone());
         if props.get(&name).is_none() {
@@ -218,6 +239,10 @@ fn plan_props(type_id: i32, props: &Value, param: &str) -> PropPlan {
         plan.columns.push(col);
         plan.exprs.push(expr);
     }
+    plan.ext_needed = props
+        .as_object()
+        .map(|o| o.keys().any(|k| !plan.declared.contains(k)))
+        .unwrap_or(false);
     plan
 }
 
@@ -250,14 +275,27 @@ fn og_create_node(graph: &str, type_name: &str, props: default!(JsonB, "'{}'")) 
     create_node_inner(gid, tid, type_name, props.0)
 }
 
+/// A virtual type's storage is a view over rows that live elsewhere. The view
+/// would pass an UPDATE or DELETE on to the source if the fabric account had
+/// the right to, so the refusal has to happen here, not depend on that grant.
+pub fn refuse_virtual_write(tid: i32) {
+    if let Some(source) = crate::fabric::virtual_source(tid) {
+        let name = types::try_type_name(tid).unwrap_or_else(|| tid.to_string());
+        error!(
+            "'{name}' is a virtual node type and read-only: its rows live in {source}. \
+             Write to the source system, or MATERIALIZE VIRTUAL NODE {name} to take a copy"
+        );
+    }
+}
+
 pub fn create_node_inner(_gid: i32, tid: i32, type_name: &str, props: Value) -> i64 {
     if types::type_kind(tid) != 'e' {
         error!("'{type_name}' is not an entity type");
     }
     let table = types::storage_table(tid)
         .unwrap_or_else(|| error!("'{type_name}' is abstract and cannot be instantiated"));
+    refuse_virtual_write(tid);
 
-    let nid = alloc_id(tid);
     let plan = plan_props(tid, &props, "$2");
     let ext = ext_expr(&plan, "$2");
 
@@ -265,8 +303,12 @@ pub fn create_node_inner(_gid: i32, tid: i32, type_name: &str, props: Value) -> 
     let mut vals = vec!["$1".to_string()];
     cols.extend(plan.columns.iter().cloned());
     vals.extend(plan.exprs.iter().cloned());
-    cols.push("__ext".into());
-    vals.push(ext);
+    if plan.ext_needed {
+        cols.push("__ext".into());
+        vals.push(ext);
+    }
+    crate::security::check_write(tid, &table, crate::security::WriteOp::Create, &cols);
+    let nid = alloc_id(tid);
 
     Spi::run_with_args(
         "INSERT INTO og_data.og_node (id, type_id) VALUES ($1, $2)",
@@ -297,9 +339,18 @@ fn og_set_node_props(id: i64, props: JsonB) {
 
 pub fn set_node_props_inner(id: i64, props: Value) {
     let tid = id::id_type(id);
+    refuse_virtual_write(tid);
     let table = types::storage_table(tid).unwrap_or_else(|| error!("unknown type for id {id}"));
     let plan = plan_props(tid, &props, "$2");
     let written = props.clone();
+    let mut touched = plan.columns.clone();
+    if plan.ext_needed {
+        touched.push("__ext".into());
+    }
+    crate::security::check_write(tid, &table, crate::security::WriteOp::Set, &touched);
+    if !plan.ext_needed && plan.columns.is_empty() {
+        return;
+    }
     if plan.columns.is_empty() {
         let ext = ext_expr(&plan, "$2");
         Spi::run_with_args(
@@ -317,10 +368,14 @@ pub fn set_node_props_inner(id: i64, props: Value) {
         .map(|(c, e)| format!("{c} = {e}"))
         .collect();
     let ext = ext_expr(&plan, "$2");
-    let sql = format!(
-        "UPDATE {table} SET {}, __ext = COALESCE(__ext,'{{}}'::jsonb) || COALESCE({ext},'{{}}'::jsonb) WHERE id = $1",
-        sets.join(", ")
-    );
+    let sql = if plan.ext_needed {
+        format!(
+            "UPDATE {table} SET {}, __ext = COALESCE(__ext,'{{}}'::jsonb) || COALESCE({ext},'{{}}'::jsonb) WHERE id = $1",
+            sets.join(", ")
+        )
+    } else {
+        format!("UPDATE {table} SET {} WHERE id = $1", sets.join(", "))
+    };
     Spi::run_with_args(&sql, &[id.into(), JsonB(props).into()]).expect("update failed");
     crate::stats::properties_set(&written);
 }
@@ -332,15 +387,25 @@ pub fn set_edge_props_inner(id: i64, props: Value) {
     let plan = plan_props(tid, &props, "$2");
     let written = props.clone();
     let ext = ext_expr(&plan, "$2");
+    let mut touched = plan.columns.clone();
+    if plan.ext_needed {
+        touched.push("__ext".into());
+    }
+    crate::security::check_write(tid, &table, crate::security::WriteOp::Set, &touched);
     let mut sets: Vec<String> = plan
         .columns
         .iter()
         .zip(plan.exprs.iter())
         .map(|(c, e)| format!("{c} = {e}"))
         .collect();
-    sets.push(format!(
-        "__ext = COALESCE(__ext,'{{}}'::jsonb) || COALESCE({ext},'{{}}'::jsonb)"
-    ));
+    if plan.ext_needed {
+        sets.push(format!(
+            "__ext = COALESCE(__ext,'{{}}'::jsonb) || COALESCE({ext},'{{}}'::jsonb)"
+        ));
+    }
+    if sets.is_empty() {
+        return;
+    }
     let sql = format!("UPDATE {table} SET {} WHERE id = $1", sets.join(", "));
     Spi::run_with_args(&sql, &[id.into(), JsonB(props).into()]).expect("update failed");
     crate::stats::properties_set(&written);
@@ -354,6 +419,10 @@ fn og_delete_node(id: i64) -> i64 {
 
 pub fn delete_node_inner(id: i64) -> i64 {
     let tid = id::id_type(id);
+    refuse_virtual_write(tid);
+    if let Some(table) = types::storage_table(tid) {
+        crate::security::check_write(tid, &table, crate::security::WriteOp::Delete, &[]);
+    }
     let incident: Vec<i64> = Spi::connect(|client| {
         client
             .select(
@@ -415,7 +484,6 @@ pub fn create_edge_inner(
 
     validate_roles(tid, rel_type, src, dst);
 
-    let eid = alloc_id(tid);
     let plan = plan_props(tid, &props, "$4");
     let ext = ext_expr(&plan, "$4");
 
@@ -423,8 +491,12 @@ pub fn create_edge_inner(
     let mut vals = vec!["$1".to_string(), "$2".into(), "$3".into()];
     cols.extend(plan.columns.iter().cloned());
     vals.extend(plan.exprs.iter().cloned());
-    cols.push("__ext".into());
-    vals.push(ext);
+    if plan.ext_needed {
+        cols.push("__ext".into());
+        vals.push(ext);
+    }
+    crate::security::check_write(tid, &table, crate::security::WriteOp::Create, &cols);
+    let eid = alloc_id(tid);
 
     Spi::run_with_args(
         "INSERT INTO og_data.og_edge (id, type_id, src, dst) VALUES ($1, $2, $3, $4)",
@@ -512,6 +584,9 @@ pub fn delete_edge_inner(eid: i64) -> i64 {
             .map(|r| (r.get::<i64>(1).unwrap().unwrap(), r.get::<i64>(2).unwrap().unwrap()))
     });
     let Some((src, dst)) = endpoints else { return 0 };
+    if let Some(table) = types::storage_table(tid) {
+        crate::security::check_write(tid, &table, crate::security::WriteOp::Delete, &[]);
+    }
 
     adjacency::remove(src, tid, 'o', eid);
     adjacency::remove(dst, tid, 'i', eid);

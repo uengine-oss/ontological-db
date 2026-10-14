@@ -1,0 +1,824 @@
+{
+ "10000/age/S1": {
+  "ms": 2658.3,
+  "runs_ms": [
+   2678.6,
+   2658.3,
+   2641.3
+  ],
+  "status": "ok",
+  "writes": 20029
+ },
+ "10000/age/S2": {
+  "ms": 90.3,
+  "runs_ms": [
+   86.1,
+   90.3,
+   90.3
+  ],
+  "status": "ok",
+  "writes": 60174
+ },
+ "10000/age/S3": {
+  "ms": 22.5,
+  "runs_ms": [
+   22.5,
+   23.6,
+   22.3
+  ],
+  "status": "ok",
+  "writes": 20164
+ },
+ "10000/age/S4": {
+  "note": "a vertex has exactly one label in AGE",
+  "status": "n/a"
+ },
+ "10000/age/S5": {
+  "ms": 808.4,
+  "runs_ms": [
+   808.4,
+   807.5,
+   816.3
+  ],
+  "status": "ok",
+  "writes": 10000
+ },
+ "10000/age/S6": {
+  "ms": 962.7,
+  "runs_ms": [
+   962.7,
+   966.1,
+   953.7
+  ],
+  "status": "ok",
+  "writes": 10000
+ },
+ "10000/age/S7": {
+  "ms": 18.3,
+  "runs_ms": [
+   18.3,
+   18.3,
+   18.7
+  ],
+  "status": "ok",
+  "writes": 8
+ },
+ "10000/neo4j/S1": {
+  "loadavg_1m": 11.8,
+  "ms": 40.1,
+  "runs_ms": [
+   42.8,
+   38.1,
+   40.1
+  ],
+  "status": "ok",
+  "writes": 20000
+ },
+ "10000/neo4j/S2": {
+  "loadavg_1m": 11.8,
+  "ms": 37.9,
+  "runs_ms": [
+   69.1,
+   36.6,
+   37.9
+  ],
+  "status": "ok",
+  "writes": 20000
+ },
+ "10000/neo4j/S3": {
+  "loadavg_1m": 11.8,
+  "ms": 195.5,
+  "runs_ms": [
+   226.6,
+   194.8,
+   195.5
+  ],
+  "status": "ok",
+  "writes": 40000
+ },
+ "10000/neo4j/S4": {
+  "loadavg_1m": 11.8,
+  "ms": 24.6,
+  "runs_ms": [
+   24.1,
+   28.2,
+   24.6
+  ],
+  "status": "ok",
+  "writes": 10000
+ },
+ "10000/neo4j/S5": {
+  "loadavg_1m": 11.8,
+  "ms": 38.8,
+  "runs_ms": [
+   37.7,
+   38.8,
+   47.1
+  ],
+  "status": "ok",
+  "writes": 10000
+ },
+ "10000/neo4j/S6": {
+  "loadavg_1m": 11.8,
+  "ms": 30.0,
+  "runs_ms": [
+   31.7,
+   25.5,
+   30.0
+  ],
+  "status": "ok",
+  "writes": 10000
+ },
+ "10000/neo4j/S7": {
+  "loadavg_1m": 11.8,
+  "ms": 25.0,
+  "runs_ms": [
+   25.0,
+   32.6,
+   21.6
+  ],
+  "status": "ok",
+  "writes": 0
+ },
+ "10000/ontological-physical/S1": {
+  "loadavg_1m": 9.6,
+  "ms": 25.6,
+  "runs_ms": [
+   25.3,
+   25.6,
+   26.8
+  ],
+  "status": "ok",
+  "writes": 10101
+ },
+ "10000/ontological-physical/S2": {
+  "loadavg_1m": 9.6,
+  "ms": 543.3,
+  "runs_ms": [
+   543.5,
+   522.0,
+   543.3
+  ],
+  "status": "ok",
+  "writes": 160337
+ },
+ "10000/ontological-physical/S3": {
+  "loadavg_1m": 9.6,
+  "ms": 244.5,
+  "runs_ms": [
+   244.5,
+   234.2,
+   252.4
+  ],
+  "status": "ok",
+  "writes": 100190
+ },
+ "10000/ontological-physical/S4": {
+  "loadavg_1m": 9.6,
+  "ms": 5.9,
+  "runs_ms": [
+   4.8,
+   6.3,
+   5.9
+  ],
+  "status": "ok",
+  "writes": 86
+ },
+ "10000/ontological-physical/S5": {
+  "loadavg_1m": 9.6,
+  "ms": 4.2,
+  "runs_ms": [
+   4.3,
+   4.2,
+   3.7
+  ],
+  "status": "ok",
+  "writes": 70
+ },
+ "10000/ontological-physical/S6": {
+  "loadavg_1m": 9.6,
+  "ms": 44.6,
+  "runs_ms": [
+   45.0,
+   44.6,
+   44.4
+  ],
+  "status": "ok",
+  "writes": 10080
+ },
+ "10000/ontological-physical/S7": {
+  "loadavg_1m": 9.6,
+  "ms": 15.6,
+  "runs_ms": [
+   15.6,
+   13.7,
+   28.8
+  ],
+  "status": "ok",
+  "writes": 32
+ },
+ "10000/ontological/S1": {
+  "loadavg_1m": 9.6,
+  "ms": 3.4,
+  "runs_ms": [
+   2.9,
+   3.4,
+   3.5
+  ],
+  "status": "ok",
+  "writes": 10
+ },
+ "10000/ontological/S2": {
+  "loadavg_1m": 9.6,
+  "ms": 3.0,
+  "runs_ms": [
+   3.0,
+   2.4,
+   3.0
+  ],
+  "status": "ok",
+  "writes": 71
+ },
+ "10000/ontological/S3": {
+  "loadavg_1m": 9.6,
+  "ms": 2.5,
+  "runs_ms": [
+   3.1,
+   2.3,
+   2.5
+  ],
+  "status": "ok",
+  "writes": 63
+ },
+ "10000/ontological/S4": {
+  "loadavg_1m": 9.6,
+  "ms": 5.3,
+  "runs_ms": [
+   5.8,
+   5.3,
+   4.9
+  ],
+  "status": "ok",
+  "writes": 86
+ },
+ "10000/ontological/S5": {
+  "loadavg_1m": 9.6,
+  "ms": 3.7,
+  "runs_ms": [
+   4.0,
+   3.7,
+   3.2
+  ],
+  "status": "ok",
+  "writes": 71
+ },
+ "10000/ontological/S6": {
+  "loadavg_1m": 9.6,
+  "ms": 43.3,
+  "runs_ms": [
+   43.3,
+   44.1,
+   43.3
+  ],
+  "status": "ok",
+  "writes": 10081
+ },
+ "10000/ontological/S7": {
+  "loadavg_1m": 9.6,
+  "ms": 14.0,
+  "runs_ms": [
+   14.6,
+   14.0,
+   13.8
+  ],
+  "status": "ok",
+  "writes": 32
+ },
+ "100000/age/S1": {
+  "ms": 324226.0,
+  "runs_ms": [
+   369683.9,
+   314120.6,
+   324226.0
+  ],
+  "status": "ok",
+  "writes": 200029
+ },
+ "100000/age/S2": {
+  "ms": 1258.8,
+  "runs_ms": [
+   1627.2,
+   1202.7,
+   1258.8
+  ],
+  "status": "ok",
+  "writes": 600174
+ },
+ "100000/age/S3": {
+  "ms": 208.9,
+  "runs_ms": [
+   466.7,
+   194.4,
+   208.9
+  ],
+  "status": "ok",
+  "writes": 200164
+ },
+ "100000/age/S4": {
+  "note": "a vertex has exactly one label in AGE",
+  "status": "n/a"
+ },
+ "100000/age/S5": {
+  "ms": 82875.1,
+  "runs_ms": [
+   82875.1,
+   83165.6,
+   80167.8
+  ],
+  "status": "ok",
+  "writes": 100007
+ },
+ "100000/age/S6": {
+  "ms": 135632.2,
+  "runs_ms": [
+   134561.8,
+   135809.8,
+   135632.2
+  ],
+  "status": "ok",
+  "writes": 100003
+ },
+ "100000/age/S7": {
+  "ms": 165.5,
+  "runs_ms": [
+   165.5,
+   165.0,
+   165.8
+  ],
+  "status": "ok",
+  "writes": 8
+ },
+ "100000/neo4j/S1": {
+  "loadavg_1m": 9.3,
+  "ms": 332.5,
+  "runs_ms": [
+   332.5,
+   316.4,
+   339.2
+  ],
+  "status": "ok",
+  "writes": 200000
+ },
+ "100000/neo4j/S2": {
+  "loadavg_1m": 9.3,
+  "ms": 311.0,
+  "runs_ms": [
+   315.0,
+   310.2,
+   311.0
+  ],
+  "status": "ok",
+  "writes": 200000
+ },
+ "100000/neo4j/S3": {
+  "loadavg_1m": 9.3,
+  "ms": 3196.4,
+  "runs_ms": [
+   3196.4,
+   3287.8,
+   3090.6
+  ],
+  "status": "ok",
+  "writes": 400000
+ },
+ "100000/neo4j/S4": {
+  "loadavg_1m": 9.3,
+  "ms": 184.9,
+  "runs_ms": [
+   190.9,
+   181.5,
+   184.9
+  ],
+  "status": "ok",
+  "writes": 100000
+ },
+ "100000/neo4j/S5": {
+  "loadavg_1m": 9.3,
+  "ms": 312.2,
+  "runs_ms": [
+   316.0,
+   312.2,
+   311.3
+  ],
+  "status": "ok",
+  "writes": 100000
+ },
+ "100000/neo4j/S6": {
+  "loadavg_1m": 9.3,
+  "ms": 194.6,
+  "runs_ms": [
+   196.5,
+   194.6,
+   185.7
+  ],
+  "status": "ok",
+  "writes": 100000
+ },
+ "100000/neo4j/S7": {
+  "loadavg_1m": 9.3,
+  "ms": 63.4,
+  "runs_ms": [
+   65.3,
+   63.4,
+   61.1
+  ],
+  "status": "ok",
+  "writes": 0
+ },
+ "100000/ontological-physical/S1": {
+  "loadavg_1m": 11.8,
+  "ms": 220.0,
+  "runs_ms": [
+   220.0,
+   218.1,
+   233.6
+  ],
+  "status": "ok",
+  "writes": 100101
+ },
+ "100000/ontological-physical/S2": {
+  "loadavg_1m": 11.8,
+  "ms": 6143.8,
+  "runs_ms": [
+   6732.4,
+   6143.8,
+   5936.5
+  ],
+  "status": "ok",
+  "writes": 1600337
+ },
+ "100000/ontological-physical/S3": {
+  "loadavg_1m": 11.8,
+  "ms": 3461.8,
+  "runs_ms": [
+   3647.6,
+   3454.0,
+   3461.8
+  ],
+  "status": "ok",
+  "writes": 1000190
+ },
+ "100000/ontological-physical/S4": {
+  "loadavg_1m": 11.8,
+  "ms": 5.5,
+  "runs_ms": [
+   5.2,
+   5.5,
+   5.7
+  ],
+  "status": "ok",
+  "writes": 86
+ },
+ "100000/ontological-physical/S5": {
+  "loadavg_1m": 11.8,
+  "ms": 8.2,
+  "runs_ms": [
+   8.2,
+   8.0,
+   8.2
+  ],
+  "status": "ok",
+  "writes": 70
+ },
+ "100000/ontological-physical/S6": {
+  "loadavg_1m": 11.8,
+  "ms": 468.8,
+  "runs_ms": [
+   469.3,
+   468.8,
+   461.3
+  ],
+  "status": "ok",
+  "writes": 100080
+ },
+ "100000/ontological-physical/S7": {
+  "loadavg_1m": 11.8,
+  "ms": 319.5,
+  "runs_ms": [
+   319.5,
+   313.4,
+   399.2
+  ],
+  "status": "ok",
+  "writes": 32
+ },
+ "100000/ontological/S1": {
+  "loadavg_1m": 10.0,
+  "ms": 3.2,
+  "runs_ms": [
+   2.8,
+   3.3,
+   3.2
+  ],
+  "status": "ok",
+  "writes": 10
+ },
+ "100000/ontological/S2": {
+  "loadavg_1m": 10.0,
+  "ms": 3.1,
+  "runs_ms": [
+   3.1,
+   2.4,
+   3.4
+  ],
+  "status": "ok",
+  "writes": 71
+ },
+ "100000/ontological/S3": {
+  "loadavg_1m": 10.0,
+  "ms": 2.8,
+  "runs_ms": [
+   2.8,
+   2.5,
+   2.9
+  ],
+  "status": "ok",
+  "writes": 63
+ },
+ "100000/ontological/S4": {
+  "loadavg_1m": 10.0,
+  "ms": 5.1,
+  "runs_ms": [
+   5.4,
+   5.0,
+   5.1
+  ],
+  "status": "ok",
+  "writes": 86
+ },
+ "100000/ontological/S5": {
+  "loadavg_1m": 10.0,
+  "ms": 7.8,
+  "runs_ms": [
+   7.3,
+   8.1,
+   7.8
+  ],
+  "status": "ok",
+  "writes": 71
+ },
+ "100000/ontological/S6": {
+  "loadavg_1m": 10.0,
+  "ms": 421.9,
+  "runs_ms": [
+   424.7,
+   418.5,
+   421.9
+  ],
+  "status": "ok",
+  "writes": 100081
+ },
+ "100000/ontological/S7": {
+  "loadavg_1m": 10.0,
+  "ms": 172.2,
+  "runs_ms": [
+   185.8,
+   172.2,
+   166.3
+  ],
+  "status": "ok",
+  "writes": 32
+ },
+ "1000000/age/S1": {
+  "note": "not run at this size",
+  "status": "skipped"
+ },
+ "1000000/age/S2": {
+  "ms": 17648.7,
+  "runs_ms": [
+   17648.7
+  ],
+  "status": "ok",
+  "writes": 6000174
+ },
+ "1000000/age/S3": {
+  "ms": 2649.2,
+  "runs_ms": [
+   2649.2
+  ],
+  "status": "ok",
+  "writes": 2000164
+ },
+ "1000000/age/S4": {
+  "note": "a vertex has exactly one label in AGE",
+  "status": "n/a"
+ },
+ "1000000/age/S5": {
+  "note": "not run at this size",
+  "status": "skipped"
+ },
+ "1000000/age/S6": {
+  "note": "not run at this size",
+  "status": "skipped"
+ },
+ "1000000/age/S7": {
+  "note": "not run at this size",
+  "status": "skipped"
+ },
+ "1000000/neo4j/S1": {
+  "loadavg_1m": 8.5,
+  "ms": 3178.0,
+  "runs_ms": [
+   3178.0,
+   3159.2
+  ],
+  "status": "ok",
+  "writes": 2000000
+ },
+ "1000000/neo4j/S2": {
+  "loadavg_1m": 8.5,
+  "ms": 3393.6,
+  "runs_ms": [
+   3393.6,
+   3350.4
+  ],
+  "status": "ok",
+  "writes": 2000000
+ },
+ "1000000/neo4j/S3": {
+  "loadavg_1m": 8.5,
+  "ms": 39543.6,
+  "runs_ms": [
+   39543.6,
+   38805.4
+  ],
+  "status": "ok",
+  "writes": 4000000
+ },
+ "1000000/neo4j/S4": {
+  "loadavg_1m": 8.5,
+  "ms": 2146.0,
+  "runs_ms": [
+   2146.0,
+   2046.1
+  ],
+  "status": "ok",
+  "writes": 1000000
+ },
+ "1000000/neo4j/S5": {
+  "loadavg_1m": 8.5,
+  "ms": 3364.8,
+  "runs_ms": [
+   3364.8,
+   3004.3
+  ],
+  "status": "ok",
+  "writes": 1000000
+ },
+ "1000000/neo4j/S6": {
+  "loadavg_1m": 8.5,
+  "ms": 2013.3,
+  "runs_ms": [
+   2013.3,
+   1777.0
+  ],
+  "status": "ok",
+  "writes": 1000000
+ },
+ "1000000/neo4j/S7": {
+  "loadavg_1m": 8.5,
+  "ms": 538.5,
+  "runs_ms": [
+   538.5,
+   529.4
+  ],
+  "status": "ok",
+  "writes": 0
+ },
+ "1000000/ontological-physical/S1": {
+  "loadavg_1m": 9.3,
+  "ms": 2631.6,
+  "runs_ms": [
+   2631.6
+  ],
+  "status": "ok",
+  "writes": 1000101
+ },
+ "1000000/ontological-physical/S2": {
+  "loadavg_1m": 9.3,
+  "ms": 123969.2,
+  "runs_ms": [
+   123969.2
+  ],
+  "status": "ok",
+  "writes": 16000344
+ },
+ "1000000/ontological-physical/S3": {
+  "loadavg_1m": 9.3,
+  "ms": 60328.2,
+  "runs_ms": [
+   60328.2
+  ],
+  "status": "ok",
+  "writes": 10000190
+ },
+ "1000000/ontological-physical/S4": {
+  "loadavg_1m": 9.3,
+  "ms": 9.7,
+  "runs_ms": [
+   9.7
+  ],
+  "status": "ok",
+  "writes": 86
+ },
+ "1000000/ontological-physical/S5": {
+  "loadavg_1m": 9.3,
+  "ms": 52.4,
+  "runs_ms": [
+   52.4
+  ],
+  "status": "ok",
+  "writes": 71
+ },
+ "1000000/ontological-physical/S6": {
+  "loadavg_1m": 9.3,
+  "ms": 5626.1,
+  "runs_ms": [
+   5626.1
+  ],
+  "status": "ok",
+  "writes": 1000090
+ },
+ "1000000/ontological-physical/S7": {
+  "loadavg_1m": 9.3,
+  "ms": 1521.1,
+  "runs_ms": [
+   1521.1
+  ],
+  "status": "ok",
+  "writes": 32
+ },
+ "1000000/ontological/S1": {
+  "loadavg_1m": 6.5,
+  "ms": 3.9,
+  "runs_ms": [
+   3.9
+  ],
+  "status": "ok",
+  "writes": 10
+ },
+ "1000000/ontological/S2": {
+  "loadavg_1m": 6.5,
+  "ms": 3.1,
+  "runs_ms": [
+   3.1
+  ],
+  "status": "ok",
+  "writes": 71
+ },
+ "1000000/ontological/S3": {
+  "loadavg_1m": 6.5,
+  "ms": 2.7,
+  "runs_ms": [
+   2.7
+  ],
+  "status": "ok",
+  "writes": 63
+ },
+ "1000000/ontological/S4": {
+  "loadavg_1m": 6.5,
+  "ms": 5.3,
+  "runs_ms": [
+   5.3
+  ],
+  "status": "ok",
+  "writes": 86
+ },
+ "1000000/ontological/S5": {
+  "loadavg_1m": 6.5,
+  "ms": 48.6,
+  "runs_ms": [
+   48.6
+  ],
+  "status": "ok",
+  "writes": 71
+ },
+ "1000000/ontological/S6": {
+  "loadavg_1m": 6.5,
+  "ms": 5910.8,
+  "runs_ms": [
+   5910.8
+  ],
+  "status": "ok",
+  "writes": 1000090
+ },
+ "1000000/ontological/S7": {
+  "loadavg_1m": 6.5,
+  "ms": 1544.9,
+  "runs_ms": [
+   1544.9
+  ],
+  "status": "ok",
+  "writes": 32
+ }
+}

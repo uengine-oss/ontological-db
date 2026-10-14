@@ -271,7 +271,12 @@ $$;
 
 -- History capture trigger — spec 008 FR-018..FR-023. Attached per type only
 -- when og_enable_history() is called, because retaining history costs writes.
-CREATE FUNCTION og_capture_history() RETURNS trigger LANGUAGE plpgsql AS $$
+--
+-- SECURITY DEFINER: the history table is a record *about* writers, so writers
+-- must not hold DML on it. A trigger function runs with its own privileges, not
+-- the caller's, which is exactly the separation wanted here.
+CREATE FUNCTION og_capture_history() RETURNS trigger LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
 DECLARE
     eid int8;
     op  "char";
@@ -337,6 +342,350 @@ CREATE VIEW og_typeql_role AS
 COMMENT ON VIEW og_typeql_role IS
   'Spec 010 FR-043: TypeQL role assignments. Relations are reified as nodes, so relation_id is a node id and a relation may carry three or more roles.';
 
+
+-- ============================================================================
+-- Schema evolution helpers — spec 012.
+-- ============================================================================
+
+-- Would this text cast to that type? Migration casts through text on purpose:
+-- `3.5::int8` rounds, `'3.5'::int8` refuses, and a type change that silently
+-- rounds is not one anybody asked for.
+--
+-- PostgreSQL 16 answers that question directly with pg_input_is_valid(), with
+-- no subtransaction per value; before 16 the only way is to try the cast and
+-- catch the error, which costs a subtransaction per row (6× slower over a
+-- million rows, measured).
+CREATE FUNCTION og__castable(val text, typ text) RETURNS bool
+LANGUAGE plpgsql STABLE AS $$
+BEGIN
+    IF val IS NULL THEN RETURN true; END IF;
+    IF current_setting('server_version_num')::int >= 160000 THEN
+        RETURN pg_input_is_valid(val, typ);
+    END IF;
+    BEGIN
+        EXECUTE format('SELECT %L::%s', val, typ);
+        RETURN true;
+    EXCEPTION WHEN others THEN
+        RETURN false;
+    END;
+END $$;
+
+-- Dual write during a type change (spec 012): between expand and contract the
+-- new column follows the old one on every write, including raw SQL. The value
+-- goes through text, so what the new type cannot hold is refused here, now.
+-- A write that leaves the old column alone — the migration's own backfill —
+-- is left alone. SECURITY INVOKER: it only touches NEW.
+CREATE FUNCTION og__shadow_write() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+    col text := TG_ARGV[0];
+    sh  text := TG_ARGV[1];
+    v   jsonb := to_jsonb(NEW) -> col;
+BEGIN
+    IF TG_OP = 'UPDATE' AND (to_jsonb(OLD) -> col) IS NOT DISTINCT FROM v THEN
+        RETURN NEW;
+    END IF;
+    NEW := jsonb_populate_record(NEW, jsonb_build_object(sh,
+             CASE WHEN v IS NULL OR v = 'null'::jsonb THEN NULL ELSE to_jsonb(v #>> '{}') END));
+    RETURN NEW;
+END $$;
+
+-- The catalog of one graph as a document: types, parents, properties, roles,
+-- and which settings apply. Stored with every schema version.
+CREATE FUNCTION og__schema_snapshot(gid int4) RETURNS jsonb
+LANGUAGE sql STABLE AS $$
+    SELECT jsonb_build_object('types', COALESCE(jsonb_agg(jsonb_build_object(
+        'name', t.name,
+        'kind', t.kind::text,
+        'abstract', t.is_abstract,
+        'parents', (SELECT COALESCE(jsonb_agg(p.name ORDER BY p.name), '[]'::jsonb)
+                      FROM og_catalog.type_parent tp
+                      JOIN og_catalog.type p ON p.type_id = tp.parent_id
+                     WHERE tp.type_id = t.type_id),
+        'properties', (SELECT COALESCE(jsonb_object_agg(pr.name, jsonb_build_object(
+                                 'type', pr.data_type, 'column', pr.column_name,
+                                 'required', pr.required, 'key', pr.is_key)), '{}'::jsonb)
+                         FROM og_catalog.property pr WHERE pr.type_id = t.type_id),
+        'roles', (SELECT COALESCE(jsonb_object_agg(r.name, jsonb_build_object(
+                            'ordinal', r.ordinal,
+                            'player', (SELECT name FROM og_catalog.type WHERE type_id = r.player_type_id))), '{}'::jsonb)
+                    FROM og_catalog.role r WHERE r.rel_type_id = t.type_id),
+        'temporal', EXISTS (SELECT 1 FROM og_catalog.temporal x WHERE x.type_id = t.type_id),
+        'stamped',  EXISTS (SELECT 1 FROM og_catalog.stamped  x WHERE x.type_id = t.type_id)
+    ) ORDER BY t.type_id), '[]'::jsonb))
+      FROM og_catalog.type t
+     WHERE t.graph_id = gid
+$$;
+
+-- The schema as it stood at a version, or at an instant. With neither, the
+-- current one. "What structure was this written under?"
+CREATE FUNCTION og_schema_snapshot(graph text, version int8 DEFAULT NULL, at timestamptz DEFAULT NULL)
+RETURNS jsonb LANGUAGE sql STABLE AS $$
+    SELECT jsonb_build_object('version', sv.version, 'changed_at', sv.changed_at,
+                              'description', sv.description)
+           || COALESCE(sv.snapshot, '{}'::jsonb)
+      FROM og_catalog.schema_version sv
+      JOIN og_catalog.graph g ON g.graph_id = sv.graph_id
+     WHERE g.name = og_schema_snapshot.graph
+       AND (og_schema_snapshot.version IS NULL OR sv.version <= og_schema_snapshot.version)
+       AND (og_schema_snapshot.at IS NULL OR sv.changed_at <= og_schema_snapshot.at)
+     ORDER BY sv.version DESC
+     LIMIT 1
+$$;
+
+-- ============================================================================
+-- Point-in-time context — spec 013 FR-006..FR-010.
+--
+-- A query names the instant it wants with two settings, and nothing else:
+--
+--     SET og.valid_at  = '2024-03-01';   -- when was it true in the world?
+--     SET og.system_at = '2025-01-01';   -- as we knew it then
+--
+-- The generated type views read these through the functions below, so the
+-- compiled SQL does not change with the instant and the plan cache stays valid.
+-- Unset, both mean "now": the current state.
+-- ============================================================================
+
+CREATE FUNCTION og_valid_at() RETURNS timestamptz
+LANGUAGE sql STABLE PARALLEL SAFE AS $$
+    SELECT COALESCE(NULLIF(current_setting('og.valid_at', true), '')::timestamptz, now())
+$$;
+
+CREATE FUNCTION og_system_at() RETURNS timestamptz
+LANGUAGE sql STABLE PARALLEL SAFE AS $$
+    SELECT COALESCE(NULLIF(current_setting('og.system_at', true), '')::timestamptz, now())
+$$;
+
+CREATE FUNCTION og_asof_active() RETURNS bool
+LANGUAGE sql STABLE PARALLEL SAFE AS $$
+    SELECT COALESCE(current_setting('og.valid_at', true), '') <> ''
+        OR COALESCE(current_setting('og.system_at', true), '') <> ''
+$$;
+
+-- Placed in a query that can only see the current state (adjacency-only
+-- traversal, untyped scans, TypeQL). Answering a point-in-time question with
+-- today's data would be a wrong answer that looks right, so it is an error.
+CREATE FUNCTION og_require_current(what text) RETURNS bool
+LANGUAGE plpgsql STABLE AS $$
+BEGIN
+    IF og_asof_active() THEN
+        RAISE EXCEPTION 'OG_TEMPORAL_UNSUPPORTED: % cannot answer a point-in-time query (og.valid_at / og.system_at is set)', what
+          USING ERRCODE = '0A000',
+                HINT = 'Use typed patterns and single-hop relationships over temporal types, or RESET og.valid_at and og.system_at.';
+    END IF;
+    RETURN true;
+END $$;
+
+-- ============================================================================
+-- Write-time security — spec 014.
+--
+-- Fine-grained write privileges are PostgreSQL table and column grants on the
+-- per-type storage tables (og_grant_write). The shared registries — og_node,
+-- og_edge, og_adj, og_role_player — are written on every create and delete, so
+-- a table grant on them would be a grant on every type at once. Row-level
+-- security closes that: a registry row may be written only by a role that could
+-- write the storage table of the type the row belongs to.
+--
+-- The owner and superusers bypass these policies, so the benchmark and admin
+-- paths pay nothing; readers see a `true` policy the planner discards.
+-- ============================================================================
+
+CREATE FUNCTION og_type_priv(type_id int4, priv text) RETURNS bool
+LANGUAGE sql STABLE AS $$
+    SELECT COALESCE((
+        SELECT CASE
+                 -- The storage table is already gone (og_drop_type removes it
+                 -- before its registry rows). Whoever may delete from the
+                 -- registry at all may clean those up.
+                 WHEN to_regclass(t.storage_table) IS NULL THEN true
+                 WHEN og_type_priv.priv = 'DELETE'
+                   THEN has_table_privilege(t.storage_table, 'DELETE')
+                 ELSE has_any_column_privilege(t.storage_table, og_type_priv.priv)
+               END
+          FROM og_catalog.type t
+         WHERE t.type_id = og_type_priv.type_id AND t.storage_table IS NOT NULL
+    ), false)
+$$;
+
+ALTER TABLE og_data.og_node ENABLE ROW LEVEL SECURITY;
+CREATE POLICY og_read   ON og_data.og_node FOR SELECT USING (true);
+CREATE POLICY og_insert ON og_data.og_node FOR INSERT WITH CHECK (og_type_priv(type_id, 'INSERT'));
+CREATE POLICY og_update ON og_data.og_node FOR UPDATE USING (og_type_priv(type_id, 'UPDATE'));
+CREATE POLICY og_delete ON og_data.og_node FOR DELETE USING (og_type_priv(type_id, 'DELETE'));
+
+ALTER TABLE og_data.og_edge ENABLE ROW LEVEL SECURITY;
+CREATE POLICY og_read   ON og_data.og_edge FOR SELECT USING (true);
+CREATE POLICY og_insert ON og_data.og_edge FOR INSERT WITH CHECK (og_type_priv(type_id, 'INSERT'));
+CREATE POLICY og_update ON og_data.og_edge FOR UPDATE USING (og_type_priv(type_id, 'UPDATE'));
+CREATE POLICY og_delete ON og_data.og_edge FOR DELETE USING (og_type_priv(type_id, 'DELETE'));
+
+-- Adjacency segments change when an edge of their type is created or deleted.
+ALTER TABLE og_data.og_adj ENABLE ROW LEVEL SECURITY;
+CREATE POLICY og_read   ON og_data.og_adj FOR SELECT USING (true);
+CREATE POLICY og_insert ON og_data.og_adj FOR INSERT WITH CHECK (og_type_priv(etype, 'INSERT'));
+CREATE POLICY og_update ON og_data.og_adj FOR UPDATE
+    USING (og_type_priv(etype, 'INSERT') OR og_type_priv(etype, 'DELETE'));
+CREATE POLICY og_delete ON og_data.og_adj FOR DELETE
+    USING (og_type_priv(etype, 'INSERT') OR og_type_priv(etype, 'DELETE'));
+
+-- A role player belongs to the relation instance whose id carries its type.
+ALTER TABLE og_data.og_role_player ENABLE ROW LEVEL SECURITY;
+CREATE POLICY og_read   ON og_data.og_role_player FOR SELECT USING (true);
+CREATE POLICY og_insert ON og_data.og_role_player FOR INSERT
+    WITH CHECK (og_type_priv(og_id_type(edge_id), 'INSERT'));
+CREATE POLICY og_update ON og_data.og_role_player FOR UPDATE
+    USING (og_type_priv(og_id_type(edge_id), 'UPDATE'));
+CREATE POLICY og_delete ON og_data.og_role_player FOR DELETE
+    USING (og_type_priv(og_id_type(edge_id), 'DELETE'));
+
+-- Did anything a reader can see change? System columns (`__x`, except the
+-- `__ext` payload) and schema-migration shadow columns (`p_x__s<change>`) do
+-- not count. A write that changes nothing else — `SET n.x = n.x`, or a
+-- migration backfilling a shadow column — leaves no stamp and no history.
+CREATE FUNCTION og__visible(doc jsonb) RETURNS jsonb
+LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$
+    SELECT COALESCE(jsonb_object_agg(k, v), '{}'::jsonb)
+      FROM jsonb_each(doc) AS e(k, v)
+     WHERE NOT (k LIKE '\_\_%' AND k <> '__ext')
+       AND k !~ '__s[0-9]+$'
+$$;
+
+-- System-managed stamps — spec 014 FR-007..FR-009.
+--
+-- SECURITY INVOKER on purpose: `current_user` has to be the role that ran the
+-- statement. The values come from the session, never from the row, so a raw
+-- `INSERT … (__created_by) VALUES ('someone else')` is overwritten here.
+CREATE FUNCTION og__stamp() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF TG_OP = 'UPDATE' AND og__visible(to_jsonb(OLD)) = og__visible(to_jsonb(NEW)) THEN
+        NEW.__created_at := OLD.__created_at; NEW.__created_by := OLD.__created_by;
+        NEW.__updated_at := OLD.__updated_at; NEW.__updated_by := OLD.__updated_by;
+        NEW.__actor := OLD.__actor;           NEW.__source := OLD.__source;
+        RETURN NEW;
+    END IF;
+    IF TG_OP = 'INSERT' THEN
+        NEW.__created_at := now();
+        NEW.__created_by := current_user::text;
+    ELSE
+        NEW.__created_at := OLD.__created_at;
+        NEW.__created_by := OLD.__created_by;
+    END IF;
+    NEW.__updated_at := now();
+    NEW.__updated_by := current_user::text;
+    NEW.__actor  := NULLIF(current_setting('og.actor', true), '');
+    NEW.__source := NULLIF(current_setting('og.source', true), '');
+    RETURN NEW;
+END $$;
+
+-- Bitemporal capture — spec 013 FR-001..FR-005.
+--
+-- Every row of a temporal type carries `__valid` (when it is true in the world)
+-- and `__sys_from` (since when we have believed it). Changing or deleting a row
+-- does two things to its history table `h_<type_id>`:
+--
+--   1. the old belief is closed:     __sys = [old.__sys_from, now)
+--   2. the part of it that stays true is re-asserted, open-ended in system time:
+--                                    __valid = [old.lower, X), __sys = [now, ∞)
+--
+-- X is `og.valid_from` when set, else now(). Set it to '-infinity' for a
+-- correction ("it was never so"), or to a past or future instant for a change
+-- that took effect then. SECURITY DEFINER because writers hold no privilege on
+-- history tables; the stamp columns carry who did it.
+CREATE FUNCTION og__temporal() RETURNS trigger LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = @extschema@, pg_catalog, pg_temp AS $$
+DECLARE
+    h    text := 'h_' || substr(TG_TABLE_NAME, 3);
+    x    timestamptz := COALESCE(NULLIF(current_setting('og.valid_from', true), '')::timestamptz, now());
+    vto  timestamptz := NULLIF(current_setting('og.valid_to', true), '')::timestamptz;
+    doc  jsonb;
+    ins  text;
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        NEW.__valid := tstzrange(x, COALESCE(vto, 'infinity'::timestamptz), '[)');
+        NEW.__sys_from := now();
+        RETURN NEW;
+    END IF;
+
+    IF TG_OP = 'UPDATE' AND og__visible(to_jsonb(OLD)) = og__visible(to_jsonb(NEW)) THEN
+        NEW.__valid := OLD.__valid;
+        NEW.__sys_from := OLD.__sys_from;
+        RETURN NEW;
+    END IF;
+
+    IF x > lower(OLD.__valid) AND x >= upper(OLD.__valid) THEN
+        RAISE EXCEPTION 'OG_TEMPORAL_RANGE: og.valid_from % lies after the end of the current validity %',
+            x, OLD.__valid USING ERRCODE = '22023';
+    END IF;
+
+    doc := to_jsonb(OLD);
+    ins := format('INSERT INTO og_data.%I SELECT * FROM jsonb_populate_record(NULL::og_data.%I, $1)', h, h);
+
+    EXECUTE ins USING doc || jsonb_build_object(
+        '__sys_to', now(),
+        '__op', CASE TG_OP WHEN 'DELETE' THEN 'd' ELSE 'u' END);
+
+    IF x > lower(OLD.__valid) THEN
+        EXECUTE ins USING doc || jsonb_build_object(
+            '__valid', tstzrange(lower(OLD.__valid), x, '[)'),
+            '__sys_from', now(),
+            '__sys_to', 'infinity'::timestamptz,
+            '__op', 'v');
+    END IF;
+
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    END IF;
+    NEW.__valid := tstzrange(GREATEST(x, lower(OLD.__valid)), COALESCE(vto, upper(OLD.__valid)), '[)');
+    NEW.__sys_from := now();
+    RETURN NEW;
+END $$;
+
+-- System columns of one element: stamps and validity, without the leading
+-- underscores. Nothing here can be written through Cypher.
+CREATE FUNCTION og_meta(id int8) RETURNS jsonb
+LANGUAGE plpgsql STABLE AS $$
+DECLARE
+    t   text;
+    raw jsonb;
+BEGIN
+    SELECT storage_table INTO t FROM og_catalog.type WHERE type_id = og_id_type(og_meta.id);
+    IF t IS NULL THEN RETURN NULL; END IF;
+    EXECUTE format('SELECT to_jsonb(x) FROM %s x WHERE x.id = $1', t) INTO raw USING og_meta.id;
+    IF raw IS NULL THEN RETURN NULL; END IF;
+    RETURN (SELECT COALESCE(jsonb_object_agg(substr(k, 3), v), '{}'::jsonb)
+              FROM jsonb_each(raw) AS e(k, v)
+             WHERE k LIKE '\_\_%' AND k <> '__ext');
+END $$;
+
+-- Audit writer — spec 014 FR-010.
+--
+-- Readers must leave an audit row and must not be able to edit one, so nobody
+-- but the owner holds DML on og_audit and every query writes through this.
+-- The caller passes its own current_user (a SECURITY DEFINER function cannot
+-- see it); a claim the session could not SET ROLE to is replaced by the
+-- session user, so the column cannot name somebody else.
+CREATE FUNCTION og__audit(q text, lang text, rows_out int8, ms float8, err text,
+                          claimed_user text, act text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+DECLARE
+    who text := session_user::text;
+BEGIN
+    IF claimed_user IS NOT NULL
+       AND EXISTS (SELECT 1 FROM pg_roles WHERE rolname = claimed_user)
+       AND pg_has_role(session_user, claimed_user, 'MEMBER') THEN
+        who := claimed_user;
+    END IF;
+    INSERT INTO og_data.og_audit
+        (query, lang, rows_out, duration_ms, error_code,
+         db_user, actor, source, reason, request_id, schema_version, action)
+    VALUES
+        (q, lang, rows_out, ms, err, who,
+         NULLIF(current_setting('og.actor', true), ''),
+         NULLIF(current_setting('og.source', true), ''),
+         NULLIF(current_setting('og.reason', true), ''),
+         NULLIF(current_setting('og.request_id', true), ''),
+         (SELECT last_value FROM og_catalog.schema_version_seq),
+         act);
+END $$;
 
 -- ============================================================================
 -- Privileges

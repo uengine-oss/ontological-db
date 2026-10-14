@@ -193,6 +193,7 @@ fn create_instance(gid: i32, ty: &str) -> WResult<i64> {
     }
     let table = types::storage_table(tid)
         .ok_or_else(|| format!("'{ty}' is abstract and cannot be instantiated"))?;
+    crate::storage::refuse_virtual_write(tid);
     let id = alloc_id(tid);
     Spi::run_with_args(
         "INSERT INTO og_data.og_node (id, type_id) VALUES ($1, $2)",
@@ -595,6 +596,7 @@ fn delete_instance(gid: i32, id: i64) -> WResult<()> {
     }
     Spi::run_with_args("DELETE FROM og_data.og_role_player WHERE edge_id = $1", &[id.into()]).ok();
 
+    crate::storage::refuse_virtual_write(tid);
     if let Some(table) = types::storage_table(tid) {
         Spi::run_with_args(&format!("DELETE FROM {table} WHERE id = $1"), &[id.into()]).ok();
     }

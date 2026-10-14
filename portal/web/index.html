@@ -133,6 +133,7 @@ ORDER BY score DESC LIMIT 10</pre>
         <li><code>:why &lt;cypher&gt;</code> — diagnose an empty result</li>
         <li><code>:changes</code> — recorded schema changes</li>
         <li><code>:snapshot [version | instant]</code> — the catalog as it stood then</li>
+        <li><code>:param name =&gt; value</code> — set <code>$name</code> for queries on this page (not saved)</li>
         <li><code>:clear</code> — clear the stream</li>
       </ul>
     </div>
@@ -181,5 +182,6 @@ ORDER BY score DESC LIMIT 10</pre>
 
 <script src="/app.js"></script>
 <script src="/designer.js"></script>
+    <script src="/release.js"></script>
 </body>
 </html>

@@ -125,6 +125,9 @@ pub struct Compiler {
     /// True when the query cannot observe how many *paths* reach a node, only
     /// which nodes are reached — see [`Compiler::multiplicity_blind`].
     reachability_only: bool,
+    /// The type each node alias was bound to — a virtual relationship joins on
+    /// the endpoints' columns, so it has to know whose columns they are.
+    alias_tid: HashMap<String, Option<i32>>,
 }
 
 /// The joins and predicates of one OPTIONAL MATCH.
@@ -162,6 +165,7 @@ impl Compiler {
             notes: Vec::new(),
             optional: None,
             reachability_only: false,
+            alias_tid: HashMap::new(),
         }
     }
 
@@ -699,10 +703,12 @@ impl Compiler {
             self.reachability_only = false;
         }
 
-        for elem in &p.elems {
+        for (idx, elem) in p.elems.iter().enumerate() {
             match elem {
                 PatElem::Node(np) => {
                     let mark = self.from.len();
+                    let inferred = self.infer_virtual_label(p, idx, np);
+                    let np = inferred.as_ref().unwrap_or(np);
                     let alias = self.bind_node(np, optional)?;
                     let node_join_added = self.from.len() > mark;
                     if let (Some(prev), Some(rel)) = (prev_node.clone(), pending_rel.take()) {
@@ -775,6 +781,7 @@ impl Compiler {
                 self.from.push(format!("{joiner}og_data.og_node {alias}{on}"));
                 self.note_optional_join(&alias);
                 self.constrain(format!("{alias}.id = (({sql}) ->> '_id')::int8"));
+                self.guard_untyped_nodes();
                 self.binds.insert(v.clone(), Bind::Node { alias: alias.clone(), tid: None });
                 if !np.labels.is_empty() {
                     let (want, matchable) = self.resolve_label_match(&np.labels)?;
@@ -811,7 +818,10 @@ impl Compiler {
         let alias = self.fresh("n");
         let rel = match tid {
             Some(t) => views::ensure_view(t, false),
-            None => "og_data.og_node".to_string(),
+            None => {
+                self.guard_untyped_nodes();
+                "og_data.og_node".to_string()
+            }
         };
 
         // An unmatchable label empties this binding only. Under OPTIONAL MATCH
@@ -833,11 +843,118 @@ impl Compiler {
         self.from.push(join);
         self.note_optional_join(&alias);
 
+        self.alias_tid.insert(alias.clone(), tid);
         if let Some(v) = &np.var {
             self.binds.insert(v.clone(), Bind::Node { alias: alias.clone(), tid });
         }
         self.push_prop_filters(&alias, tid, &np.props)?;
         Ok(alias)
+    }
+
+    /// The single relationship type of a hop, when it is a virtual one.
+    fn virtual_rel_of(&self, rel: &RelPat) -> Option<(i32, crate::fabric::VirtualRel)> {
+        if rel.types.len() != 1 {
+            return None;
+        }
+        let rtid = types::try_type_id(self.gid, &rel.types[0])?;
+        crate::fabric::virtual_rel(rtid).map(|v| (rtid, v))
+    }
+
+    /// `MATCH (s:Supplier)<-[:ORDERED_FROM]-(po)` — the unlabelled end of a
+    /// virtual hop has only one type it can be, and without that type there are
+    /// no columns to join on. Stored adjacency does not need this; a join does.
+    fn infer_virtual_label(&self, p: &Pattern, idx: usize, np: &NodePat) -> Option<NodePat> {
+        if !np.labels.is_empty() {
+            return None;
+        }
+        if let Some(v) = &np.var {
+            if self.binds.contains_key(v) {
+                return None;
+            }
+        }
+        // As the far end of the previous hop, then as the near end of the next.
+        let sides = [
+            (idx.checked_sub(1).and_then(|i| p.elems.get(i)), true),
+            (p.elems.get(idx + 1), false),
+        ];
+        for (elem, is_far_end) in sides {
+            let Some(PatElem::Rel(rel)) = elem else { continue };
+            let Some((_, v)) = self.virtual_rel_of(rel) else { continue };
+            let tid = match (&rel.dir, is_far_end) {
+                (Dir::Out, true) | (Dir::In, false) => v.dst_type,
+                (Dir::In, true) | (Dir::Out, false) => v.src_type,
+                (Dir::Both, _) => continue,
+            };
+            let name = types::try_type_name(tid)?;
+            let mut out = np.clone();
+            out.labels = vec![name];
+            return Some(out);
+        }
+        None
+    }
+
+    /// A hop over a virtual relationship is a join on the declared keys: no
+    /// adjacency is read, so neither end has to be stored here. With both ends
+    /// on the same foreign server the planner can send the join itself there.
+    fn join_virtual_rel(
+        &mut self,
+        from_alias: &str,
+        rel: &RelPat,
+        to_alias: &str,
+        rtid: i32,
+        v: crate::fabric::VirtualRel,
+    ) -> CResult<String> {
+        let rname = &rel.types[0];
+        if rel.range.is_some() {
+            return Err(format!(
+                "virtual relationship '{rname}' cannot be traversed with a variable length yet"
+            ));
+        }
+        if !rel.props.is_empty() {
+            return Err(format!("virtual relationship '{rname}' has no properties to match"));
+        }
+        let ft = self.alias_tid.get(from_alias).copied().flatten();
+        let tt = self.alias_tid.get(to_alias).copied().flatten();
+        let is = |t: Option<i32>, want: i32| {
+            t.map_or(false, |t| t == want || crate::catalog::labeling::og_is_subtype(t, want))
+        };
+        let forward = match rel.dir {
+            Dir::Out => true,
+            Dir::In => false,
+            Dir::Both => is(ft, v.src_type) && is(tt, v.dst_type),
+        };
+        let (s_alias, s_tid, d_alias, d_tid) = if forward {
+            (from_alias, ft, to_alias, tt)
+        } else {
+            (to_alias, tt, from_alias, ft)
+        };
+        if s_tid.is_none() || d_tid.is_none() {
+            return Err(format!(
+                "virtual relationship '{rname}' needs both ends labelled — it is a join on their keys"
+            ));
+        }
+        if !is(s_tid, v.src_type) || !is(d_tid, v.dst_type) {
+            // Wrong endpoint types: the relationship cannot exist between them.
+            self.constrain("false".into());
+        }
+        let (lhs, _) = self.prop_sql(s_alias, s_tid, &v.src_prop);
+        let (rhs, _) = self.prop_sql(d_alias, d_tid, &v.dst_prop);
+        self.constrain(format!("{lhs} = {rhs}"));
+        self.notes.push(format!(
+            "'{rname}' is virtual: compiled as the join {lhs} = {rhs}, no adjacency read"
+        ));
+
+        let rel_json = format!(
+            "jsonb_build_object('_id', og_make_id(0, {rtid}, \
+             hashtextextended({s_alias}.id::text || ':' || {d_alias}.id::text, 0) & {mask}), \
+             '_type', {tn}, '_src', {s_alias}.id, '_dst', {d_alias}.id)",
+            mask = (1_i64 << 36) - 1,
+            tn = sql_str(rname),
+        );
+        if let Some(var) = &rel.var {
+            self.binds.insert(var.clone(), Bind::Scalar { sql: rel_json.clone() });
+        }
+        Ok(rel_json)
     }
 
     fn push_prop_filters(
@@ -854,6 +971,15 @@ impl Compiler {
         Ok(())
     }
 
+    /// An unlabelled node pattern scans the node registry, which holds only
+    /// what exists now. In a graph with temporal node types that cannot answer
+    /// a point-in-time query, so it refuses to (spec 013 FR-010).
+    fn guard_untyped_nodes(&mut self) {
+        if !crate::temporal::temporal_tables(self.gid, 'n').is_empty() {
+            self.constrain("og_require_current('an unlabelled node pattern')".into());
+        }
+    }
+
     /// Join a relationship. Returns a jsonb expression describing the hop, used
     /// when the pattern binds a path variable.
     fn join_rel(
@@ -863,6 +989,9 @@ impl Compiler {
         to_alias: &str,
         optional: bool,
     ) -> CResult<String> {
+        if let Some((rtid, v)) = self.virtual_rel_of(rel) {
+            return self.join_virtual_rel(from_alias, rel, to_alias, rtid, v);
+        }
         let etypes = if rel.types.is_empty() {
             None
         } else {
@@ -893,7 +1022,28 @@ impl Compiler {
             Dir::Both => "'b'",
         };
 
+        // Temporal relation types this hop may cross. Their adjacency segments
+        // know only the present, so a hop reads them from the edge tables —
+        // current and history, filtered to the session's instant (spec 013).
+        let temporal_rels: Vec<i32> = match &etypes {
+            Some(ids) => ids
+                .iter()
+                .copied()
+                .filter(|t| {
+                    types::storage_table(*t).is_some_and(|s| s.starts_with("og_data.e_"))
+                        && crate::temporal::is_temporal(*t)
+                })
+                .collect(),
+            None => crate::temporal::temporal_tables(self.gid, 'e'),
+        };
+
         if let Some((min, max)) = rel.range {
+            if !temporal_rels.is_empty() {
+                self.constrain(
+                    "og_require_current('variable-length traversal over a temporal relationship type')"
+                        .into(),
+                );
+            }
             let w = self.fresh("vl");
             let joiner = if optional { "LEFT JOIN LATERAL" } else { "CROSS JOIN LATERAL" };
             let on = if optional { " ON true" } else { "" };
@@ -950,11 +1100,44 @@ impl Compiler {
             Dir::Both => format!("{a}.dir IN ('o','i')"),
             _ => format!("{a}.dir = {dir_lit}::\"char\""),
         };
-        self.from.push(format!(
-            "{joiner} (SELECT u.nbr, u.eid FROM og_data.og_adj {a}, \
-             LATERAL unnest({a}.nbr, {a}.eid) AS u(nbr, eid) \
-             WHERE {a}.src = {from_alias}.id AND {dir_pred}{type_pred}) {u}{on}"
-        ));
+        if temporal_rels.is_empty() {
+            self.from.push(format!(
+                "{joiner} (SELECT u.nbr, u.eid FROM og_data.og_adj {a}, \
+                 LATERAL unnest({a}.nbr, {a}.eid) AS u(nbr, eid) \
+                 WHERE {a}.src = {from_alias}.id AND {dir_pred}{type_pred}) {u}{on}"
+            ));
+        } else {
+            let tlist = temporal_rels.iter().map(|t| t.to_string()).collect::<Vec<_>>().join(",");
+            let mut parts = vec![format!(
+                "SELECT u.nbr, u.eid FROM og_data.og_adj {a}, \
+                 LATERAL unnest({a}.nbr, {a}.eid) AS u(nbr, eid) \
+                 WHERE {a}.src = {from_alias}.id AND {dir_pred}{type_pred} \
+                   AND {a}.etype <> ALL(ARRAY[{tlist}]::int4[])"
+            )];
+            for t in &temporal_rels {
+                let Some(erel) = crate::temporal::edge_relation(*t) else { continue };
+                let te = self.fresh("te");
+                if matches!(rel.dir, Dir::Out | Dir::Both) {
+                    parts.push(format!(
+                        "SELECT {te}.dst, {te}.id FROM {erel} {te} WHERE {te}.src = {from_alias}.id"
+                    ));
+                }
+                if matches!(rel.dir, Dir::In | Dir::Both) {
+                    let te2 = self.fresh("te");
+                    parts.push(format!(
+                        "SELECT {te2}.src, {te2}.id FROM {erel} {te2} WHERE {te2}.dst = {from_alias}.id"
+                    ));
+                }
+            }
+            self.from.push(format!("{joiner} ({}) {u}{on}", parts.join(" UNION ALL ")));
+            // A relationship variable without one known type is rendered from
+            // the edge registry, which has no history.
+            if rel.var.is_some() && rel.types.len() != 1 {
+                self.constrain(
+                    "og_require_current('a relationship variable without a single type')".into(),
+                );
+            }
+        }
         self.note_optional_join(&u);
         self.constrain(format!("{to_alias}.id = {u}.nbr"));
 
@@ -1156,8 +1339,12 @@ impl Compiler {
                 for (name, (col, _)) in &props {
                     pairs.push(format!("{}, to_jsonb({alias}.{col})", sql_str(name)));
                 }
+                // An OPTIONAL MATCH that found nothing leaves the alias all
+                // NULL, and the node is then null — not an empty object, which
+                // `count(n)` would count and a client would take for a node.
                 format!(
-                    "(jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb))",
+                    "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE \
+                     jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb) END)",
                     pairs.join(", ")
                 )
             }
@@ -1177,7 +1364,8 @@ impl Compiler {
             pairs.push(format!("{}, to_jsonb({alias}.{col})", sql_str(name)));
         }
         format!(
-            "(jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb))",
+            "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE \
+             jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb) END)",
             pairs.join(", ")
         )
     }
@@ -1396,6 +1584,20 @@ impl Compiler {
         // `x IN xs` needs the right-hand side as jsonb whatever it came from —
         // a parameter arrives as text and containment is a jsonb operator.
         if op == BinOp::In {
+            // A typed column against a list of literals is SQL's own `IN`: a
+            // B-tree serves it, and a foreign server receives it as written —
+            // jsonb containment is evaluated here, after every row has arrived.
+            if let (Some(t), Expr::List(items)) = (self.type_of(l), r) {
+                let literal = |e: &Expr| matches!(e, Expr::Lit(x) if !matches!(x, Lit::Null));
+                if !items.is_empty() && items.iter().all(literal) {
+                    let ls = self.expr(l, Some(&t))?;
+                    let mut vs = Vec::with_capacity(items.len());
+                    for it in items {
+                        vs.push(self.expr(it, Some(&t))?);
+                    }
+                    return Ok(format!("({ls} IN ({}))", vs.join(", ")));
+                }
+            }
             let ls = self.expr(l, None)?;
             let rs = self.expr(r, Some("jsonb"))?;
             return Ok(format!("(({rs}) @> to_jsonb({ls}))"));
@@ -1420,7 +1622,16 @@ impl Compiler {
             }
         }
 
+        // Against a constant, plain `=` is both Cypher's answer (null = 'x' is
+        // null, not false) and the form a source database can use an index for
+        // — `IS NOT DISTINCT FROM` reaches a foreign server intact but no
+        // B-tree serves it, and a MySQL-dialect hop renders it as `<=>`.
+        let constant = |e: &Expr| matches!(e, Expr::Param(_)) || matches!(e, Expr::Lit(x) if !matches!(x, Lit::Null));
+        let plain = constant(l) || constant(r);
+
         Ok(match op {
+            BinOp::Eq if plain => format!("({ls} = {rs})"),
+            BinOp::Ne if plain => format!("({ls} <> {rs})"),
             BinOp::Add => format!("({ls} + {rs})"),
             BinOp::Sub => format!("({ls} - {rs})"),
             BinOp::Mul => format!("({ls} * {rs})"),

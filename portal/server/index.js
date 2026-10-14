@@ -41,6 +41,14 @@ const pool = new Pool({
   idleTimeoutMillis: 30_000,
 });
 
+// An idle connection the server closes — a restart, a dropped database, an
+// administrator's pg_terminate_backend — is reported here, and an unhandled
+// 'error' event ends the process. The pool has already discarded the client;
+// the next query gets a fresh one. Say so and carry on.
+pool.on('error', (e) => {
+  console.error(`postgres connection lost (${e.code || e.message}); the pool will reconnect`);
+});
+
 /**
  * Refuse anything that did not come from this page.
  *
@@ -99,14 +107,21 @@ function json(res, code, body) {
   res.end(payload);
 }
 
-function readBody(req) {
+function readBody(req, limit = Number(process.env.OG_STUDIO_MAX_BODY || 64e6)) {
   return new Promise((resolve, reject) => {
-    let data = '';
+    // Collect bytes and decode once. Appending each chunk to a string decodes
+    // it on its own, and a multi-byte character (any Hangul syllable) split
+    // across two chunks turns into U+FFFD — a large body arrives altered
+    // without an error, which a release package's hash then catches.
+    const chunks = [];
+    let size = 0;
     req.on('data', (c) => {
-      data += c;
-      if (data.length > 4e6) reject(new Error('request too large'));
+      chunks.push(c);
+      size += c.length;
+      if (size > limit) reject(new Error('request too large'));
     });
     req.on('end', () => {
+      const data = Buffer.concat(chunks).toString('utf8');
       try {
         resolve(data ? JSON.parse(data) : {});
       } catch (e) {
@@ -382,6 +397,16 @@ const routes = {
         JSON.stringify(params),
       ]);
       const rows = r.rows.map((x) => x.row);
+      // jsonb sorts its keys, so a row cannot say what order the query asked
+      // for; the parser can. `RETURN *` leaves it empty and the keys stand in.
+      let columns = [];
+      try {
+        const c = await client.query('SELECT og_cypher_columns($1) AS c', [query]);
+        columns = c.rows[0].c || [];
+      } catch {
+        /* the row keys below are the fallback */
+      }
+      if (!columns.length && rows.length) columns = Object.keys(rows[0]);
       let plan = null;
       try {
         const p = await client.query('SELECT og_cypher_sql($1,$2) AS sql', [graph, query]);
@@ -391,7 +416,7 @@ const routes = {
       }
       json(res, 200, {
         rows,
-        columns: rows.length ? Object.keys(rows[0]) : [],
+        columns,
         elapsed_ms: Date.now() - started,
         compiled_sql: plan,
         // Same text for every instant — the fingerprint makes that visible.
@@ -431,13 +456,14 @@ const routes = {
    * re-parent and retype existing types; a new type is a plain catalog insert.
    */
   async 'POST /api/schema-type'(req, res) {
-    const { graph = 'default', name = '', parents = [] } = await readBody(req);
+    const { graph = 'default', name = '', parents = [], kind = 'entity' } = await readBody(req);
     if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) return json(res, 400, { error: 'type name must be an identifier' });
+    if (!['entity', 'relation'].includes(kind)) return json(res, 400, { error: 'kind must be entity or relation' });
     const started = Date.now();
     try {
       const r = await pool.query('SELECT og_create_type($1, $2, $3, $4::text[]) AS id',
-        [graph, name, 'entity', parents]);
-      json(res, 200, { type_id: r.rows[0].id, name, parents, elapsed_ms: Date.now() - started });
+        [graph, name, kind, parents]);
+      json(res, 200, { type_id: r.rows[0].id, name, kind, parents, elapsed_ms: Date.now() - started });
     } catch (e) {
       json(res, 400, pgError(e));
     }
@@ -683,6 +709,9 @@ function projectGraph(rows) {
   );
   return { nodes: [...nodes.values()], edges: kept };
 }
+
+// Releases, schema diff and timelines (engine/sql/release.sql) — portal/server/release.js
+require('./release')(routes, { pool, json, readBody, pgError });
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);

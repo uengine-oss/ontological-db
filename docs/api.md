@@ -181,5 +181,156 @@ Views: `og_node_view`, `og_edge_view`, `og_type_view`, `og_property_view`,
 | `og_as_of(id, timestamptz) → jsonb` | state at a past instant; **errors** rather than returning the current value when no history is retained |
 | `og_set_source(entity_id, source, confidence = null, author = null)` | provenance metadata |
 
-Audit log: `og_data.og_audit` records every `og_cypher` call with principal,
-query, row count, duration and error code.
+Audit log: `og_data.og_audit` records every `og_cypher` and `og_typeql` call
+with `principal` (`session_user`), query, row count, duration and error code —
+and, since spec 014, `db_user` (the caller's `current_user`, accepted only if
+`session_user` is a member of it), `actor`, `source` and `request_id` (from the
+`og.*` settings, application-asserted), `schema_version` (the database-wide
+schema version sequence, not the graph's) and `action` (the Action the write
+came through). Rows are written only through the SECURITY DEFINER `og__audit`;
+`write`-level roles hold no DML on `og_audit`, `og_history`, `og_source` or
+the `h_*` history tables. Two limits: a failed query's audit row is rolled back
+with the query (SEC-18), and any reader may call `og__audit` directly and so
+*append* rows with caller-chosen query text — rows cannot be edited or deleted,
+but their content is not proof.
+
+For spec 008's `og_as_of`: it now returns NULL at an instant after the entity
+was deleted, and breaks ties within one transaction by `hist_id`. Subtypes
+created after `og_enable_history` are captured too.
+
+---
+
+## Schema evolution — spec 012
+
+A schema change on a populated graph is four calls — expand, migrate, validate,
+contract — and one row in `og_catalog.schema_change` that records where it
+stands. Most kinds are catalog edits whose cost does not depend on the amount
+of data; only `alter_property_type` (and `set_required` with a default) rewrite
+rows, in batches. See [ADR-028](99_decisions/ADR-028-schema-change-at-catalog-level.md).
+
+| Function | Purpose |
+|---|---|
+| `og_schema_plan(graph, change jsonb) → int4` | record a change and report its impact — counts, sample ids of rows that would violate it, lock notes. Changes nothing |
+| `og_schema_expand(change_id) → jsonb` | add the new structure beside the old; new writes must satisfy the new rule from here on |
+| `og_schema_migrate(change_id, batch = 10000) → jsonb` | move up to `batch` rows per table; resumable. Call until `{"done": true}`. Returns `{moved, done, migrated}` |
+| `og_schema_validate(change_id) → jsonb` | `{phase, violations, samples}`; moves to `validated` only with zero violations |
+| `og_schema_contract(change_id) → jsonb` | remove the old structure. Only from `validated` |
+| `og_schema_abort(change_id) → jsonb` | undo an expand. Does not remove a property added by `add_property` |
+| `og_schema_apply(graph, change) → jsonb` | all phases in one transaction; fails with `OG_SCHEMA_VIOLATION` (23514) and changes nothing if validation finds violations |
+| `og_schema_changes(graph) → TABLE(change_id, kind, phase, spec, report, created_by, created_at, updated_at)` | every recorded change, newest first |
+| `og_schema_snapshot(graph, version = null, at = null) → jsonb` | the graph's catalog — types, parents, properties, roles, temporal/stamped flags — as it stood at a version or an instant; current if neither |
+
+Phases: `planned → expanded → migrating → validated → contracted`, or `aborted`
+from any phase before `contracted`. Calling one out of order raises
+`OG_SCHEMA_PHASE` (SQLSTATE 55000).
+
+| `kind` | change JSON | what it does physically |
+|---|---|---|
+| `add_property` | `{type, property, data_type}` | `ADD COLUMN`, no rewrite; values already in `__ext` under that key move in. Optional only — use `set_required` afterwards |
+| `drop_property` | `{type, property}` | contract: `DROP COLUMN`. History tables keep the column |
+| `rename_property` | `{type, property, new_name}` | catalog only. Between expand and contract both names read and write the same column. The physical column keeps its old name |
+| `alter_property_type` | `{type, property, to}` | shadow column `p_x__s<id>`; a trigger attached at expand (`og_c_shadow_<id>`, dropped at contract or abort) fills it on every write, raw SQL included, cast to the new type (a value the new type rejects fails at once); migrate casts through `text` in batches; contract swaps columns, rebuilds indexes on it, re-applies column grants. History tables follow |
+| `set_required` | `{type, property, default?}` | `CHECK … NOT VALID` at expand, default filled in batches, `VALIDATE CONSTRAINT` (writes continue), then `SET NOT NULL` without a scan |
+| `add_unique` | `{type, property}` | validate reports duplicates across the hierarchy; contract builds a unique index per concrete table |
+| `rename_type` | `{type, new_name}` | catalog only; node ids do not change |
+| `alter_role` | `{relation, role, player, card_min?, card_max?}` | validate checks existing edges and role players; contract updates the role |
+| `add_parent` / `remove_parent` | `{type, parent}` | catalog + interval relabel; no row is rewritten. Inherited columns, temporal, stamping and write grants follow |
+
+A property can be dropped, renamed or retyped only on the type that declares
+it. Not supported: splitting or merging types, TypeQL `redefine`/`undefine`
+through this pipeline, hierarchy-wide uniqueness. `og_create_index`, `og_map_table` and `og_materialize_mapping` now
+bump the schema version, so cached Cypher plans are invalidated.
+
+---
+
+## Temporal — spec 013
+
+Valid time (when it was true) and system time (since when we have believed it)
+per row, for the types you choose. The query does not change; the instant is a
+setting. See [ADR-027](99_decisions/ADR-027-bitemporal-current-plus-history.md).
+
+| Function | Purpose |
+|---|---|
+| `og_enable_temporal(graph, type)` | version a type and its subtypes, including subtypes created later. Adds `__valid tstzrange` and `__sys_from` (existing rows: valid for all time, believed from now), creates `og_data.h_<type_id>`, attaches the capture trigger. Also turns on stamping |
+| `og_temporal_types(graph) → text[]` | the temporal types of a graph |
+| `og_valid_at()` / `og_system_at() → timestamptz` | the session's instant; `now()` when unset |
+| `og_asof_active() → bool` | whether either instant is set |
+| `og_require_current(what) → bool` | raises `OG_TEMPORAL_UNSUPPORTED` (SQLSTATE 0A000) when an instant is set. Compiled into query shapes that can only see the present |
+| `og_meta(id) → jsonb` | an element's system columns, including `valid` and `sys_from` |
+
+| Setting | Read or write | Meaning |
+|---|---|---|
+| `og.valid_at` | read | answer as of this valid time |
+| `og.system_at` | read | answer as the database believed it at this time |
+| `og.valid_from` | write | the change takes effect at this instant (default `now()`); `'-infinity'` is a correction |
+| `og.valid_to` | write | end of validity for the new version (default open-ended, or the old end on update) |
+
+```sql
+SET og.valid_at  = '2021-06-01';
+SET og.system_at = '2024-01-01';
+SELECT og_cypher('kb', $$ MATCH (p:Person {name: "ann"}) RETURN p.salary $$);
+```
+
+The compiled SQL is the same for every instant. A temporal type reads three
+branches: current rows; open history rows (`__sys_to = 'infinity'`, valid-time
+slices still believed), visible whenever their validity contains the instant
+and found through a partial GiST index on `__valid`; and closed history rows
+(superseded beliefs), read only when an instant is set. So a query with no
+instant still probes that partial index once per temporal type. Single hops
+over temporal relationship types read the edge tables (the same three branches)
+instead of the adjacency segments — always, not only when an instant is set. With an instant
+set, these refuse rather than answer from the present: unlabelled node patterns
+(in a graph with temporal node types), variable-length paths over temporal
+relationship types, relationship variables without a single type, and TypeQL.
+An update dated after the end of the current validity raises
+`OG_TEMPORAL_RANGE` (22023). Raw SQL writes are versioned by the same trigger.
+
+An update or delete with `og.valid_from` in the future leaves the value that
+holds until then in an open history row, so queries with no instant keep
+seeing it until that date. Not implemented: retention policy, editing past
+valid-time slices.
+
+Over Bolt, `tx_metadata` keys `valid_at`/`validAt`, `system_at`/`systemAt`,
+`valid_from`/`validFrom` and `valid_to`/`validTo` become these settings for
+that transaction (auto-commit `RUN` included).
+
+---
+
+## Write security — spec 014
+
+Write privileges are PostgreSQL table and column grants on the per-type storage
+tables, so they hold for raw SQL exactly as for Cypher. The shared registries
+(`og_node`, `og_edge`, `og_adj`, `og_role_player`) carry row-level security
+that lets a role write a registry row only if it could write that type's
+storage table. Reads of the registries are not restricted. See
+[ADR-026](99_decisions/ADR-026-write-privileges-as-postgres-grants.md).
+
+| Function | Purpose |
+|---|---|
+| `og_grant_write(role, graph, type, ops text[], props text[] = null)` | `ops` ⊆ `create`, `set`, `delete`; `props` limits `create`/`set` to those properties, `null` means every property including undeclared ones. Reaches subtypes, subtypes created later, and columns added later. Grants read access if the role has none |
+| `og_revoke_write(role, graph, type, ops = null)` | take back some or all operations |
+| `og_type_priv(type_id, priv) → bool` | used by the registry policies: may the current role `INSERT`/`UPDATE`/`DELETE` that type's storage |
+| `og_enable_stamping(graph, type)` | adds `__created_at`, `__created_by`, `__updated_at`, `__updated_by`, `__actor`, `__source`, set by trigger from `current_user`, `og.actor`, `og.source`. Values written into the row are overwritten, raw SQL included. Subtypes inherit it |
+| `og_meta(id) → jsonb` | read the stamps (and validity, spec 013) |
+| `og_define_action(graph, name, body, run_as, lang = 'cypher', params = '{}', precondition = null, description = null) → int4` | a named write. `params` is `{"name": "string", …}` with types `string`, `int`, `float`, `number`, `bool`, `list`, `map`, `any`; every declared key is required and no other key is accepted. `precondition` is Cypher returning `ok`. Creates `og_action.og_action_<id>(jsonb)`, `SECURITY DEFINER`, owned by `run_as` — the caller must be able to `SET ROLE run_as` |
+| `og_grant_action(role, graph, name)` / `og_revoke_action(role, graph, name)` | `EXECUTE` on that action's function |
+| `og_drop_action(graph, name)` | drop the action and its function |
+| `og_run_action(graph, name, params = '{}') → SETOF jsonb` | run it. Needs `EXECUTE` on the action's function; the body runs with `run_as`'s privileges |
+
+| Error | SQLSTATE | When |
+|---|---|---|
+| `OG_WRITE_DENIED: role 'r' may not set properties on 'Person' (property 'salary')` | 42501 | the engine's pre-check; PostgreSQL enforces the same rule either way |
+| `OG_RESERVED_PROPERTY` | 42501 | writing `_id`, `_type`, `_src`, `_dst` or any `__…` property |
+| `OG_ACTION_REJECTED` | 23514 | the action's precondition did not hold |
+| parameter errors | 22023 | unknown, missing or mistyped action parameter |
+
+Context settings: `og.actor`, `og.source`, `og.reason`, `og.request_id` reach
+the audit log (`og_data.og_audit`); `og.actor` and `og.source` also reach
+stamped rows. The Bolt gateway maps `tx_metadata` keys `actor`, `source`,
+`reason`, `request_id`/`requestId` to transaction-local settings.
+
+A `write`-level role without schema privileges that writes an undeclared
+property now keeps it in `__ext` instead of failing on `og_add_property`.
+Limits: TypeQL action bodies receive no parameters; the audit row of an action
+names `run_as` as `db_user`, not the caller. The action name is cleared on
+every exit, so a failed action does not leave it on later audit rows.

@@ -1,0 +1,186 @@
+ og_create_graph 
+-----------------
+               1
+
+psql:/work/bench/aeong/ontological_scenario.sql:5: NOTICE:  view "Person" does not exist, skipping
+ og_create_type 
+----------------
+              1
+
+ og_add_property 
+-----------------
+ 
+
+ og_add_property 
+-----------------
+ 
+
+psql:/work/bench/aeong/ontological_scenario.sql:7: NOTICE:  view "Company" does not exist, skipping
+ og_create_type 
+----------------
+              2
+
+ og_add_property 
+-----------------
+ 
+
+psql:/work/bench/aeong/ontological_scenario.sql:8: NOTICE:  view "WORKS_AT" does not exist, skipping
+ og_create_type 
+----------------
+              3
+
+ og_add_property 
+-----------------
+ 
+
+ og_enable_temporal 
+--------------------
+ 
+
+ og_enable_temporal 
+--------------------
+ 
+
+ og_enable_temporal 
+--------------------
+ 
+
+== T1: 2020-01-01 입사 (salary 100) ==
+ og_cypher 
+-----------
+
+ og_cypher 
+-----------
+
+ og_cypher 
+-----------
+
+ pg_sleep 
+----------
+ 
+
+== T2: 2023-01-01부터 연봉 200 (실제 입력은 오늘) ==
+ og_cypher 
+-----------
+
+ pg_sleep 
+----------
+ 
+
+== T3: 정정 — 2023 인상액은 사실 250이었다 ==
+ og_cypher 
+-----------
+
+ pg_sleep 
+----------
+ 
+
+== T4: 2024-06-01 퇴사 (관계 삭제) ==
+ og_cypher 
+-----------
+
+== Q1 현재 상태 ==
+            og_cypher             
+----------------------------------
+ {"salary": 250, "company": null}
+
+== Q2 유효시간 as-of 2021-06-01 (그때 실제로는?) ==
+                     og_cypher                      
+----------------------------------------------------
+ {"title": "eng", "salary": 100, "company": "acme"}
+
+== Q3 유효시간 as-of 2023-06-01 ==
+             og_cypher              
+------------------------------------
+ {"salary": 250, "company": "acme"}
+
+== Q4 바이템포럴: 유효 2023-06-01, 정정 전(T2)에 DB가 알던 값 ==
+          set_config           
+-------------------------------
+ 2026-10-06 05:46:00.933103+00
+
+    og_cypher    
+-----------------
+ {"salary": 200}
+
+== Q5 시스템시간 as-of T1 (유효시간 2023-06-01) — 아직 인상이 입력되기 전 ==
+          set_config          
+------------------------------
+ 2026-10-06 05:46:00.82506+00
+
+    og_cypher    
+-----------------
+ {"salary": 100}
+
+== Q6 유효시간 as-of 2025-01-01 — 퇴사 후 ==
+ og_cypher 
+-----------
+
+== Q7 이력(range): og_timeline ==
+ valid_from |  valid_to  | salary |   op    |     rec      | sup 
+------------+------------+--------+---------+--------------+-----
+ 2020-01-01 | 2023-01-01 | 100    | v       | 05:46:00.825 | 
+ 2023-01-01 | infinity   | 250    | current | 05:46:00.933 | 
+
+== Q7b 같은 이력을 T2 시점의 믿음으로 ==
+ valid_from |  valid_to  | salary | op 
+------------+------------+--------+----
+ 2020-01-01 | 2023-01-01 | 100    | v
+ 2023-01-01 | infinity   | 200    | u
+
+== Q7c 이력 테이블 원본(h_*) — 모든 버전 ==
+                       __valid                       | salary | __op |   sys_from   |    sys_to    
+-----------------------------------------------------+--------+------+--------------+--------------
+ ["2020-01-01 00:00:00+00",infinity)                 |    100 | u    | 05:46:00.764 | 05:46:00.825
+ ["2020-01-01 00:00:00+00","2023-01-01 00:00:00+00") |    100 | v    | 05:46:00.825 | 
+ ["2023-01-01 00:00:00+00",infinity)                 |    200 | u    | 05:46:00.825 | 05:46:00.933
+
+== Q8 as-of 상태에서 지원하지 않는 형태 (가변 길이 경로) ==
+psql:/work/bench/aeong/ontological_scenario.sql:70: NOTICE:  0A000 OG_TEMPORAL_UNSUPPORTED: variable-length traversal over a temporal relationship type cannot answer a point-in-time query (og.valid_at / og.system_at is set)
+== 저장 구조: 현재 테이블 vs 이력 테이블 ==
+      relname       | reltuples | pg_size_pretty 
+--------------------+-----------+----------------
+ e_3                |        -1 | 64 kB
+ h_1                |        -1 | 40 kB
+ h_2                |        -1 | 24 kB
+ h_3                |        -1 | 72 kB
+ n_1                |        -1 | 32 kB
+ n_2                |        -1 | 32 kB
+ og_adj             |        -1 | 32 kB
+ og_audit           |        -1 | 48 kB
+ og_edge            |        -1 | 72 kB
+ og_embedding_state |        -1 | 16 kB
+ og_history         |        -1 | 32 kB
+ og_id_alloc        |        -1 | 24 kB
+ og_iri             |        -1 | 24 kB
+ og_node            |        -1 | 40 kB
+ og_role_player     |        -1 | 16 kB
+ og_source          |        -1 | 16 kB
+ og_triple_overflow |        -1 | 24 kB
+
+== Q9 (AeonG P2/P4 대응) 사람 노드를 지운 뒤에도 과거는 보이는가 ==
+ pg_sleep 
+----------
+ 
+
+ og_cypher 
+-----------
+
+-- 현재
+ og_cypher 
+-----------
+
+-- 유효시간 2021-06-01 (그리고 시스템시간은 지금): 삭제는 "지금부터 없음"이므로 2021 년의 ann 은 그대로
+             og_cypher              
+------------------------------------
+ {"salary": 100, "company": "acme"}
+
+-- 시스템시간 = 삭제 직전, 유효시간 2023-06-01
+          set_config           
+-------------------------------
+ 2026-10-06 05:46:01.030105+00
+
+    og_cypher    
+-----------------
+ {"salary": 250}
+

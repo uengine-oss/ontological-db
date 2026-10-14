@@ -36,6 +36,20 @@ pub fn two<'a, A: FromDatum + IntoDatum, B: FromDatum + IntoDatum>(
     })
 }
 
+/// Read-write two-value lookup, for a data-modifying CTE that reports back.
+pub fn two_mut<'a, A: FromDatum + IntoDatum, B: FromDatum + IntoDatum>(
+    sql: &str,
+    args: &[DatumWithOid<'a>],
+) -> Result<(Option<A>, Option<B>), spi::Error> {
+    Spi::connect_mut(|client| {
+        let mut table = client.update(sql, Some(1), args)?;
+        match table.next() {
+            Some(row) => Ok((row.get::<A>(1)?, row.get::<B>(2)?)),
+            None => Ok((None, None)),
+        }
+    })
+}
+
 /// Read-write single-value lookup, for `INSERT ... RETURNING` and friends.
 pub fn one_mut<'a, T: FromDatum + IntoDatum>(sql: &str, args: &[DatumWithOid<'a>]) -> R<T> {
     Spi::connect_mut(|client| {

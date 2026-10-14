@@ -12,8 +12,8 @@
 
 ## 0. 요약
 
-Critical 5건은 전부 수정했다. High 13건은 **4건 수정 · 4건 부분 수정 · 5건 미수정**
-이다. 부분과 미수정의 이유는 4절에 있다.
+Critical 5건은 전부 수정했다. High 13건은 **4건 수정 · 5건 부분 수정 · 4건 미수정**
+이다. 부분과 미수정의 이유는 4절에 있다. (스펙 014 이후 SEC-08 이 미수정 → 부분으로 바뀌었다 — 5절.)
 
 | ID | 항목 | 상태 | 검증 |
 |---|---|---|---|
@@ -24,7 +24,7 @@ Critical 5건은 전부 수정했다. High 13건은 **4건 수정 · 4건 부분
 | SEC-05 | 재귀 깊이 제한 없음 | **fixed** | 회귀 테스트 |
 | SEC-06 | 생성 뷰 `security_invoker` | **fixed** | `cargo check` |
 | SEC-07 | `FORCE ROW LEVEL SECURITY` | **fixed** | `cargo check` |
-| SEC-08 | 레지스트리 테이블 RLS 없음 | 미수정 | — |
+| SEC-08 | 레지스트리 테이블 RLS 없음 | **부분** — 쓰기만 | `07_write_security.sql`, `10_evolution_temporal_coverage.sql` |
 | SEC-09 | `og_vector_search(filter)` 조각 보간 | **완화** | 권한으로 축소 |
 | SEC-10 | `og_stale_embeddings` 문자열 보간 | **fixed** | `cargo check` |
 | SEC-11 | `og_map_table`/`og_enable_rls` 보간 | **부분** | 식별자만 |
@@ -91,6 +91,8 @@ admin 이다. 나중에 추가되는 함수는 누군가 목록에 넣기 전까
 > 권한 부족으로 실패한다. 스키마 변경이 admin 쪽에 남는 건 의도한 선이지만,
 > `declare_new_props` 는 실패를 `is_ok()` 로만 보므로 **SPI 오류가 트랜잭션을
 > 중단시키는 경로가 남아 있다.** SEC-13 과 함께 미해결이다(4절).
+> **→ 스펙 014 에서 수정(6절 결함 2).** 이제 승격 전에 스키마 권한을 확인하고, 없으면
+> 값을 `__ext` 에 남긴다.
 
 ---
 
@@ -173,7 +175,7 @@ PostgreSQL 백엔드였으므로 accept 폭주가 양쪽을 동시에 소진시�
 
 | ID | 왜 남겼나 |
 |---|---|
-| SEC-08 | 레지스트리·인접 테이블(`og_node`, `og_edge`, `og_adj`)에 RLS 를 걸면 **모든 순회 경로의 계획이 바뀐다.** 성능 영향이 크고 벤치마크 없이 넣을 변경이 아니다. 헌법 원칙 X. |
+| SEC-08 | 레지스트리·인접 테이블(`og_node`, `og_edge`, `og_adj`)에 RLS 를 걸면 **모든 순회 경로의 계획이 바뀐다.** 성능 영향이 크고 벤치마크 없이 넣을 변경이 아니다. 헌법 원칙 X. **스펙 014 이후 쓰기 쪽은 닫혔다 — 5절.** 읽기 쪽이 이 문장의 대상으로 남아 있다. |
 | SEC-12 | `og_explain_error` 의 `catch_unwind` 는 PostgreSQL 오류 상태 정리 문제라 오류 처리 경로 전체를 다시 봐야 한다. 잘못 고치면 조용한 데이터 손상이 되는 종류다. |
 | SEC-13 | 쓰기 시점 자동 DDL 은 **설계 결정**이다(ADR-006). 보안 수정이 아니라 설계 변경이고, 1절의 부수 효과와 함께 다뤄야 한다. |
 | SEC-14 | `og_csr_build` 의 할당은 PostgreSQL 메모리 컨텍스트 밖이다. 상한을 두는 것 자체는 쉽지만 CSR 의 성능 전제를 건드리므로 측정이 먼저다. |
@@ -185,7 +187,55 @@ PostgreSQL 백엔드였으므로 accept 폭주가 양쪽을 동시에 소진시�
 (`.github` 부재), `tests/run.sh` 는 `^ERROR` 줄 수만 세므로 권한 회귀를 잡지
 못한다. `og_grant` 의 SQL 은 타입 검사만 통과한 상태다.
 
+---
+
+## 5. SEC-08 상태 변경 — 레지스트리에 쓰기 RLS (스펙 014)
+
+**상태: 미수정 → 부분.** 감사가 지적한 것은 두 가지였다: 레지스트리·인접 테이블
+(`og_node`, `og_edge`, `og_adj`)에 RLS 가 없어 (a) 토폴로지가 모든 읽기 역할에게 보이고
+(b) 쓰기 역할이 어떤 타입의 행이든 쓸 수 있다. **(b)만 닫혔다.**
+
+- `engine/sql/access.sql` 이 `og_node`, `og_edge`, `og_adj`, `og_role_player` 에 RLS 를 켜고
+  INSERT/UPDATE/DELETE 정책을 `og_type_priv(type_id, priv)` 로 건다 — 그 행의 타입 저장
+  테이블에 해당 권한이 있는 역할만 레지스트리 행을 쓸 수 있다. 저장 테이블 권한은
+  `og_grant_write` 가 주는 PostgreSQL 테이블/컬럼 GRANT 다
+  ([ADR-026](../99_decisions/ADR-026-write-privileges-as-postgres-grants.md)).
+- **읽기 정책은 `USING (true)` 다.** 토폴로지 노출(a, CWE-200)은 그대로다. 4절의 이유 —
+  읽기 RLS 는 모든 순회 계획을 바꾼다 — 가 여전히 유효하며, 읽기 제한이 필요한 타입은 005 의
+  `og_enable_rls` 로 저장 테이블을 막아야 한다. 이 경우에도 "어떤 id 가 존재하는가"는
+  레지스트리로 보인다.
+- 정책은 `FORCE` 되지 않는다. 소유자·슈퍼유저는 정책을 거치지 않는다(의도: 관리·벤치마크
+  경로 무비용).
+- 검증: `engine/tests/sql/07_write_security.sql` — `og_grant_write` 로 `Person` 만 받은
+  역할이 `Doc` 타입의 `og_node` 행을 원시 SQL 로 INSERT 하면 `row-level security` 오류(42501).
+  `engine/tests/sql/10_evolution_temporal_coverage.sql` — 관계 타입 쓰기 부여가 없는 역할이
+  `og_edge`, `og_adj` 행을 원시 SQL 로 INSERT 하면 같은 오류(42501). `og_role_player` 정책은
+  테스트가 없다.
+
+---
+
+## 6. 비소유자 역할로 돌려 보니 드러난 선행 결함 4건 (스펙 014)
+
+4절 끝에서 "PostgreSQL 에 실제로 설치해 돌려보지는 않았다"고 적었다. 스펙 014 의 테스트
+(`engine/tests/sql/07_write_security.sql`)는 **처음으로 비소유자 역할**(`og_t_reader`,
+`og_t_writer`, `og_t_clerk`, `og_t_agent`, `og_t_runner`)로 기존 경로를 실행했고, ADR-025 의
+권한 모델에서 네 개의 결함이 나왔다. `tests/run.sh` 는 `ON_ERROR_STOP` 인 이 파일의 첫 오류에서
+실패하므로, 아래 단언들은 이제 회귀 게이트다.
+
+| # | 결함 | 수정 | 검증 |
+|---|---|---|---|
+| 1 | `og_data` 에 CREATE 권한이 없는 역할이 **아직 생성 뷰가 없는 타입**을 읽으면 `permission denied for schema og_data`. 생성 뷰는 첫 질의가 만들고 스키마 변경마다 전부 지워지므로, 스키마 변경 직후 읽기 역할의 첫 질의는 항상 실패했다 | 권한이 없으면 SECURITY DEFINER `og__ensure_view(tid, is_edge)` 가 소유자로 만든다. 뷰는 `security_invoker` 라 누가 만들었는지가 읽기 권한을 바꾸지 않는다 (`cypher/views.rs`) | 07: `og_add_property` 로 뷰를 모두 지운 뒤 `og_t_reader` 가 `MATCH (d:Doc)` 1행 |
+| 2 | 스키마 권한 없는 쓰기 역할이 **미선언 속성**을 쓰면 `og_add_property` EXECUTE 에서 트랜잭션 실패. ADR-025 는 "`__ext` 에 남는다"고 서술했지만 그렇게 동작하지 않았다(1절 부수 효과) | `security::can_change_schema()` 가 거짓이면 승격하지 않고 `__ext` 에 둔다. 검사는 승격할 것이 있을 때만 한다 (`storage/mod.rs` `declare_new_props`) | 07: `og_t_writer` 의 `CREATE (:Person {mood:"fine"})` 성공, 값 읽힘, `og_catalog.property` 에 `mood` 없음 |
+| 3 | `ensure_alias_view` 가 이미 인용된 뷰 이름을 `apply_to_view` 에 넘겨 **이중 인용** — 없는 릴레이션 이름이 되어, `og_grant` 를 한 번이라도 실행한 뒤에는 **모든 `og_add_property` 가 실패**했다 | 인용하지 않은 `og_data.<name>` 을 넘긴다 (`catalog/types.rs`) | 07: `og_grant` 두 번 이후의 `og_add_property('sec','Doc','pages','int')` 성공 (09 도 `og_grant` 이후 `og_add_property` 를 실행) |
+| 4 | `write` 역할이 `og_audit`, `og_history` 를 **수정·삭제**할 수 있었다 — 감사 대상이 자기 기록을 고친다 | `og_grant(…, 'write'/'admin')` 가 `og_audit`, `og_history`, `og_source`, `h_*` 의 DML 을 회수(`protect_records`), 이력 테이블은 새로 생길 때도 DML 을 주지 않는다. 기록은 SECURITY DEFINER `og__audit`, `og_capture_history`, `og__temporal` 만 쓴다 | 07: `og_t_writer` 의 `DELETE`/`UPDATE og_audit` 42501. 09: `og_t_writer` 의 `DELETE`/`INSERT og_data.h_1` 42501, 그래도 쓰기는 이력에 남음 |
+
+**남은 것.** 감사 행은 이제 쓰기 역할이 고칠 수 없지만, `og__audit` 가 READ 목록에 있으므로
+읽기 역할도 직접 불러 임의 내용의 행을 **추가**할 수 있다(`db_user` 는 검증된다). 실패한 질의의
+감사 행이 질의와 함께 롤백되는 SEC-18 은 그대로다.
+
 관련: [09_improvements_security.md](09_improvements_security.md) ·
+[ADR-026](../99_decisions/ADR-026-write-privileges-as-postgres-grants.md) ·
+[spec 014](../../specs/014-write-security-context/spec.md) ·
 [03_rls_and_isolation.md](03_rls_and_isolation.md) ·
 [08_secure_deployment.md](08_secure_deployment.md) ·
 [ADR-025](../99_decisions/ADR-025-privilege-model-default-deny.md)

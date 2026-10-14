@@ -129,3 +129,18 @@ Ontological, so its numbers are not comparable to anything produced since.
   hand-written disjunction, which re-walks its own prefixes
 
 Those are gaps in the harness, not results that were run and omitted.
+
+## Schema evolution
+
+`bench/schema_evolution.py` is a separate harness: seven schema changes (rename a
+property, a node type, a relationship type; introduce a supertype; drop a
+property; change a property's type; add a uniqueness constraint) applied to a
+loaded graph on Ontological's catalog path, on a classical copy-and-delete
+migration over the same storage, on Neo4j 5 and on Apache AGE. Every change is
+followed by a correctness check that voids the timing on a wrong answer.
+
+    python3 bench/schema_evolution.py --sizes 10000,100000 --repeat 3
+    python3 bench/schema_evolution.py --sizes 1000000 --skip "age:S1,S5,S6,S7"
+
+Results and what they do and do not show:
+[docs/schema-evolution-benchmark.md](../docs/schema-evolution-benchmark.md).

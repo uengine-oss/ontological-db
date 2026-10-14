@@ -30,8 +30,13 @@ plan.md 의 Phasing / Complexity Tracking 에 있다.
 ## Phase 3 — temporal
 - [x] T016 `og_enable_history` — 타입 단위 opt-in 트리거
 - [x] T017 `og_history` — 엔티티 변경 이력
-- [x] T018 `og_as_of` — 이력 없으면 현재 값 대신 **오류**
-- [ ] T019 유효 시각 / 기록 시각 분리 질의
+- [x] T018 `og_as_of` — 이력 없으면 현재 값 대신 **오류**. 삭제 이후 시점은 NULL, 같은 트랜잭션
+      안의 동시각 변경은 기록 순서로 — 스펙 013 이 고치고 `engine/tests/sql/10_evolution_temporal_coverage.sql`
+      이 단언
+- [x] T019 유효 시각 / 기록 시각 분리 질의 → [스펙 013](../013-bitemporal-graph/) 으로 이관·구현
+      (`og_enable_temporal` + `og.valid_at`/`og.system_at`). 이 스펙의 `og_as_of` 경로는 여전히
+      기록 시각 하나다. 보존 정책(FR-023)은 013 에서도 미구현이다 —
+      [013 tasks](../013-bitemporal-graph/tasks.md)
 
 ## Phase 4 — MCP
 - [ ] T020 MCP 서버 (포탈 HTTP API가 동일 기능을 이미 노출)

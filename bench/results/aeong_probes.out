@@ -1,0 +1,31 @@
+== P1. 노드 속성만 바뀔 때: 정상 ==
+  TT AS 0    p.v=           r.w=
+  TT AS 1    p.v=           r.w=
+  TT AS 2    p.v=           r.w=
+  TT AS 3    p.v="1"        r.w="""a""" 
+  TT AS 4    p.v="1"        r.w="""a""" 
+  TT AS 5    p.v="2"        r.w="""a""" 
+  TT AS 6    p.v="2"        r.w="""a""" 
+  TT AS 7    p.v="3"        r.w="""a""" 
+  TT AS 8    p.v="3"        r.w="""a""" 
+== P2. 붙어 있던 관계를 지운 뒤 같은 질문: 모든 과거 시점이 현재값(3), 관계는 사라짐 ==
+  TT AS 0    p.v=           r.w=
+  TT AS 1    p.v=           r.w=
+  TT AS 2    p.v=           r.w=
+  TT AS 3    p.v="3"        r.w=
+  TT AS 4    p.v="3"        r.w=
+  TT AS 5    p.v="3"        r.w=
+  TT AS 6    p.v="3"        r.w=
+  TT AS 7    p.v="3"        r.w=
+  TT AS 8    p.v="3"        r.w=
+== P3. 구간 질의: 존재하지 않는 'NULL' 버전이 섞여 나온다 ==
+  TT FROM 0 TO 1e14 -> "3" "3" "2" "1" """NULL""" """NULL""" """NULL""" 
+== P4. 노드를 지우면 그 노드의 이력 전체가 시점 질의로 안 보인다 ==
+  삭제 전 구간: "8" "7" """NULL""" """NULL""" """NULL""" 
+  삭제 후 구간: []
+== P5. 문법에 있는 VT(유효시간) 절은 파서가 거절한다 ==
+  Client received exception: line 1:13 mismatched input 'VT' expecting {<EOF>, ';'} 
+== P6. GC(FREE MEMORY) 후에도 P2 의 결과는 그대로 ==
+  TT AS 2 -> 
+  TT AS 4 -> "3" 
+  TT AS 6 -> "3" 

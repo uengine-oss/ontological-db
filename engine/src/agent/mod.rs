@@ -353,7 +353,9 @@ fn og_estimate(graph: &str, query: &str) -> JsonB {
         Ok(s) => s,
         Err(e) => return JsonB(json!({ "error": e })),
     };
-    let plan = crate::spiu::one_mut::<JsonB>(
+    // EXPLAIN's JSON format is `json`, not `jsonb`: read as jsonb it fails, the
+    // `.ok()` below hides that, and every estimate came out as zero.
+    let plan = crate::spiu::one_mut::<pgrx::Json>(
         &format!("EXPLAIN (FORMAT JSON) {sql}"),
         &[JsonB(json!({})).into()],
     )
@@ -481,7 +483,7 @@ fn og_history(id: i64) -> TableIterator<
         client
             .select(
                 "SELECT recorded_at, op::text, payload FROM og_data.og_history
-                  WHERE entity_id = $1 ORDER BY recorded_at DESC",
+                  WHERE entity_id = $1 ORDER BY recorded_at DESC, hist_id DESC",
                 None,
                 &[id.into()],
             )
@@ -514,10 +516,13 @@ fn og_as_of(id: i64, at: pgrx::datum::TimestampWithTimeZone) -> JsonB {
              og_enable_history(graph, type) — returning the current value instead would be a lie"
         );
     }
+    // Several writes in one transaction share `recorded_at`, so `hist_id`
+    // breaks the tie; and an entity whose last change before `at` was its
+    // deletion did not exist then — its final payload is the pre-delete row.
     crate::spiu::one::<JsonB>(
-        "SELECT payload FROM og_data.og_history
+        "SELECT CASE WHEN op = 'd' THEN NULL ELSE payload END FROM og_data.og_history
           WHERE entity_id = $1 AND recorded_at <= $2
-          ORDER BY recorded_at DESC LIMIT 1",
+          ORDER BY recorded_at DESC, hist_id DESC LIMIT 1",
         &[id.into(), at.into()],
     )
     .ok()

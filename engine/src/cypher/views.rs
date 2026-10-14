@@ -18,7 +18,21 @@
 
 use crate::catalog::labeling;
 use pgrx::prelude::*;
+use std::cell::Cell;
 use std::collections::BTreeMap;
+
+thread_local! {
+    /// Set when this backend created a view since the flag was last taken.
+    /// A view created inside a transaction disappears if that transaction
+    /// rolls back, so SQL compiled against it must not be cached — see
+    /// `compile_cached`.
+    static CREATED_VIEW: Cell<bool> = const { Cell::new(false) };
+}
+
+/// Whether a view was created since the last call, clearing the flag.
+pub fn take_created_view() -> bool {
+    CREATED_VIEW.with(|c| c.replace(false))
+}
 
 pub fn node_view(tid: i32) -> String {
     format!("og_data.v_{tid}")
@@ -90,32 +104,88 @@ fn view_exists(name: &str) -> bool {
 
 /// Create the union view for a type if it does not exist yet. Views are dropped
 /// wholesale whenever the schema changes, so "exists" is a valid freshness test.
+///
+/// Views are created lazily by whoever queries first, and most roles cannot
+/// create anything in `og_data` — so a role without that privilege builds the
+/// view through `og__ensure_view`, which runs as the extension owner. The view
+/// is `security_invoker`, so who created it does not change who may read
+/// through it.
 pub fn ensure_view(tid: i32, is_edge: bool) -> String {
     let view = if is_edge { edge_view(tid) } else { node_view(tid) };
     if view_exists(&view) {
         return view;
     }
+    let can_create = crate::spiu::one::<bool>(
+        "SELECT has_schema_privilege('og_data', 'CREATE')",
+        &[],
+    )
+    .ok()
+    .flatten()
+    .unwrap_or(false);
+    CREATED_VIEW.with(|c| c.set(true));
+    if can_create {
+        build_view(tid, is_edge)
+    } else {
+        crate::spiu::one_mut::<String>(
+            "SELECT og__ensure_view($1, $2)",
+            &[tid.into(), is_edge.into()],
+        )
+        .unwrap_or_else(|e| error!("failed to build type view for type {tid}: {e}"))
+        .unwrap_or(view)
+    }
+}
 
+/// Build a generated type view as the extension owner. It takes a type id and
+/// a flag, and can only ever produce the view `ensure_view` would have built.
+#[allow(non_snake_case)]
+#[pg_extern(security_definer)]
+#[search_path(@extschema@, pg_catalog, pg_temp)]
+fn og__ensure_view(tid: i32, is_edge: bool) -> String {
+    let view = if is_edge { edge_view(tid) } else { node_view(tid) };
+    if view_exists(&view) {
+        return view;
+    }
+    build_view(tid, is_edge)
+}
+
+fn build_view(tid: i32, is_edge: bool) -> String {
+    let view = if is_edge { edge_view(tid) } else { node_view(tid) };
     let props = view_properties(tid);
     let tables = concrete_tables(tid, is_edge);
 
     let mut selects: Vec<String> = Vec::new();
     for (sub, table) in &tables {
-        let own = own_columns(table);
-        let mut cols: Vec<String> = vec!["id".into(), format!("{sub}::int4 AS type_id")];
-        if is_edge {
-            cols.push("src".into());
-            cols.push("dst".into());
-        }
-        for (col, dt) in props.values() {
-            if own.contains(col) {
-                cols.push(col.clone());
-            } else {
-                cols.push(format!("NULL::{dt} AS {col}"));
+        // A temporal type contributes its current rows and, when an instant
+        // is set, its history rows — both filtered to that instant (spec 013).
+        let temporal = crate::temporal::is_temporal(*sub);
+        let mut sources: Vec<(String, String)> = Vec::new();
+        if temporal {
+            let (cur, open, closed) = crate::temporal::visibility_predicates();
+            sources.push((table.clone(), format!(" WHERE {cur}")));
+            if let Some(h) = crate::temporal::history_table(table) {
+                sources.push((h.clone(), format!(" WHERE {open}")));
+                sources.push((h, format!(" WHERE {closed}")));
             }
+        } else {
+            sources.push((table.clone(), String::new()));
         }
-        cols.push("__ext".into());
-        selects.push(format!("SELECT {} FROM {}", cols.join(", "), table));
+        for (rel, filter) in sources {
+            let own = own_columns(&rel);
+            let mut cols: Vec<String> = vec!["id".into(), format!("{sub}::int4 AS type_id")];
+            if is_edge {
+                cols.push("src".into());
+                cols.push("dst".into());
+            }
+            for (col, dt) in view_columns(&props) {
+                if own.contains(&col) {
+                    cols.push(col.clone());
+                } else {
+                    cols.push(format!("NULL::{dt} AS {col}"));
+                }
+            }
+            cols.push("__ext".into());
+            selects.push(format!("SELECT {} FROM {}{}", cols.join(", "), rel, filter));
+        }
     }
 
     if selects.is_empty() {
@@ -125,7 +195,7 @@ pub fn ensure_view(tid: i32, is_edge: bool) -> String {
             cols.push("NULL::int8 AS src".into());
             cols.push("NULL::int8 AS dst".into());
         }
-        for (col, dt) in props.values() {
+        for (col, dt) in view_columns(&props) {
             cols.push(format!("NULL::{dt} AS {col}"));
         }
         cols.push("NULL::jsonb AS __ext".into());
@@ -140,6 +210,17 @@ pub fn ensure_view(tid: i32, is_edge: bool) -> String {
         .unwrap_or_else(|e| error!("failed to build type view for type {tid}: {e}"));
     crate::catalog::privileges::apply_to_view(&view);
     view
+}
+
+/// Each physical column once. While a property is being renamed (spec 012) it
+/// has two names for one column, and a view cannot select a column twice.
+fn view_columns(props: &BTreeMap<String, (String, String)>) -> Vec<(String, String)> {
+    let mut seen = std::collections::BTreeSet::new();
+    props
+        .values()
+        .filter(|(col, _)| seen.insert(col.clone()))
+        .cloned()
+        .collect()
 }
 
 fn own_columns(table: &str) -> Vec<String> {

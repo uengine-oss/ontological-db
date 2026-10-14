@@ -71,7 +71,7 @@ fn is_write(q: &Query) -> bool {
     })
 }
 
-fn compile_cached(graph: &str, query: &str) -> Result<(String, Vec<String>), String> {
+pub(crate) fn compile_cached(graph: &str, query: &str) -> Result<(String, Vec<String>), String> {
     let key = (graph.to_string(), query.to_string(), schema_epoch());
     if let Some(hit) = PLAN_CACHE.with(|c| c.borrow().get(&key).cloned()) {
         return Ok(hit);
@@ -80,9 +80,17 @@ fn compile_cached(graph: &str, query: &str) -> Result<(String, Vec<String>), Str
     if is_write(&ast) {
         return Err("write queries are not compiled to a single statement".into());
     }
+    views::take_created_view();
     let mut c = compile::Compiler::new(graph);
     let compiled = c.compile_read(&ast)?;
     let out = (compiled.sql, compiled.columns);
+    // A view this compile created exists only once its transaction commits; a
+    // rollback drops it, and a cached plan would then name a missing relation
+    // ("relation og_data.v_N does not exist") for the rest of the session.
+    // Compile again next time — by then the view either exists or is rebuilt.
+    if views::take_created_view() {
+        return Ok(out);
+    }
     PLAN_CACHE.with(|cache| {
         let mut m = cache.borrow_mut();
         if m.len() > 512 {
@@ -100,6 +108,9 @@ fn compile_cached(graph: &str, query: &str) -> Result<(String, Vec<String>), Str
 /// query, because it is one.
 #[pg_extern(stable)]
 fn og_cypher_sql(graph: &str, query: &str) -> String {
+    if crate::fabric::sqlish::is_statement(query) {
+        return crate::fabric::sqlish::shown_sql(query, graph).unwrap_or_else(|e| error!("fabric statement: {e}"));
+    }
     match compile_cached(graph, query) {
         Ok((sql, _)) => sql,
         Err(e) => error!("{e}"),
@@ -113,10 +124,27 @@ fn og_cypher(
     query: &str,
     params: default!(JsonB, "'{}'"),
 ) -> SetOfIterator<'static, JsonB> {
+    let rows = run_query(graph, query, &params.0);
+    SetOfIterator::new(rows.into_iter().map(JsonB))
+}
+
+/// The body of `og_cypher`, callable from Rust — actions run their Cypher
+/// through here so that it is parsed, checked and audited the same way.
+pub fn run_query(graph: &str, query: &str, params: &Value) -> Vec<Value> {
     let started = std::time::Instant::now();
     // Each call reports what *it* changed, so the count starts here rather than
     // accumulating over the connection. See `crate::stats`.
     crate::stats::reset();
+    // A fabric statement (CREATE DATASOURCE, SHOW TABLES, CREATE VIRTUAL NODE …)
+    // is not Cypher, but it arrives wherever Cypher does — the Studio, a Bolt
+    // driver — so this is where it is recognised and handed on.
+    if crate::fabric::sqlish::is_statement(query) {
+        let p = match params {
+            Value::Object(m) => m.clone(),
+            _ => serde_json::Map::new(),
+        };
+        return crate::fabric::sqlish::run(query, Some(graph), &p);
+    }
     let ast = match parser::parse(query) {
         Ok(a) => a,
         Err(e) => {
@@ -126,13 +154,13 @@ fn og_cypher(
     };
 
     let rows = if is_write(&ast) {
-        run_write(graph, &ast, &params.0)
+        run_write(graph, &ast, params)
     } else {
-        run_read(graph, query, &params.0)
+        run_read(graph, query, params)
     };
 
     audit(graph, query, rows.len() as i64, started, None);
-    SetOfIterator::new(rows.into_iter().map(JsonB))
+    rows
 }
 
 /// What the last `og_cypher()` on this connection changed.
@@ -147,18 +175,7 @@ fn og_cypher_stats() -> JsonB {
 }
 
 fn audit(graph: &str, query: &str, rows: i64, started: std::time::Instant, err: Option<&str>) {
-    let ms = started.elapsed().as_secs_f64() * 1000.0;
-    Spi::run_with_args(
-        "INSERT INTO og_data.og_audit (query, lang, rows_out, duration_ms, error_code)
-         VALUES ($1, 'cypher', $2, $3, $4)",
-        &[
-            format!("[{graph}] {query}").into(),
-            rows.into(),
-            ms.into(),
-            err.map(|e| e.chars().take(200).collect::<String>()).into(),
-        ],
-    )
-    .ok();
+    crate::security::audit("cypher", graph, query, rows, started, err);
 }
 
 fn run_read(graph: &str, query: &str, params: &Value) -> Vec<Value> {
@@ -770,7 +787,9 @@ fn og_cypher_explain(graph: &str, query: &str, analyze: default!(bool, false)) -
         Err(e) => error!("{e}"),
     };
     let opts = if analyze { "ANALYZE, BUFFERS, FORMAT JSON" } else { "FORMAT JSON" };
-    let plan = crate::spiu::one_mut::<JsonB>(
+    // EXPLAIN's JSON format is `json`, not `jsonb` — read as jsonb it fails,
+    // and the `.ok()` below turned that into a plan of null.
+    let plan = crate::spiu::one_mut::<pgrx::Json>(
         &format!("EXPLAIN ({opts}) {sql}"),
         &[JsonB(json!({})).into()],
     )
@@ -788,6 +807,14 @@ fn og_cypher_explain(graph: &str, query: &str, analyze: default!(bool, false)) -
 /// Parse only — used by the portal and by agents to validate before executing.
 #[pg_extern(immutable, parallel_safe)]
 fn og_cypher_check(query: &str) -> JsonB {
+    if crate::fabric::sqlish::is_statement(query) {
+        return JsonB(json!({
+            "ok": true,
+            "clauses": 1,
+            "write": crate::fabric::sqlish::is_write(query),
+            "fabric": true,
+        }));
+    }
     match parser::parse(query) {
         Ok(q) => JsonB(json!({
             "ok": true,
@@ -806,6 +833,9 @@ fn og_cypher_check(query: &str) -> JsonB {
 /// parser instead of guessing. Parse only; no database access.
 #[pg_extern(immutable, parallel_safe)]
 fn og_cypher_columns(query: &str) -> Vec<String> {
+    if crate::fabric::sqlish::is_statement(query) {
+        return crate::fabric::sqlish::columns(query);
+    }
     let q = match parser::parse(query) {
         Ok(q) => q,
         Err(e) => error!("{e}"),

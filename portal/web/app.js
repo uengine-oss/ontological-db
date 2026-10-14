@@ -18,6 +18,10 @@ const state = {
   history: JSON.parse(localStorage.getItem('og.history') || '[]'),
   histIdx: -1,
   at: { valid_at: '', system_at: '', system_label: '' },  // time travel (spec 013)
+  // Query parameters set with `:param`. Kept in memory only: a parameter is
+  // where a secret goes so that it stays out of the query text, and the query
+  // text is what the history below writes to localStorage.
+  params: {},
 };
 
 /** Stable label colouring: the same type keeps its colour across frames. */
@@ -662,9 +666,46 @@ function showInspector(d) {
 
 // ------------------------------------------------------------------- runner ---
 
+/**
+ * `:param name => value` sets a query parameter, `:params` lists the names,
+ * `:params clear` forgets them. The value is parsed as JSON when it is JSON
+ * (`5`, `true`, `"x"`, `[1,2]`), and taken as a string otherwise, with one
+ * layer of quotes removed. Neither the command nor the value enters history.
+ */
+function paramCommand(query) {
+  const note = (text) => {
+    const frame = addFrame(query.replace(/=>.*$/s, '=> …'));
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:12px 16px;font-family:var(--mono);font-size:12.5px';
+    div.textContent = text;
+    setViews(frame, [{ name: 'Result', node: div }], '<span>parameters</span>');
+    $('#editor').value = '';
+    autosize();
+  };
+  if (query === ':params') {
+    const names = Object.keys(state.params);
+    return note(names.length ? names.map((n) => `$${n}`).join(', ') + ' — values are not shown' : 'no parameters set');
+  }
+  if (query === ':params clear') {
+    state.params = {};
+    return note('parameters cleared');
+  }
+  const m = query.match(/^:param\s+([A-Za-z_][A-Za-z0-9_]*)\s*=>\s*([\s\S]+)$/);
+  if (!m) return note('usage — :param name => value');
+  let value = m[2].trim();
+  try {
+    value = JSON.parse(value);
+  } catch {
+    value = value.replace(/^'([\s\S]*)'$/, '$1');
+  }
+  state.params[m[1]] = value;
+  return note(`$${m[1]} set for this page — not saved, not shown`);
+}
+
 async function run() {
   const query = $('#editor').value.trim();
   if (!query) return;
+  if (query.startsWith(':param')) return paramCommand(query);
 
   state.history.unshift(query);
   state.history = state.history.slice(0, 100);
@@ -688,9 +729,11 @@ async function run() {
   if (query === ':schema') return runSchemaCmd(frame);
   if (query === ':changes') return runChangesCmd(frame);
   if (query === ':snapshot' || query.startsWith(':snapshot ')) return runSnapshotCmd(frame, query.slice(9).trim());
+  if (query === ':releases') return runReleasesCmd(frame);              // release.js
+  if (query.startsWith(':timeline')) return runTimelineCmd(frame, query.slice(9)); // release.js
 
   const t0 = performance.now();
-  const { ok, data } = await api('/api/cypher', { graph: state.graph, query, params: {}, at: instant });
+  const { ok, data } = await api('/api/cypher', { graph: state.graph, query, params: state.params, at: instant });
   const ms = (performance.now() - t0).toFixed(0);
 
   if (!ok) {

@@ -173,9 +173,11 @@ pub fn bump_schema_version(graph_id: i32, description: &str) {
     // Generated per-type union views encode the descendant set, so any schema
     // change invalidates them (spec 003 / cypher::views).
     crate::cypher::views::drop_all_views();
+    // The whole catalog of the graph as it stands after this change, so "what
+    // structure was this written under?" has an answer (spec 012 FR-009).
     Spi::run_with_args(
-        "INSERT INTO og_catalog.schema_version (version, graph_id, description)
-         VALUES (nextval('og_catalog.schema_version_seq'), $1, $2)",
+        "INSERT INTO og_catalog.schema_version (version, graph_id, description, snapshot)
+         VALUES (nextval('og_catalog.schema_version_seq'), $1, $2, og__schema_snapshot($1))",
         &[graph_id.into(), description.into()],
     )
     .expect("failed to bump schema version");

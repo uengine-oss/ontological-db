@@ -1,0 +1,83 @@
+[T0 빈 그래프] t=1791261743884
+== 쓰기 ==
+  CREATE (:Person {name:'ann', salary:100})-[:WORKS_AT {title:'eng'}]->(:Company {name:'acme'})
+    -> []
+[T1 입사, salary 100] t=1791261744031
+  MATCH (p:Person {name:'ann'}) SET p.salary = 200
+    -> []
+[T2 연봉 200] t=1791261744189
+  MATCH (p:Person {name:'ann'}) SET p.salary = 250
+    -> []
+[T3 정정 250] t=1791261744357
+  MATCH (:Person {name:'ann'})-[w:WORKS_AT]->() DELETE w
+    -> []
+[T4 퇴사(관계 삭제)] t=1791261744503
+  MATCH (p:Person {name:'ann'}) DETACH DELETE p
+    -> []
+[T5 사람 노드 삭제] t=1791261744654
+== 현재 ==
+  MATCH (p:Person) RETURN p.name AS name, p.salary AS salary
+    -> []
+  MATCH (c:Company) RETURN c.name AS name
+    -> [{'name': '"acme"'}]
+== 시점(TT AS) ==
+-- T0
+  MATCH (p:Person {name:'ann'}) TT AS 1791261743884 RETURN p.salary AS salary
+    -> []
+  MATCH (p:Person {name:'ann'})-[w:WORKS_AT]->(c:Company) TT AS 1791261743884 RETURN c.name AS company, w.title AS title
+    -> []
+-- T1
+  MATCH (p:Person {name:'ann'}) TT AS 1791261744031 RETURN p.salary AS salary
+    -> []
+  MATCH (p:Person {name:'ann'})-[w:WORKS_AT]->(c:Company) TT AS 1791261744031 RETURN c.name AS company, w.title AS title
+    -> []
+-- T2
+  MATCH (p:Person {name:'ann'}) TT AS 1791261744189 RETURN p.salary AS salary
+    -> []
+  MATCH (p:Person {name:'ann'})-[w:WORKS_AT]->(c:Company) TT AS 1791261744189 RETURN c.name AS company, w.title AS title
+    -> []
+-- T3
+  MATCH (p:Person {name:'ann'}) TT AS 1791261744357 RETURN p.salary AS salary
+    -> []
+  MATCH (p:Person {name:'ann'})-[w:WORKS_AT]->(c:Company) TT AS 1791261744357 RETURN c.name AS company, w.title AS title
+    -> []
+-- T4
+  MATCH (p:Person {name:'ann'}) TT AS 1791261744503 RETURN p.salary AS salary
+    -> []
+  MATCH (p:Person {name:'ann'})-[w:WORKS_AT]->(c:Company) TT AS 1791261744503 RETURN c.name AS company, w.title AS title
+    -> []
+-- T5
+  MATCH (p:Person {name:'ann'}) TT AS 1791261744654 RETURN p.salary AS salary
+    -> []
+  MATCH (p:Person {name:'ann'})-[w:WORKS_AT]->(c:Company) TT AS 1791261744654 RETURN c.name AS company, w.title AS title
+    -> []
+== 구간(TT FROM .. TO) ==
+  MATCH (p:Person {name:'ann'}) TT FROM 1791261743884 TO 1791261744654 RETURN p.salary AS salary
+    -> []
+  MATCH (p:Person {name:'ann'}) TT FROM 1791261744031 TO 1791261744189 RETURN p.salary AS salary
+    -> []
+  MATCH (p:Person {name:'ann'})-[w:WORKS_AT]->(c) TT FROM 1791261743884 TO 1791261744654 RETURN c.name AS company
+    -> []
+== 형태별 지원 여부 (TT AS T3) ==
+  MATCH (n) TT AS 1791261744357 RETURN labels(n) AS l, n.name AS name
+    -> [{'l': '["Company"]', 'name': '"acme"'}]
+  MATCH (p:Person)-[:WORKS_AT*1..2]->(c) TT AS 1791261744357 RETURN c.name AS company
+    -> []
+  MATCH (p:Person)-[r]->(c) TT AS 1791261744357 RETURN type(r) AS t
+    -> []
+  MATCH (p:Person {name:'ann'}) WHERE p.salary > 150 TT AS 1791261744357 RETURN p.salary AS salary
+    -> []
+  MATCH (p:Person {name:'ann'}) TT AS 1791261744031 WITH p MATCH (p)-[:WORKS_AT]->(c) RETURN c.name AS company
+    -> []
+  OPTIONAL MATCH (p:Person {name:'ann'}) TT AS 1791261744357 RETURN p.salary AS salary
+    -> [{'salary': 'Null'}]
+== 유효시간(VT) 절 — 문법만 있고 동작은? ==
+  MATCH (c:Company) VT AS 0 RETURN c.name AS name
+    -> ERROR: Client received exception: line 1:19 mismatched input 'VT' expecting {<EOF>, ';'}
+  MATCH (p:Person {name:'ann'}) TT AS 1791261744357 VT AS 0 RETURN p.salary AS salary
+    -> ERROR: Client received exception: line 1:51 mismatched input 'VT' expecting {<EOF>, ';'}
+== 쓰기 쪽 시간 지정(유효시간 소급) — 구문이 있는가? ==
+  CREATE (:Person {name:'bob', salary:1}) VT AS 0
+    -> ERROR: Client received exception: line 1:41 mismatched input 'VT' expecting {<EOF>, ';'}
+  MATCH (c:Company) TT AS 0 SET c.name = 'x'
+    -> []

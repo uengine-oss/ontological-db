@@ -98,7 +98,10 @@ pub fn ensure_alias_view(tid: i32, name: &str, table: &str) {
         // something already in the schema must not stop a type from existing.
         pgrx::log!("could not create the alias view for type {tid} ({name}): {e}");
     } else {
-        crate::catalog::privileges::apply_to_view(&view);
+        // `apply_to_view` quotes what it is given; `view` is quoted already,
+        // and quoting it twice named a relation that does not exist — which
+        // failed every og_add_property once any role had been granted access.
+        crate::catalog::privileges::apply_to_view(&format!("og_data.{name}"));
     }
 }
 
@@ -455,10 +458,46 @@ pub fn create_type_inner(
     .expect("id alloc init failed");
 
     labeling::relabel_graph(gid);
+
+    // Settings declared on an ancestor reach a subtype created later: the
+    // labels above are what make the ancestry visible, so this comes after.
+    if !is_abstract && k != 'a' {
+        if crate::security::inherits_stamping(tid) {
+            if let Some(table) = storage_table(tid) {
+                crate::security::stamp_table(&table);
+            }
+        }
+        if crate::temporal::is_temporal(tid) {
+            crate::temporal::enable_table(tid);
+        }
+        inherit_history_capture(graph, tid);
+        crate::security::replay_write_grants(tid);
+    }
     tid
 }
 
-fn copy_inherited_properties(parent: i32, child: i32, child_table: &str) {
+/// `og_enable_history` on an ancestor covers a subtype created afterwards.
+fn inherit_history_capture(graph: &str, tid: i32) {
+    let on = crate::spiu::one::<bool>(
+        "SELECT true FROM og_catalog.setting s
+           JOIN og_catalog.type t ON s.key = 'history.' || $1 || '.' || t.name
+          WHERE t.type_id = ANY($2) AND s.value = 'on' LIMIT 1",
+        &[graph.into(), labeling::og_supertypes(tid).into()],
+    )
+    .ok()
+    .flatten()
+    .unwrap_or(false);
+    if let (true, Some(table)) = (on, storage_table(tid)) {
+        Spi::run(&format!(
+            "CREATE OR REPLACE TRIGGER og_hist_{tid}
+               AFTER INSERT OR UPDATE OR DELETE ON {table}
+               FOR EACH ROW EXECUTE FUNCTION og_capture_history()"
+        ))
+        .unwrap_or_else(|e| error!("failed to enable history on {table}: {e}"));
+    }
+}
+
+pub fn copy_inherited_properties(parent: i32, child: i32, child_table: &str) {
     let props: Vec<(String, String, String, bool, bool)> = Spi::connect(|client| {
         client
             .select(
@@ -528,8 +567,11 @@ fn og_add_property(
     let col = column_name(prop);
 
     if required {
+        // Relation instances live in og_edge, not og_node; counting only nodes
+        // let a required property onto a relation type with edges in it.
         let n = crate::spiu::one::<i64>(
-            "SELECT count(*) FROM og_data.og_node WHERE type_id = ANY($1)",
+            "SELECT (SELECT count(*) FROM og_data.og_node WHERE type_id = ANY($1))
+                  + (SELECT count(*) FROM og_data.og_edge WHERE type_id = ANY($1))",
             &[labeling::og_subtypes(tid).into()],
         )
         .expect("count failed")
@@ -581,6 +623,7 @@ fn og_add_property(
                 ))
                 .expect("unique index failed");
             }
+            crate::temporal::sync_history(sub);
             if sub != tid {
                 Spi::run_with_args(
                     "INSERT INTO og_catalog.property
@@ -601,6 +644,8 @@ fn og_add_property(
         if let (Some(table), Some(sub_name)) = (storage_table(sub), try_type_name(sub)) {
             ensure_alias_view(sub, &sub_name, &table);
         }
+        // A grant on "every property" of a type covers this column too.
+        crate::security::replay_write_grants(sub);
     }
     labeling::bump_schema_version(gid, &format!("add property {type_name}.{prop}"));
 }
@@ -617,6 +662,7 @@ fn og_create_index(graph: &str, type_name: &str, prop: &str) {
                 .expect("index creation failed");
         }
     }
+    labeling::bump_schema_version(gid, &format!("create index {type_name}.{prop}"));
 }
 
 pub fn storage_table(tid: i32) -> Option<String> {

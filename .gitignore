@@ -73,3 +73,7 @@ data/
 pgdata/
 *.sqlite
 *.db-journal
+experiments/fabric/.env.fabric
+
+# built from docs/ by web/build_docs.py (and in CI by .github/workflows/pages.yml)
+web/docs/

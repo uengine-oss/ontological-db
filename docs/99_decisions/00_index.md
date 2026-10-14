@@ -22,7 +22,7 @@
 | 거버넌스 문서 | `.specify/memory/constitution.md` (v1.0.0, 비준 2026-08-05) |
 | 헌법 원칙 수 | 10개 (I~X). **NON-NEGOTIABLE**: I(포크 금지), VIII(에이전트 네이티브), IX(ACID) |
 | 헌법 이탈 기록 위치 | 각 `specs/NNN-*/plan.md`의 *Complexity Tracking* 절 |
-| 스펙 수 | 11개 (`specs/001-*` ~ `specs/011-*`) |
+| 스펙 수 | 14개 (`specs/001-*` ~ `specs/014-*`) |
 | 커밋 이력 | 6개 커밋, 2026-08-15 ~ 2026-08-17 |
 
 ## ADR 색인
@@ -54,6 +54,10 @@
 | [023](ADR-023-benchmark-correctness-gate.md) | 벤치마크에 정확성 게이트를 두고, 불일치 시 성능 수치를 무효 처리한다 | Accepted | 2026-08-06 | testing, docs, performance |
 | [024](ADR-024-rdf-overflow-table-for-lossless-mapping.md) | RDF 매핑 불가 구문을 `og_triple_overflow`에 원형 보존한다 | Accepted | 2026-08-06 | adapters, data, catalog |
 | [025](ADR-025-privilege-model-default-deny.md) | 함수 권한은 기본 거부하고, 역할은 확장이 만들지 않는다 | Accepted | 2026-08-23 | security, api, data, operations |
+| [026](ADR-026-write-privileges-as-postgres-grants.md) | 세분화된 쓰기 권한은 PG 테이블/컬럼 GRANT + 레지스트리 RLS 로, 행위(Action)는 `run_as` 소유 SECURITY DEFINER 함수로 | Accepted | 2026-09-30 | security, storage, api, bolt, audit |
+| [027](ADR-027-bitemporal-current-plus-history.md) | 이중 시간은 현재 테이블 + `h_<type_id>` 이력으로, 시점은 생성 뷰가 읽는 세션 설정으로. 답할 수 없는 질의는 오류 | Accepted | 2026-09-30 | storage, cypher, typeql, bolt, catalog |
+| [028](ADR-028-schema-change-at-catalog-level.md) | 스키마 변경은 가능한 한 카탈로그(매핑) 수준에서, 표현 변경만 배치로 행을 다시 쓴다 (Expand/Migrate/Validate/Contract) | Accepted | 2026-09-30 | catalog, storage, cypher, security, temporal |
+| [029](ADR-029-virtual-fabric-via-fdw.md) | 데이터 패브릭을 Ontological 안에 둔다 — 가상 타입은 FDW 위의 매핑 뷰, 가상 관계는 키 조인 | Proposed | 2026-10-09 | interop, cypher, catalog |
 
 **Superseded / Deprecated 항목은 현재 없다.** 대체된 결정이 발생하면 상태 열을
 `Superseded by ADR-0NN`으로 바꾸고, 대체 ADR에 근거를 남긴다.
@@ -69,7 +73,7 @@
 | V. 벡터는 노드·엣지·경로 모두에 | pgvector 재사용, push-down | 019 | ⚠️ 노드·관계는 충족, **경로/서브그래프 임베딩은 미확인** |
 | VI. 코어는 하나, 표준은 어댑터로 | 이중 저장 금지 | 015, 016, 017, 024 | ✅ 충족 |
 | VII. 처음부터 확장 가능하게 | 복제 + 샤딩 | 003, 021 | ⚠️ **부분** — 샤딩 미구현 (ADR-021), Bolt `ROUTE` 형식만 |
-| VIII. 에이전트 네이티브 (NON-NEGOTIABLE) | introspection, 교정 가능한 오류 | 022 (간접) | 미확인 — spec 008 범위, 별도 ADR 없음 |
+| VIII. 에이전트 네이티브 (NON-NEGOTIABLE) | introspection, 교정 가능한 오류, 시간 축 | 022 (간접), 026, 027 | ⚠️ **부분** — introspection·오류는 spec 008 범위(별도 ADR 없음). 유효/기록 시각은 ADR-027 (가변 길이·TypeQL 시점 질의는 거부) |
 | IX. ACID (NON-NEGOTIABLE) | 모든 그래프 변경이 MVCC/WAL | 002, 004, 009, 012, 014, 021 | ✅ 충족 (CSR은 자동 적용하지 않음으로써 유지) |
 | X. 벤치마크로 증명 | 재현 가능한 측정 | 012, 013, 022, 023 | ✅ 충족 |
 
@@ -88,6 +92,9 @@
 | 벤치마크 하네스·성능 주장 | 023, 012, 013 |
 | 분산·복제·샤드 | 021, 003 |
 | RDF/OWL 어댑터 | 024, 007 |
+| 쓰기 권한·행위·스탬프·감사 | 026, 025, 005 |
+| 이력·시점 질의, 생성 뷰의 temporal 분기 | 027, 012, 013 |
+| 스키마 변경 파이프라인, 속성/타입 이름 매핑 | 028, 005, 007, 003 |
 
 ## 필수 / 금지 (Required / Forbidden)
 
@@ -107,6 +114,9 @@
 - **인접 구조를 비동기로 갱신하는 것** — 헌법 원칙 IX, ADR-009.
 - **2PC와 장애 주입 검증 없이 분산 쓰기를 여는 것** — ADR-021.
 - **시스템 간 결과 대조 없이 성능 수치를 발표하는 것** — ADR-023.
+- **시점(`og.valid_at`/`og.system_at`)이 설정된 질의에 현재 상태로 답하는 경로를 추가하는 것** —
+  레지스트리·인접 세그먼트만 읽는 새 질의 모양은 `og_require_current` 로 막아야 한다 — ADR-027.
+- **쓰기 권한을 엔진 쪽 검사로만 강제하는 것** — 판정은 PostgreSQL GRANT/RLS 가 한다 — ADR-026.
 
 ### 필수 (Required)
 
@@ -115,7 +125,7 @@
   손익분기 — ADR-013. 새 케이스는 `engine/tests/sql/05_reachability.sql`에 양방향으로
   고정한다.
 - 인접 세그먼트를 읽는 컴파일 결과는 **항상 대상 노드 뷰와 조인**해야 한다 —
-  `og_adj`에는 RLS가 걸리지 않기 때문 (ADR-004, spec 005).
+  `og_adj`의 RLS는 쓰기 정책뿐이고 읽기는 `USING (true)`이기 때문 (ADR-004, ADR-026, spec 005).
 - 헌법 원칙 이탈은 해당 `plan.md`의 *Complexity Tracking*에 (a) 위반 원칙,
   (b) 위반 없이 불가능한 이유, (c) 제거 계획을 기록해야 한다 — 헌법 Governance.
   **기록 없는 위반은 리뷰에서 반려된다.**

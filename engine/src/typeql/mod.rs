@@ -51,8 +51,15 @@ fn og_typeql(
     query: &str,
     _params: default!(JsonB, "'{}'"),
 ) -> SetOfIterator<'static, JsonB> {
+    SetOfIterator::new(run_action_body(graph, query).into_iter().map(JsonB))
+}
+
+/// The body of `og_typeql`, callable from Rust (actions use it).
+pub fn run_action_body(graph: &str, query: &str) -> Vec<Value> {
     let started = std::time::Instant::now();
     let gid = crate::catalog::types::graph_id(graph);
+    // TypeQL reads the registries, which hold only the current state.
+    crate::temporal::guard_current_only(gid, "TypeQL");
     let rows = match run_script(gid, query) {
         Ok(r) => r,
         Err(e) => {
@@ -61,7 +68,7 @@ fn og_typeql(
         }
     };
     audit(graph, query, rows.len() as i64, started, None);
-    SetOfIterator::new(rows.into_iter().map(JsonB))
+    rows
 }
 
 /// Parse and validate without executing — spec 010 FR-002.
@@ -113,18 +120,7 @@ fn og_typeql_script(graph: &str, script: &str) -> i64 {
 }
 
 fn audit(graph: &str, query: &str, rows: i64, started: std::time::Instant, err: Option<&str>) {
-    let ms = started.elapsed().as_secs_f64() * 1000.0;
-    Spi::run_with_args(
-        "INSERT INTO og_data.og_audit (query, lang, rows_out, duration_ms, error_code)
-         VALUES ($1, 'typeql', $2, $3, $4)",
-        &[
-            format!("[{graph}] {query}").into(),
-            rows.into(),
-            ms.into(),
-            err.map(|e| e.chars().take(200).collect::<String>()).into(),
-        ],
-    )
-    .ok();
+    crate::security::audit("typeql", graph, query, rows, started, err);
 }
 
 // --------------------------------------------------------------------------
