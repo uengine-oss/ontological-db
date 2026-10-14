@@ -1,0 +1,34 @@
+# Source systems for the virtual-fabric tutorial: one PostgreSQL (ERP) and one
+# MySQL (WMS + CRM). Throwaway data, no published ports — only containers on the
+# `fabric-tut` network can reach them. The passwords below are tutorial values.
+name: fabric-tut
+services:
+  erp:
+    image: postgres:16-alpine
+    container_name: fabric-tut-erp
+    environment:
+      POSTGRES_DB: erp
+      POSTGRES_PASSWORD: tutorial-admin
+    volumes:
+      - ./sources/erp.sql:/docker-entrypoint-initdb.d/01_erp.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d erp"]
+      interval: 3s
+      retries: 20
+    networks: [fabric-tut]
+  mysql:
+    image: mysql:8.0
+    container_name: fabric-tut-mysql
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MYSQL_ROOT_PASSWORD: tutorial-admin
+    volumes:
+      - ./sources/wms_crm.sql:/docker-entrypoint-initdb.d/01_wms_crm.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -ufabric_ro -pfabric-ro-pw -e 'select 1 from crm.claim limit 1'"]
+      interval: 3s
+      retries: 40
+    networks: [fabric-tut]
+networks:
+  fabric-tut:
+    name: fabric-tut
