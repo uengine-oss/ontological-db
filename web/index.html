@@ -1,4 +1,9 @@
-<title>Ontological DB — PostgreSQL 안에서 사는 온톨로지 그래프 데이터베이스</title>
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ontological DB — Agentic AI를 위한 온톨로지 데이터베이스</title>
+<meta name="description" content="OWL·Cypher·TypeQL을 한 그래프에서, 데이터 패브릭과 이중 시간, 보안을 내장한 온톨로지 그래프 데이터베이스. PostgreSQL 확장 하나로 설치합니다.">
 
 <style>
 /* ─────────────────────────────────────────────────────────────
@@ -145,9 +150,10 @@ code, pre, .num { font-family: var(--mono); font-variant-ligatures: none; }
 .eyebrow::before { content: ""; width: 26px; height: 1px; background: var(--accent); }
 h1 {
   margin: 0; font-size: clamp(36px, 5.6vw, 62px); line-height: 1.08; letter-spacing: -.038em;
-  font-weight: 700; max-width: 17ch; text-wrap: balance;
+  font-weight: 700; max-width: 19ch; text-wrap: balance;
 }
 h1 em { font-style: normal; color: var(--accent); }
+h1, h2, h3, .lede, p { word-break: keep-all; }
 .lede { margin: 26px 0 0; font-size: clamp(17px, 1.6vw, 19.5px); color: var(--ink-2); max-width: 60ch; }
 .lede b { color: var(--ink); font-weight: 600; }
 
@@ -253,6 +259,59 @@ pre.code.cy { color: var(--ink); font-size: 13.4px; }
 .gpane svg { width: 100%; height: auto; display: block; }
 .gnode-l { font-family: var(--mono); font-size: 8.4px; fill: var(--ink); }
 .gedge-l { font-family: var(--mono); font-size: 7px; fill: var(--muted); letter-spacing: .06em; }
+
+
+/* ── hero pillars ──────────────────────────────────────── */
+.topnav a.nav-docs { color: var(--accent); font-weight: 650; }
+.pillars { margin-top: 40px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px;
+  background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.pillars a { background: var(--panel); padding: 15px 14px 16px; text-decoration: none; color: var(--ink);
+  border-top: 2px solid transparent; transition: border-color .16s, background .16s; }
+.pillars a:hover { border-top-color: var(--accent); background: var(--panel-2); }
+.pillars b { display: block; font-size: 14px; letter-spacing: -.01em; }
+.pillars span { display: block; margin-top: 4px; font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+@media (max-width: 1020px) { .pillars { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 560px) { .pillars { grid-template-columns: repeat(2, 1fr); } }
+.metrics { margin-top: 28px; }
+
+/* ── features ──────────────────────────────────────────── */
+.frow { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 40px; padding: 44px 0;
+  border-top: 1px solid var(--line-soft); align-items: start; scroll-margin-top: 80px; }
+.frow:first-of-type { border-top: 0; padding-top: 6px; }
+.frow .no { font-family: var(--mono); font-size: 11px; letter-spacing: .2em; color: var(--muted); }
+.frow h3 { margin: 10px 0 12px; font-size: 25px; line-height: 1.28; letter-spacing: -.025em; font-weight: 680; text-wrap: balance; }
+.frow h3 em { font-style: normal; color: var(--accent); }
+.frow p { margin: 0 0 12px; color: var(--ink-2); font-size: 15.4px; line-height: 1.7; }
+.frow p b { color: var(--ink); font-weight: 600; }
+.frow ul { margin: 0 0 14px; padding-left: 18px; color: var(--ink-2); font-size: 14.4px; line-height: 1.65; }
+.frow li { margin: 3px 0; }
+.frow li::marker { color: var(--accent); }
+.frow .honest { font-size: 13px; color: var(--muted); border-left: 2px solid var(--amber); padding: 2px 0 2px 11px; margin: 14px 0 0; }
+.frow .honest b { color: var(--amber); font-weight: 600; }
+.flinks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.flinks a { font-size: 13px; font-weight: 600; text-decoration: none; color: var(--ink); padding: 7px 13px;
+  border: 1px solid var(--line); border-radius: 3px; background: var(--panel); }
+.flinks a:hover { border-color: var(--accent); color: var(--accent); }
+.flinks a.go { background: var(--accent); border-color: var(--accent); color: #04120c; }
+.fpanel { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); overflow: hidden; box-shadow: var(--shadow); }
+.fpanel .bar { display: flex; justify-content: space-between; padding: 9px 14px; border-bottom: 1px solid var(--line-soft);
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.fpanel .bar b { color: var(--accent); font-weight: 500; }
+.fpanel pre { margin: 0; padding: 15px 16px; overflow-x: auto; font-family: var(--mono); font-size: 12.6px; line-height: 1.62; color: var(--ink); }
+.fpanel pre + pre { border-top: 1px dashed var(--line); color: var(--ink-2); background: var(--panel-2); }
+.fpanel .kw { color: var(--accent); } .fpanel .cm { color: var(--muted); } .fpanel .st2 { color: var(--amber); }
+@media (max-width: 900px) { .frow { grid-template-columns: 1fr; gap: 22px; } }
+
+/* ── videos ────────────────────────────────────────────── */
+.vgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+@media (max-width: 900px) { .vgrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .vgrid { grid-template-columns: 1fr; } }
+.vcard { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); overflow: hidden; }
+.vcard video { width: 100%; aspect-ratio: 16 / 9; display: block; background: #0b1015; }
+.vcard .vt { padding: 13px 16px 15px; }
+.vcard .vt b { display: block; font-size: 15px; letter-spacing: -.01em; }
+.vcard .vt span { display: block; margin-top: 3px; font-size: 12.6px; color: var(--muted); }
+.vcard .vt a { font-size: 12.6px; font-weight: 600; text-decoration: none; }
 
 /* ── generic cards ─────────────────────────────────────── */
 .grid { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
@@ -424,15 +483,14 @@ footer { border-top: 1px solid var(--line); padding: 34px 0 60px; }
       <span class="wm">ONTOLOGICAL&nbsp;DB</span>
     </a>
     <nav class="topnav">
+      <a href="#features">기능</a>
+      <a href="#videos">영상</a>
       <a href="#seam">컴파일</a>
-      <a href="#why">특장점</a>
       <a href="#bench">벤치마크</a>
-      <a href="#deep">깊은 홉</a>
-      <a href="#diameter">지름</a>
-      <a href="#usecase">활용</a>
-      <a href="#neo4j">Neo4j 샘플</a>
+      <a href="#agent">에이전트</a>
       <a href="#status">현황</a>
       <a href="#start">시작하기</a>
+      <a class="nav-docs" href="docs/index.html">문서</a>
     </nav>
   </div>
 </header>
@@ -442,18 +500,29 @@ footer { border-top: 1px solid var(--line); padding: 34px 0 60px; }
 <!-- ══════════════════ HERO ══════════════════ -->
 <section class="hero">
   <div class="wrap hero-in">
-    <p class="eyebrow">CREATE EXTENSION ontological CASCADE;</p>
-    <h1>온톨로지 그래프 데이터베이스가 <em>PostgreSQL 안에서</em> 돕니다.</h1>
+    <p class="eyebrow">Agentic AI를 위한 온톨로지 데이터베이스</p>
+    <h1>에이전트가 일하는 데 필요한 것이 <em>데이터베이스 하나에</em> 있습니다.</h1>
     <p class="lede">
-      Neo4j급 순회, TypeDB급 타입 상속, pgvector 기반 의미 검색 —
-      <b>노드뿐 아니라 관계(relationship)에도 임베딩</b>을 답니다.
-      새 서버도, 새 운영팀도, 두 번째 진실의 원천도 필요 없습니다.
-      확장(extension) 하나를 설치하면 끝입니다.
+      온톨로지를 <b>OWL · Cypher · TypeQL</b> 세 언어로 다루고, 다른 시스템의 데이터를 <b>복사 없이</b> 그래프로 묻고,
+      <b>어느 시점의 사실</b>이든 같은 질의로 되돌려 보고, 권한은 <b>순회 도중에도</b> 지켜집니다.
+      새 서버가 아니라 PostgreSQL 확장 하나입니다 — <code class="inline-code">CREATE EXTENSION ontological</code>.
     </p>
 
     <div class="cta-row">
-      <a class="btn btn-primary" href="#start">10분 만에 띄우기 <span class="k">docker</span></a>
-      <a class="btn" href="#bench">벤치마크 방법부터 보기</a>
+      <a class="btn btn-primary" href="#features">일곱 가지 기능 보기</a>
+      <a class="btn" href="#videos">2분 영상으로 보기</a>
+      <a class="btn" href="docs/index.html">문서 <span class="k">튜토리얼 7편</span></a>
+      <a class="btn" href="#start">10분 만에 띄우기 <span class="k">docker</span></a>
+    </div>
+
+    <div class="pillars">
+      <a href="#f-languages"><b>세 언어</b><span>OWL · Cypher · TypeQL</span></a>
+      <a href="#f-fabric"><b>데이터 패브릭</b><span>복사 없는 연합 질의</span></a>
+      <a href="#f-temporal"><b>이중 시간</b><span>유효 시간 · 시스템 시간</span></a>
+      <a href="#f-security"><b>내장 보안</b><span>순회 중에도 적용</span></a>
+      <a href="#f-agent"><b>에이전트 인터페이스</b><span>탐색 · 교정 · 가늠</span></a>
+      <a href="#f-vector"><b>벡터 검색</b><span>관계에도 임베딩</span></a>
+      <a href="#f-evolution"><b>스키마 진화</b><span>운영 중 변경</span></a>
     </div>
 
     <div class="metrics">
@@ -487,11 +556,259 @@ footer { border-top: 1px solid var(--line); padding: 34px 0 60px; }
   </div>
 </section>
 
+<!-- ══════════════════ FEATURES ══════════════════ -->
+<!-- FEATURES:BEGIN -->
+<section class="band" id="features">
+  <div class="wrap band-inner">
+    <div class="shead">
+      <div class="rail">01 · 기능</div>
+      <div>
+        <h2>일곱 가지를 데이터베이스가 직접 합니다. 각각 실행으로 확인한 튜토리얼이 있습니다.</h2>
+        <p>
+          아래의 문장은 모두 튜토리얼에서 <b>실제로 실행해 보인 것</b>입니다. 튜토리얼의 예제는 릴리스 때마다 회귀 테스트로 다시 돕니다.
+          되지 않는 것은 기능마다 "아직" 줄에 적었습니다.
+        </p>
+      </div>
+    </div>
+
+    <div class="frow" id="f-languages">
+      <div>
+        <span class="no">01 · OWL · Cypher · TypeQL · <span class="st st-part" style="font-size:9.5px;padding:1px 7px">working · partial</span></span>
+        <h3>온톨로지는 <em>세 언어로</em> 들어오고, 그래프는 하나입니다</h3>
+        <p>OWL/Turtle 파일이 별도의 트리플 저장소가 아니라 데이터베이스의 <b>타입 계층</b>이 됩니다. <code>rdfs:subClassOf</code>는 상속이, <code>domain</code>/<code>range</code>는 쓰기 시점에 검사되는 제약이 됩니다. 그 위에서 같은 그래프가 Cypher와 TypeQL에 답합니다.</p>
+        <ul><li><b>라벨 하나에 계층 전체가 답합니다.</b> <code>MATCH (v:Vehicle)</code>와 <code>match $v isa Vehicle</code>이 하위 타입까지 같은 수를 돌려줍니다</li><li>한 언어로 넣은 것을 다른 언어가 바로 읽고, 두 언어가 <b>트랜잭션 하나와 감사 로그 하나</b>를 공유합니다</li><li>Neo4j 드라이버는 주소만 바꿔 Bolt로 접속합니다. Neo4j의 MCP 서버가 수정 없이 동작합니다</li></ul>
+        <p class="honest"><b>아직</b> — SPARQL과 SHACL은 없습니다. TypeQL 사용자 정의 함수는 평가하지 않습니다. RDF 덤프는 무손실 왕복이 아닙니다.</p>
+        <div class="flinks">
+          <a class="go" href="docs/tutorials/three-languages-tutorial.html">튜토리얼</a>
+          <a href="#v-languages">2분 영상</a>
+          <a href="docs/tutorials/three-languages-tutorial.pdf">PDF</a>
+        </div>
+      </div>
+      <div class="fpanel">
+        <div class="bar"><span>한 그래프, 세 입구</span><b>fleet</b></div>
+        <pre>-- OWL: 온톨로지가 타입 계층이 된다
+SELECT og_load_rdf('fleet', $rdf$
+  :Truck         rdfs:subClassOf :Vehicle .
+  :ElectricTruck rdfs:subClassOf :Truck .
+$rdf$);</pre><pre>// Cypher: 배차 앱
+MATCH (v:Vehicle) RETURN count(v)      // 트럭·전기트럭 포함
+
+# TypeQL: 정비팀
+match $v isa Vehicle;                 # 같은 수</pre>
+      </div>
+    </div>
+    <div class="frow" id="f-fabric">
+      <div>
+        <span class="no">02 · Data Fabric · <span class="st st-part" style="font-size:9.5px;padding:1px 7px">proposed</span></span>
+        <h3>다른 시스템의 데이터를 <em>복사 없이</em> 그래프로 묻습니다</h3>
+        <p>ERP는 PostgreSQL에, 물류는 MySQL에 있어도 됩니다. 외부 테이블을 노드로, 시스템 사이의 키 대응을 관계로 한 번 선언하면 사이퍼 패턴 하나가 두 DB를 건넙니다. <b>조건과 같은 DB 안의 조인은 원천으로 내려가고</b>, 넘어오는 것은 필요한 행뿐입니다.</p>
+        <ul><li>그래프에 저장된 지식과 원천의 행을 <b>한 질의에서</b> 섞습니다. 순수한 연합 질의 엔진이 못 하는 일입니다</li><li><code>EXPLAIN FABRIC</code>이 각 원천에 실제로 보낸 SQL과 넘어온 행 수를 보여 줍니다</li><li><b>원천은 읽기 전용</b>입니다. 원천 계정에 쓰기 권한이 있어도 엔진이 먼저 거부합니다</li></ul>
+        <p class="honest"><b>아직</b> — 제안 단계(ADR-029)입니다. 지원 원천은 PostgreSQL과 MySQL이고, 가상 관계의 가변 길이 순회와 원천 쓰기는 없습니다.</p>
+        <div class="flinks">
+          <a class="go" href="docs/tutorials/virtual-fabric-tutorial.html">튜토리얼</a>
+          <a href="#v-fabric">2분 영상</a>
+          <a href="docs/tutorials/virtual-fabric-tutorial.pdf">PDF</a>
+        </div>
+      </div>
+      <div class="fpanel">
+        <div class="bar"><span>선언 셋, 질의 하나</span><b>scm</b></div>
+        <pre>CREATE DATASOURCE wms WITH ENGINE = 'mysql',
+  PARAMETERS = {host: '…', database: 'wms', password: $pw}
+CREATE VIRTUAL NODE Shipment FROM wms.shipment KEY shipment_no
+CREATE VIRTUAL RELATIONSHIP SHIPPED_BY
+  FROM Shipment(vendor_code) TO Supplier(supplier_id)</pre><pre>// 리스크는 그래프, 공급사는 ERP, 선적은 WMS
+MATCH (:Region {name: 'East Asia'})&lt;-[:IN_REGION]-(e:RiskEvent)
+      -[:AFFECTS]-&gt;(s:Supplier)&lt;-[:SHIPPED_BY]-(sh:Shipment)
+WHERE sh.ship_status &lt;&gt; 'DELIVERED'
+RETURN e.title, s.name, sh.shipment_no</pre>
+      </div>
+    </div>
+    <div class="frow" id="f-temporal">
+      <div>
+        <span class="no">03 · Time-aware · Bitemporal · <span class="st st-part" style="font-size:9.5px;padding:1px 7px">working · partial</span></span>
+        <h3><em>그때 실제로 어땠는지</em>와 <em>그때 무엇을 믿었는지</em>를 따로 묻습니다</h3>
+        <p>타입마다 유효 시간과 시스템 시간을 함께 기록합니다. 세상이 바뀐 일(인상)과 잘못 적은 값을 고친 일(정정)이 구별되므로, "2023년 6월의 실제 연봉"과 "감사 보고서를 낼 때 우리가 알던 2023년 6월의 연봉"이 서로 다른 답으로 나옵니다.</p>
+        <ul><li><b>질의는 고치지 않습니다.</b> 세션 설정만 바꾸면 같은 사이퍼가 다른 시점에 답하고, 컴파일된 SQL은 같은 문장입니다</li><li>2030년부터 적용될 변경은 그날이 되기 전까지 오늘의 답을 바꾸지 않습니다</li><li>시점을 답할 수 없는 질의는 오늘 데이터로 답하는 대신 <b>오류로 거부</b>합니다</li></ul>
+        <p class="honest"><b>아직</b> — 가변 길이 경로·라벨 없는 스캔·TypeQL은 시점 질의를 거부합니다. 이력 보존 정책은 없습니다. 미래 날짜 변경 뒤에는 패턴에 라벨을 붙여야 합니다.</p>
+        <div class="flinks">
+          <a class="go" href="docs/tutorials/temporal-tutorial.html">튜토리얼</a>
+          <a href="#v-temporal">2분 영상</a>
+          <a href="docs/tutorials/temporal-tutorial.pdf">PDF</a>
+        </div>
+      </div>
+      <div class="fpanel">
+        <div class="bar"><span>같은 질의, 다른 시점</span><b>corp</b></div>
+        <pre>MATCH (p:Person {name: 'ann'}) RETURN p.salary</pre><pre>SET og.valid_at  = '2023-06-01';          → 250   그때 실제로
+SET og.system_at = '&lt;보고서를 낸 시각&gt;';  → 200   그때 우리가 알던
+RESET …;                                   → 현재</pre>
+      </div>
+    </div>
+    <div class="frow" id="f-security">
+      <div>
+        <span class="no">04 · Built-in security · <span class="st st-part" style="font-size:9.5px;padding:1px 7px">working · partial</span></span>
+        <h3>권한은 애플리케이션이 아니라 <em>데이터베이스의 것</em>입니다</h3>
+        <p>사용자는 PostgreSQL 역할이고, Neo4j 드라이버로 접속해도 그 역할로 인증됩니다. 타입에 행 수준 보안을 걸면 그 타입을 지나는 패턴에서 <b>보이지 않는 노드는 조인에서 빠지고, 그 노드를 지나는 경로 전체가 사라집니다.</b></p>
+        <ul><li>쓰기 권한은 타입·연산·속성 단위이고 실제로는 컬럼 GRANT입니다. <b>사이퍼든 원시 SQL이든 Bolt든 같은 거부</b>를 받습니다</li><li>읽기만 가능한 AI 에이전트에게 파라미터 계약과 전제 조건이 붙은 <b>행위(Action)</b>만 실행하게 할 수 있습니다</li><li>누가, 누구를 대신해, 왜 했는지가 감사 로그에 남고 쓰기 권한자도 고칠 수 없습니다</li></ul>
+        <p class="honest"><b>아직</b> — 노드·간선 레지스트리의 읽기 제한은 아직 없어, 연결이 존재한다는 사실까지 숨기지는 못합니다. 라벨 없는 패턴에서는 경로가 남습니다.</p>
+        <div class="flinks">
+          <a class="go" href="docs/tutorials/security-tutorial.html">튜토리얼</a>
+          <a href="#v-security">2분 영상</a>
+          <a href="docs/tutorials/security-tutorial.pdf">PDF</a>
+        </div>
+      </div>
+      <div class="fpanel">
+        <div class="bar"><span>같은 질의, 다른 역할</span><b>hospital</b></div>
+        <pre>SELECT og_enable_rls('hospital', 'Patient',
+  $$p_ward &lt;&gt; '정신건강' OR current_user = 'doctor'$$);
+SELECT og_grant_write('nurse', 'hospital', 'Patient',
+  ARRAY['set'], ARRAY['room']);</pre><pre>MATCH (d:Doctor)&lt;-[:TREATED_BY]-(p:Patient)-[:PRESCRIBED]-&gt;(m:Drug)
+RETURN d.name, m.name
+
+의사   → 경로 3개
+간호사 → 경로 2개   가려진 환자를 지나는 경로가 없다</pre>
+      </div>
+    </div>
+    <div class="frow" id="f-agent">
+      <div>
+        <span class="no">05 · Agent-native · <span class="st st-part" style="font-size:9.5px;padding:1px 7px">working · partial</span></span>
+        <h3>에이전트가 <em>스스로 탐색하고, 틀리면 고치고, 실행 전에 가늠합니다</em></h3>
+        <p>처음 보는 그래프에서 에이전트가 필요로 하는 것을 데이터베이스가 직접 줍니다. 프롬프트에 넣을 크기로 줄인 스키마, 실행하지 않고 받는 오류 코드와 위치, <b>틀리지 않았는데 0행인 이유</b>, 실행 전의 추정입니다.</p>
+        <ul><li><code>og_schema</code>가 관계의 어느 쪽이 출발이고 도착인지까지 돌려주고, 예산을 주면 줄였다는 사실과 함께 줄여서 줍니다</li><li><code>og_diagnose_empty</code>가 패턴을 한 요소씩 세어 <b>어디서 끊겼는지</b>, 또는 WHERE가 전부 지웠는지를 짚습니다</li><li><code>og_estimate</code>가 관계 없이 나열된 노드의 카티션 곱을 실행 전에 경고합니다. 성공한 질의는 누가 왜 보냈는지와 함께 감사 로그에 남습니다</li></ul>
+        <p class="honest"><b>아직</b> — 없는 라벨은 오류가 아니라 0행입니다. 스키마 예산은 토큰이 아니라 타입 개수로 줄입니다. 역할 제한 중 max_rows와 read_only는 동작하지 않으니 읽기 전용은 PostgreSQL 역할로 겁니다.</p>
+        <div class="flinks">
+          <a class="go" href="docs/tutorials/agent-native-tutorial.html">튜토리얼</a>
+          <a href="#v-agent">2분 영상</a>
+          <a href="docs/tutorials/agent-native-tutorial.pdf">PDF</a>
+        </div>
+      </div>
+      <div class="fpanel">
+        <div class="bar"><span>에이전트의 한 바퀴</span><b>shop</b></div>
+        <pre>SELECT og_schema('shop', 4000);                -- 읽는다
+SELECT og_explain_error('shop', $$MATCH …$$);  -- 검사한다
+SELECT og_estimate('shop', $$MATCH …$$);       -- 가늠한다</pre><pre>SELECT * FROM og_cypher('shop', $$MATCH …$$); -- 실행한다
+SELECT og_diagnose_empty('shop', $$MATCH …$$); -- 0행이면 이유를 묻는다
+
+Studio:  :schema   :explain &lt;cypher&gt;   :why &lt;cypher&gt;</pre>
+      </div>
+    </div>
+    <div class="frow" id="f-vector">
+      <div>
+        <span class="no">06 · Vector · Hybrid · <span class="st st-ok" style="font-size:9.5px;padding:1px 7px">working</span></span>
+        <h3>임베딩은 노드뿐 아니라 <em>관계에도</em> 붙습니다</h3>
+        <p>임베딩은 별도 벡터 저장소가 아니라 프로퍼티입니다. 그래서 관계에도 같은 방식으로 선언됩니다. "이 문의가 <b>왜</b> 이 문서로 해결됐는가" 같은 관계의 맥락을 의미로 찾을 수 있습니다.</p>
+        <ul><li>유사도 정렬이 그래프 패턴·프로퍼티 조건과 함께 SQL 한 문장이 됩니다. <b>조건은 top-k를 자르기 전에</b> 적용됩니다</li><li>Neo4j와 같은 <code>CREATE VECTOR INDEX</code>와 <code>db.index.vector.queryNodes</code>를 받습니다</li><li>하이브리드 검색은 벡터 순위와 그래프 거리를 RRF로 합치고 두 점수를 따로 돌려줍니다</li></ul>
+        <p class="honest"><b>아직</b> — 임베딩 생성은 외부 모델의 몫입니다. 전문 검색과 벡터의 결합, 경로 임베딩은 없습니다. 하이브리드는 노드 타입만 됩니다.</p>
+        <div class="flinks">
+          <a class="go" href="docs/tutorials/vector-search-tutorial.html">튜토리얼</a>
+          <a href="#v-vector">2분 영상</a>
+          <a href="docs/tutorials/vector-search-tutorial.pdf">PDF</a>
+        </div>
+      </div>
+      <div class="fpanel">
+        <div class="bar"><span>관계를 의미로 찾는다</span><b>support</b></div>
+        <pre>CREATE VECTOR INDEX article_emb FOR (a:Article) ON (a.emb)
+OPTIONS {indexConfig: {`vector.dimensions`: 3,
+         `vector.similarity_function`: 'cosine'}}</pre><pre>MATCH (t:Ticket)-[r:RESOLVED_BY]-&gt;(a:Article)-[:ABOUT]-&gt;(p:Product {name: '계정'})
+WHERE a.status = 'published'
+RETURN t.title, a.title, r.note,
+       vector.similarity(r.note_emb, $q) AS score
+ORDER BY score DESC LIMIT 5</pre>
+      </div>
+    </div>
+    <div class="frow" id="f-evolution">
+      <div>
+        <span class="no">07 · Schema evolution · <span class="st st-part" style="font-size:9.5px;padding:1px 7px">working · partial</span></span>
+        <h3>데이터가 들어 있는 그래프의 스키마를 <em>서비스 중에</em> 바꿉니다</h3>
+        <p>스키마 변경은 plan → expand → migrate → validate → contract를 거치는 기록된 객체입니다. plan은 아무것도 바꾸지 않고 <b>변환할 수 없는 값이 몇 개이고 어느 노드인지</b> 먼저 알려 줍니다.</p>
+        <ul><li>타입 변경 중에도 읽기는 계속 답하고, 새 타입에 맞지 않는 쓰기는 사이퍼든 원시 SQL이든 그 순간부터 거부됩니다</li><li>기존 행은 배치로 옮기고 중단한 곳에서 이어 갑니다. <b>이름 변경과 상위 타입 추가는 행을 한 줄도 다시 쓰지 않습니다</b></li><li>모든 변경이 스키마 버전과 함께 이력으로 남고, 지난 버전의 카탈로그를 조회할 수 있습니다</li></ul>
+        <p class="honest"><b>아직</b> — 타입 분할·병합은 없습니다. TypeQL의 redefine은 이 절차와 연결되지 않습니다. 유니크 제약은 계층 전체가 아니라 테이블 단위입니다.</p>
+        <div class="flinks">
+          <a class="go" href="docs/tutorials/schema-evolution-tutorial.html">튜토리얼</a>
+          <a href="#v-evolution">2분 영상</a>
+          <a href="docs/tutorials/schema-evolution-tutorial.pdf">PDF</a>
+        </div>
+      </div>
+      <div class="fpanel">
+        <div class="bar"><span>계획하고, 옮기고, 닫는다</span><b>hr</b></div>
+        <pre>SELECT og_schema_plan('hr', '{"kind": "alter_property_type",
+  "type": "Person", "property": "age", "to": "int"}');
+-- report: 5행 중 1개 값이 변환되지 않음 · 노드 id</pre><pre>og_schema_expand  → 이중 쓰기 시작, 읽기는 옛 컬럼
+og_schema_migrate → 배치로, 이어서
+og_schema_validate → 막히는 행의 id
+og_schema_contract → 새 타입으로 전환</pre>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- FEATURES:END -->
+
+<!-- ══════════════════ VIDEOS ══════════════════ -->
+<!-- VIDEOS:BEGIN -->
+<section class="band" id="videos">
+  <div class="wrap band-inner">
+    <div class="shead">
+      <div class="rail">02 · 영상</div>
+      <div>
+        <h2>2~3분씩, 빈 데이터베이스에서 시작해 실제로 실행한 화면입니다.</h2>
+        <p>
+          연출한 화면이 아닙니다. 영상 속의 문장은 녹화 중에 Studio 편집기에 입력해 실행한 것이고,
+          화면이 자막의 내용과 다르면 녹화가 중단되도록 장면마다 검사했습니다. 설명은 자막으로 들어 있습니다.
+        </p>
+      </div>
+    </div>
+    <div class="vgrid">
+      <div class="vcard" id="v-languages">
+        <video controls preload="none" poster="docs/tutorials/media/three-languages-demo.jpg" src="docs/tutorials/media/three-languages-demo.mp4"></video>
+        <div class="vt"><b>온톨로지는 세 언어로 들어오고, 그래프는 하나입니다</b>
+          <span>OWL로 들어온 온톨로지를 Cypher와 TypeQL이 함께 읽고 씁니다</span>
+          <a href="docs/tutorials/three-languages-tutorial.html">튜토리얼로 따라 하기 →</a></div>
+      </div>
+      <div class="vcard" id="v-fabric">
+        <video controls preload="none" poster="docs/tutorials/media/virtual-fabric-demo.jpg" src="docs/tutorials/media/virtual-fabric-demo.mp4"></video>
+        <div class="vt"><b>다른 시스템의 데이터를 복사 없이 그래프로 묻습니다</b>
+          <span>PostgreSQL과 MySQL의 데이터를 복사 없이 한 패턴으로</span>
+          <a href="docs/tutorials/virtual-fabric-tutorial.html">튜토리얼로 따라 하기 →</a></div>
+      </div>
+      <div class="vcard" id="v-temporal">
+        <video controls preload="none" poster="docs/tutorials/media/temporal-demo.jpg" src="docs/tutorials/media/temporal-demo.mp4"></video>
+        <div class="vt"><b>그때 실제로 어땠는지와 그때 무엇을 믿었는지를 따로 묻습니다</b>
+          <span>같은 질의를 다섯 번, 시점만 바꿔 묻습니다</span>
+          <a href="docs/tutorials/temporal-tutorial.html">튜토리얼로 따라 하기 →</a></div>
+      </div>
+      <div class="vcard" id="v-security">
+        <video controls preload="none" poster="docs/tutorials/media/security-demo.jpg" src="docs/tutorials/media/security-demo.mp4"></video>
+        <div class="vt"><b>권한은 애플리케이션이 아니라 데이터베이스의 것입니다</b>
+          <span>같은 질의가 역할에 따라 다른 경로를 돌려줍니다</span>
+          <a href="docs/tutorials/security-tutorial.html">튜토리얼로 따라 하기 →</a></div>
+      </div>
+      <div class="vcard" id="v-agent">
+        <video controls preload="none" poster="docs/tutorials/media/agent-native-demo.jpg" src="docs/tutorials/media/agent-native-demo.mp4"></video>
+        <div class="vt"><b>에이전트가 스스로 탐색하고, 틀리면 고치고, 실행 전에 가늠합니다</b>
+          <span>에이전트가 스키마를 읽고, 틀리고, 고치는 과정</span>
+          <a href="docs/tutorials/agent-native-tutorial.html">튜토리얼로 따라 하기 →</a></div>
+      </div>
+      <div class="vcard" id="v-vector">
+        <video controls preload="none" poster="docs/tutorials/media/vector-search-demo.jpg" src="docs/tutorials/media/vector-search-demo.mp4"></video>
+        <div class="vt"><b>임베딩은 노드뿐 아니라 관계에도 붙습니다</b>
+          <span>문서 검색이 놓친 답을 관계 검색이 찾습니다</span>
+          <a href="docs/tutorials/vector-search-tutorial.html">튜토리얼로 따라 하기 →</a></div>
+      </div>
+      <div class="vcard" id="v-evolution">
+        <video controls preload="none" poster="docs/tutorials/media/schema-evolution-demo.jpg" src="docs/tutorials/media/schema-evolution-demo.mp4"></video>
+        <div class="vt"><b>데이터가 들어 있는 그래프의 스키마를 서비스 중에 바꿉니다</b>
+          <span>운영 중인 그래프에서 잘못된 타입을 고칩니다</span>
+          <a href="docs/tutorials/schema-evolution-tutorial.html">튜토리얼로 따라 하기 →</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- VIDEOS:END -->
+
 <!-- ══════════════════ COMPILER SEAM ══════════════════ -->
 <section class="band" id="seam">
   <div class="wrap band-inner">
     <div class="shead">
-      <div class="rail">01 · 제품의 핵심</div>
+      <div class="rail">03 · 제품의 핵심</div>
       <div>
         <h2>Cypher가 들어가고, 플래너가 최적화하는 SQL이 나옵니다.</h2>
         <p>
@@ -551,7 +868,7 @@ footer { border-top: 1px solid var(--line); padding: 34px 0 60px; }
 <section class="band" id="why">
   <div class="wrap band-inner">
     <div class="shead">
-      <div class="rail">02 · 특장점</div>
+      <div class="rail">04 · 특장점</div>
       <div>
         <h2>여섯 가지가 구조적으로 다릅니다. 상수배가 아니라 설계가 다릅니다.</h2>
         <p>
@@ -656,7 +973,7 @@ og_node_view · og_edge_view · og_type_view</div>
 <section class="band band-tight">
   <div class="wrap band-inner">
     <div class="shead">
-      <div class="rail">02.1 · 구조 대조</div>
+      <div class="rail">04.1 · 구조 대조</div>
       <div>
         <h2>Apache AGE와 무엇이 다른가</h2>
         <p>
@@ -714,7 +1031,7 @@ og_node_view · og_edge_view · og_type_view</div>
 <section class="band" id="bench">
   <div class="wrap band-inner">
     <div class="shead">
-      <div class="rail">03 · 벤치마크</div>
+      <div class="rail">05 · 벤치마크</div>
       <div>
         <h2>수치는 그 근거만큼만 값어치가 있습니다. 그래서 하네스를 우리에게 적대적으로 짰습니다.</h2>
         <p>
@@ -789,7 +1106,7 @@ og_node_view · og_edge_view · og_type_view</div>
     <div style="height:44px"></div>
 
     <div class="shead">
-      <div class="rail">03.1 · 논리 페이지</div>
+      <div class="rail">05.1 · 논리 페이지</div>
       <div>
         <h2>지연 시간은 캐시 상태를 따라 움직입니다. 페이지 접근 횟수는 저장 구조의 직접 함수입니다.</h2>
         <p>그래서 저장 구조에 대한 주장은 이 표로 검증하는 것이 정직합니다.</p>
@@ -824,7 +1141,7 @@ og_node_view · og_edge_view · og_type_view</div>
 
     <!-- ── 03.2 깊은 홉 ─────────────────────────────────── -->
     <div class="shead" id="deep">
-      <div class="rail">03.2 · 깊은 홉</div>
+      <div class="rail">05.2 · 깊은 홉</div>
       <div>
         <h2>4홉을 넘기면 우리가 하던 일은 순회가 아니었습니다. <em>경로 열거</em>였습니다.</h2>
         <p>
@@ -872,7 +1189,7 @@ og_node_view · og_edge_view · og_type_view</div>
     <div style="height:34px"></div>
 
     <div class="shead">
-      <div class="rail">03.3 · 무엇을 바꿨나</div>
+      <div class="rail">05.3 · 무엇을 바꿨나</div>
       <div>
         <h2>저장 구조는 그대로입니다. 컴파일러가 질문을 다시 읽을 뿐입니다.</h2>
         <p>
@@ -930,7 +1247,7 @@ og_node_view · og_edge_view · og_type_view</div>
     <div style="height:34px"></div>
 
     <div class="shead">
-      <div class="rail">03.4 · 깊은 홉 벤치마크</div>
+      <div class="rail">05.4 · 깊은 홉 벤치마크</div>
       <div>
         <h2>Neo4j · Apache AGE · pgGraph를 직접 빌드해서 같은 서버에 올렸습니다.</h2>
         <p>
@@ -1006,7 +1323,7 @@ og_node_view · og_edge_view · og_type_view</div>
 
     <!-- ── 03.5 지름이 큰 그래프 ────────────────────────── -->
     <div class="shead" id="diameter">
-      <div class="rail">03.5 · 지름이 큰 그래프</div>
+      <div class="rail">05.5 · 지름이 큰 그래프</div>
       <div>
         <h2>10만 홉을 걸어봤습니다. 그리고 결론 하나를 정정해야 합니다.</h2>
         <p>
@@ -1065,7 +1382,7 @@ og_node_view · og_edge_view · og_type_view</div>
     <div style="height:34px"></div>
 
     <div class="shead">
-      <div class="rail">03.6 · 지름이 큰 그래프 · 엔진 비교</div>
+      <div class="rail">05.6 · 지름이 큰 그래프 · 엔진 비교</div>
       <div>
         <h2>여기서는 Neo4j가 우리를 이깁니다.</h2>
         <p>25만 노드, 같은 정규화된 질문, 문장당 60초 상한, 끝난 모든 칸에서 정답 일치.</p>
@@ -1220,7 +1537,7 @@ python3 bench/harness.py --compare-baseline bench/results/baseline.json  <span c
 <section class="band" id="agent">
   <div class="wrap band-inner">
     <div class="shead">
-      <div class="rail">04 · 에이전트 네이티브</div>
+      <div class="rail">06 · 에이전트 네이티브</div>
       <div>
         <h2>LLM이 틀리는 방식은 사람과 다릅니다. 그건 프롬프트가 아니라 데이터베이스가 고칠 문제입니다.</h2>
         <p>
@@ -1296,7 +1613,7 @@ python3 bench/harness.py --compare-baseline bench/results/baseline.json  <span c
 <section class="band" id="usecase">
   <div class="wrap band-inner">
     <div class="shead">
-      <div class="rail">05 · 활용 용도</div>
+      <div class="rail">07 · 활용 용도</div>
       <div>
         <h2>이미 PostgreSQL을 쓰고 있는데 그래프가 필요해진 순간</h2>
         <p>각 항목에 실제 호출할 함수까지 적었습니다. 데모가 아니라 오늘 쓸 수 있는 표면입니다.</p>
@@ -1405,7 +1722,7 @@ og_data.og_audit — principal · query · rows · ms · code</div>
 <section class="band" id="neo4j">
   <div class="wrap band-inner">
     <div class="shead">
-      <div class="rail">06 · Neo4j 샘플 이식</div>
+      <div class="rail">08 · Neo4j 샘플 이식</div>
       <div>
         <h2>Neo4j 애플리케이션이 접속 URI만 바꾸면 그대로 돕니다.</h2>
         <p>
@@ -1517,9 +1834,9 @@ python3 tests/neo4j-movies/sample_app.py</pre>
 <section class="band" id="status">
   <div class="wrap band-inner">
     <div class="shead">
-      <div class="rail">07 · 구현 현황</div>
+      <div class="rail">09 · 구현 현황</div>
       <div>
-        <h2>아홉 개 명세를 순서대로 계획하고 구현했습니다. 부분 구현은 부분 구현이라고 씁니다.</h2>
+        <h2>열네 개 명세와 제안 하나. 부분 구현은 부분 구현이라고 씁니다.</h2>
         <p>
           거버넌스는 저장소의 헌법(constitution) 문서에 있고, 모든 이탈은 해당 <code class="inline-code">plan.md</code>의
           <em>Complexity Tracking</em>에 기록됩니다 — 그중 가장 중요한 두 가지도 포함해서.
@@ -1530,14 +1847,19 @@ python3 tests/neo4j-movies/sample_app.py</pre>
     <div class="status">
       <div class="srow"><span class="id num">001</span><span class="nm">네이티브 그래프 저장 엔진<span>인접 세그먼트 · 타입 속성 테이블 · 벌크 적재 · 온라인 재구성 · 무결성 검사기</span></span><span class="st st-ok">working</span></div>
       <div class="srow"><span class="id num">002</span><span class="nm">온톨로지 타입 시스템 · 상속 인덱싱<span>entity/relation/attribute · 다중 상속 · 역할 · 제약 · 구간 라벨</span></span><span class="st st-ok">working</span></div>
-      <div class="srow"><span class="id num">003</span><span class="nm">네이티브 Cypher 엔진<span>렉서 · 파서 · SQL 컴파일러 · 읽기 + 쓰기 경로. <b>WITH · UNION 미지원</b></span></span><span class="st st-ok">working</span></div>
+      <div class="srow"><span class="id num">003</span><span class="nm">네이티브 Cypher 엔진<span>렉서 · 파서 · SQL 컴파일러 · 읽기 + 쓰기 경로 · WITH · 리스트 컴프리헨션 · CALL</span></span><span class="st st-ok">working</span></div>
       <div class="srow"><span class="id num">004</span><span class="nm">벡터 · 하이브리드 의미 검색<span>노드 <b>및 관계</b> 임베딩 · 필터 푸시다운 · 하이브리드 RRF · 재현율 하네스</span></span><span class="st st-ok">working</span></div>
       <div class="srow"><span class="id num">005</span><span class="nm">PostgreSQL / Supabase 상호운용<span>관계형 뷰 · RLS 헬퍼 · PostgREST RPC · 테이블 매핑</span></span><span class="st st-ok">working</span></div>
       <div class="srow"><span class="id num">006</span><span class="nm">RDF / OWL / SPARQL / SHACL<span>RDF 적재·덤프 · OWL→타입 계층 매핑 · 오버플로 충실도. <b>SPARQL 미구현</b></span></span><span class="st st-part">partial</span></div>
       <div class="srow"><span class="id num">007</span><span class="nm">분산 클러스터<span>읽기 복제본만 동작. 샤딩은 설계 완료, 구현 전 — 이유는 plan.md에</span></span><span class="st st-part">read replicas</span></div>
-      <div class="srow"><span class="id num">008</span><span class="nm">에이전트 네이티브 인터페이스<span>토큰 예산 스키마 · 교정 가능한 오류 · 드라이런 추정 · 이력 · 감사 · 역할</span></span><span class="st st-ok">working</span></div>
+      <div class="srow"><span class="id num">008</span><span class="nm">에이전트 네이티브 인터페이스<span>예산에 맞춘 스키마 · 실행 없는 오류 검사 · 0행 진단 · 드라이런 추정 · 이력 · 감사. <b>없는 라벨은 오류가 아님 · 역할의 max_rows·read_only 미동작</b></span></span><span class="st st-part">working · partial</span></div>
       <div class="srow"><span class="id num">009</span><span class="nm">벤치마크 · 적합성 하네스<span>정확성 게이트가 붙은 AGE/CTE 비교 · 무결성 검사 · 회귀 비교</span></span><span class="st st-ok">working</span></div>
-      <div class="srow"><span class="id num">011</span><span class="nm">Bolt 프로토콜 게이트웨이<span>Bolt 4.4 · Node/Relationship · 트랜잭션 · 인증은 PostgreSQL 역할. <b>5.x·Path·TLS 미지원</b></span></span><span class="st st-ok">working</span></div>
+      <div class="srow"><span class="id num">010</span><span class="nm">TypeQL 질의 표면<span>TypeDB 3.x define/insert/put/match/fetch/delete/update · TypeDB 서점 예제가 수정 없이 실행. <b>사용자 정의 함수는 평가하지 않음</b></span></span><span class="st st-part">partial</span></div>
+      <div class="srow"><span class="id num">011</span><span class="nm">Bolt 프로토콜 게이트웨이<span>Bolt 4.4 · Node/Relationship · 트랜잭션 · 인증은 PostgreSQL 역할 · Neo4j MCP 서버가 수정 없이 동작. <b>5.x·Path·TLS 미지원</b></span></span><span class="st st-ok">working</span></div>
+      <div class="srow"><span class="id num">012</span><span class="nm">스키마 진화<span>expand → migrate(배치·재개) → validate → contract · 스키마 버전별 카탈로그 스냅샷. <b>타입 분할/병합 · TypeQL redefine 미구현</b></span></span><span class="st st-part">working · partial</span></div>
+      <div class="srow"><span class="id num">013</span><span class="nm">이중 시간(bitemporal) 그래프<span>타입별 유효 시간 · 시스템 시간 · 어느 시점이든 같은 Cypher, 같은 SQL. <b>가변 길이 경로 · TypeQL은 시점 질의를 거부 · 보존 정책 미구현</b></span></span><span class="st st-part">working · partial</span></div>
+      <div class="srow"><span class="id num">014</span><span class="nm">쓰기 시점 보안 컨텍스트<span>타입·연산·프로퍼티별 쓰기 권한 · 레지스트리 RLS · 위조 불가 스탬프 · Action · 감사. <b>레지스트리 읽기는 아직 무제한</b></span></span><span class="st st-part">working · partial</span></div>
+      <div class="srow"><span class="id num">—</span><span class="nm">가상 패브릭 (ADR-029)<span>외부 PostgreSQL·MySQL 테이블을 복사 없이 노드로 · 가상 관계 · 원천 읽기 전용 · Studio/Bolt/SQL 게이트웨이. <b>제안 단계 — 가변 길이 · 원천 쓰기 미지원</b></span></span><span class="st st-part">proposed</span></div>
     </div>
 
     <div style="height:32px"></div>
@@ -1568,7 +1890,7 @@ python3 tests/neo4j-movies/sample_app.py</pre>
 <section class="band" id="start">
   <div class="wrap band-inner">
     <div class="shead">
-      <div class="rail">08 · 시작하기</div>
+      <div class="rail">10 · 시작하기</div>
       <div>
         <h2>Docker 하나면 전부 들어 있습니다</h2>
         <p>엔진, PostgreSQL 16, pgvector, 데모 데이터셋, 그리고 Studio까지.</p>
@@ -1653,6 +1975,7 @@ SELECT og_cypher_sql('default',
   <div class="wrap foot-in">
     <span>ONTOLOGICAL DB · Apache-2.0</span>
     <span>PostgreSQL 16 · pgrx · pgvector</span>
+    <span><a href="docs/index.html">문서</a> · <a href="docs/tutorials/README.html">튜토리얼</a> · <a href="https://github.com/uengine-oss/ontological-db">GitHub</a></span>
     <span>모든 수치: 2026-08-06 · 50,000 노드 / 974,936 엣지 · 정답 일치 검증 완료</span>
   </div>
 </footer>

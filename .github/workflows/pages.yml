@@ -1,0 +1,50 @@
+# Publish web/ — the landing page and the documentation site — to GitHub Pages.
+#
+# The documentation pages are not committed: they are built here from docs/**/*.md
+# by web/build_docs.py, so what is published is always what the Markdown says.
+#
+# One-time setup in the repository: Settings → Pages → Build and deployment →
+# Source: "GitHub Actions". The site then lives at
+# https://uengine-oss.github.io/ontological-db/ (every link in it is relative, so a
+# custom domain or a different repository name needs no change here).
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", "docs/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pandoc
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq pandoc
+      - name: Build the documentation pages
+        run: python3 web/build_docs.py
+      - name: Check that every local link resolves
+        run: python3 web/check_links.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
