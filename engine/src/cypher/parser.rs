@@ -149,6 +149,14 @@ impl Parser {
                         return Err(self.err(&format!("unexpected clause '{}'", other.to_uppercase())))
                     }
                 },
+                // `SHOW` is matched by spelling rather than reserved, for the
+                // same reason INDEX and CONSTRAINT are not keywords: reserving
+                // it would stop anyone from having a property or label called
+                // `show`. It can only start a clause, so recognising it here
+                // costs nothing elsewhere.
+                Tok::Ident(s) if s.eq_ignore_ascii_case("show") => {
+                    clauses.extend(self.parse_show()?)
+                }
                 Tok::Eof => break,
                 _ => return Err(self.err("expected a clause keyword")),
             }
@@ -299,6 +307,74 @@ impl Parser {
     // ----------------------------------------------------------------------
     // CALL
     // ----------------------------------------------------------------------
+
+    /// `SHOW CONSTRAINTS` / `SHOW INDEXES`, with the optional
+    /// `YIELD … [WHERE …]` tail Neo4j allows.
+    ///
+    /// These are administration *commands*, not procedures, so a driver cannot
+    /// reach them through `CALL`. Tools ask for them constantly — a schema
+    /// browser lists them, and any code that wants to know which labels carry a
+    /// declared key has nowhere else to look — so refusing the syntax makes the
+    /// database look like it has no constraints rather than like it does not
+    /// speak the command.
+    ///
+    /// Desugared into the procedure machinery: the command becomes a `Call`
+    /// with the same yielded columns, so `YIELD`, `WHERE`, `RETURN` and joins
+    /// all behave as they do everywhere else and nothing new has to be planned.
+    fn parse_show(&mut self) -> PResult<Vec<Clause>> {
+        self.bump(); // SHOW — an identifier, not a reserved word
+        let what = self.name()?.to_ascii_lowercase();
+        let name = match what.as_str() {
+            "constraint" | "constraints" => "show.constraints",
+            "index" | "indexes" | "indices" => "show.indexes",
+            other => {
+                return Err(self.err(&format!(
+                    "SHOW {} is not supported (SHOW CONSTRAINTS | SHOW INDEXES)",
+                    other.to_uppercase()
+                )))
+            }
+        };
+        // Neo4j accepts a trailing verbosity word; it changes only how much is
+        // printed, and we always return the same columns.
+        let _ = self.eat_kw("brief") || self.eat_kw("verbose");
+
+        let columns = show_columns(name);
+        let mut yields: Vec<(String, String)> = Vec::new();
+        if self.eat_kw("yield") {
+            loop {
+                let col = self.name()?;
+                let alias = if self.eat_kw("as") { self.name()? } else { col.clone() };
+                yields.push((col, alias));
+                if !self.eat_punct(",") {
+                    break;
+                }
+            }
+        }
+
+        let explicit_yield = !yields.is_empty();
+        if !explicit_yield {
+            yields = columns.iter().map(|c| ((*c).to_string(), (*c).to_string())).collect();
+        }
+
+        let mut out = vec![Clause::Call { name: name.into(), args: Vec::new(), yields: yields.clone() }];
+
+        // `YIELD … WHERE p` filters the yielded rows. `WITH * WHERE p` is
+        // exactly that, and it already exists.
+        if self.eat_kw("where") {
+            let pred = self.parse_expr()?;
+            out.push(Clause::With {
+                proj: projection_of(&yields),
+                where_: Some(pred),
+            });
+        }
+
+        // Bare `SHOW CONSTRAINTS` is a complete query in Neo4j. Without an
+        // explicit YIELD the caller wrote no RETURN either, so supply one.
+        if !explicit_yield && !self.at_kw("return") {
+            out.push(Clause::Return(projection_of(&yields)));
+        }
+        Ok(out)
+    }
 
     fn parse_call(&mut self) -> PResult<Clause> {
         self.expect_kw("call")?;
@@ -1129,6 +1205,34 @@ impl Parser {
         Ok(Expr::Case { operand, whens, else_ })
     }
 }
+
+
+/// Columns `SHOW …` yields, in Neo4j's order and spelling. Kept next to the
+/// parser because the bare form has to project them without a `YIELD`.
+fn show_columns(which: &str) -> &'static [&'static str] {
+    match which {
+        "show.constraints" => &["id", "name", "type", "entityType", "labelsOrTypes", "properties"],
+        _ => &["id", "name", "state", "type", "entityType", "labelsOrTypes", "properties"],
+    }
+}
+
+/// A projection that passes the yielded columns straight through.
+fn projection_of(yields: &[(String, String)]) -> Projection {
+    Projection {
+        items: yields
+            .iter()
+            .map(|(_, alias)| ReturnItem {
+                expr: Expr::Var(alias.clone()),
+                alias: Some(alias.clone()),
+            })
+            .collect(),
+        distinct: false,
+        order: Vec::new(),
+        skip: None,
+        limit: None,
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

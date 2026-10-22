@@ -1348,6 +1348,28 @@ impl Compiler {
             return Ok(format!("(({rs}) @> to_jsonb({ls}))"));
         }
 
+        // String predicates work on text, so both sides are compiled *as* text
+        // rather than cast afterwards. That distinction matters: a yielded or
+        // unwound value is jsonb underneath, and `jsonb::text` keeps the JSON
+        // quotes — `"Doc"` rather than `Doc` — so the comparison silently
+        // matched nothing. Asking for text here makes the existing scalar
+        // read-out (`#>> '{}'`) do the unquoting, and it is also the only form
+        // that works for an untyped parameter.
+        if matches!(
+            op,
+            BinOp::StartsWith | BinOp::EndsWith | BinOp::Contains | BinOp::Regex | BinOp::Concat
+        ) {
+            let ls = self.expr(l, Some("text"))?;
+            let rs = self.expr(r, Some("text"))?;
+            return Ok(match op {
+                BinOp::StartsWith => format!("(({ls})::text LIKE ({rs})::text || '%')"),
+                BinOp::EndsWith => format!("(({ls})::text LIKE '%' || ({rs})::text)"),
+                BinOp::Contains => format!("(strpos(({ls})::text, ({rs})::text) > 0)"),
+                BinOp::Regex => format!("(({ls})::text ~ ({rs})::text)"),
+                _ => format!("(({ls})::text || ({rs})::text)"),
+            });
+        }
+
         let lhint = self.type_of(r);
         let rhint = self.type_of(l);
         let mut ls = self.expr(l, lhint.as_deref())?;
@@ -1383,11 +1405,20 @@ impl Compiler {
             BinOp::And => format!("({ls} AND {rs})"),
             BinOp::Or => format!("({ls} OR {rs})"),
             BinOp::Xor => format!("(({ls}) <> ({rs}))"),
-            BinOp::Concat => format!("(({ls})::text || ({rs})::text)"),
-            BinOp::StartsWith => format!("(({ls})::text LIKE ({rs})::text || '%')"),
-            BinOp::EndsWith => format!("(({ls})::text LIKE '%' || ({rs})::text)"),
-            BinOp::Contains => format!("(strpos(({ls})::text, ({rs})::text) > 0)"),
-            BinOp::Regex => format!("(({ls})::text ~ ({rs})::text)"),
+            BinOp::Concat => unreachable!("handled above"),
+            // `::text` on a jsonb string keeps its quotes — `"c_doc"`, not
+            // `c_doc` — so a jsonb operand never matched a plain one. It only
+            // looked right when the other side was a literal, because the
+            // literal's type propagated a hint that read the jsonb out first;
+            // the same predicate against a parameter compared `"c_doc"` with
+            // `c_d%` and quietly returned nothing.
+            //
+            // `as_text` reads either representation out to the same string, so
+            // these no longer depend on a hint arriving.
+            BinOp::StartsWith
+            | BinOp::EndsWith
+            | BinOp::Contains
+            | BinOp::Regex => unreachable!("handled above"),
             BinOp::In => unreachable!("handled above"),
         })
     }
@@ -1531,7 +1562,38 @@ impl Compiler {
             "datetime" => "now()".into(),
             "exists" => format!("({} IS NOT NULL)", a[0]),
             "keys" => format!("to_jsonb(ARRAY(SELECT jsonb_object_keys({})))", a[0]),
-            "element_at" => format!("({} -> ({})::int)", a[0], a[1]),
+            // `properties(n)` is the map a node or relationship already
+            // compiles to — the same value `keys()` reads. Neo4j has it and
+            // drivers reach for it whenever they want the whole property bag
+            // rather than a named one.
+            //
+            // The bookkeeping keys come off. In Neo4j this returns a *map*, and
+            // leaving `_id`/`_type` in would both invent properties the caller
+            // never set and make the driver hydrate the result as a node.
+            "properties" => format!("(({}) - '_id' - '_type')", a[0]),
+            // `x[i]` is two different operations wearing one syntax: list
+            // indexing when `i` is a number, map lookup when it is a string.
+            // Compiling it as `-> int` unconditionally made
+            // `n[k] for k IN keys(n)` — the ordinary way to walk a node's
+            // properties — fail with "cannot cast jsonb string to type
+            // integer".
+            //
+            // Where the key's type is known at compile time, emit the operator
+            // directly. Where it is not (a comprehension binder holds jsonb),
+            // decide on the value's own json type at run time.
+            "element_at" => {
+                let obj = &a[0];
+                let idx = &a[1];
+                match self.type_of(&args[1]).as_deref() {
+                    Some("int8") => format!("({obj} -> ({idx})::int)"),
+                    Some("text") => format!("({obj} -> ({idx})::text)"),
+                    _ => format!(
+                        "(CASE WHEN jsonb_typeof(to_jsonb({idx})) = 'number' \
+                         THEN {obj} -> ((to_jsonb({idx}) #>> '{{}}')::int) \
+                         ELSE {obj} -> (to_jsonb({idx}) #>> '{{}}') END)"
+                    ),
+                }
+            }
             "nodes" | "relationships" => a[0].clone(),
             // spec 004 — vector surface
             "vector.similarity" | "similarity" => {
@@ -1589,3 +1651,4 @@ pub fn quote_ident(s: &str) -> String {
 pub fn sql_str(s: &str) -> String {
     format!("'{}'", s.replace('\'', "''"))
 }
+

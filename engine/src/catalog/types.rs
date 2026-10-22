@@ -213,8 +213,22 @@ pub fn resolve_or_create_label_set(gid: i32, graph: &str, labels: &[String], kin
     }
     let mut parents: Vec<String> = Vec::new();
     for name in labels {
-        if try_type_id(gid, name).is_none() {
-            create_type_inner(graph, name, kind, &parents, false);
+        match try_type_id(gid, name) {
+            None => {
+                create_type_inner(graph, name, kind, &parents, false);
+            }
+            // The type already exists. It may still be unplaced: `CREATE
+            // CONSTRAINT FOR (n:Doc) …` declares `Doc` before any node carries
+            // it, and a constraint says nothing about where `Doc` sits in the
+            // hierarchy. Left as a root, the first `(:_Entity:Doc)` write would
+            // then fail forever — the labels are not on one chain, and no
+            // amount of retrying changes that.
+            //
+            // So adopt it now, under the same left-to-right reading that
+            // governs a freshly created label. Only when it is safe: a root
+            // with no instances, which is exactly the "declared but never
+            // used" case a constraint leaves behind.
+            Some(tid) => adopt_if_unplaced(gid, tid, name, &parents),
         }
         parents.push(name.clone());
     }
@@ -228,6 +242,77 @@ pub fn resolve_or_create_label_set(gid: i32, graph: &str, labels: &[String], kin
         ),
         Err(e) => error!("{e}"),
     }
+}
+
+/// Place an already-declared type under `parents`, if that is safe.
+///
+/// "Safe" is narrow on purpose:
+///
+///   * it is already a subtype of every parent — nothing to do;
+///   * it has parents of its own — someone placed it deliberately, and moving
+///     it would silently rewrite a hierarchy the author chose;
+///   * it holds rows — a type's storage table is its own, but its inherited
+///     columns come from its parents, so adopting a populated type would mean
+///     backfilling. Refuse rather than half-do it.
+///
+/// What remains is the case this exists for: a root type with no instances,
+/// which is what `CREATE CONSTRAINT` leaves behind.
+fn adopt_if_unplaced(gid: i32, tid: i32, name: &str, parents: &[String]) {
+    if parents.is_empty() {
+        return;
+    }
+    let parent_ids: Vec<i32> = parents.iter().map(|p| type_id(gid, p)).collect();
+    if parent_ids.iter().all(|p| *p == tid || labeling::og_is_subtype(tid, *p)) {
+        return;
+    }
+    let has_parent = crate::spiu::one::<bool>(
+        "SELECT true FROM og_catalog.type_parent WHERE type_id = $1 LIMIT 1",
+        &[tid.into()],
+    )
+    .ok()
+    .flatten()
+    .unwrap_or(false);
+    if has_parent {
+        return;
+    }
+
+    let kind = type_kind(tid);
+    let table = match kind {
+        'e' => node_table(tid),
+        'r' => edge_table(tid),
+        // Attribute types have no storage and no instances to weigh.
+        _ => return,
+    };
+    let occupied = crate::spiu::one::<bool>(
+        &format!("SELECT true FROM {table} LIMIT 1"),
+        &[],
+    )
+    .ok()
+    .flatten()
+    .unwrap_or(false);
+    if occupied {
+        return;
+    }
+
+    for pid in parent_ids {
+        if type_kind(pid) != kind {
+            return;
+        }
+        Spi::run_with_args(
+            "INSERT INTO og_catalog.type_parent (type_id, parent_id) VALUES ($1, $2)
+             ON CONFLICT DO NOTHING",
+            &[tid.into(), pid.into()],
+        )
+        .expect("parent insert failed");
+        copy_inherited_properties(pid, tid, &table);
+    }
+    // Subtype tests read the nested-set intervals in `og_catalog.type_label`,
+    // not `type_parent` directly. Without this the edge exists and
+    // `og_is_subtype` still says no — the adoption would look like it did
+    // nothing at all.
+    labeling::relabel_graph(gid);
+    labeling::bump_schema_version(gid, &format!("adopt {name} under {}", parents.join(":")));
+    log!("type '{name}' adopted under ({}) on first labelled write", parents.join(":"));
 }
 
 /// Nearest type names by edit distance — feeds spec 008 FR-008 (correctable
