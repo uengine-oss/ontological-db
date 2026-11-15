@@ -1,0 +1,72 @@
+{
+  "_doc": "Where each client's Cypher lives. A root's path can be overridden with the environment variable named in `env` (CI has no client checkouts; the corpus is committed, so only re-extraction needs them).",
+  "studio": {
+    "graph": "ontology",
+    "roots": [
+      {
+        "name": "studio-app",
+        "env": "COMPAT_STUDIO_APP",
+        "path": "/Users/uengine/uengine-platform/ontology-studio-desktop/runtime/studio/app",
+        "fallback": "/Users/uengine/uengine-platform/ontology-studio-desktop/sources/ontology-studio",
+        "repo": "/Users/uengine/uengine-platform/ontology-studio-desktop",
+        "note": "Studio's backend as it ships: sources/ontology-studio/backend with patches/studio-backend applied (scripts/build-studio.sh). Same tree, byte for byte, as applying the patches by hand (checked 2026-11-16).",
+        "include": ["backend/src/**/*.py"],
+        "exclude": ["**/tests/**", "**/test_*.py"],
+        "markdown": ["skills/**/*.md"]
+      },
+      {
+        "name": "studio-desktop",
+        "env": "COMPAT_STUDIO_DESKTOP",
+        "path": "/Users/uengine/uengine-platform/ontology-studio-desktop",
+        "repo": "/Users/uengine/uengine-platform/ontology-studio-desktop",
+        "include": ["src/main/*.js"],
+        "exclude": []
+      },
+      {
+        "name": "kinetic-action",
+        "env": "COMPAT_KINETIC",
+        "path": "/Users/uengine/uengine-platform/ontology-studio-desktop/sources/kinetic-action",
+        "repo": "/Users/uengine/uengine-platform/ontology-studio-desktop",
+        "include": ["app/*.py"],
+        "exclude": []
+      }
+    ]
+  },
+  "robo": {
+    "graph": "robo",
+    "analyzer_graph": "robo_analysis",
+    "roots": [
+      {
+        "name": "robo-architect-lite",
+        "env": "COMPAT_ROBO",
+        "path": "/Users/uengine/robo-architect-lite",
+        "repo": "/Users/uengine/robo-architect-lite",
+        "include": ["api/features/**/*.py", "api/platform/*.py", "api/main.py"],
+        "exclude": ["**/tests/**", "**/test_*.py"],
+        "schema_scripts": ["docs/cypher/schema/*.cypher"]
+      }
+    ]
+  },
+  "analyzer": {
+    "graph": "analyzer_run",
+    "roots": [
+      {
+        "name": "robo-data-analyzer",
+        "env": "COMPAT_ANALYZER",
+        "path": "/Users/uengine/robo-architect-lite/robo-analyzer/robo-data-analyzer",
+        "repo": "/Users/uengine/robo-architect-lite/robo-analyzer/robo-data-analyzer",
+        "include": ["**/*.py"],
+        "exclude": ["**/tests/**", "**/test_*.py", ".venv/**", "**/.venv/**"],
+        "transform": "for_ontological"
+      },
+      {
+        "name": "robo-data-catalog",
+        "env": "COMPAT_CATALOG",
+        "path": "/Users/uengine/worktrees/robo-data-catalog-relinfer",
+        "repo": "/Users/uengine/worktrees/robo-data-catalog-relinfer",
+        "include": ["**/*.py"],
+        "exclude": ["**/tests/**", "**/test_*.py", ".venv/**", "**/.venv/**"]
+      }
+    ]
+  }
+}

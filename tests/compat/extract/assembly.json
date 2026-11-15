@@ -1,0 +1,623 @@
+{
+  "_doc": [
+    "Assembly rules: how a query that the client builds at run time becomes one representative text.",
+    "placeholders.<client>: expression text inside {…} / ${…} -> the text put there (whole client).",
+    "file_placeholders.'<root>:<path>': the same for one file; a key '@<line>:<expr>' applies only to the candidate that starts on that line.",
+    "assembled: queries written out by hand because the code glues pieces (lists, +=, str.replace); `covers` lists the extracted pieces they stand for.",
+    "skip: extracted texts that are not Cypher sent to the server (log lines, messages).",
+    "Representative values follow the fixture (corpus/<client>/fixture): Studio's classes are Customer / PurchaseOrder / Supplier under _Entity, its fabric datasource is erp; Robo's labels are the ones its schema scripts declare."
+  ],
+  "placeholders": {
+    "studio": {
+      "profile.class_name": "Customer",
+      "class_name": "Customer",
+      "cls": "Customer",
+      "widget.class_name": "Customer",
+      "cls_name": "Customer",
+      "cls['class_name']": "Customer",
+      "target": "Customer",
+      "ref['class']": "Customer",
+      "label": "Customer",
+      "int(limit)": "50",
+      "property_name": "grade",
+      "prop": "grade",
+      "pname": "grade",
+      "prop['name']": "grade",
+      "embedding_dimensions": "8",
+      "len(vectors[0])": "8",
+      "graph": "ontology",
+      "self._in": " IN ontology",
+      "fabric._in": " IN ontology",
+      "datasource": "erp",
+      "table": "supplier",
+      "gs.CLASS_LABEL": "_OntologyClass",
+      "gs.BINDING_LABEL": "_OntologyBinding",
+      "_label(predicate)": "PLACED",
+      "predicate": "PLACED",
+      "rel": "PLACED",
+      "rel_type": "PLACED",
+      "relationship_type": "PLACED",
+      "set_props": ", r.channel = $channel",
+      "ident(g)": "ontology",
+      "graphOf(b)": "ontology",
+      "ident(ds, '데이터소스 이름')": "erp",
+      "ident(table, '테이블 이름')": "supplier",
+      "ident(label)": "ErpSupplier",
+      "Math.max(1, Math.min(200, limit | 0 || 10))": "10",
+      "ds": "erp",
+      "row.name": "erp",
+      "ident(b.name, '데이터소스 이름')": "erp",
+      "ident(b.label, '노드 타입 이름')": "ErpPurchaseOrder",
+      "ident(b.name, '관계 이름')": "ITEM_OF",
+      "ident(f.node, '출발 노드')": "ErpPurchaseOrder",
+      "ident(f.property, '출발 속성')": "supplier_id",
+      "ident(t.node, '도착 노드')": "ErpSupplier",
+      "ident(t.property, '도착 속성')": "supplier_id",
+      "r.type.replace(/`/g, '')": "PLACED"
+    },
+    "robo": {
+      "label": "BoundedContext",
+      "node_type": "Command",
+      "source_type": "Command",
+      "target_type": "Event",
+      "rel_type": "EMITS",
+      "host_label": "Command",
+      "target_label": "Event",
+      "source_label": "Command",
+      "actual_rel": "EMITS",
+      "rel_pattern": "HAS_AGGREGATE|HAS_COMMAND|EMITS|TRIGGERS",
+      "attached_to_type": "Command",
+      "lbl": "Aggregate",
+      "fld": "description",
+      "node_label": "Aggregate",
+      "field": "description",
+      "op.field": "description",
+      "key": "id",
+      "k": "2",
+      "_safe_label(design_label)": "Aggregate",
+      "_safe_label(label)": "Aggregate",
+      "_LABELS_BY_TYPE[target_type]": "Aggregate",
+      "rel": "HAS_AGGREGATE",
+      "labels": "Aggregate",
+      "_sanitize_rel(r['type'])": "HAS_AGGREGATE"
+    },
+    "analyzer": {
+      "rel_type": "READS",
+      "set_clause": "",
+      "label": "RULE",
+      "label.lower()": "rule",
+      "int(dim)": "8",
+      "key": "id",
+      "_analysis_node_predicate('__cy_n__')": "__cy_n__._owner = 'analyzer'",
+      "_analysis_node_predicate('__cy_a__')": "__cy_a__._owner = 'analyzer'",
+      "_analysis_node_predicate('__cy_b__')": "__cy_b__._owner = 'analyzer'",
+      "null_projection_suffix": ", embedding: null",
+      "' AND '.join(conditions)": "table._owner = $owner AND table.schema = $schema",
+      "where": "(table.name = $table_name OR table._id ENDS WITH $table_name) AND table.schema = $schema",
+      "file_condition": " AND routine.file_path = $file_path",
+      "ident(self._datasource)": "erp",
+      "ident(table)": "supplier",
+      "ident(ds)": "erp",
+      "ident(g)": "analyzer_run",
+      "ft[0]": "erp.supplier",
+      "sample": "1000",
+      "ct": "erp.purchase_order",
+      "ident(cc)": "supplier_id",
+      "pt": "erp.supplier",
+      "ident(pc)": "supplier_id",
+      "osample": "1000"
+    }
+  },
+  "file_placeholders": {
+    "studio-app:backend/src/modules/ontology/api.py": {
+      "set_clause": "n.name = $name, n.grade = $grade",
+      "class_filter": ":Customer",
+      "body.original_name": "Customer",
+      "body.name": "Client"
+    },
+    "studio-app:backend/src/modules/ontology/tools.py": {
+      "name": "Customer",
+      "' AND '.join(conditions)": "n.name CONTAINS $name",
+      "merge_clause": "customer_id: $merge_customer_id",
+      "@644:set_clause": "n.customer_id = $customer_id, n.name = $name, n.grade = $grade",
+      "@826:set_clause": ", r.channel = $channel",
+      "set_parts": "n.name = $name, n.grade = $grade, n._source_id = $_source_id, n._parent_source_id = $_parent_source_id",
+      "'AND NOT any(l IN labels(n) WHERE l IN $virtual) ' if virtual_labels else ''": "AND NOT any(l IN labels(n) WHERE l IN $virtual) "
+    },
+    "studio-app:backend/src/modules/ontology/from_tables.py": {
+      "@205:label": "Customer",
+      "@269:label": "Customer",
+      "@353:label": "ErpPurchaseOrder",
+      "@360:name": "ITEM_OF",
+      "@1012:name": "ITEM_OF",
+      "src": "ErpPurchaseOrder",
+      "src_prop": "supplier_id",
+      "dst": "ErpSupplier",
+      "dst_prop": "supplier_id",
+      "@844:name": "ErpItem",
+      "plan['source']": "erp.item",
+      "plan['key']": "item_id",
+      "', '.join((p['column'] if p['column'] == p['property'] else p['column'] + ' AS ' + p['property'] for p in plan['picks']))": "item_id, name AS item_name, unit",
+      "@286:label": "ErpItem",
+      "@286:datasource": "erp",
+      "@286:table": "item",
+      "@286:key": "item_id",
+      "@286:f' PROPERTIES ({cols})' if picks else ''": " PROPERTIES (item_id, name AS item_name)"
+    },
+    "studio-app:backend/src/modules/ontology/publish.py": {
+      "label": "Customer",
+      "props": " {`customer_id`: $sample}",
+      "name": "customer_customer_id_key",
+      "key": "customer_id",
+      "where": "m.schema_id = $schema_id"
+    },
+    "studio-app:backend/src/modules/ontology_runtime/entity_resolution.py": {
+      "@223:clause": "toLower(toString(n.`name`)) CONTAINS toLower(t) OR toLower(toString(n.`email`)) CONTAINS toLower(t)",
+      "@458:label": "ErpSupplier",
+      "@458:clause": "toLower(toString(n.`name`)) CONTAINS $t0"
+    },
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py": {
+      "@623:clause": "toLower(toString(n.`name`)) CONTAINS toLower($text) OR toLower(toString(n.`email`)) CONTAINS toLower($text)",
+      "@966:label": "ErpSupplier",
+      "@966:clause": "toString(n.`name`) = $v OR toLower(trim(toString(n.`name`))) = $lv"
+    },
+    "studio-app:backend/src/modules/quality/identity.py": {
+      "name": "Customer",
+      "extra": ", n.`email` AS `p_email`"
+    },
+    "studio-app:backend/src/modules/quality/imputation.py": {
+      "name": "Customer"
+    },
+    "studio-app:backend/src/modules/quality/lint.py": {
+      "name": "Customer"
+    },
+    "studio-app:backend/src/modules/quality/shapes.py": {
+      "_q(shape['property'])": "email",
+      "_q(shape['predicate'])": "PLACED",
+      "_q(a)": "Customer",
+      "_q(b)": "Supplier"
+    },
+    "studio-desktop:src/main/fabric-bridge.js": {
+      "@223:name": "erp",
+      "@238:name": "erp_old",
+      "label": "ErpItem",
+      "ident(ds, '데이터소스 이름')": "erp",
+      "ident(table, '테이블 이름')": "item",
+      "key": "item_id"
+    },
+    "studio-desktop:src/main/codeapps.js": {
+      "q": "Customer"
+    },
+    "studio-desktop:src/main/services.js": {
+      "ds": "erp_old",
+      "n": "ErpPurchaseOrder",
+      "r.relationship": "SUPPLIED_BY"
+    },
+    "robo-architect-lite:api/features/canvas_graph/routes/canvas_expansion.py": {
+      "set_clauses": "n.name = $name, n.description = $description"
+    },
+    "robo-architect-lite:api/features/canvas_graph/routes/event_modeling.py": {
+      "label": "Command"
+    },
+    "robo-architect-lite:api/features/constitution/services/constitution_store.py": {
+      "set_fields": "c.principles=$principles",
+      "mem_clause": ""
+    },
+    "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/bounded_contexts.py": {
+      "', '.join(sets)": "bc.name = $name, bc.description = $description"
+    },
+    "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/features.py": {
+      "set_extra": ",\n    f.edgeCases = $edgeCases",
+      "', '.join(sets)": "f.name = $name, f.description = $description"
+    },
+    "robo-architect-lite:api/features/ingestion/figma_plugin_ws.py": {
+      "where": "ui.id = $id"
+    },
+    "robo-architect-lite:api/features/ingestion/hybrid/event_storming_bridge/promote_to_es.py": {
+      "label": "BpmTask"
+    },
+    "robo-architect-lite:api/features/ingestion/hybrid/ontology/neo4j_ops.py": {
+      "label": "BpmTask",
+      "src": "Process",
+      "prop": "proc_id",
+      "tgt": "BpmnProcess",
+      "rel": "NEXT"
+    },
+    "robo-architect-lite:api/features/ingestion/hybrid/router.py": {
+      "label": "BpmTask"
+    },
+    "robo-architect-lite:api/features/ingestion/ingestion_workflow_runner.py": {
+      "label": "UserStory"
+    },
+    "robo-architect-lite:api/features/invariants/neo4j_ops.py": {
+      "', '.join(sets)": "inv.statement = $statement"
+    },
+    "robo-architect-lite:api/features/model_modifier/model_change_application.py": {
+      "', '.join(set_clauses)": "n.name = $name, n.description = $description"
+    },
+    "robo-architect-lite:api/features/proposal_lifecycle/routes/proposals_crud.py": {
+      "where_clause": "WHERE p.status = $status",
+      "set_clause": "p.status = $status, p.updatedAt = $updatedAt"
+    },
+    "robo-architect-lite:api/features/proposal_lifecycle/services/dual_merge.py": {
+      "label": "Aggregate"
+    },
+    "robo-architect-lite:api/features/proposal_lifecycle/services/intent_runner.py": {
+      "', '.join(set_parts)": "p.intent = $intent"
+    },
+    "robo-architect-lite:api/features/proposal_lifecycle/services/plan_runner.py": {
+      "', '.join(set_parts)": "p.plan = $plan"
+    },
+    "robo-architect-lite:api/features/proposal_lifecycle/services/oda_runner.py": {
+      "', '.join(sets)": "p.oda = $oda"
+    },
+    "robo-architect-lite:api/features/proposal_lifecycle/services/proposal_apply.py": {
+      "@746:lbl": "Given",
+      "@746:rel": "HAS_GIVEN"
+    },
+    "robo-architect-lite:api/features/requirement_changes/services/design_applier.py": {
+      "label": "Aggregate"
+    },
+    "robo-architect-lite:api/features/requirements/chat_edit/scope_io.py": {
+      "label": "BoundedContext",
+      "',' if projections else ''": ",",
+      "projections": "n.name AS name, n.description AS description",
+      "', '.join(sets)": "n.name = $name"
+    },
+    "robo-architect-lite:api/features/requirements/routes/canvas.py": {
+      "@129:', '.join(sets)": "bc.name = $name",
+      "@202:', '.join(sets)": "a.name = $name"
+    },
+    "robo-architect-lite:api/features/requirements/routes/ddd_wizard.py": {
+      "', '.join(sets)": "bc.domainType = $domainType"
+    },
+    "robo-architect-lite:api/features/requirements/routes/pivotal_events.py": {
+      "', '.join(sets)": "e.pivotal = $pivotal"
+    },
+    "robo-data-analyzer:scripts/reset_neo4j_schema.py": {
+      "@36:row['name']": "uniq_rule",
+      "@45:row['name']": "analyzer_search_vec"
+    },
+    "kinetic-action:app/graph.py": {
+      "quote(label, '클래스')": "`Customer`",
+      "quote(prop)": "`grade`",
+      "match": "toString(n.`customer_id`) = $key"
+    },
+    "kinetic-action:app/targeting.py": {
+      "lbl": "`Customer`",
+      "where": " WHERE n.`grade` = $p0",
+      "order": "n.`customer_id`"
+    }
+  },
+  "assembled": [
+    {
+      "client": "studio",
+      "origins": [
+        "studio-app:backend/src/modules/board/query_gen.py:153"
+      ],
+      "covers": [
+        "studio-app:backend/src/modules/board/query_gen.py:153"
+      ],
+      "rule": "board widget, raw rows: `MATCH (n:_Entity:<cls>)` + `_cypher_where` (filters joined with AND, values bound as $<param_key>) + `RETURN n.<p> AS <p>, …`",
+      "query": "MATCH (n:_Entity:Customer) WHERE n.grade = $grade RETURN n.name AS name, n.grade AS grade, n.credit_limit AS credit_limit"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-app:backend/src/modules/board/query_gen.py:155"
+      ],
+      "covers": [
+        "studio-app:backend/src/modules/board/query_gen.py:155",
+        "studio-app:backend/src/modules/board/query_gen.py:157",
+        "studio-app:backend/src/modules/board/query_gen.py:158",
+        "studio-app:backend/src/modules/board/query_gen.py:159"
+      ],
+      "rule": "board widget with dimensions and measures: parts `MATCH … WHERE …`, `WITH <dims>, <agg>(n.<p>) AS <label>`, `RETURN <names>`, `ORDER BY <first dim>` joined with spaces; contains filters become toLower(toString(n.p)) CONTAINS toLower($key)",
+      "query": "MATCH (n:_Entity:Customer) WHERE toLower(toString(n.name)) CONTAINS toLower($q) WITH n.grade AS grade, count(*) AS count, avg(toFloat(n.credit_limit)) AS avg_credit RETURN grade, count, avg_credit ORDER BY grade"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-app:backend/src/modules/board/query_gen.py:164"
+      ],
+      "covers": [
+        "studio-app:backend/src/modules/board/query_gen.py:164"
+      ],
+      "rule": "board widget with measures only: `MATCH …` + `RETURN <agg> AS <label>, …`",
+      "query": "MATCH (n:_Entity:Customer) RETURN count(*) AS count, sum(n.credit_limit) AS total_credit"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-app:backend/src/modules/ontology/from_tables.py:245"
+      ],
+      "covers": [
+        "studio-app:backend/src/modules/ontology/from_tables.py:245"
+      ],
+      "rule": "label probe: one CREATE of up to 40 `(n<i>:_Entity:`<label>`)` patterns, RETURN elementId(n<i>) AS e<i> (two labels shown)",
+      "query": "CREATE (n0:_Entity:`Customer`), (n1:_Entity:`Supplier`) RETURN elementId(n0) AS e0, elementId(n1) AS e1"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-app:backend/src/modules/ontology/from_tables.py:257"
+      ],
+      "covers": [
+        "studio-app:backend/src/modules/ontology/from_tables.py:257",
+        "studio-app:backend/src/modules/ontology/from_tables.py:259"
+      ],
+      "rule": "label probe cleanup: `MATCH (n<i>:`<label>`) WHERE elementId(n<i>) = $e<i>` per label joined with spaces, then `DELETE n0, n1, …`",
+      "query": "MATCH (n0:`Customer`) WHERE elementId(n0) = $e0 MATCH (n1:`Supplier`) WHERE elementId(n1) = $e1 DELETE n0, n1"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-app:backend/src/modules/quality/ingest_gate.py:132"
+      ],
+      "covers": [
+        "studio-app:backend/src/modules/quality/ingest_gate.py:116"
+      ],
+      "rule": "write_candidate(entity): `_merge_entity_clause('s','s')` = MERGE (s:_Entity:<label> {_source_id: $s_key}) + _ENTITY_SET (ON CREATE SET … / SET updated_at) + SET name = coalesce(…), then RETURN elementId(s)",
+      "query": "MERGE (s:_Entity:Customer {_source_id: $s_key})\nON CREATE SET s.created_at = datetime(), s._confidence = $s_conf,\n              s._run_id = $run_id, s._evidence_ref = $evidence_ref,\n              s._source_system = $s_sys, s._source_key = $s_skey\nSET s.updated_at = datetime()\nSET s.name = coalesce(s.name, $s_name)\nRETURN elementId(s) AS sid"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-app:backend/src/modules/quality/ingest_gate.py:139"
+      ],
+      "covers": [],
+      "rule": "write_candidate(relation): subject clause + WITH s + object clause + WITH s, o + MERGE (s)-[r:<predicate>]->(o) with ON CREATE SET / SET, RETURN the three element ids",
+      "query": "MERGE (s:_Entity:Customer {_source_id: $s_key})\nON CREATE SET s.created_at = datetime(), s._confidence = $s_conf,\n              s._run_id = $run_id, s._evidence_ref = $evidence_ref,\n              s._source_system = $s_sys, s._source_key = $s_skey\nSET s.updated_at = datetime()\nSET s.name = coalesce(s.name, $s_name)\nWITH s\nMERGE (o:_Entity:PurchaseOrder {_source_id: $o_key})\nON CREATE SET o.created_at = datetime(), o._confidence = $o_conf,\n              o._run_id = $run_id, o._evidence_ref = $evidence_ref,\n              o._source_system = $o_sys, o._source_key = $o_skey\nSET o.updated_at = datetime()\nSET o.name = coalesce(o.name, $o_name)\nWITH s, o\nMERGE (s)-[r:PLACED]->(o)\nON CREATE SET r.created_at = datetime(), r._confidence = $confidence, r._run_id = $run_id, r._evidence_ref = $evidence_ref\nSET r.updated_at = datetime()\nRETURN elementId(s) AS sid, elementId(o) AS oid, elementId(r) AS rid"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-app:backend/src/modules/quality/ingest_gate.py:156"
+      ],
+      "covers": [],
+      "rule": "write_candidate(property): subject clause + SET s.`<prop>` = $value + RETURN elementId(s)",
+      "query": "MERGE (s:_Entity:Customer {_source_id: $s_key})\nON CREATE SET s.created_at = datetime(), s._confidence = $s_conf,\n              s._run_id = $run_id, s._evidence_ref = $evidence_ref,\n              s._source_system = $s_sys, s._source_key = $s_skey\nSET s.updated_at = datetime()\nSET s.name = coalesce(s.name, $s_name)\nSET s.`grade` = $value\nRETURN elementId(s) AS sid"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-desktop:src/main/nl2cypher.js:26"
+      ],
+      "covers": [],
+      "rule": "nl2cypher is LLM-written; only the examples its prompt records: `(po:PurchaseOrder)-[:ORDERED_FROM]->(s:Supplier)` with every node labelled, `RETURN s.name AS supplier, …` named columns, `LIMIT 100`",
+      "query": "MATCH (po:PurchaseOrder)-[:ORDERED_FROM]->(s:Supplier) RETURN s.name AS supplier, count(po) AS orders ORDER BY supplier LIMIT 100"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-desktop:src/main/nl2cypher.js:30"
+      ],
+      "covers": [],
+      "rule": "nl2cypher prompt example: a label predicate in WHERE (`WHERE n:Label`, `NOT n:Label`)",
+      "query": "MATCH (n) WHERE n:Supplier AND NOT n:PurchaseOrder RETURN n.name AS name LIMIT 100"
+    },
+    {
+      "client": "robo",
+      "origins": [
+        "robo-architect-lite:api/features/figma_binding/repository.py:114"
+      ],
+      "covers": [
+        "robo-architect-lite:api/features/figma_binding/repository.py:114"
+      ],
+      "rule": "list_storyboard_mappings: base MATCH + (status given) `WHERE m.status = $status` + `RETURN m ORDER BY m.figmaPageName`",
+      "query": "MATCH (b:FigmaBinding {id: $id})-[:MAPS_STORYBOARD]->(m:StoryboardPageMapping)\nWHERE m.status = $status\nRETURN m ORDER BY m.figmaPageName"
+    },
+    {
+      "client": "robo",
+      "origins": [
+        "robo-architect-lite:api/features/figma_binding/repository.py:120"
+      ],
+      "covers": [],
+      "rule": "list_storyboard_mappings(status=None): base MATCH + RETURN, no WHERE",
+      "query": "MATCH (b:FigmaBinding {id: $id})-[:MAPS_STORYBOARD]->(m:StoryboardPageMapping)\nRETURN m ORDER BY m.figmaPageName"
+    },
+    {
+      "client": "robo",
+      "origins": [
+        "robo-architect-lite:api/features/requirements/routes/design_reflect.py:68"
+      ],
+      "covers": [
+        "robo-architect-lite:api/features/requirements/routes/design_reflect.py:68"
+      ],
+      "rule": "pending-design scoped to a bounded context: `_PENDING_QUERY.replace('OPTIONAL MATCH (us)-[:IMPLEMENTS]->(bc:BoundedContext)', '  AND <_SCOPE_BC>\\nOPTIONAL MATCH …', 1)`",
+      "query": "MATCH (us:UserStory)\nWHERE NOT (us)-[:IMPLEMENTS]->(:Aggregate)\n  AND NOT (us)-[:IMPLEMENTS]->(:Command)\n  AND NOT (us)-[:IMPLEMENTS]->(:Event)\n  AND NOT (us)-[:IMPLEMENTS]->(:Policy)\n  AND NOT (us)-[:IMPLEMENTS]->(:ReadModel)\n  AND (us)-[:IMPLEMENTS]->(:BoundedContext {id: $scopeId})\nOPTIONAL MATCH (us)-[:IMPLEMENTS]->(bc:BoundedContext)\nOPTIONAL MATCH (f:Feature)-[:HAS_USER_STORY]->(us)\nRETURN us.id AS id, us.role AS role, us.action AS action, us.benefit AS benefit,\n       bc.id AS bcId, f.id AS featureId\nORDER BY us.id"
+    },
+    {
+      "client": "robo",
+      "origins": [
+        "robo-architect-lite:api/features/requirements/routes/design_reflect.py:69"
+      ],
+      "covers": [],
+      "rule": "pending-design scoped to a feature: the same replace with `_SCOPE_FEATURE`",
+      "query": "MATCH (us:UserStory)\nWHERE NOT (us)-[:IMPLEMENTS]->(:Aggregate)\n  AND NOT (us)-[:IMPLEMENTS]->(:Command)\n  AND NOT (us)-[:IMPLEMENTS]->(:Event)\n  AND NOT (us)-[:IMPLEMENTS]->(:Policy)\n  AND NOT (us)-[:IMPLEMENTS]->(:ReadModel)\n  AND (:Feature {id: $scopeId})-[:HAS_USER_STORY]->(us)\nOPTIONAL MATCH (us)-[:IMPLEMENTS]->(bc:BoundedContext)\nOPTIONAL MATCH (f:Feature)-[:HAS_USER_STORY]->(us)\nRETURN us.id AS id, us.role AS role, us.action AS action, us.benefit AS benefit,\n       bc.id AS bcId, f.id AS featureId\nORDER BY us.id"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-desktop:src/main/fabric-bridge.js:206"
+      ],
+      "covers": [
+        "studio-desktop:src/main/fabric-bridge.js:206",
+        "studio-desktop:src/main/fabric-bridge.js:209"
+      ],
+      "rule": "createDatasource: head `CREATE DATASOURCE <name> WITH ENGINE = '<engine>', PARAMETERS = ` + `{<k>: $<k>, …}` over the keys the form filled (password, or credentials when the keychain holds it)",
+      "query": "CREATE DATASOURCE erp_new WITH ENGINE = 'postgres', PARAMETERS = {host: $host, port: $port, database: $database, schema: $schema, user: $user, password: $password}"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-desktop:src/main/fabric-bridge.js:223"
+      ],
+      "covers": [
+        "studio-desktop:src/main/fabric-bridge.js:223",
+        "studio-desktop:src/main/fabric-bridge.js:225"
+      ],
+      "rule": "alterCredentials without a keychain: head `ALTER DATASOURCE <name> SET CREDENTIALS = ` + '{user: $user, password: $password}'",
+      "query": "ALTER DATASOURCE erp SET CREDENTIALS = {user: $user, password: $password}"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-desktop:src/main/fabric-bridge.js:228"
+      ],
+      "covers": [
+        "studio-desktop:src/main/fabric-bridge.js:228"
+      ],
+      "rule": "alterCredentials with a keychain reference: head + '{user: $user, credentials: $credentials}'",
+      "query": "ALTER DATASOURCE erp SET CREDENTIALS = {user: $user, credentials: $credentials}"
+    },
+    {
+      "client": "studio",
+      "origins": [
+        "studio-desktop:src/main/fabric-bridge.js:256"
+      ],
+      "covers": [
+        "studio-desktop:src/main/fabric-bridge.js:253",
+        "studio-desktop:src/main/fabric-bridge.js:256"
+      ],
+      "rule": "createVirtualNode with properties: base statement + ` PROPERTIES (<key>, <col> [AS <prop>], …)` (the key column put first when missing)",
+      "query": "CREATE VIRTUAL NODE ErpItem IN ontology FROM erp.item KEY item_id PROPERTIES (item_id, name AS item_name)"
+    },
+    {
+      "client": "robo",
+      "origins": [
+        "robo-architect-lite:api/tests/test_cypher_order_by_alias.py:38"
+      ],
+      "covers": [],
+      "rule": "known v1 incompatibility the client's own test guards against (10-31 BC full-tree): ORDER BY on a map projection's alias. The clients no longer send it; kept so the answer is on record for v2",
+      "query": "MATCH (bc:BoundedContext {id: $context_id})-[:HAS_READMODEL]->(rm:ReadModel)\nRETURN rm {.id, .name} as readmodel\n    ORDER BY readmodel.name"
+    }
+  ],
+  "skip": [
+    {
+      "client": "analyzer",
+      "origin": "robo-data-analyzer:pipeline/execution/analysis_profile.py:198",
+      "reason": "log line, not a query"
+    },
+    {
+      "client": "analyzer",
+      "origin": "robo-data-catalog:shared/config/capabilities.py:131",
+      "reason": "error message, not a query"
+    },
+    {
+      "client": "studio",
+      "origin": "studio-app:backend/src/modules/quality/shapes.py:58",
+      "reason": "fragment: the shared RETURN tail the shape checks below append to their MATCH"
+    }
+  ],
+  "params": {
+    "_doc": "Parameter values that the rules in prepare.py cannot guess, by query id or by origin. {\"$env\": NAME} is filled by the runner (COMPAT_PGHOST, COMPAT_PGPORT, COMPAT_PGDATABASE, COMPAT_PGUSER).",
+    "studio-desktop:src/main/fabric-bridge.js:206": {
+      "host": {
+        "$env": "COMPAT_PGHOST"
+      },
+      "port": {
+        "$env": "COMPAT_PGPORT",
+        "type": "int"
+      },
+      "database": {
+        "$env": "COMPAT_PGDATABASE"
+      },
+      "schema": "compat_erp",
+      "user": {
+        "$env": "COMPAT_PGUSER"
+      },
+      "password": ""
+    },
+    "studio-desktop:src/main/fabric-bridge.js:223": {
+      "user": {
+        "$env": "COMPAT_PGUSER"
+      },
+      "password": ""
+    },
+    "studio-desktop:src/main/fabric-bridge.js:228": {
+      "user": {
+        "$env": "COMPAT_PGUSER"
+      },
+      "credentials": "keychain:erp"
+    },
+    "studio-desktop:src/main/index.js:246": {
+      "ref": "keychain:erp"
+    }
+  },
+  "fixture_defaults": {
+    "_doc": "Derived fixture settings per client. `always`: property values on every derived node; `when_used`: values for a property where the corpus names it for that label; `supplement`: also give each label of the hand-kept fixture two derived nodes carrying every property the corpus names for it.",
+    "robo": {
+      "when_used": {
+        "session_id": "sess-1",
+        "graph_owner": "analyzer",
+        "_owner": "analyzer"
+      },
+      "supplement": true
+    },
+    "analyzer": {
+      "always": {
+        "graph_owner": "analyzer",
+        "_owner": "analyzer"
+      },
+      "supplement": true
+    },
+    "studio": {
+      "when_used": {
+        "_source_system": "erp"
+      }
+    }
+  },
+  "param_names": {
+    "_doc": "Values for parameters by name, per client, used when the query text does not say what the value is (a list after IN, a label name …).",
+    "studio": {
+      "classes": [
+        "Customer",
+        "PurchaseOrder"
+      ],
+      "class": "Customer",
+      "virtual": [
+        "ErpSupplier"
+      ],
+      "skip": [
+        "SAME_AS"
+      ],
+      "terms": [
+        "acme",
+        "cable"
+      ],
+      "text": "acme",
+      "q": "acme",
+      "query": "Customer",
+      "prefix": "customer",
+      "schema_name": "compat",
+      "lv": "a",
+      "v": "A",
+      "value": "A",
+      "datasource": "erp",
+      "schema": "compat_erp",
+      "tables": [],
+      "target_node_ids": [
+        {
+          "$ref": "elementId",
+          "label": "Chunk",
+          "nth": 0
+        }
+      ],
+      "document_ids": [],
+      "chunk_refs": [],
+      "source_pages": [],
+      "keys": [
+        "cust-1",
+        "cust-2"
+      ]
+    },
+    "robo": {},
+    "analyzer": {
+      "owner": "analyzer",
+      "datasources": [
+        "erp"
+      ]
+    }
+  }
+}
