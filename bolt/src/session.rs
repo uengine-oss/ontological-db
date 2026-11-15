@@ -637,21 +637,30 @@ impl Session<'_> {
 fn split_plan_prefix(query: &str) -> (&str, bool) {
     let trimmed = query.trim_start();
     for kw in ["explain", "profile"] {
-        if trimmed.len() > kw.len()
-            && trimmed[..kw.len()].eq_ignore_ascii_case(kw)
-            && trimmed.as_bytes()[kw.len()].is_ascii_whitespace()
-        {
+        if starts_with_keyword(trimmed, kw) {
+            // The keyword and the whitespace after it are ASCII, so this is a
+            // character boundary.
             let rest = trimmed[kw.len()..].trim_start();
             // `EXPLAIN FABRIC <query>` is a statement of its own — it runs the
             // query and reports what each source was sent — not a request for
             // a plan with no records.
-            if rest.len() > 6 && rest[..6].eq_ignore_ascii_case("fabric") && rest.as_bytes()[6].is_ascii_whitespace() {
+            if starts_with_keyword(rest, "fabric") {
                 return (query, false);
             }
             return (rest, true);
         }
     }
     (query, false)
+}
+
+/// Whether `s` begins with the ASCII keyword `kw` (any case) followed by
+/// whitespace. Compared as bytes: a query whose first bytes hold a multibyte
+/// character (`// 소스 …`, `WITH '🙂' …`) is simply not a match — slicing the
+/// `str` at `kw.len()` there would not be on a character boundary and panics
+/// the session thread.
+fn starts_with_keyword(s: &str, kw: &str) -> bool {
+    let b = s.as_bytes();
+    b.len() > kw.len() && b[..kw.len()].eq_ignore_ascii_case(kw.as_bytes()) && b[kw.len()].is_ascii_whitespace()
 }
 
 // ------------------------------------------------------------------ values
@@ -1103,5 +1112,37 @@ mod watch_tests {
         assert_eq!(tx_timeout(&map(vec![("tx_timeout", Value::Int(0))])), Some(0));
         assert_eq!(tx_timeout(&map(vec![("tx_timeout", Value::Int(-1))])), None);
         assert_eq!(tx_timeout(&map(vec![("db", string("g"))])), None);
+    }
+}
+
+#[cfg(test)]
+mod plan_prefix_tests {
+    use super::*;
+
+    #[test]
+    fn plan_prefixes_are_stripped() {
+        assert_eq!(split_plan_prefix("EXPLAIN MATCH (n) RETURN n"), ("MATCH (n) RETURN n", true));
+        assert_eq!(split_plan_prefix("  profile\tRETURN 1"), ("RETURN 1", true));
+        assert_eq!(split_plan_prefix("EXPLAIN FABRIC MATCH (n) RETURN n"), ("EXPLAIN FABRIC MATCH (n) RETURN n", false));
+        assert_eq!(split_plan_prefix("explainer"), ("explainer", false));
+        assert_eq!(split_plan_prefix("RETURN 1"), ("RETURN 1", false));
+    }
+
+    #[test]
+    fn multibyte_characters_in_the_first_bytes_do_not_panic() {
+        // A character that straddles byte 7 (`explain`/`profile`) or byte 6 (`fabric`).
+        for q in [
+            "// 소스 확인\nMATCH (n) RETURN n",
+            "WITH {수량: 3} AS m RETURN m.수량",
+            "WITH '🙂' AS f RETURN f",
+            "//🙂🙂\nRETURN 1",
+            "가나다",
+            "é",
+        ] {
+            assert_eq!(split_plan_prefix(q), (q, false), "{q}");
+        }
+        assert_eq!(split_plan_prefix("EXPLAIN //소스\nMATCH (n) RETURN n"), ("//소스\nMATCH (n) RETURN n", true));
+        assert_eq!(split_plan_prefix("PROFILE 🙂🙂"), ("🙂🙂", true));
+        assert_eq!(split_plan_prefix("EXPLAIN fabri🙂 x"), ("fabri🙂 x", true));
     }
 }
