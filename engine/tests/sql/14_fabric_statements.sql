@@ -32,6 +32,15 @@ BEGIN
     PERFORM og_fabric('create virtual node Purchase from loop.purchase key po_no properties (po_no, supplier_code, amount AS total);');
     PERFORM og_fabric('CREATE VIRTUAL RELATIONSHIP FROM_SUPPLIER FROM Purchase(supplier_code) TO Supplier(code)');
 
+    -- Columns of a source table, with the source's types and NOT NULL; `key` is
+    -- the column a virtual node over the table uses as its id.
+    SELECT count(*) INTO n FROM og_fabric('SHOW COLUMNS FROM loop.purchase');
+    IF n <> 3 THEN RAISE EXCEPTION 'SHOW COLUMNS: expected 3, got %', n; END IF;
+    SELECT jsonb_agg(r ORDER BY r->>'column') INTO got FROM og_fabric('show columns from loop.supplier;') r WHERE (r->>'key')::boolean;
+    IF got->0->>'column' <> 'code' OR got->0->>'type' <> 'text' OR (got->0->>'nullable')::boolean OR jsonb_array_length(got) <> 1 THEN
+        RAISE EXCEPTION 'SHOW COLUMNS key column: %', got;
+    END IF;
+
     SELECT og_fabric('SHOW VIRTUAL RELATIONSHIPS') INTO got;
     IF got->>'from' <> 'Purchase.supplier_code' OR got->>'to' <> 'Supplier.code' THEN
         RAISE EXCEPTION 'SHOW VIRTUAL RELATIONSHIPS: %', got;

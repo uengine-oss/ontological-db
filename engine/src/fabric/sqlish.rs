@@ -16,6 +16,7 @@
 //! CREATE DATASOURCE erp WITH ENGINE = 'postgres', PARAMETERS = {"host": …, "schema": "erp"}
 //! DROP DATASOURCE erp            REFRESH DATASOURCE erp
 //! SHOW DATASOURCES               SHOW TABLES FROM erp
+//! SHOW COLUMNS FROM erp.item
 //! CREATE GRAPH scm               SHOW GRAPHS              USE GRAPH scm
 //! CREATE VIRTUAL NODE Item FROM erp.item KEY item_id [PROPERTIES (name, safety_stock AS safety)]
 //! CREATE VIRTUAL RELATIONSHIP SHIPS FROM Shipment(ref_po_no) TO PurchaseOrder(po_id)
@@ -354,7 +355,7 @@ pub fn is_statement(stmt: &str) -> bool {
                 || (w1 == "DATABASE" && s.to_ascii_uppercase().split_whitespace().any(|x| x.starts_with("ENGINE")))
         }
         "DROP" => matches!(w1, "DATASOURCE" | "VIRTUAL"),
-        "SHOW" => matches!(w1, "DATASOURCES" | "TABLES" | "VIRTUAL" | "GRAPHS"),
+        "SHOW" => matches!(w1, "DATASOURCES" | "TABLES" | "COLUMNS" | "VIRTUAL" | "GRAPHS"),
         "REFRESH" => w1 == "DATASOURCE",
         "MATERIALIZE" => true,
         "EXPLAIN" => w1 == "FABRIC",
@@ -376,6 +377,7 @@ pub fn columns(stmt: &str) -> Vec<String> {
         ["SHOW", "GRAPHS", ..] => &["graph", "types"],
         ["SHOW", "DATASOURCES", ..] => &["name", "engine", "host", "tables"],
         ["SHOW", "TABLES", ..] => &["table", "columns", "virtual_node"],
+        ["SHOW", "COLUMNS", ..] => &["column", "type", "nullable", "key"],
         ["SHOW", "VIRTUAL", "NODES"] => &["node", "source", "key", "properties", "storage"],
         ["SHOW", "VIRTUAL", ..] => &["relationship", "from", "to"],
         ["EXPLAIN", "FABRIC", ..] => &["step", "place", "operation", "rows", "detail"],
@@ -649,6 +651,37 @@ fn translate(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) -> R<
                    JOIN pg_class c ON c.oid = ft.ftrelid JOIN pg_namespace n ON n.oid = c.relnamespace \
                   WHERE d.name = {} ORDER BY 1",
                 lit(&ds)
+            )
+        } else if p.kw("COLUMNS") {
+            if !(p.kw("FROM") || p.kw("IN")) {
+                return Err(format!("expected FROM <datasource>.<table>{}", p.near()));
+            }
+            let table = p.qualified("a datasource table")?;
+            let Some((ds, rel)) = table.split_once('.') else {
+                return Err(format!("expected <datasource>.<table>, found '{table}'"));
+            };
+            let known = one::<bool>("SELECT true FROM og_catalog.datasource WHERE name = $1", &[ds.into()])
+                .ok()
+                .flatten()
+                .unwrap_or(false);
+            if !known {
+                return Err(format!("datasource '{ds}' is not registered"));
+            }
+            // The foreign table's own columns, as IMPORT FOREIGN SCHEMA brought them
+            // in (types and NOT NULL come from the source). `key` marks the column a
+            // virtual node over this table uses as its id.
+            format!(
+                "SELECT a.attname AS \"column\", format_type(a.atttypid, a.atttypmod) AS type, \
+                        NOT a.attnotnull AS nullable, \
+                        EXISTS (SELECT 1 FROM og_catalog.mapping m \
+                                 WHERE to_regclass(m.source_table) = c.oid AND m.id_column = a.attname) AS key \
+                   FROM pg_foreign_table ft JOIN pg_foreign_server s ON s.oid = ft.ftserver \
+                   JOIN og_catalog.datasource d ON d.server_name = s.srvname \
+                   JOIN pg_class c ON c.oid = ft.ftrelid JOIN pg_namespace n ON n.oid = c.relnamespace \
+                   JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped \
+                  WHERE d.name = {} AND c.relname = {} ORDER BY a.attnum",
+                lit(ds),
+                lit(rel)
             )
         } else if p.kw("VIRTUAL") {
             if p.kw("NODES") {
