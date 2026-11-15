@@ -1,0 +1,7 @@
+comment = 'K0 spike: the engine code under a second extension name'
+default_version = '0.1.0'
+module_pathname = '$libdir/ontological_age'
+relocatable = false
+superuser = false
+trusted = false
+schema = 'oga_catalog'

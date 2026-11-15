@@ -1,0 +1,18 @@
+# v2 shell: extension `ontological_age`, schema oga_catalog (D9, DESIGN 5.3)
+[package]
+name = "ontological_age_k0"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["pg16"]
+pg16 = ["pgrx/pg16", "og_engine_lib/pg16"]
+pg17 = ["pgrx/pg17", "og_engine_lib/pg17"]
+pg_test = []
+
+[dependencies]
+pgrx = { workspace = true }
+og_engine_lib = { path = "../engine_lib" }

@@ -1,0 +1,130 @@
+=== engine: one library, two extensions, one database
+SHOW search_path;
+   search_path   
+-----------------
+ "$user", public
+(1 row)
+
+CREATE EXTENSION vector;
+CREATE EXTENSION
+CREATE EXTENSION ontological;
+CREATE EXTENSION
+CREATE EXTENSION ontological_age;
+CREATE EXTENSION
+SELECT e.extname, e.extversion, n.nspname AS extschema
+  FROM pg_extension e JOIN pg_namespace n ON n.oid = e.extnamespace ORDER BY 1;
+     extname     | extversion |  extschema  
+-----------------+------------+-------------
+ ontological     | 0.1.0      | public
+ ontological_age | 0.1.0      | oga_catalog
+ plpgsql         | 1.0        | pg_catalog
+ vector          | 0.8.7      | public
+(4 rows)
+
+--- C functions per extension: schema and library
+SELECT e.extname, n.nspname AS schema, count(*) AS c_functions, min(p.probin) AS probin
+  FROM pg_proc p
+  JOIN pg_namespace n ON n.oid = p.pronamespace
+  JOIN pg_depend d ON d.classid = 'pg_proc'::regclass AND d.objid = p.oid AND d.deptype = 'e'
+  JOIN pg_extension e ON e.oid = d.refobjid
+ WHERE e.extname LIKE 'ontological%' AND p.prolang = (SELECT oid FROM pg_language WHERE lanname = 'c')
+ GROUP BY 1, 2 ORDER BY 1, 2;
+     extname     |   schema    | c_functions |         probin          
+-----------------+-------------+-------------+-------------------------
+ ontological     | public      |         119 | $libdir/ontological
+ ontological_age | oga_catalog |         119 | $libdir/ontological_age
+(2 rows)
+
+SELECT n.nspname AS schema, p.proname, p.probin, p.prosrc
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+ WHERE p.proname IN ('og_cypher', 'og_create_graph', 'og_cypher_json') ORDER BY 2, 1;
+   schema    |     proname     |         probin          |         prosrc          
+-------------+-----------------+-------------------------+-------------------------
+ oga_catalog | og_create_graph | $libdir/ontological_age | og_create_graph_wrapper
+ public      | og_create_graph | $libdir/ontological     | og_create_graph_wrapper
+ oga_catalog | og_cypher       | $libdir/ontological_age | og_cypher_wrapper
+ public      | og_cypher       | $libdir/ontological     | og_cypher_wrapper
+ oga_catalog | og_cypher_json  | $libdir/ontological_age | og_cypher_json_wrapper
+ public      | og_cypher_json  | $libdir/ontological     | og_cypher_json_wrapper
+(6 rows)
+
+SELECT public.ontological_version() AS v1, oga_catalog.ontological_version() AS v2;
+  v1   |  v2   
+-------+-------
+ 0.1.0 | 0.1.0
+(1 row)
+
+--- a catalog function from each shared object (both write og_catalog: it is v1 code in both)
+SELECT public.og_create_graph('k0_v1') AS v1_graph_id, oga_catalog.og_create_graph('k0_v2') AS v2_graph_id;
+ v1_graph_id | v2_graph_id 
+-------------+-------------
+           1 |           2
+(1 row)
+
+SELECT graph_id, name FROM og_catalog.graph ORDER BY 1;
+ graph_id | name  
+----------+-------
+        1 | k0_v1
+        2 | k0_v2
+(2 rows)
+
+--- og_cypher from each shared object
+SELECT * FROM public.og_cypher('k0_v1', 'CREATE (:Person {name: ''Ada''}) RETURN 1 AS created');
+psql:sql/engine.sql:28: NOTICE:  view "Person" does not exist, skipping
+   og_cypher    
+----------------
+ {"created": 1}
+(1 row)
+
+SELECT * FROM oga_catalog.og_cypher('k0_v1', 'MATCH (p:Person) RETURN p.name AS name');
+    og_cypher    
+-----------------
+ {"name": "Ada"}
+(1 row)
+
+SELECT public.og_cypher_sql('k0_v1', 'MATCH (p:Person) RETURN p.name AS name')
+     = oga_catalog.og_cypher_sql('k0_v1', 'MATCH (p:Person) RETURN p.name AS name') AS same_compiled_sql;
+ same_compiled_sql 
+-------------------
+ t
+(1 row)
+
+--- v2 og_cypher_json runs og_cypher by SPI, unqualified (engine/src/interop/mod.rs:46): which one?
+SET track_functions = 'all';
+SET
+BEGIN;
+BEGIN
+SELECT oga_catalog.og_cypher_json('k0_v1', 'MATCH (p:Person) RETURN p.name AS name') AS v2_json;
+      v2_json      
+-------------------
+ [{"name": "Ada"}]
+(1 row)
+
+SELECT schemaname, funcname, calls FROM pg_stat_xact_user_functions
+ WHERE funcname IN ('og_cypher', 'og_cypher_json') ORDER BY 2, 1;
+ schemaname  |    funcname    | calls 
+-------------+----------------+-------
+ public      | og_cypher      |     1
+ oga_catalog | og_cypher_json |     1
+(2 rows)
+
+COMMIT;
+COMMIT
+--- both shared objects are mapped into this one backend
+SELECT pg_backend_pid() AS pid 
+ontological.dylib
+ontological_age.dylib
+DROP EXTENSION ontological_age;
+DROP EXTENSION
+DROP EXTENSION ontological CASCADE;
+psql:sql/engine.sql:44: NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table og_data.n_1
+drop cascades to view og_data."Person"
+drop cascades to view og_data.v_1
+DROP EXTENSION
+SELECT count(*) AS leftover FROM pg_extension WHERE extname LIKE 'ontological%';
+ leftover 
+----------
+        0
+(1 row)
+

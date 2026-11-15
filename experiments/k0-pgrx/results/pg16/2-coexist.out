@@ -1,0 +1,128 @@
+=== phase 2: two extensions, one database
+SHOW search_path;
+   search_path   
+-----------------
+ "$user", public
+(1 row)
+
+CREATE EXTENSION ext_a;
+CREATE EXTENSION
+CREATE EXTENSION ext_b;
+CREATE EXTENSION
+--- extensions and the schema each one was installed into
+SELECT e.extname, e.extversion, n.nspname AS extschema
+  FROM pg_extension e JOIN pg_namespace n ON n.oid = e.extnamespace
+ WHERE e.extname LIKE 'ext_%' ORDER BY 1;
+ extname | extversion | extschema 
+---------+------------+-----------
+ ext_a   | 0.1.0      | public
+ ext_b   | 0.1.0      | ext_b_s
+(2 rows)
+
+--- every function the two installed: schema, library, C symbol
+SELECT e.extname, n.nspname AS schema, p.proname, p.probin, p.prosrc
+  FROM pg_proc p
+  JOIN pg_namespace n ON n.oid = p.pronamespace
+  JOIN pg_depend d ON d.classid = 'pg_proc'::regclass AND d.objid = p.oid AND d.deptype = 'e'
+  JOIN pg_extension e ON e.oid = d.refobjid
+ WHERE e.extname LIKE 'ext_%'
+ ORDER BY p.proname, e.extname;
+ extname |  schema  |      proname       |    probin     |           prosrc           
+---------+----------+--------------------+---------------+----------------------------
+ ext_a   | public   | ext_a_only         | $libdir/ext_a | ext_a_only_wrapper
+ ext_b   | ext_b_s  | ext_b_only         | $libdir/ext_b | ext_b_only_wrapper
+ ext_a   | public   | k0_edition_local   | $libdir/ext_a | k0_edition_local_wrapper
+ ext_b   | ext_b_s  | k0_edition_local   | $libdir/ext_b | k0_edition_local_wrapper
+ ext_a   | public   | k0_guc_probe       | $libdir/ext_a | k0_guc_probe_wrapper
+ ext_b   | ext_b_s  | k0_guc_probe       | $libdir/ext_b | k0_guc_probe_wrapper
+ ext_a   | public   | k0_hello           | $libdir/ext_a | k0_hello_wrapper
+ ext_b   | ext_b_s  | k0_hello           | $libdir/ext_b | k0_hello_wrapper
+ ext_a   | k0_fixed | k0_in_fixed_schema | $libdir/ext_a | k0_in_fixed_schema_wrapper
+ ext_a   | public   | k0_spi_qualified   | $libdir/ext_a | k0_spi_qualified_wrapper
+ ext_b   | ext_b_s  | k0_spi_qualified   | $libdir/ext_b | k0_spi_qualified_wrapper
+ ext_a   | public   | k0_spi_unqualified | $libdir/ext_a | k0_spi_unqualified_wrapper
+ ext_b   | ext_b_s  | k0_spi_unqualified | $libdir/ext_b | k0_spi_unqualified_wrapper
+ ext_a   | public   | k0_whoami          | $libdir/ext_a | k0_whoami_wrapper
+ ext_b   | ext_b_s  | k0_whoami          | $libdir/ext_b | k0_whoami_wrapper
+(15 rows)
+
+--- same SQL name, same C symbol name, two shared objects: each call reaches its own
+SELECT public.k0_whoami() AS public_k0_whoami, ext_b_s.k0_whoami() AS ext_b_s_k0_whoami;
+  public_k0_whoami   |  ext_b_s_k0_whoami  
+---------------------+---------------------
+ ext_a (ext_a.dylib) | ext_b (ext_b.dylib)
+(1 row)
+
+SELECT public.k0_hello() AS a, ext_b_s.k0_hello() AS b;
+                     a                      |                     b                      
+--------------------------------------------+--------------------------------------------
+ og_shared::k0_hello in ext_a (ext_a.dylib) | og_shared::k0_hello in ext_b (ext_b.dylib)
+(1 row)
+
+SELECT public.k0_edition_local() AS a, ext_b_s.k0_edition_local() AS b;
+              a               |              b               
+------------------------------+------------------------------
+ ext_a's own k0_edition_local | ext_b's own k0_edition_local
+(1 row)
+
+SELECT public.ext_a_only() AS a, ext_b_s.ext_b_only() AS b;
+            a             |     b      
+--------------------------+------------
+ ext_a_only (ext_a.dylib) | ext_b_only
+(1 row)
+
+SELECT k0_fixed.k0_in_fixed_schema() AS ext_a_fixed_schema_fn;
+ ext_a_fixed_schema_fn 
+-----------------------
+ ext_a (ext_a.dylib)
+(1 row)
+
+--- og_shared extension_sql! and extension_sql_file! ran once per extension, in its schema
+SELECT 'public' AS schema, note FROM public.k0_shared_marker
+UNION ALL SELECT 'ext_b_s', note FROM ext_b_s.k0_shared_marker;
+ schema  |                         note                         
+---------+------------------------------------------------------
+ public  | from og_shared extension_sql!, after ext_a bootstrap
+ ext_b_s | from og_shared extension_sql!, after ext_b bootstrap
+(2 rows)
+
+SELECT 'public' AS schema, note, obj_description('public.k0_shared_file_marker'::regclass) AS comment
+  FROM public.k0_shared_file_marker
+UNION ALL SELECT 'ext_b_s', note, obj_description('ext_b_s.k0_shared_file_marker'::regclass)
+  FROM ext_b_s.k0_shared_file_marker;
+ schema  |                         note                         |    comment     
+---------+------------------------------------------------------+----------------
+ public  | from og_shared/sql/shared.sql, after ext_a bootstrap | schema=public
+ ext_b_s | from og_shared/sql/shared.sql, after ext_b bootstrap | schema=ext_b_s
+(2 rows)
+
+SELECT 'public' AS schema, note FROM public.k0_finalize UNION ALL SELECT 'ext_b_s', note FROM ext_b_s.k0_finalize;
+ schema  |      note      
+---------+----------------
+ public  | ext_a finalize
+ ext_b_s | ext_b finalize
+(2 rows)
+
+--- SPI inside the library: an unqualified name follows search_path, not the extension
+SELECT ext_b_s.k0_spi_unqualified() AS ext_b_calls_unqualified,
+       ext_b_s.k0_spi_qualified()   AS ext_b_calls_own_schema;
+        ext_b_calls_unqualified         |        ext_b_calls_own_schema        
+----------------------------------------+--------------------------------------
+ spi-unqualified -> ext_a (ext_a.dylib) | spi-qualified -> ext_b (ext_b.dylib)
+(1 row)
+
+SET search_path = ext_b_s, public;
+SET
+SELECT public.k0_spi_unqualified() AS ext_a_calls_unqualified,
+       public.k0_spi_qualified()   AS ext_a_calls_own_schema;
+        ext_a_calls_unqualified         |        ext_a_calls_own_schema        
+----------------------------------------+--------------------------------------
+ spi-unqualified -> ext_b (ext_b.dylib) | spi-qualified -> ext_a (ext_a.dylib)
+(1 row)
+
+RESET search_path;
+RESET
+--- both shared objects are mapped into this one backend
+SELECT pg_backend_pid() AS pid 
+ext_a.dylib
+ext_b.dylib

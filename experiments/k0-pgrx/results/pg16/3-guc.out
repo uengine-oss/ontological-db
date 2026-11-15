@@ -1,0 +1,21 @@
+=== phase 3: a GUC defined by shared code, used from both extensions in one backend
+SELECT public.k0_guc_probe() AS from_ext_a;
+ from_ext_a 
+------------
+          7
+(1 row)
+
+SELECT ext_b_s.k0_guc_probe() AS from_ext_b;
+psql:sql/3-guc.sql:6: ERROR:  attempt to redefine parameter "k0.shared_probe"
+SELECT ext_b_s.k0_guc_probe() AS from_ext_b_again;
+ from_ext_b_again 
+------------------
+                7
+(1 row)
+
+SHOW k0.shared_probe;
+ k0.shared_probe 
+-----------------
+ 7
+(1 row)
+

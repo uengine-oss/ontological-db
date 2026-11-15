@@ -1,0 +1,28 @@
+# K0 spike: can a plain library crate hold `#[pg_extern]` functions and `extension_sql!`
+# that two separate pgrx extensions (cdylibs) each ship in their own install SQL?
+#
+#   og_shared  library (rlib) — stands in for og-pg-common: pg_extern, pg_schema, extension_sql(_file)
+#   ext_a      cdylib `ext_a` — stands in for v1 `ontological` (control without `schema`)
+#   ext_b      cdylib `ext_b` — stands in for v2 `ontological_age` (control `schema = 'ext_b_s'`)
+#   engine_lib  engine/src (unmodified) compiled as a library, `og_engine_lib`
+#   engine_v1   cdylib, extension `ontological` (control copied from engine/)
+#   engine_age  cdylib, extension `ontological_age` (control `schema = 'oga_catalog'`)
+#
+# Profiles copy engine/Cargo.toml so the dependency builds in the shared CARGO_TARGET_DIR are reused.
+# run.sh (toy) and run-engine.sh (engine) build, install into a writable PG16 / PG17 and check one
+# database with both extensions. Results: results/pg16, results/pg17. Findings: RESULT.md.
+[workspace]
+resolver = "2"
+members = ["og_shared", "ext_a", "ext_b", "engine_lib", "engine_v1", "engine_age"]
+
+[workspace.dependencies]
+pgrx = "=0.19.2"
+
+[profile.dev]
+panic = "unwind"
+
+[profile.release]
+panic = "unwind"
+opt-level = 3
+lto = "fat"
+codegen-units = 1

@@ -1,0 +1,23 @@
+[package]
+name = "ext_b"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["pg16"]
+pg16 = ["pgrx/pg16"]
+pg17 = ["pgrx/pg17"]
+pg_test = []
+fixed-schema = ["og_shared/fixed-schema"]
+# Linking variants, only for `cargo pgrx schema` counts (run.sh):
+#   variant-unlinked     og_shared is a dependency but nothing in ext_b names it
+#   variant-extern-only  `extern crate og_shared as _;` and nothing else
+variant-unlinked = []
+variant-extern-only = []
+
+[dependencies]
+pgrx = { workspace = true }
+og_shared = { path = "../og_shared" }

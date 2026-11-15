@@ -1,0 +1,14 @@
+[package]
+name = "og_shared"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+pgrx = { workspace = true }
+
+[features]
+# Compile the #[pg_schema] module `k0_fixed` in (its schema name is fixed at compile time).
+fixed-schema = []

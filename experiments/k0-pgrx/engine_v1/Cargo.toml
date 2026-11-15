@@ -1,0 +1,18 @@
+# v1 shell: extension `ontological`, control copied from engine/ontological.control
+[package]
+name = "ontological_k0v1"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["pg16"]
+pg16 = ["pgrx/pg16", "og_engine_lib/pg16"]
+pg17 = ["pgrx/pg17", "og_engine_lib/pg17"]
+pg_test = []
+
+[dependencies]
+pgrx = { workspace = true }
+og_engine_lib = { path = "../engine_lib" }

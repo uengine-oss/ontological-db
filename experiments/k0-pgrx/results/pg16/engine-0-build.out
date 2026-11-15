@@ -1,0 +1,23 @@
+engine/ (ontological): Discovered 122 SQL entities: 0 schemas (0 unique), 119 functions, 0 types, 0 enums, 3 sqls, 0 ords, 0 hashes, 0 aggregates, 0 triggers
+ontological_k0v1: Discovered 122 SQL entities: 0 schemas (0 unique), 119 functions, 0 types, 0 enums, 3 sqls, 0 ords, 0 hashes, 0 aggregates, 0 triggers
+--- engine/ vs engine_v1: raw
+lines:     3233 vs     3233
+differing lines: 482
+differing lines that are not '-- ' comments: 0
+first differences:
+10c10
+< -- src/lib.rs:23
+---
+> -- engine_lib/../../../engine/src/lib.rs:23
+623c623
+< -- src/lib.rs:24
+---
+> -- engine_lib/../../../engine/src/lib.rs:24
+977,978c977,978
+< -- src/security/action.rs:211
+< -- ontological::security::action::og__action_exec
+---
+--- engine/ vs engine_v1: location comments removed
+normalized install SQL: identical
+ontological_age_k0: Discovered 122 SQL entities: 0 schemas (0 unique), 119 functions, 0 types, 0 enums, 3 sqls, 0 ords, 0 hashes, 0 aggregates, 0 triggers
+ontological_age script: 123 blocks generated, 119 pgrx function blocks kept

@@ -1,0 +1,41 @@
+=== phase 4: reverse order, then both in one schema
+DROP EXTENSION ext_b;
+DROP EXTENSION
+DROP EXTENSION ext_a;
+DROP EXTENSION
+DROP SCHEMA IF EXISTS ext_b_s;
+DROP SCHEMA
+CREATE EXTENSION ext_b;
+CREATE EXTENSION
+CREATE EXTENSION ext_a;
+CREATE EXTENSION
+SELECT e.extname, n.nspname AS extschema FROM pg_extension e JOIN pg_namespace n ON n.oid = e.extnamespace
+ WHERE e.extname LIKE 'ext_%' ORDER BY 1;
+ extname | extschema 
+---------+-----------
+ ext_a   | public
+ ext_b   | ext_b_s
+(2 rows)
+
+SELECT public.k0_whoami() AS a, ext_b_s.k0_whoami() AS b;
+          a          |          b          
+---------------------+---------------------
+ ext_a (ext_a.dylib) | ext_b (ext_b.dylib)
+(1 row)
+
+DROP EXTENSION ext_a;
+DROP EXTENSION
+--- ext_a put into schema ext_b_s: the two scripts now collide
+CREATE EXTENSION ext_a SCHEMA ext_b_s;
+psql:sql/4-order-and-same-schema.sql:13: ERROR:  relation "k0_edition_boot" already exists
+DROP EXTENSION IF EXISTS ext_a;
+psql:sql/4-order-and-same-schema.sql:14: NOTICE:  extension "ext_a" does not exist, skipping
+DROP EXTENSION
+DROP EXTENSION ext_b;
+DROP EXTENSION
+SELECT count(*) AS leftover_extensions FROM pg_extension WHERE extname LIKE 'ext_%';
+ leftover_extensions 
+---------------------
+                   0
+(1 row)
+

@@ -1,0 +1,17 @@
+=== phase 1: shared #[pg_schema] in both extensions
+CREATE EXTENSION ext_a;
+CREATE EXTENSION
+CREATE EXTENSION ext_b;
+psql:sql/1-fixed-conflict.sql:6: ERROR:  schema k0_fixed is not a member of extension "ext_b"
+DETAIL:  An extension may only use CREATE ... IF NOT EXISTS to skip object creation if the conflicting object is one that it already owns.
+SELECT extname FROM pg_extension WHERE extname LIKE 'ext_%' ORDER BY 1;
+ extname 
+---------
+ ext_a
+(1 row)
+
+DROP EXTENSION IF EXISTS ext_b;
+psql:sql/1-fixed-conflict.sql:8: NOTICE:  extension "ext_b" does not exist, skipping
+DROP EXTENSION
+DROP EXTENSION ext_a;
+DROP EXTENSION

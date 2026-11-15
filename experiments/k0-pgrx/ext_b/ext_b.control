@@ -1,0 +1,7 @@
+comment = 'K0 ext_b: stands in for v2 ontological_age (own schema, D9)'
+default_version = '0.1.0'
+module_pathname = '$libdir/ext_b'
+relocatable = false
+superuser = false
+trusted = false
+schema = 'ext_b_s'
