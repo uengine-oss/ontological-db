@@ -103,8 +103,23 @@ pub enum Expr {
     /// `n:A` used as a predicate — `WHERE n:A`, `NOT n:A`, `n:A:B`, `n:A|B`.
     /// Any one of `alts` holds when the element carries every label in it.
     HasLabels { var: String, alts: Vec<Vec<String>> },
+    /// `reduce(acc = init, x IN list | expr)`.
+    Reduce { acc: String, init: Box<Expr>, var: String, list: Box<Expr>, expr: Box<Expr> },
+    /// A pattern as a value: `EXISTS { MATCH? pattern [WHERE …] }`, a bare
+    /// pattern predicate `WHERE (a)-[:R]->(:B)`, `exists((a)-[:R]->())` — a
+    /// boolean; `COUNT { … }` — the number of matches; `[(a)-[:R]->(b) WHERE …
+    /// | b.name]` — a list with one element per match.
+    Subquery { kind: SubqueryKind, patterns: Vec<Pattern>, where_: Option<Box<Expr>>, project: Option<Box<Expr>> },
     /// `labels(n)` style pseudo-property used by RETURN projection
     Star,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SubqueryKind {
+    Exists,
+    Count,
+    /// A pattern comprehension.
+    Collect,
 }
 
 #[derive(Debug, Clone)]
@@ -171,6 +186,8 @@ pub enum Clause {
     /// Procedures are resolved by their Neo4j name against a fixed registry;
     /// there is no user-defined procedure mechanism (see `compat::procs`).
     Call { name: String, args: Vec<Expr>, yields: Vec<(String, String)> },
+    /// `FOREACH (x IN list | <write clauses>)`.
+    Foreach { var: String, list: Expr, body: Vec<Clause> },
     /// Index and constraint DDL. Cypher applications send these at startup, so
     /// accepting them is part of speaking Cypher, not an extra.
     Ddl(Ddl),
@@ -250,6 +267,7 @@ impl Expr {
                 .iter()
                 .any(|i| matches!(i, MapProjItem::Entry(_, e) if e.is_aggregate())),
             Expr::Prop(b, _) => b.is_aggregate(),
+            Expr::Reduce { init, list, .. } => init.is_aggregate() || list.is_aggregate(),
             // `collect(x)[..3]`: the projection still groups.
             Expr::Slice { list, from, to } => {
                 list.is_aggregate()

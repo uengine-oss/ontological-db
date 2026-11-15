@@ -39,6 +39,8 @@ const FAILURE: u8 = 0x7F;
 // graph structures
 const NODE: u8 = 0x4E;
 const RELATIONSHIP: u8 = 0x52;
+const UNBOUND_RELATIONSHIP: u8 = 0x72;
+const PATH: u8 = 0x50;
 
 #[derive(PartialEq)]
 enum State {
@@ -116,8 +118,9 @@ fn tx_settings(extra: &Value) -> Vec<(String, String)> {
             Value::String(s) => s.clone(),
             Value::Null => continue,
             other => match to_json(other) {
-                serde_json::Value::String(s) => s,
-                j => j.to_string(),
+                Ok(serde_json::Value::String(s)) => s,
+                Ok(j) => j.to_string(),
+                Err(_) => continue,
             },
         };
         if !out.iter().any(|(s, _): &(String, String)| s == setting) {
@@ -379,7 +382,11 @@ impl Session<'_> {
             .to_string();
         self.select_graph(&extra);
 
-        let params_json = to_json(&params).to_string();
+        // A parameter the engine has no JSON form for (a point) is refused
+        // here, by name, rather than stored as a placeholder string.
+        let params_json = to_json(&params)
+            .map_err(|e| Failure::client("Neo.ClientError.Statement.TypeError", e))?
+            .to_string();
 
         // `EXPLAIN` / `PROFILE` prefix a query to ask what it *would* do. Neo4j
         // answers with a plan and no records; the one field of that answer that
@@ -702,6 +709,11 @@ fn to_bolt(v: &serde_json::Value) -> Value {
                         .collect(),
                 )
             };
+            if m.get("_path").and_then(serde_json::Value::as_bool) == Some(true) {
+                if let Some(p) = path(m) {
+                    return p;
+                }
+            }
             match (id, ty, src, dst) {
                 (Some(id), Some(ty), Some(src), Some(dst)) => Value::Struct(
                     RELATIONSHIP,
@@ -723,23 +735,211 @@ fn to_bolt(v: &serde_json::Value) -> Value {
     }
 }
 
+/// A path — `{"_path": true, "nodes": […], "relationships": […]}` from the
+/// engine — as Bolt's Path structure: the distinct nodes, the distinct
+/// relationships (unbound), and the walk as indices into both (a relationship
+/// index is negative when the walk crosses it against its direction).
+/// `None` when the value is not shaped like one; it then goes out as a map.
+fn path(m: &serde_json::Map<String, serde_json::Value>) -> Option<Value> {
+    let nodes = m.get("nodes")?.as_array()?;
+    let rels = m.get("relationships")?.as_array()?;
+    if nodes.len() != rels.len() + 1 {
+        return None;
+    }
+    let id = |v: &serde_json::Value, k: &str| v.get(k).and_then(serde_json::Value::as_i64);
+    let mut node_ids: Vec<i64> = Vec::new();
+    let mut node_vals: Vec<Value> = Vec::new();
+    let mut walk: Vec<i64> = Vec::new();
+    let mut node_index = |n: &serde_json::Value| -> Option<i64> {
+        let nid = id(n, "_id")?;
+        Some(match node_ids.iter().position(|x| *x == nid) {
+            Some(i) => i as i64,
+            None => {
+                node_ids.push(nid);
+                node_vals.push(to_bolt(n));
+                (node_ids.len() - 1) as i64
+            }
+        })
+    };
+    node_index(&nodes[0])?;
+    let mut rel_ids: Vec<i64> = Vec::new();
+    let mut rel_vals: Vec<Value> = Vec::new();
+    for (i, r) in rels.iter().enumerate() {
+        let (rid, src) = (id(r, "_id")?, id(r, "_src")?);
+        let ty = r.get("_type").and_then(serde_json::Value::as_str)?;
+        let at = match rel_ids.iter().position(|x| *x == rid) {
+            Some(k) => k,
+            None => {
+                rel_ids.push(rid);
+                let props = r
+                    .as_object()?
+                    .iter()
+                    .filter(|(k, _)| !k.starts_with('_'))
+                    .map(|(k, v)| (k.clone(), to_bolt(v)))
+                    .collect();
+                rel_vals.push(Value::Struct(UNBOUND_RELATIONSHIP, vec![Value::Int(rid), string(ty), Value::Map(props)]));
+                rel_ids.len() - 1
+            }
+        } as i64
+            + 1;
+        let forward = id(&nodes[i], "_id")? == src;
+        walk.push(if forward { at } else { -at });
+        walk.push(node_index(&nodes[i + 1])?);
+    }
+    Some(Value::Struct(
+        PATH,
+        vec![
+            Value::List(node_vals),
+            Value::List(rel_vals),
+            Value::List(walk.into_iter().map(Value::Int).collect()),
+        ],
+    ))
+}
+
 /// Parameters travel to `og_cypher()` as jsonb, never interpolated into the
 /// query text — the injection guarantee is spec 003's FR-026, unchanged here.
-fn to_json(v: &Value) -> serde_json::Value {
-    match v {
+///
+/// Temporal values arrive as Bolt structures. They become the ISO 8601 text
+/// the engine reads dates and times from (`date($d)`, `datetime($t)`, a
+/// comparison with a date column) and that Neo4j prints them as. They used to
+/// become the string `"<unsupported struct 0x64>"` and were stored like that.
+/// Points have no form here and are refused.
+fn to_json(v: &Value) -> Result<serde_json::Value, String> {
+    Ok(match v {
         Value::Null => serde_json::Value::Null,
         Value::Bool(b) => serde_json::Value::Bool(*b),
         Value::Int(i) => serde_json::Value::from(*i),
         Value::Float(f) => serde_json::Value::from(*f),
         Value::String(s) => serde_json::Value::String(s.clone()),
-        Value::List(xs) => serde_json::Value::Array(xs.iter().map(to_json).collect()),
-        Value::Map(m) => {
-            serde_json::Value::Object(m.iter().map(|(k, v)| (k.clone(), to_json(v))).collect())
+        Value::List(xs) => serde_json::Value::Array(xs.iter().map(to_json).collect::<Result<_, _>>()?),
+        Value::Map(m) => serde_json::Value::Object(
+            m.iter().map(|(k, v)| Ok((k.clone(), to_json(v)?))).collect::<Result<_, String>>()?,
+        ),
+        Value::Struct(sig, fields) => serde_json::Value::String(temporal_text(*sig, fields)?),
+    })
+}
+
+/// A Bolt 4.4 temporal structure as ISO 8601 text.
+fn temporal_text(sig: u8, f: &[Value]) -> Result<String, String> {
+    let int = |i: usize| f.get(i).and_then(Value::as_i64).ok_or_else(|| format!("malformed structure 0x{sig:02X}"));
+    Ok(match sig {
+        // Date: days since 1970-01-01.
+        0x44 => civil_date(int(0)?),
+        // LocalTime: nanoseconds since midnight.
+        0x74 => clock(int(0)?),
+        // Time: nanoseconds since midnight, offset in seconds.
+        0x54 => format!("{}{}", clock(int(0)?), offset(int(1)?)),
+        // LocalDateTime: seconds since the epoch (as if UTC) and nanoseconds.
+        0x64 => date_time(int(0)?, int(1)?),
+        // DateTime (4.4): local seconds and nanoseconds, offset in seconds.
+        0x46 => format!("{}{}", date_time(int(0)?, int(1)?), offset(int(2)?)),
+        // DateTime (4.4): local seconds and nanoseconds, zone id. Written the
+        // way Neo4j prints it, less the offset, which needs the zone database
+        // to know — PostgreSQL reads this form as that local time in the zone.
+        0x66 => {
+            let zone = f.get(2).and_then(Value::as_str).ok_or("malformed DateTime structure")?;
+            format!("{}[{zone}]", date_time(int(0)?, int(1)?))
         }
-        // Drivers can send temporal/spatial structures; 4.4 support for those is
-        // out of scope (spec 011), and silently mangling them would be worse.
-        Value::Struct(sig, _) => serde_json::Value::String(format!("<unsupported struct 0x{sig:02X}>")),
+        // DateTime (5.x / utc patch): UTC seconds, nanoseconds, offset or zone.
+        0x49 => format!("{}{}", date_time(int(0)? + int(2)?, int(1)?), offset(int(2)?)),
+        // … with a zone id: the instant, in UTC (the local time needs the
+        // zone database).
+        0x69 => format!("{}Z", date_time(int(0)?, int(1)?)),
+        // Duration: months, days, seconds, nanoseconds.
+        0x45 => duration(int(0)?, int(1)?, int(2)?, int(3)?),
+        0x58 | 0x59 => return Err("point parameters are not supported".into()),
+        other => return Err(format!("parameters of Bolt structure 0x{other:02X} are not supported")),
+    })
+}
+
+/// Days since 1970-01-01 → `YYYY-MM-DD` (proleptic Gregorian).
+fn civil_date(days: i64) -> String {
+    // Howard Hinnant's days_from_civil, inverted.
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = yoe + era * 400 + i64::from(m <= 2);
+    if (0..=9999).contains(&y) {
+        format!("{y:04}-{m:02}-{d:02}")
+    } else {
+        format!("{y:+05}-{m:02}-{d:02}")
     }
+}
+
+/// Nanoseconds since midnight → `HH:MM:SS[.fraction]`.
+fn clock(nanos: i64) -> String {
+    let secs = nanos.div_euclid(1_000_000_000);
+    let frac = nanos.rem_euclid(1_000_000_000);
+    format!("{:02}:{:02}:{:02}{}", secs / 3600, (secs / 60) % 60, secs % 60, fraction(frac))
+}
+
+fn date_time(seconds: i64, nanos: i64) -> String {
+    let day = seconds.div_euclid(86_400);
+    let tod = seconds.rem_euclid(86_400);
+    format!("{}T{}", civil_date(day), clock(tod * 1_000_000_000 + nanos))
+}
+
+/// `.123`, `.000000001`; nothing for whole seconds.
+fn fraction(nanos: i64) -> String {
+    if nanos == 0 {
+        return String::new();
+    }
+    let s = format!(".{nanos:09}");
+    s.trim_end_matches('0').to_string()
+}
+
+/// Seconds east of UTC → `Z` or `+HH:MM[:SS]`.
+fn offset(secs: i64) -> String {
+    if secs == 0 {
+        return "Z".into();
+    }
+    let sign = if secs < 0 { '-' } else { '+' };
+    let a = secs.abs();
+    if a % 60 == 0 {
+        format!("{sign}{:02}:{:02}", a / 3600, (a / 60) % 60)
+    } else {
+        format!("{sign}{:02}:{:02}:{:02}", a / 3600, (a / 60) % 60, a % 60)
+    }
+}
+
+/// An ISO 8601 duration, the way Neo4j prints one (`P1Y2M3DT4H5M6.5S`).
+fn duration(months: i64, days: i64, seconds: i64, nanos: i64) -> String {
+    let mut out = String::from("P");
+    let (y, m) = (months / 12, months % 12);
+    if y != 0 {
+        out.push_str(&format!("{y}Y"));
+    }
+    if m != 0 {
+        out.push_str(&format!("{m}M"));
+    }
+    if days != 0 {
+        out.push_str(&format!("{days}D"));
+    }
+    let total = seconds as i128 * 1_000_000_000 + nanos as i128;
+    if total != 0 || out == "P" {
+        out.push('T');
+        let neg = total < 0;
+        let a = total.abs();
+        let secs = (a / 1_000_000_000) as i64;
+        let frac = (a % 1_000_000_000) as i64;
+        let (h, mi, s) = (secs / 3600, (secs / 60) % 60, secs % 60);
+        let sign = if neg { "-" } else { "" };
+        if h != 0 {
+            out.push_str(&format!("{sign}{h}H"));
+        }
+        if mi != 0 {
+            out.push_str(&format!("{sign}{mi}M"));
+        }
+        if s != 0 || frac != 0 || (h == 0 && mi == 0) {
+            out.push_str(&format!("{sign}{s}{}S", fraction(frac)));
+        }
+    }
+    out
 }
 
 // ------------------------------------------------------------ watching
@@ -1144,5 +1344,59 @@ mod plan_prefix_tests {
         assert_eq!(split_plan_prefix("EXPLAIN //소스\nMATCH (n) RETURN n"), ("//소스\nMATCH (n) RETURN n", true));
         assert_eq!(split_plan_prefix("PROFILE 🙂🙂"), ("🙂🙂", true));
         assert_eq!(split_plan_prefix("EXPLAIN fabri🙂 x"), ("fabri🙂 x", true));
+    }
+}
+
+#[cfg(test)]
+mod parameter_tests {
+    use super::*;
+
+    #[test]
+    fn temporal_parameters_become_iso_text() {
+        // 2024-03-05 = 19787 days after the epoch.
+        assert_eq!(temporal_text(0x44, &[Value::Int(19_787)]).unwrap(), "2024-03-05");
+        assert_eq!(temporal_text(0x44, &[Value::Int(-1)]).unwrap(), "1969-12-31");
+        let t = 19_787 * 86_400 + 3_600 * 13 + 60 * 4 + 5;
+        assert_eq!(temporal_text(0x64, &[Value::Int(t), Value::Int(120_000_000)]).unwrap(), "2024-03-05T13:04:05.12");
+        assert_eq!(
+            temporal_text(0x46, &[Value::Int(t), Value::Int(0), Value::Int(9 * 3600)]).unwrap(),
+            "2024-03-05T13:04:05+09:00"
+        );
+        assert_eq!(
+            temporal_text(0x66, &[Value::Int(t), Value::Int(0), Value::String("Asia/Seoul".into())]).unwrap(),
+            "2024-03-05T13:04:05[Asia/Seoul]"
+        );
+        // UTC seconds plus an offset (Bolt 5): the local time is shown.
+        assert_eq!(
+            temporal_text(0x49, &[Value::Int(t), Value::Int(0), Value::Int(-3600)]).unwrap(),
+            "2024-03-05T12:04:05-01:00"
+        );
+        assert_eq!(temporal_text(0x74, &[Value::Int(1_000_000_001)]).unwrap(), "00:00:01.000000001");
+        assert_eq!(temporal_text(0x54, &[Value::Int(0), Value::Int(0)]).unwrap(), "00:00:00Z");
+        assert_eq!(
+            temporal_text(0x45, &[Value::Int(14), Value::Int(3), Value::Int(3_725), Value::Int(500_000_000)]).unwrap(),
+            "P1Y2M3DT1H2M5.5S"
+        );
+        assert_eq!(temporal_text(0x45, &[Value::Int(0), Value::Int(0), Value::Int(0), Value::Int(0)]).unwrap(), "PT0S");
+        assert!(temporal_text(0x58, &[Value::Int(4326), Value::Float(1.0), Value::Float(2.0)]).is_err());
+        let p = Value::Map([("d".to_string(), Value::Struct(0x44, vec![Value::Int(0)]))].into_iter().collect());
+        assert_eq!(to_json(&p).unwrap(), serde_json::json!({"d": "1970-01-01"}));
+    }
+
+    #[test]
+    fn a_path_becomes_a_path_structure() {
+        let v = serde_json::json!({
+            "_path": true,
+            "nodes": [{"_id": 1, "_type": "A", "k": 1}, {"_id": 2, "_type": "A"}, {"_id": 1, "_type": "A", "k": 1}],
+            "relationships": [{"_id": 10, "_type": "R", "_src": 1, "_dst": 2}, {"_id": 10, "_type": "R", "_src": 1, "_dst": 2}]
+        });
+        let Value::Struct(sig, f) = to_bolt(&v) else { panic!("not a structure") };
+        assert_eq!(sig, PATH);
+        let (Value::List(nodes), Value::List(rels), Value::List(walk)) = (&f[0], &f[1], &f[2]) else { panic!() };
+        assert_eq!((nodes.len(), rels.len()), (2, 1));
+        // out along 10 to node 1 (index 1), back against it to node 0.
+        assert_eq!(walk, &vec![Value::Int(1), Value::Int(1), Value::Int(-1), Value::Int(0)]);
+        // Not shaped like a path: a map.
+        assert!(matches!(to_bolt(&serde_json::json!({"_path": true, "nodes": []})), Value::Map(_)));
     }
 }

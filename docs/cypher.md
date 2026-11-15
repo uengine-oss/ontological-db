@@ -119,18 +119,47 @@ source as `active = true`.
 node it folds to a constant. An umbrella label beside a virtual type
 (`n:_Entity` on a virtual `Customer`) holds, as it does in `MATCH`.
 
+**`id` is an ordinary property**, as in Neo4j: `CREATE (n:Lamp {id: 'singleton'})`
+then `MATCH (n:Lamp {id: $id})` and `n.id` read the property you stored (null where
+there is none). The node's identifier is `id(n)`, `elementId(n)` and `n._id`. (Before
+this, `n.id` on a stored type was the identifier, and `{id: 'x'}` failed with
+"invalid input syntax for type bigint".)
+
+**Unlabelled patterns stay in the session's graph.** `MATCH (n)` and
+`MATCH (a)-[r]->(b)` read the graph the session is on, not every graph in the
+database; so `MATCH (n) DETACH DELETE n` empties one graph.
+
+**Pattern predicates and subqueries** (Neo4j 5): `WHERE EXISTS { (a)-[:R]->(:B) }`,
+`EXISTS { MATCH … WHERE … }`, `exists((a)-[:R]->())`, a bare `WHERE NOT (a)-[:R]->()`,
+`COUNT { pattern }`, `COLLECT { MATCH … RETURN x }` and pattern comprehensions
+`[(a)-[:R]->(b) WHERE … | b.name]` are compiled to correlated sub-selects, so they
+neither add rows nor leak bindings. They are values for a read; in `SET`/`CREATE` they
+are refused ("cannot be evaluated in a write clause") — compute them in a `WITH` first.
+`FOREACH (x IN list | SET … / CREATE … / MERGE … / nested FOREACH)` runs its write
+clauses once per element (a read inside it is refused). `ORDER BY alias.prop` sorts
+by a property of a projected map or node.
+
+**Writes.** `UNWIND $rows AS item MERGE (n:L {k: item.k})` matches existing nodes
+(a null key is refused, as Neo4j refuses it); `WITH x AS alias`, or any expression,
+may precede a write clause, and a reading clause after a write runs for each row.
+
+**Parameters over Bolt.** A date, time, datetime or duration parameter is the ISO 8601
+text Neo4j prints it as (`date($d)` and comparisons with a date column work); a point
+parameter is refused by name. A path result is a Bolt `Path`. A map parameter's
+properties read: `$row.name`, `WITH $row AS r RETURN r.name`.
+
 ### Functions
 
 | Group | Functions |
 |---|---|
 | aggregate | `count` (incl. `DISTINCT` and `count(*)`), `sum`, `avg`, `min`, `max`, `collect`, `stdev` |
 | list | `head`, `last`, `tail`, slices `xs[a..b]` (from inclusive, to exclusive, negative from the end) |
-| graph | `id`, `labels`, `type`, `nodes`, `relationships`, `length`, `size` |
+| graph | `id`, `elementId`, `labels`, `type`, `nodes`, `relationships`, `length`, `size` (a string's characters, a list's items, `null` for `null`; a map has none and is refused), `startNode`, `endNode` |
 | string | `toUpper`, `toLower`, `trim`, `substring`, `replace`, `split` |
 | numeric | `abs`, `ceil`, `floor`, `round`, `sqrt`, `rand` |
 | conversion | `toString`, `toInteger`, `toFloat` — a number truncates toward zero, a string that is not a number gives `null` |
 | temporal | `date()`, `date('2016-01-31')`, `date({year, month, day})`, `datetime()`, `datetime('…')`, `localdatetime(…)`, `duration('P30D')`, `duration({days: 30})`, `timestamp()`; fields `.year` `.quarter` `.month` `.week` `.day` `.ordinalDay` `.dayOfWeek` `.hour` `.minute` `.second` `.millisecond` `.epochSeconds` `.epochMillis` |
-| other | `coalesce`, `keys`, `exists` |
+| list / other | `reduce(acc = init, x IN xs \| e)`, `coalesce` (keeps a list a list), `keys`, `exists` (a property, or a pattern: `exists((a)-[:R]->())`), `randomUUID()`, `vector.similarity.cosine(a, b)` |
 | **vector** | `vector.similarity(a, b)`, `vector.distance(a, b)`, `vector.l2(a, b)`, `genai.vector.encode(text, provider, config)` |
 
 `vector.similarity` compiles to `1 - (a <=> b)` on a pgvector column, so it uses
@@ -329,9 +358,8 @@ new column, because "write first, index later" is the ordinary order.
 | Construct | What happens | Alternative |
 |---|---|---|
 | `UNION` | parsed, not compiled | `UNION` the two `og_cypher()` calls in SQL |
-| `FOREACH` | rejected at parse time | `UNWIND` + write clause |
+| `CALL { … }` subqueries | rejected at parse time | `WITH` + the clauses inline; `UNWIND` for a per-row loop |
 | `SET a:Label` adding a *new* label | rejected with the reason | a node's type is part of its identifier here. To rename a class write `REMOVE n:Old SET n:New`; to move a node between types, create it under the target type |
-| pattern comprehensions | not parsed | `collect()` with a sub-query |
 | `shortestPath` | not implemented | `og_vlp()` ordered by depth |
 | user-defined procedures | no mechanism | the `og_*` SQL function surface |
 

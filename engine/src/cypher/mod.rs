@@ -67,6 +67,7 @@ fn is_write(q: &Query) -> bool {
                 | Clause::Set(_)
                 | Clause::Remove(_)
                 | Clause::Delete { .. }
+                | Clause::Foreach { .. }
                 | Clause::Ddl(_)
         )
     })
@@ -213,6 +214,14 @@ fn exec_json(sql: &str, params: &Value) -> Vec<Value> {
 // Write execution
 // --------------------------------------------------------------------------
 
+/// Clauses that only read: they turn rows of bindings into rows of bindings.
+fn is_read_clause(c: &Clause) -> bool {
+    matches!(c, Clause::Match { .. } | Clause::Unwind { .. } | Clause::With { .. } | Clause::Call { .. })
+}
+
+/// The parameter a read segment after a write receives the rows so far in.
+const ROWS_PARAM: &str = "__og_rows";
+
 fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
     // Schema commands stand alone — Cypher does not let them share a statement
     // with a pattern, so they are handled before any binding work.
@@ -229,289 +238,266 @@ fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
 
     let gid = crate::catalog::types::graph_id(graph);
 
-    // 1. Evaluate the read part (if any) to produce bindings.
-    //
-    // `WITH` belongs here. It used to stop the `take_while` and then fall
-    // through the write loop's catch-all, which meant `MATCH (n) WITH n LIMIT 1
-    // DELETE n` dropped the `LIMIT` and deleted the whole label. A clause that
-    // changes which rows are written cannot be ignored — either it is honoured
-    // or the query is refused.
-    let read_clauses: Vec<Clause> = q
-        .clauses
-        .iter()
-        .take_while(|c| {
-            matches!(c, Clause::Match { .. } | Clause::Unwind { .. } | Clause::With { .. })
-        })
-        .cloned()
-        .collect();
+    // `REMOVE n:Old SET n:New` — renaming a class. Recognised across the two
+    // clauses and applied once to the catalog — after the rows are matched
+    // (by the old name), before the first one is written — because it is a
+    // schema change and not a per-node one. See `rename_label`.
+    let write_clauses: Vec<&Clause> =
+        q.clauses.iter().filter(|c| !is_read_clause(c) && !matches!(c, Clause::Return(_))).collect();
+    let mut renamed: Option<bool> = None;
 
-    let mut envs: Vec<eval::Env> = Vec::new();
-    let mut with_proj: Option<Projection> = None;
-    if read_clauses.is_empty() {
-        envs.push(HashMap::new());
-    } else {
-        let mut c = compile::Compiler::new(graph);
-        for clause in &read_clauses {
-            match clause {
-                Clause::Match { patterns, optional, where_ } => {
-                    c.begin_match_clause();
-                    for p in patterns {
-                        if let Err(e) = c.compile_pattern(p, *optional) {
-                            error!("cypher error: {e}");
-                        }
+    // The query runs as a pipeline of rows, clause by clause, as Cypher reads.
+    //
+    // A run of reading clauses (MATCH, UNWIND, WITH, CALL … YIELD) is compiled
+    // to one SQL statement and turns the rows so far into new rows; a writing
+    // clause is applied to each row. The reading part used to be allowed only
+    // in front: `WITH` before a write could only pass plain variables through,
+    // and a reading clause *after* a write — `MERGE (a:A {k: 1}) WITH a MATCH
+    // (b:B {k: 2}) MERGE (a)-[:R]->(b)`, the ordinary way to link two nodes —
+    // was skipped without a word, so `b` was a new, empty node. Now each run of
+    // reading clauses after the first starts from the rows written so far.
+    let mut envs: Vec<eval::Env> = vec![HashMap::new()];
+    // The variables in scope: the rows may be too few (none) to tell.
+    let mut names: Vec<String> = Vec::new();
+    let clauses = &q.clauses;
+    let mut i = 0;
+    while i < clauses.len() {
+        if is_read_clause(&clauses[i]) {
+            let end = clauses[i..].iter().position(|c| !is_read_clause(c)).map_or(clauses.len(), |k| i + k);
+            let seed = if i == 0 { None } else { Some((envs.as_slice(), names.as_slice())) };
+            let (rows, bound) = read_segment(graph, &clauses[i..end], None, seed, params);
+            names = bound;
+            envs = rows
+                .into_iter()
+                .map(|row| match row {
+                    Value::Object(m) => {
+                        let mut env: eval::Env = m.into_iter().collect();
+                        env.remove(ROW_MARK);
+                        env
                     }
-                    if let Some(w) = where_ {
-                        match c.expr(w, None) {
-                            Ok(s) => c.push_where(s),
-                            Err(e) => error!("cypher error: {e}"),
-                        }
-                    }
-                }
-                Clause::Unwind { expr, alias } => {
-                    // `UNWIND $rows AS row MATCH (n) WHERE … SET …` is the
-                    // standard way a Neo4j application writes a batch. The
-                    // compiler has always been able to produce the rows; only
-                    // this path refused them.
-                    if let Err(e) = c.compile_unwind(expr, alias) {
-                        error!("cypher error: {e}");
-                    }
-                }
-                Clause::With { proj, where_ } => {
-                    // What is honoured here is the part of `WITH` that decides
-                    // *which rows* reach the write: DISTINCT, ORDER BY, SKIP,
-                    // LIMIT, and a trailing WHERE. What is refused is the part
-                    // that would re-shape the bindings — expressions, aliases
-                    // and aggregates — because the write clauses that follow
-                    // address pattern variables, and a projection that renames
-                    // or computes them leaves nothing for `DELETE n` to mean.
-                    //
-                    // Refusing is the point. Every one of these used to be
-                    // dropped on the floor along with the LIMIT beside it.
-                    if with_proj.is_some() {
-                        error!("only one WITH is supported before a write clause");
-                    }
-                    if !proj.items.iter().all(|i| {
-                        matches!(&i.expr, Expr::Var(v) if i.alias.as_deref().unwrap_or(v) == v)
-                    }) {
-                        error!(
-                            "WITH before a write clause may only carry plain variables —                              expressions, aliases and aggregates are not supported here"
-                        );
-                    }
-                    if let Some(w) = where_ {
-                        match c.expr(w, None) {
-                            Ok(sql) => c.push_where(sql),
-                            Err(e) => error!("cypher error: {e}"),
-                        }
-                    }
-                    with_proj = Some(proj.clone());
-                }
-                _ => {}
+                    _ => HashMap::new(),
+                })
+                .collect();
+            i = end;
+            continue;
+        }
+        if let Clause::Return(proj) = &clauses[i] {
+            // The result is projected by SQL over the rows the writes produced,
+            // so RETURN after a write has everything RETURN has elsewhere —
+            // ORDER BY, SKIP, LIMIT, DISTINCT, aggregates, every function.
+            return read_segment(graph, &[], Some(proj), Some((&envs, &names)), params).0;
+        }
+        let renamed = *renamed.get_or_insert_with(|| rename_label(gid, &write_clauses));
+        for env in envs.iter_mut() {
+            // One binding's writes are a handful of SPI calls; a MATCH that bound a
+            // million rows makes this loop long, and a cancel has to reach it.
+            pgrx::check_for_interrupts!();
+            apply_write(graph, gid, &clauses[i], env, params, renamed);
+        }
+        let introduced: Vec<&Pattern> = match &clauses[i] {
+            Clause::Create(pats) => pats.iter().collect(),
+            Clause::Merge { pattern, .. } => vec![pattern],
+            _ => Vec::new(),
+        };
+        for p in introduced {
+            names.extend(p.path_var.iter().cloned());
+            for e in &p.elems {
+                let v = match e {
+                    PatElem::Node(n) => &n.var,
+                    PatElem::Rel(r) => &r.var,
+                };
+                names.extend(v.iter().cloned());
             }
         }
-        // A WITH that is not last would mean a second scoping horizon, and the
-        // clauses after it were compiled against the first. Refuse rather than
-        // compile something that means neither.
-        if with_proj.is_some()
-            && !matches!(read_clauses.last(), Some(Clause::With { .. }))
-        {
-            error!("WITH must be the last read clause before a write clause");
+        names.sort();
+        names.dedup();
+        i += 1;
+    }
+    Vec::new()
+}
+
+/// A column every read segment projects, so that a segment binding no
+/// variables still yields one row per match (`MATCH (:A) CREATE (:B)` creates
+/// a B for every A — it used to create one).
+const ROW_MARK: &str = "__og_row";
+
+/// Compile and run a run of reading clauses, starting from `seed` (the rows a
+/// write produced, and the variables in scope) when given, and project either
+/// every bound variable or `ret`. Returns one object per row, and the
+/// variables bound at the end.
+fn read_segment(
+    graph: &str,
+    clauses: &[Clause],
+    ret: Option<&Projection>,
+    seed: Option<(&[eval::Env], &[String])>,
+    params: &Value,
+) -> (Vec<Value>, Vec<String>) {
+    let mut c = compile::Compiler::new(graph);
+    let mut p = params.clone();
+    if let Some((rows, known)) = seed {
+        let mut names: Vec<String> = rows.iter().flat_map(|e| e.keys().cloned()).collect();
+        names.extend(known.iter().cloned());
+        names.sort();
+        names.dedup();
+        // A variable that is a stored node of the same type in every row can
+        // anchor a pattern on that type's view.
+        let mut types = HashMap::new();
+        for n in &names {
+            let mut tid: Option<i32> = None;
+            let mut same = true;
+            for e in rows {
+                let t = e
+                    .get(n)
+                    .filter(|v| v.get("_src").is_none())
+                    .and_then(|v| v.get("_id"))
+                    .and_then(Value::as_i64)
+                    .map(crate::id::id_type);
+                match (t, tid) {
+                    (Some(t), None) => tid = Some(t),
+                    (Some(t), Some(have)) if t == have => {}
+                    _ => {
+                        same = false;
+                        break;
+                    }
+                }
+            }
+            if let (true, Some(t)) = (same, tid) {
+                types.insert(n.clone(), t);
+            }
         }
-        let proj = match &with_proj {
-            Some(p) => p.clone(),
-            None => Projection {
-                items: c
-                    .bound_vars()
-                    .into_iter()
-                    .map(|v| ReturnItem { expr: Expr::Var(v.clone()), alias: Some(v) })
-                    .collect(),
-                ..Default::default()
-            },
-        };
-        if proj.items.is_empty() {
-            envs.push(HashMap::new());
+        let list: Vec<Value> =
+            rows.iter().map(|e| Value::Object(e.iter().map(|(k, v)| (k.clone(), v.clone())).collect())).collect();
+        if let Value::Object(m) = &mut p {
+            m.insert(ROWS_PARAM.into(), Value::Array(list));
         } else {
-            let compiled = match c.build_select_pub(&proj) {
-                Ok(v) => v,
-                Err(e) => error!("cypher error: {e}"),
+            p = json!({ ROWS_PARAM: list });
+        }
+        c.seed_rows(ROWS_PARAM, &names, &types);
+    }
+    for clause in clauses {
+        let r = match clause {
+            Clause::Match { patterns, optional, where_ } => c.compile_match(patterns, *optional, where_.as_ref()),
+            Clause::Unwind { expr, alias } => c.compile_unwind(expr, alias),
+            Clause::With { proj, where_ } => c.compile_with(proj, where_.as_ref()),
+            Clause::Call { name, args, yields } => c.compile_call(name, args, yields),
+            _ => Err("this clause cannot be part of a read".into()),
+        };
+        if let Err(e) = r {
+            error!("cypher error: {e}");
+        }
+    }
+    let proj = match ret {
+        Some(p) => p.clone(),
+        None => {
+            let mut items: Vec<ReturnItem> = c
+                .bound_vars()
+                .into_iter()
+                .map(|v| ReturnItem { expr: Expr::Var(v.clone()), alias: Some(v) })
+                .collect();
+            items.push(ReturnItem { expr: Expr::Lit(Lit::Int(1)), alias: Some(ROW_MARK.into()) });
+            Projection { items, ..Default::default() }
+        }
+    };
+    let bound = c.bound_vars();
+    let compiled = c.build_select_pub(&proj).unwrap_or_else(|e| error!("cypher error: {e}"));
+    (exec_json(&compiled.sql, &p), bound)
+}
+
+/// Apply one writing clause to one row.
+fn apply_write(graph: &str, gid: i32, clause: &Clause, env: &mut eval::Env, params: &Value, renamed: bool) {
+    if renamed
+        && matches!(clause, Clause::Set(items) | Clause::Remove(items)
+            if items.iter().all(|i| matches!(i, SetOp::Label { .. })))
+    {
+        return;
+    }
+    match clause {
+        Clause::Create(pats) => {
+            for p in pats {
+                create_pattern(graph, gid, p, env, params);
+            }
+        }
+        Clause::Merge { pattern, on_create, on_match } => {
+            merge_pattern(graph, gid, pattern, on_create, on_match, env, params);
+        }
+        Clause::Set(items) => apply_set(items, env, params),
+        Clause::Remove(items) => apply_set(items, env, params),
+        Clause::Delete { exprs, detach } => {
+            for e in exprs {
+                let v = eval_or_fail(e, env, params);
+                if let Some(id) = v.get("_id").and_then(|x| x.as_i64()) {
+                    let is_edge = v.get("_src").is_some();
+                    if is_edge {
+                        crate::storage::delete_edge_inner(id);
+                    } else {
+                        if !*detach {
+                            let deg = crate::spiu::one::<i64>(
+                                "SELECT COALESCE(sum(n),0)::int8 FROM og_data.og_adj WHERE src = $1",
+                                &[id.into()],
+                            )
+                            .ok()
+                            .flatten()
+                            .unwrap_or(0);
+                            if deg > 0 {
+                                error!(
+                                    "cannot delete node {id}: it still has {deg} \
+                                     relationship(s). use DETACH DELETE"
+                                );
+                            }
+                        }
+                        crate::storage::delete_node_inner(id);
+                    }
+                }
+            }
+        }
+        // `FOREACH (x IN list | <writes>)`: the writes once per element, with
+        // `x` bound. Variables the body introduces stay inside it, as in
+        // Cypher; what it does to the row's own variables (SET n.x) stays.
+        Clause::Foreach { var, list, body } => {
+            let items = match eval_or_fail(list, env, params) {
+                Value::Array(xs) => xs,
+                Value::Null => Vec::new(),
+                other => error!("FOREACH needs a list, got {other}"),
             };
-            for row in exec_json(&compiled.sql, params) {
-                let mut env = HashMap::new();
-                if let Value::Object(m) = row {
-                    for (k, v) in m {
+            for item in items {
+                let mut local = env.clone();
+                local.insert(var.clone(), item);
+                for c in body {
+                    apply_write(graph, gid, c, &mut local, params, renamed);
+                }
+                for (k, v) in local {
+                    if k != *var && env.contains_key(&k) {
                         env.insert(k, v);
                     }
                 }
-                envs.push(env);
             }
         }
+        other => error!("this clause cannot be used here: {}", clause_name(other)),
     }
-
-    // 2. Apply write clauses per binding row.
-    let write_clauses: Vec<&Clause> = q
-        .clauses
-        .iter()
-        .skip(read_clauses.len())
-        .collect();
-
-    // `REMOVE n:Old SET n:New` — renaming a class. Recognised across the two
-    // clauses and applied once to the catalog, before the per-row loop, because
-    // it is a schema change and not a per-node one. See `rename_label`.
-    let renamed = rename_label(gid, &write_clauses);
-
-    let mut out = Vec::new();
-    for env in envs.iter_mut() {
-        // One binding's writes are a handful of SPI calls; a MATCH that bound a
-        // million rows makes this loop long, and a cancel has to reach it.
-        pgrx::check_for_interrupts!();
-        for clause in &write_clauses {
-            if renamed && matches!(clause, Clause::Set(items) | Clause::Remove(items)
-                if items.iter().all(|i| matches!(i, SetOp::Label { .. })))
-            {
-                continue;
-            }
-            match clause {
-                Clause::Create(pats) => {
-                    for p in pats {
-                        create_pattern(graph, gid, p, env, params);
-                    }
-                }
-                Clause::Merge { pattern, on_create, on_match } => {
-                    merge_pattern(graph, gid, pattern, on_create, on_match, env, params);
-                }
-                Clause::Set(items) => apply_set(items, env, params),
-                Clause::Remove(items) => apply_set(items, env, params),
-                Clause::Delete { exprs, detach } => {
-                    for e in exprs {
-                        let v = eval::eval(e, env, params).unwrap_or(Value::Null);
-                        if let Some(id) = v.get("_id").and_then(|x| x.as_i64()) {
-                            let is_edge = v.get("_src").is_some();
-                            if is_edge {
-                                crate::storage::delete_edge_inner(id);
-                            } else {
-                                if !*detach {
-                                    let deg = crate::spiu::one::<i64>(
-                                        "SELECT COALESCE(sum(n),0)::int8 FROM og_data.og_adj WHERE src = $1",
-                                        &[id.into()],
-                                    )
-                                    .ok()
-                                    .flatten()
-                                    .unwrap_or(0);
-                                    if deg > 0 {
-                                        error!(
-                                            "cannot delete node {id}: it still has {deg} \
-                                             relationship(s). use DETACH DELETE"
-                                        );
-                                    }
-                                }
-                                crate::storage::delete_node_inner(id);
-                            }
-                        }
-                    }
-                }
-                Clause::Return(proj) => {
-                    let mut obj = Map::new();
-                    for item in &proj.items {
-                        let name =
-                            item.alias.clone().unwrap_or_else(|| item.expr.default_alias());
-                        // An aggregate cannot be evaluated one row at a time.
-                        // Keep its *argument* per row; `fold_aggregates` folds
-                        // the column once every row has been produced.
-                        let value = match &item.expr {
-                            Expr::Func { args, .. } if item.expr.is_aggregate() => {
-                                match args.first() {
-                                    None | Some(Expr::Star) => json!(true),
-                                    Some(a) => eval::eval(a, env, params).unwrap_or(Value::Null),
-                                }
-                            }
-                            e => eval::eval(e, env, params).unwrap_or(Value::Null),
-                        };
-                        obj.insert(name, value);
-                    }
-                    out.push(Value::Object(obj));
-                }
-                _ => {}
-            }
-        }
-    }
-    // `… RETURN count(n)` after a write is how an application asks how much it
-    // changed. The write path walks bindings one row at a time and cannot see
-    // across them, so the aggregate is folded here, over the rows it produced.
-    if let Some(Clause::Return(proj)) = write_clauses.iter().find_map(|c| match c {
-        Clause::Return(_) => Some(*c),
-        _ => None,
-    }) {
-        if proj.items.iter().any(|i| i.expr.is_aggregate()) {
-            return vec![fold_aggregates(proj, &out)];
-        }
-    }
-    out
 }
 
-/// Fold a projection containing aggregates over the rows a write produced.
-///
-/// Only the aggregates Cypher's write path realistically ends with are folded —
-/// counting and collecting what changed. A non-aggregate item takes its value
-/// from the first row, which is what grouping by nothing means.
-fn fold_aggregates(proj: &Projection, rows: &[Value]) -> Value {
-    let mut obj = Map::new();
-    for item in &proj.items {
-        let name = item.alias.clone().unwrap_or_else(|| item.expr.default_alias());
-        let value = match &item.expr {
-            Expr::Func { name: f, args, distinct } => {
-                let f = f.to_ascii_lowercase();
-                let mut values: Vec<Value> = rows
-                    .iter()
-                    .filter_map(|r| r.get(&name).cloned())
-                    .filter(|v| !v.is_null())
-                    .collect();
-                if *distinct {
-                    // `Vec::dedup` removes *consecutive* duplicates, and these
-                    // rows arrive in whatever order the plan produced — so
-                    // `count(DISTINCT x)` counted runs, not values. serde_json's
-                    // map is a BTreeMap unless `preserve_order` is on, so a
-                    // value's serialisation is canonical and usable as identity;
-                    // `Value` implements neither `Hash` nor `Ord`, which is why
-                    // this goes through the text form rather than a set of
-                    // values. Order of first appearance is preserved, which is
-                    // what `collect(DISTINCT x)` should return.
-                    let mut seen = std::collections::HashSet::new();
-                    values.retain(|v| seen.insert(v.to_string()));
-                }
-                match f.as_str() {
-                    // `count(*)` counts rows; `count(x)` counts non-null x. The
-                    // per-row pass already evaluated x into this column.
-                    "count" if matches!(args.first(), Some(Expr::Star)) => json!(rows.len()),
-                    "count" => json!(values.len()),
-                    "collect" => Value::Array(values),
-                    "sum" | "avg" => {
-                        let nums: Vec<f64> =
-                            values.iter().filter_map(serde_json::Value::as_f64).collect();
-                        let total: f64 = nums.iter().sum();
-                        if f == "sum" {
-                            json!(total)
-                        } else if nums.is_empty() {
-                            Value::Null
-                        } else {
-                            json!(total / nums.len() as f64)
-                        }
-                    }
-                    "min" => values.into_iter().min_by(cmp_json).unwrap_or(Value::Null),
-                    "max" => values.into_iter().max_by(cmp_json).unwrap_or(Value::Null),
-                    _ => Value::Null,
-                }
-            }
-            _ => rows.first().and_then(|r| r.get(&name).cloned()).unwrap_or(Value::Null),
-        };
-        obj.insert(name, value);
+fn clause_name(c: &Clause) -> &'static str {
+    match c {
+        Clause::Match { .. } => "MATCH",
+        Clause::Unwind { .. } => "UNWIND",
+        Clause::With { .. } => "WITH",
+        Clause::Return(_) => "RETURN",
+        Clause::Create(_) => "CREATE",
+        Clause::Merge { .. } => "MERGE",
+        Clause::Set(_) => "SET",
+        Clause::Remove(_) => "REMOVE",
+        Clause::Delete { .. } => "DELETE",
+        Clause::Call { .. } => "CALL",
+        Clause::Foreach { .. } => "FOREACH",
+        Clause::Ddl(_) => "a schema command",
     }
-    Value::Object(obj)
 }
 
-fn cmp_json(a: &Value, b: &Value) -> std::cmp::Ordering {
-    match (a.as_f64(), b.as_f64()) {
-        (Some(x), Some(y)) => x.partial_cmp(&y).unwrap_or(std::cmp::Ordering::Equal),
-        _ => a.to_string().cmp(&b.to_string()),
-    }
+/// A value for a write. An expression the write path cannot evaluate used to
+/// become null without a word — `SET n.id = randomUUID()` made the node and
+/// left the property empty — so it is an error now.
+fn eval_or_fail(e: &Expr, env: &eval::Env, params: &Value) -> Value {
+    eval::eval(e, env, params).unwrap_or_else(|err| error!("cypher error: {err}"))
 }
 
 fn create_pattern(graph: &str, gid: i32, p: &Pattern, env: &mut eval::Env, params: &Value) {
@@ -581,49 +567,85 @@ fn merge_pattern(
     env: &mut eval::Env,
     params: &Value,
 ) {
-    // Try to find it first, with the pattern's inline properties as the key.
-    let mut c = compile::Compiler::new(graph);
-    if c.compile_pattern(p, false).is_ok() {
-        let vars = c.bound_vars();
-        // Variables an earlier clause already bound are fixed points, not free
-        // ones to match again: `MERGE (a)-[:DIRECTED]->(m)` must look for an
-        // edge between *these* two nodes. Without pinning, the pattern matches
-        // any DIRECTED edge in the graph and MERGE never creates a second one.
-        for v in &vars {
-            let Some(id) = env.get(v).and_then(|e| e.get("_id")).and_then(Value::as_i64) else {
-                continue;
-            };
-            match c.binding(v) {
-                Some(compile::Bind::Node { alias, .. })
-                | Some(compile::Bind::Rel { alias: Some(alias), .. }) => {
-                    let w = format!("{alias}.id = {id}");
-                    c.push_where(w);
-                }
-                _ => {}
-            }
-        }
-        let proj = Projection {
-            items: vars
-                .iter()
-                .map(|v| ReturnItem { expr: Expr::Var(v.clone()), alias: Some(v.clone()) })
-                .collect(),
-            limit: Some(Expr::Lit(Lit::Int(1))),
-            ..Default::default()
+    // The pattern's inline properties are the key it is looked up by. Their
+    // values are fixed here, from the row, and handed to the lookup as
+    // parameters: the lookup is compiled on its own, where a row variable —
+    // `UNWIND $rows AS item MERGE (n:L {product_id: item.node_id})` — is not
+    // bound. It used to fail to compile there, and the failure fell through to
+    // CREATE: every MERGE under UNWIND made a new node (or broke a unique
+    // constraint). Evaluated once, the same values serve the lookup and the
+    // create.
+    let mut pat = p.clone();
+    let mut bound = match params {
+        Value::Object(m) => m.clone(),
+        _ => Map::new(),
+    };
+    let mut k = 0usize;
+    for elem in pat.elems.iter_mut() {
+        let (props, what) = match elem {
+            PatElem::Node(n) => (&mut n.props, "node"),
+            PatElem::Rel(r) => (&mut r.props, "relationship"),
         };
-        if !proj.items.is_empty() {
-            if let Ok(compiled) = c.build_select_pub(&proj) {
-                let rows = exec_json(&compiled.sql, params);
-                if let Some(Value::Object(m)) = rows.into_iter().next() {
-                    for (k, v) in m {
-                        env.insert(k, v);
-                    }
-                    apply_set(on_match, env, params);
-                    return;
-                }
+        for (key, e) in props.iter_mut() {
+            let v = eval_or_fail(e, env, params);
+            if v.is_null() {
+                // Neo4j refuses this too: a null key matches nothing, so every
+                // run would create another.
+                error!(
+                    "cannot MERGE a {what} on a null property value for '{key}' — \
+                     leave the rows without it out first (WHERE … IS NOT NULL)"
+                );
             }
+            let name = format!("__og_merge_{k}");
+            k += 1;
+            bound.insert(name.clone(), v);
+            *e = Expr::Param(name);
         }
     }
-    create_pattern(graph, gid, p, env, params);
+    let params = &Value::Object(bound);
+
+    // Try to find it first.
+    let mut c = compile::Compiler::new(graph);
+    if let Err(e) = c.compile_pattern(&pat, false) {
+        error!("cypher error: {e}");
+    }
+    let vars = c.bound_vars();
+    // Variables an earlier clause already bound are fixed points, not free
+    // ones to match again: `MERGE (a)-[:DIRECTED]->(m)` must look for an
+    // edge between *these* two nodes. Without pinning, the pattern matches
+    // any DIRECTED edge in the graph and MERGE never creates a second one.
+    for v in &vars {
+        let Some(id) = env.get(v).and_then(|e| e.get("_id")).and_then(Value::as_i64) else {
+            continue;
+        };
+        match c.binding(v) {
+            Some(compile::Bind::Node { alias, .. })
+            | Some(compile::Bind::Rel { alias: Some(alias), .. }) => {
+                let w = format!("{alias}.id = {id}");
+                c.push_where(w);
+            }
+            _ => {}
+        }
+    }
+    let mut items: Vec<ReturnItem> = vars
+        .iter()
+        .map(|v| ReturnItem { expr: Expr::Var(v.clone()), alias: Some(v.clone()) })
+        .collect();
+    // A pattern with no variable (`MERGE (:Tag {name: 'x'})`) still has to be
+    // looked up — it used to be created every time.
+    items.push(ReturnItem { expr: Expr::Lit(Lit::Int(1)), alias: Some(ROW_MARK.into()) });
+    let proj = Projection { items, limit: Some(Expr::Lit(Lit::Int(1))), ..Default::default() };
+    let compiled = c.build_select_pub(&proj).unwrap_or_else(|e| error!("cypher error: {e}"));
+    if let Some(Value::Object(m)) = exec_json(&compiled.sql, params).into_iter().next() {
+        for (k, v) in m {
+            if k != ROW_MARK {
+                env.insert(k, v);
+            }
+        }
+        apply_set(on_match, env, params);
+        return;
+    }
+    create_pattern(graph, gid, &pat, env, params);
     apply_set(on_create, env, params);
 }
 
@@ -705,12 +727,17 @@ fn apply_set(items: &[SetOp], env: &mut eval::Env, params: &Value) {
                     error!("SET refers to unbound variable '{var}'");
                 };
                 let Some(id) = entity.get("_id").and_then(|x| x.as_i64()) else { continue };
-                let v = eval::eval(value, env, params).unwrap_or(Value::Null);
+                let v = eval_or_fail(value, env, params);
                 let mut m = Map::new();
                 m.insert(prop.clone(), v.clone());
                 write_props(id, entity.get("_src").is_some(), Value::Object(m));
                 if let Some(Value::Object(e)) = env.get_mut(var) {
-                    e.insert(prop.clone(), v);
+                    // A property set to null is gone, as in Cypher.
+                    if v.is_null() {
+                        e.remove(prop);
+                    } else {
+                        e.insert(prop.clone(), v);
+                    }
                 }
             }
             SetOp::Map { var, value, merge } => {
@@ -718,12 +745,16 @@ fn apply_set(items: &[SetOp], env: &mut eval::Env, params: &Value) {
                     error!("SET refers to unbound variable '{var}'");
                 };
                 let Some(id) = entity.get("_id").and_then(|x| x.as_i64()) else { continue };
-                let v = eval::eval(value, env, params).unwrap_or(Value::Null);
+                let v = eval_or_fail(value, env, params);
+                let is_edge = entity.get("_src").is_some();
                 if !*merge {
                     // `SET a = {..}` replaces: clear existing extension payload.
-                    write_props(id, entity.get("_src").is_some(), json!({}));
+                    write_props(id, is_edge, json!({}));
                 }
-                write_props(id, entity.get("_src").is_some(), v);
+                write_props(id, is_edge, v);
+                // The row carries the element as it is now, for what follows
+                // (a RETURN, a later clause).
+                env.insert(var.clone(), if is_edge { edge_json(id) } else { node_json(id) });
             }
             SetOp::Label { var, labels } => {
                 // Adding a label the node already carries — its own type or one
@@ -771,7 +802,7 @@ fn write_props(id: i64, is_edge: bool, props: Value) {
 fn props_json(props: &[(String, Expr)], env: &eval::Env, params: &Value) -> Value {
     let mut m = Map::new();
     for (k, v) in props {
-        m.insert(k.clone(), eval::eval(v, env, params).unwrap_or(Value::Null));
+        m.insert(k.clone(), eval_or_fail(v, env, params));
     }
     Value::Object(m)
 }

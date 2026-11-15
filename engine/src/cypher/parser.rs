@@ -161,6 +161,9 @@ impl Parser {
                 Tok::Ident(s) if s.eq_ignore_ascii_case("show") => {
                     clauses.extend(self.parse_show()?)
                 }
+                Tok::Ident(s) if s.eq_ignore_ascii_case("foreach") && self.peek_at(1) == &Tok::Punct("(".into()) => {
+                    clauses.push(self.parse_foreach()?)
+                }
                 Tok::Eof => break,
                 _ => return Err(self.err("expected a clause keyword")),
             }
@@ -677,6 +680,45 @@ impl Parser {
         Ok(items)
     }
 
+    /// `FOREACH (x IN list | clause …)` — the clauses are writes.
+    fn parse_foreach(&mut self) -> PResult<Clause> {
+        self.bump(); // FOREACH — an identifier, not a reserved word
+        self.expect_punct("(")?;
+        let var = self.name()?;
+        self.expect_kw("in")?;
+        let list = self.parse_expr()?;
+        self.expect_punct("|")?;
+        let mut body = Vec::new();
+        while !self.at_punct(")") {
+            let c = match self.peek().clone() {
+                Tok::Keyword(k) => match k.as_str() {
+                    "create" => self.parse_create()?,
+                    "merge" => self.parse_merge()?,
+                    "set" => self.parse_set()?,
+                    "remove" => self.parse_remove()?,
+                    "delete" | "detach" => self.parse_delete()?,
+                    other => {
+                        return Err(self.err(&format!(
+                            "FOREACH may only hold writes (CREATE, MERGE, SET, REMOVE, DELETE, FOREACH), not {}",
+                            other.to_uppercase()
+                        )))
+                    }
+                },
+                Tok::Ident(s) if s.eq_ignore_ascii_case("foreach") => self.parse_foreach()?,
+                _ => return Err(self.err("expected a write clause or ')' in FOREACH")),
+            };
+            if matches!(c, Clause::Ddl(_)) {
+                return Err(self.err("a schema command cannot be part of FOREACH"));
+            }
+            body.push(c);
+        }
+        self.expect_punct(")")?;
+        if body.is_empty() {
+            return Err(self.err("FOREACH needs at least one clause after '|'"));
+        }
+        Ok(Clause::Foreach { var, list, body })
+    }
+
     fn parse_delete(&mut self) -> PResult<Clause> {
         let detach = self.eat_kw("detach");
         self.expect_kw("delete")?;
@@ -1061,6 +1103,26 @@ impl Parser {
             Tok::Keyword(k) if (k == "count" || k == "exists") => {
                 let name = k.clone();
                 self.bump();
+                if self.at_punct("{") {
+                    let kind = if name == "count" { SubqueryKind::Count } else { SubqueryKind::Exists };
+                    return self.parse_pattern_subquery(kind);
+                }
+                if name == "exists" && self.at_punct("(") {
+                    // `exists((a)-[:R]->())`: the Neo4j 4 spelling of a pattern predicate.
+                    let save = self.i;
+                    self.bump();
+                    if let Some(pat) = self.try_relationship_pattern() {
+                        if self.eat_punct(")") {
+                            return Ok(Expr::Subquery {
+                                kind: SubqueryKind::Exists,
+                                patterns: vec![pat],
+                                where_: None,
+                                project: None,
+                            });
+                        }
+                    }
+                    self.i = save;
+                }
                 if self.at_punct("(") {
                     self.parse_call_args(&name)
                 } else {
@@ -1068,6 +1130,16 @@ impl Parser {
                 }
             }
             Tok::Punct(p) if p == "(" => {
+                // `(a)-[:R]->(:B)` in an expression is a pattern predicate; a
+                // parenthesised expression otherwise.
+                if let Some(pat) = self.try_relationship_pattern() {
+                    return Ok(Expr::Subquery {
+                        kind: SubqueryKind::Exists,
+                        patterns: vec![pat],
+                        where_: None,
+                        project: None,
+                    });
+                }
                 self.bump();
                 let e = self.parse_expr()?;
                 self.expect_punct(")")?;
@@ -1075,6 +1147,31 @@ impl Parser {
             }
             Tok::Punct(p) if p == "[" => {
                 self.bump();
+                // `[(a)-[:R]->(b) WHERE … | b.name]` — a pattern comprehension.
+                if self.at_punct("(") {
+                    let save = self.i;
+                    if let Some(pat) = self.try_relationship_pattern() {
+                        if self.at_kw("where") || self.at_punct("|") {
+                            let where_ = if self.eat_kw("where") {
+                                self.in_comprehension_filter += 1;
+                                let f = self.parse_expr();
+                                self.in_comprehension_filter -= 1;
+                                Some(Box::new(f?))
+                            } else {
+                                None
+                            };
+                            let project = if self.eat_punct("|") { Some(Box::new(self.parse_expr()?)) } else { None };
+                            self.expect_punct("]")?;
+                            return Ok(Expr::Subquery {
+                                kind: SubqueryKind::Collect,
+                                patterns: vec![pat],
+                                where_,
+                                project,
+                            });
+                        }
+                    }
+                    self.i = save;
+                }
                 // `[x IN xs …]` is a comprehension, `[a, b, c]` a literal list.
                 // One token of lookahead separates them: a bare name followed by
                 // IN can only be the comprehension's binder.
@@ -1121,6 +1218,27 @@ impl Parser {
                 self.bump();
                 self.parse_list_pred(ListPredKind::All)
             }
+            // `reduce(acc = init, x IN list | expr)`.
+            Tok::Ident(name)
+                if name.eq_ignore_ascii_case("reduce")
+                    && self.peek_at(1) == &Tok::Punct("(".into())
+                    && matches!(self.peek_at(2), Tok::Ident(_))
+                    && self.peek_at(3) == &Tok::Punct("=".into()) =>
+            {
+                self.bump();
+                self.expect_punct("(")?;
+                let acc = self.name()?;
+                self.expect_punct("=")?;
+                let init = Box::new(self.parse_expr()?);
+                self.expect_punct(",")?;
+                let var = self.name()?;
+                self.expect_kw("in")?;
+                let list = Box::new(self.parse_expr()?);
+                self.expect_punct("|")?;
+                let expr = Box::new(self.parse_expr()?);
+                self.expect_punct(")")?;
+                Ok(Expr::Reduce { acc, init, var, list, expr })
+            }
             Tok::Ident(name)
                 if matches!(name.to_ascii_lowercase().as_str(), "any" | "none" | "single")
                     && self.list_pred_ahead() =>
@@ -1132,6 +1250,10 @@ impl Parser {
                 };
                 self.bump();
                 self.parse_list_pred(kind)
+            }
+            Tok::Ident(name) if name.eq_ignore_ascii_case("collect") && self.peek_at(1) == &Tok::Punct("{".into()) => {
+                self.bump();
+                self.parse_pattern_subquery(SubqueryKind::Collect)
             }
             Tok::Ident(name) => {
                 self.bump();
@@ -1177,6 +1299,45 @@ impl Parser {
             }
             _ => Err(self.err("expected an expression")),
         }
+    }
+
+    /// A pattern with at least one relationship, if one starts here; the
+    /// position is left where it was when none does.
+    fn try_relationship_pattern(&mut self) -> Option<Pattern> {
+        let save = self.i;
+        match self.parse_pattern() {
+            Ok(p) if p.path_var.is_none() && p.elems.len() > 1 => Some(p),
+            _ => {
+                self.i = save;
+                None
+            }
+        }
+    }
+
+    /// `{ [MATCH] pattern, … [WHERE …] }` after EXISTS or COUNT.
+    fn parse_pattern_subquery(&mut self, kind: SubqueryKind) -> PResult<Expr> {
+        self.expect_punct("{")?;
+        self.eat_kw("match");
+        let mut patterns = vec![self.parse_pattern()?];
+        while self.eat_punct(",") {
+            patterns.push(self.parse_pattern()?);
+        }
+        let where_ = if self.eat_kw("where") { Some(Box::new(self.parse_expr()?)) } else { None };
+        // A RETURN is what COLLECT { … } collects; in EXISTS / COUNT it does
+        // not change the answer.
+        let project = if self.eat_kw("return") { Some(Box::new(self.parse_expr()?)) } else { None };
+        if !self.at_punct("}") {
+            return Err(self.err(
+                "only `{ [MATCH] pattern [WHERE …] [RETURN expr] }` is supported inside \
+                 EXISTS / COUNT / COLLECT — not WITH, UNION or further clauses",
+            ));
+        }
+        self.bump();
+        if kind == SubqueryKind::Collect && project.is_none() {
+            return Err(self.err("COLLECT { … } needs a RETURN"));
+        }
+        let project = if kind == SubqueryKind::Collect { project } else { None };
+        Ok(Expr::Subquery { kind, patterns, where_, project })
     }
 
     /// Does the call ahead look like `f(x IN …)` rather than `f(expr, …)`?
@@ -1320,8 +1481,11 @@ mod tests {
 
     #[test]
     fn rejects_unknown_clause_loudly() {
-        let e = parse("FOREACH (x IN [1] | SET x.y = 1)").unwrap_err();
+        let e = parse("FROBNICATE (x)").unwrap_err();
         assert!(e.contains("unexpected") || e.contains("expected"));
+        let q = parse("MATCH (n) FOREACH (x IN [1, 2] | SET n.y = x CREATE (:T {v: x}))").unwrap();
+        assert!(matches!(&q.clauses[1], Clause::Foreach { body, .. } if body.len() == 2));
+        assert!(parse("FOREACH (x IN [1] | MATCH (n) SET n.y = 1)").is_err());
     }
 
     #[test]

@@ -103,6 +103,9 @@ fn blind_expr(e: &Expr) -> bool {
 pub enum Bind {
     Node { alias: String, tid: Option<i32> },
     Rel { alias: Option<String>, tid: Option<i32>, id_expr: String },
+    /// A path variable: `hops_expr` is the path's value — jsonb
+    /// `{"_path": true, "nodes": [...], "relationships": [...]}`, or null when an
+    /// OPTIONAL MATCH found none.
     Path { hops_expr: String },
     Scalar { sql: String },
 }
@@ -136,6 +139,15 @@ pub struct Compiler {
     /// numbers and `WITH c MATCH (c)<-[:R]-(o)` still knows what `c` is.
     carried_tid: HashMap<String, i32>,
     scalar_types: HashMap<String, String>,
+    /// The `og_vlp` alias of the variable-length hop `join_rel` just joined —
+    /// a path over it needs the nodes along the way, not only its ends.
+    last_var_hop: Option<String>,
+    /// Names carried through WITH whose value is a list (`collect(x) AS xs`),
+    /// so that `xs + ys` concatenates rather than adds.
+    carried_lists: std::collections::HashSet<String>,
+    /// The names the last `CALL … [YIELD …]` brought into scope: what a query
+    /// that is only a CALL returns.
+    last_yields: Vec<String>,
 }
 
 /// The joins and predicates of one OPTIONAL MATCH.
@@ -177,6 +189,9 @@ impl Compiler {
             unmatchable: std::collections::HashSet::new(),
             carried_tid: HashMap::new(),
             scalar_types: HashMap::new(),
+            last_var_hop: None,
+            carried_lists: std::collections::HashSet::new(),
+            last_yields: Vec::new(),
         }
     }
 
@@ -184,6 +199,7 @@ impl Compiler {
     /// comprehension binder) no longer carries what an earlier `WITH` said
     /// about it. Returns what was there, for a binder to restore.
     fn forget_carried(&mut self, name: &str) -> (Option<i32>, Option<String>) {
+        self.carried_lists.remove(name);
         (self.carried_tid.remove(name), self.scalar_types.remove(name))
     }
 
@@ -208,6 +224,15 @@ impl Compiler {
     ) -> CResult<()> {
         self.begin_match_clause();
         if optional {
+            // An OPTIONAL MATCH that opens the query still yields one row — of
+            // nulls when nothing matches. With nothing before it to join onto,
+            // its first relation was the plain FROM and its predicates were
+            // appended to it as `v_1 n1 AND (…)` — a syntax error. One row to
+            // LEFT JOIN onto gives it the shape every later OPTIONAL MATCH has.
+            if self.from.is_empty() {
+                let a = self.fresh("om");
+                self.from.push(format!("(SELECT 1) AS {a}"));
+            }
             self.optional = Some(OptionalScope::default());
         }
         let result = (|slf: &mut Self| -> CResult<()> {
@@ -240,6 +265,23 @@ impl Compiler {
         self.forget_carried(alias);
         self.binds.insert(alias.to_string(), Bind::Scalar { sql: format!("{a}.v") });
         Ok(())
+    }
+
+    /// Start from rows a write query has already produced.
+    ///
+    /// `MERGE (a:A {k: 1}) WITH a MATCH (b:B {k: 2}) MERGE (a)-[:R]->(b)` reads
+    /// after it writes. The rows so far travel as the jsonb list `param_key` of
+    /// the parameters; each one's variables become bindings here, and a node
+    /// whose type every row agrees on (`types`) anchors a pattern on its view.
+    pub fn seed_rows(&mut self, param_key: &str, names: &[String], types: &HashMap<String, i32>) {
+        let a = self.fresh("rw");
+        self.from.push(format!("jsonb_array_elements({PARAM} -> {}) AS {a}(v)", sql_str(param_key)));
+        for n in names {
+            self.binds.insert(n.clone(), Bind::Scalar { sql: format!("({a}.v -> {})", sql_str(n)) });
+            if let Some(t) = types.get(n) {
+                self.carried_tid.insert(n.clone(), *t);
+            }
+        }
     }
 
     /// Add a predicate, to wherever it belongs: the `ON` of an optional join
@@ -437,6 +479,16 @@ impl Compiler {
             }
         }
 
+        // `CALL db.awaitIndexes()` alone is a complete query in Cypher: it
+        // returns what the procedure yields.
+        if projection.is_none() && matches!(q.clauses.last(), Some(Clause::Call { .. })) {
+            let items = self
+                .last_yields
+                .iter()
+                .map(|n| ReturnItem { expr: Expr::Var(n.clone()), alias: Some(n.clone()) })
+                .collect();
+            return self.build_select(&Projection { items, ..Default::default() });
+        }
         let proj = projection.ok_or("a read query must end with RETURN")?;
         self.build_select(proj)
     }
@@ -451,13 +503,15 @@ impl Compiler {
     ///
     /// Aggregation works for free — `WITH a, count(*) AS n` is a grouped SELECT,
     /// and the `WHERE` after it filters the grouped rows, which is `HAVING`.
-    fn compile_with(&mut self, proj: &Projection, where_: Option<&Expr>) -> CResult<()> {
+    pub(crate) fn compile_with(&mut self, proj: &Projection, where_: Option<&Expr>) -> CResult<()> {
         // What each projected name is, decided while the names it is computed
         // from are still bound.
         let mut carried_tid: HashMap<String, i32> = HashMap::new();
         let mut scalar_types: HashMap<String, String> = HashMap::new();
+        let mut carried_lists = std::collections::HashSet::new();
         for item in &proj.items {
             if matches!(item.expr, Expr::Star) {
+                carried_lists.extend(self.carried_lists.iter().cloned());
                 for (v, b) in &self.binds {
                     if let Bind::Node { tid: Some(t), .. } = b {
                         carried_tid.insert(v.clone(), *t);
@@ -468,6 +522,9 @@ impl Compiler {
                 continue;
             }
             let name = item.alias.clone().unwrap_or_else(|| item.expr.default_alias());
+            if self.is_list_value(&item.expr) {
+                carried_lists.insert(name.clone());
+            }
             if let Expr::Var(v) = &item.expr {
                 match self.binds.get(v) {
                     Some(Bind::Node { tid: Some(t), .. }) => {
@@ -506,6 +563,7 @@ impl Compiler {
             .collect();
         self.carried_tid = carried_tid;
         self.scalar_types = scalar_types;
+        self.carried_lists = carried_lists;
 
         // `WITH … WHERE` filters what the horizon produced, so it is compiled
         // against the new bindings, not the old ones.
@@ -521,7 +579,7 @@ impl Compiler {
     /// The procedure becomes a relation in the FROM list and its yielded
     /// columns become ordinary bindings, so everything after it — WHERE,
     /// another MATCH, RETURN — treats them like any other bound value.
-    fn compile_call(
+    pub(crate) fn compile_call(
         &mut self,
         name: &str,
         args: &[Expr],
@@ -562,6 +620,7 @@ impl Compiler {
         } else {
             yields.to_vec()
         };
+        self.last_yields = wanted.iter().map(|(_, a)| a.clone()).collect();
         for (col, as_name) in wanted {
             let found = plan
                 .columns
@@ -604,6 +663,15 @@ impl Compiler {
             let name = item.alias.clone().unwrap_or_else(|| item.expr.default_alias());
             if has_agg && !item.expr.is_aggregate() {
                 group_by.push(sql.clone());
+            } else if has_agg {
+                // `a + collect(m.key)`: the `a` outside the aggregate is a
+                // grouping key, as in Cypher — SQL wants it said.
+                for r in bare_references(&item.expr) {
+                    let g = self.expr(&r, None)?;
+                    if !group_by.contains(&g) {
+                        group_by.push(g);
+                    }
+                }
             }
             cols.push(format!("{sql} AS c{i}"));
             names.push(name);
@@ -648,6 +716,15 @@ impl Compiler {
                         .get(v)
                         .cloned()
                         .ok_or_else(|| format!("ORDER BY refers to unknown name '{v}'"))?
+                }
+                // `RETURN x {.name, .age} AS a ORDER BY a.age`: a key of a
+                // projected value, read from the projection.
+                Expr::Prop(base, p)
+                    if matches!(&**base, Expr::Var(v) if !self.binds.contains_key(v) && alias_sql.contains_key(v)) =>
+                {
+                    let Expr::Var(v) = &**base else { unreachable!() };
+                    names_an_aggregate = alias_is_agg.get(v).copied().unwrap_or(false);
+                    format!("(to_jsonb({}) -> {})", alias_sql[v], sql_str(p))
                 }
                 _ => self.expr(&o.expr, None)?,
             };
@@ -779,7 +856,10 @@ impl Compiler {
         }
         let mut prev_node: Option<String> = None;
         let mut pending_rel: Option<&RelPat> = None;
-        let mut hop_exprs: Vec<String> = Vec::new();
+        // For a path variable: the relationships of each hop and the nodes
+        // reached by it, as jsonb arrays concatenated in order.
+        let mut path_rels: Vec<String> = Vec::new();
+        let mut path_nodes: Vec<String> = Vec::new();
 
         // `MATCH p = (a)-[*1..3]->(b)` binds the paths themselves, so this
         // pattern must enumerate them however multiplicity-blind the RETURN is.
@@ -797,8 +877,15 @@ impl Compiler {
                     let alias = self.bind_node(np, optional)?;
                     let node_join_added = self.from.len() > mark;
                     if let (Some(prev), Some(rel)) = (prev_node.clone(), pending_rel.take()) {
+                        self.last_var_hop = None;
                         let hop = self.join_rel(&prev, rel, &alias, optional)?;
-                        hop_exprs.push(hop);
+                        if p.path_var.is_some() {
+                            path_rels.push(hop);
+                            path_nodes.push(match self.last_var_hop.take() {
+                                Some(w) => var_hop_nodes(&prev, &w),
+                                None => format!("jsonb_build_array({})", self.alias_json(&alias)),
+                            });
+                        }
                         // The node is constrained by the hop that reaches it, so
                         // its join has to come *after* the hop's — otherwise the
                         // predicate cannot be an ON condition and the node joins
@@ -808,18 +895,22 @@ impl Compiler {
                             self.move_join_to_end(mark);
                         }
                     }
+                    if p.path_var.is_some() && prev_node.is_none() {
+                        path_nodes.push(format!("jsonb_build_array({})", self.alias_json(&alias)));
+                    }
                     prev_node = Some(alias);
                 }
                 PatElem::Rel(rp) => pending_rel = Some(rp),
             }
         }
 
-        if let Some(pv) = &p.path_var {
-            let expr = if hop_exprs.is_empty() {
-                "'[]'::jsonb".to_string()
-            } else {
-                format!("jsonb_build_array({})", hop_exprs.join(", "))
-            };
+        if let (Some(pv), Some(last)) = (&p.path_var, &prev_node) {
+            let rels = if path_rels.is_empty() { "'[]'::jsonb".to_string() } else { path_rels.join(" || ") };
+            let expr = format!(
+                "(CASE WHEN {last}.id IS NULL THEN NULL ELSE jsonb_build_object('_path', true, \
+                 'nodes', {}, 'relationships', {rels}) END)",
+                path_nodes.join(" || ")
+            );
             self.binds.insert(pv.clone(), Bind::Path { hops_expr: expr });
         }
         self.reachability_only = outer_reachability;
@@ -964,7 +1055,7 @@ impl Compiler {
             Some(t) => views::ensure_view(t, false),
             None => {
                 self.guard_untyped_nodes();
-                "og_data.og_node".to_string()
+                self.graph_nodes()
             }
         };
 
@@ -1210,7 +1301,7 @@ impl Compiler {
         if let Some(var) = &rel.var {
             self.binds.insert(var.clone(), Bind::Scalar { sql: rel_json.clone() });
         }
-        Ok(rel_json)
+        Ok(format!("jsonb_build_array({rel_json})"))
     }
 
     fn push_prop_filters(
@@ -1221,10 +1312,37 @@ impl Compiler {
     ) -> CResult<()> {
         for (k, v) in props {
             let (lhs, ty) = self.prop_sql(alias, tid, k);
+            // A property with no declared type (an unlabelled node, a key only
+            // the extension payload holds) is compared as JSON: read as text it
+            // met a jsonb value (`UNWIND $ids AS x MATCH (n {k: x})`) or a
+            // number as `text = jsonb` / `text = integer`, which do not exist.
+            if ty.is_none() {
+                let lj = self.prop_sql_json(alias, tid, k);
+                let rj = self.jsonb_of(v)?;
+                self.constrain(format!("{lj} = {rj}"));
+                continue;
+            }
             let rhs = self.expr(v, ty.as_deref())?;
             self.constrain(format!("{lhs} = {rhs}"));
         }
         Ok(())
+    }
+
+    /// The node registry, narrowed to this query's graph.
+    ///
+    /// `og_node` is shared by every graph in the database — a node's graph is
+    /// its type's — so an unlabelled `MATCH (n)` or `(a)-[r]->(b)` read the
+    /// nodes of every graph (project), and `MATCH (n) DETACH DELETE n` emptied
+    /// all of them. A labelled match was always confined by its label. The
+    /// graph's types are looked up when the query runs, not when it is
+    /// compiled: a compiled plan is cached, and a type another session creates
+    /// meanwhile must not be missed.
+    fn graph_nodes(&self) -> String {
+        format!(
+            "(SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN \
+             (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = {}))",
+            self.gid
+        )
     }
 
     /// An unlabelled node pattern scans the node registry, which holds only
@@ -1335,13 +1453,16 @@ impl Compiler {
             ));
             self.note_optional_join(&w);
             self.constrain(format!("{to_alias}.id = {w}.node"));
+            // A relationship variable on a variable-length hop is the list of
+            // relationships walked, as in Cypher (it used to be their ids).
+            let rels = var_hop_rels(&w);
             if let Some(v) = &rel.var {
-                self.binds.insert(
-                    v.clone(),
-                    Bind::Path { hops_expr: format!("to_jsonb({w}.path)") },
-                );
+                self.forget_carried(v);
+                self.binds.insert(v.clone(), Bind::Scalar { sql: rels.clone() });
+                self.carried_lists.insert(v.clone());
             }
-            return Ok(format!("to_jsonb({w}.path)"));
+            self.last_var_hop = Some(w);
+            return Ok(rels);
         }
 
         let a = self.fresh("adj");
@@ -1423,7 +1544,7 @@ impl Compiler {
                         Bind::Rel { alias: Some(ea.clone()), tid: Some(t), id_expr: format!("{u}.eid") },
                     );
                     self.push_rel_prop_filters(&ea, Some(t), &rel.props)?;
-                    return Ok(format!("to_jsonb({u}.eid)"));
+                    return Ok(format!("jsonb_build_array({})", self.rel_json(&ea, t)));
                 }
             }
             self.binds
@@ -1443,7 +1564,7 @@ impl Compiler {
                 self.push_rel_prop_filters(&ea, Some(t), &rel.props)?;
             }
         }
-        Ok(format!("to_jsonb({u}.eid)"))
+        Ok(format!("jsonb_build_array(og_edge_json({u}.eid))"))
     }
 
     fn push_rel_prop_filters(
@@ -1465,8 +1586,15 @@ impl Compiler {
     // ----------------------------------------------------------------------
 
     /// SQL for a property access, plus the column's SQL type when known.
+    ///
+    /// `_id` is the element's identifier. `id` is an ordinary property, as in
+    /// Neo4j — whose identifier is `id(n)` / `elementId(n)`, never `n.id`.
+    /// Stored types used to read `n.id` as the identifier: a node created with
+    /// `{id: 'singleton'}` came back with a number, and `MATCH (n:L {id: $id})`
+    /// failed with "invalid input syntax for type bigint". Virtual types already
+    /// read it as their source column; now every type does.
     pub fn prop_sql(&self, alias: &str, tid: Option<i32>, prop: &str) -> (String, Option<String>) {
-        if prop == "_id" || (prop == "id" && !declares_source_id(tid)) {
+        if prop == "_id" {
             return (format!("{alias}.id"), Some("int8".into()));
         }
         if let Some(t) = tid {
@@ -1493,7 +1621,7 @@ impl Compiler {
     /// written. Declared properties are real columns and already carry their
     /// type, so they only need wrapping.
     pub fn prop_sql_json(&self, alias: &str, tid: Option<i32>, prop: &str) -> String {
-        if prop == "_id" || (prop == "id" && !declares_source_id(tid)) {
+        if prop == "_id" {
             return format!("to_jsonb({alias}.id)");
         }
         if let Some(t) = tid {
@@ -1510,9 +1638,24 @@ impl Compiler {
     /// Only property reads differ from `expr`: everything else already has a
     /// SQL type that `jsonb_build_object` renders faithfully.
     fn expr_for_output(&mut self, e: &Expr) -> CResult<String> {
+        match e {
+            // A parameter keeps its JSON type: `RETURN $n` is a number and
+            // `WITH $row AS r` a map (it was the map's text, so `r.name` was null).
+            Expr::Param(p) => return Ok(format!("({PARAM} -> {})", sql_str(p))),
+            Expr::Func { name, args, .. }
+                if name.eq_ignore_ascii_case("coalesce") && self.coalesce_as_jsonb(args, true) =>
+            {
+                return self.coalesce_jsonb(args);
+            }
+            _ => {}
+        }
         if let Expr::Prop(base, prop) = e {
             if let Some(sql) = self.temporal_field(base, prop, true)? {
                 return Ok(sql);
+            }
+            if !matches!(&**base, Expr::Var(_)) {
+                let j = self.jsonb_of(base)?;
+                return Ok(format!("(({j}) -> {})", sql_str(prop)));
             }
             if let Expr::Var(v) = &**base {
                 match self.binds.get(v).cloned() {
@@ -1612,6 +1755,12 @@ impl Compiler {
         }
     }
 
+    /// The node a pattern alias stands for, as jsonb.
+    fn alias_json(&self, alias: &str) -> String {
+        let tid = self.alias_tid.get(alias).copied().flatten();
+        self.node_json(alias, tid)
+    }
+
     fn rel_json(&self, alias: &str, tid: i32) -> String {
         let props = views::view_layout(tid).columns;
         let mut pairs = vec![
@@ -1636,12 +1785,11 @@ impl Compiler {
     /// `unknown` type until something resolves them — and `to_jsonb()` is
     /// polymorphic, so it cannot. `['Neo']` would fail to compile without the
     /// explicit type here.
+    ///
+    /// A property or a parameter keeps its JSON type (`jsonb_of`): `[x IN
+    /// nodes(p) | x.i]` gave `["1", "2"]` where Neo4j gives `[1, 2]`.
     fn jsonb_arg(&mut self, e: &Expr) -> CResult<String> {
-        Ok(match e {
-            Expr::Lit(Lit::Null) => "'null'::jsonb".into(),
-            Expr::Lit(Lit::Str(s)) => format!("to_jsonb({}::text)", sql_str(s)),
-            _ => format!("to_jsonb({})", self.expr(e, None)?),
-        })
+        self.jsonb_of(e)
     }
 
     pub fn expr(&mut self, e: &Expr, hint: Option<&str>) -> CResult<String> {
@@ -1689,10 +1837,17 @@ impl Compiler {
                         }
                     }
                 }
+                // A property of any other value — a map parameter (`$row.name`),
+                // a map, `coalesce(x1, x2).name` over OPTIONAL MATCH results,
+                // `head(list).name` — is a key of its jsonb form.
                 let Expr::Var(v) = &**base else {
-                    return Err("property access is only supported on pattern variables \
-                                and on dates and times (.year, .month, .day …)"
-                        .into());
+                    let j = self.jsonb_of(base)?;
+                    let key = sql_str(p);
+                    return Ok(match hint {
+                        Some("jsonb") => format!("(({j}) -> {key})"),
+                        Some(t) if t != "text" && is_scalar_type(t) => format!("((({j}) ->> {key})::{t})"),
+                        _ => format!("(({j}) ->> {key})"),
+                    });
                 };
                 match self.binds.get(v).cloned() {
                     Some(Bind::Node { alias, tid }) => self.prop_sql(&alias, tid, p).0,
@@ -1837,19 +1992,23 @@ impl Compiler {
                 }
             }
             Expr::Case { operand, whens, else_ } => {
+                // Results SQL cannot give one type — a list beside a parameter
+                // (`CASE WHEN $x IS NULL THEN [null] ELSE $x END`), a node
+                // beside a string — are all taken as jsonb.
+                let results: Vec<Expr> =
+                    whens.iter().map(|(_, v)| v.clone()).chain(else_.iter().map(|e| (**e).clone())).collect();
+                let as_jsonb = self.coalesce_as_jsonb(&results, false);
                 let head = match operand {
                     Some(o) => format!("CASE {} ", self.expr_own(o)?),
                     None => "CASE ".into(),
                 };
                 let mut body = String::new();
                 for (c, v) in whens {
-                    body.push_str(&format!(
-                        "WHEN {} THEN {} ",
-                        self.expr_own(c)?,
-                        self.expr_own(v)?
-                    ));
+                    let value = if as_jsonb { self.jsonb_of(v)? } else { self.expr_own(v)? };
+                    body.push_str(&format!("WHEN {} THEN {} ", self.expr_own(c)?, value));
                 }
                 let tail = match else_ {
+                    Some(e) if as_jsonb => format!("ELSE {} ", self.jsonb_of(e)?),
                     Some(e) => format!("ELSE {} ", self.expr_own(e)?),
                     None => String::new(),
                 };
@@ -1862,7 +2021,7 @@ impl Compiler {
                 let element = matches!(
                     name.to_ascii_lowercase().as_str(),
                     "head" | "last" | "element_at"
-                );
+                ) || (name.eq_ignore_ascii_case("coalesce") && self.coalesce_as_jsonb(args, false));
                 match hint {
                     Some(t) if element && is_scalar_type(t) => format!("(({sql}) #>> '{{}}')::{t}"),
                     _ => sql,
@@ -1870,6 +2029,10 @@ impl Compiler {
             }
             Expr::Slice { list, from, to } => self.slice(list, from.as_deref(), to.as_deref())?,
             Expr::HasLabels { var, alts } => self.has_labels(var, alts)?,
+            Expr::Reduce { acc, init, var, list, expr } => self.reduce(acc, init, var, list, expr)?,
+            Expr::Subquery { kind, patterns, where_, project } => {
+                self.pattern_subquery(*kind, patterns, where_.as_deref(), project.as_deref())?
+            }
             Expr::Star => "*".into(),
         })
     }
@@ -1989,6 +2152,121 @@ impl Compiler {
         Ok(format!("(CASE WHEN {tid_sql} IS NULL THEN NULL ELSE ({}) END)", any.join(" OR ")))
     }
 
+    /// `reduce(acc = init, x IN list | step)`: a fold, as a recursive query
+    /// over the list's positions. The accumulator and the element are jsonb
+    /// bindings while `step` compiles; the accumulator is read at the type its
+    /// initial value has (a number as numeric, a string as text), so `acc + x`
+    /// adds or concatenates as Cypher would.
+    fn reduce(&mut self, acc: &str, init: &Expr, var: &str, list: &Expr, step: &Expr) -> CResult<String> {
+        if acc == var {
+            return Err("reduce(): the accumulator and the element need different names".into());
+        }
+        let l = self.jsonb_of(list)?;
+        let start = self.jsonb_of(init)?;
+        let r = self.fresh("rd");
+        let acc_type = match self.type_of(init).as_deref() {
+            Some(t) if is_numeric_type(t) => Some("numeric".to_string()),
+            Some(t) if is_scalar_type(t) => Some(t.to_string()),
+            _ => None,
+        };
+        let acc_carried = self.forget_carried(acc);
+        let acc_shadowed = self.binds.insert(acc.to_string(), Bind::Scalar { sql: format!("{r}.acc") });
+        let var_carried = self.forget_carried(var);
+        let var_shadowed = self.binds.insert(var.to_string(), Bind::Scalar { sql: format!("(({l}) -> {r}.i)") });
+        if let Some(t) = &acc_type {
+            self.scalar_types.insert(acc.to_string(), t.clone());
+        }
+        let body = self.jsonb_of(step);
+        self.scalar_types.remove(acc);
+        self.restore_bind(var, var_shadowed);
+        self.restore_carried(var, var_carried);
+        self.restore_bind(acc, acc_shadowed);
+        self.restore_carried(acc, acc_carried);
+        let body = body?;
+        Ok(format!(
+            "(CASE WHEN jsonb_typeof(({l})::jsonb) = 'array' THEN (WITH RECURSIVE {r}(i, acc) AS (\
+             SELECT 0, ({start})::jsonb UNION ALL \
+             SELECT {r}.i + 1, ({body})::jsonb FROM {r} WHERE {r}.i < jsonb_array_length(({l})::jsonb)) \
+             SELECT {r}.acc FROM {r} ORDER BY {r}.i DESC LIMIT 1) END)"
+        ))
+    }
+
+    /// A pattern as a value — `EXISTS { … }`, a pattern predicate, `COUNT { … }`,
+    /// a pattern comprehension: a correlated subquery. The pattern is compiled
+    /// by a compiler that sees this one's bindings, so a variable bound outside
+    /// is the same alias inside (that is the correlation), and nothing the
+    /// pattern binds leaks out.
+    fn pattern_subquery(
+        &mut self,
+        kind: SubqueryKind,
+        patterns: &[Pattern],
+        where_: Option<&Expr>,
+        project: Option<&Expr>,
+    ) -> CResult<String> {
+        let mut child = Compiler {
+            graph: self.graph.clone(),
+            gid: self.gid,
+            binds: self.binds.clone(),
+            from: Vec::new(),
+            wheres: Vec::new(),
+            ctes: Vec::new(),
+            n: self.n,
+            rel_ids: Vec::new(),
+            notes: Vec::new(),
+            optional: None,
+            reachability_only: false,
+            alias_tid: self.alias_tid.clone(),
+            unmatchable: self.unmatchable.clone(),
+            carried_tid: self.carried_tid.clone(),
+            scalar_types: self.scalar_types.clone(),
+            last_var_hop: None,
+            carried_lists: self.carried_lists.clone(),
+            last_yields: Vec::new(),
+        };
+        let compiled = (|c: &mut Compiler| -> CResult<String> {
+            c.compile_match(patterns, false, where_)?;
+            Ok(match kind {
+                SubqueryKind::Exists => "1".into(),
+                SubqueryKind::Count => "count(*)".into(),
+                SubqueryKind::Collect => {
+                    let value = match project {
+                        Some(e) => c.jsonb_of(e)?,
+                        None => {
+                            let last = patterns.last().and_then(|p| match p.elems.last() {
+                                Some(PatElem::Node(NodePat { var: Some(v), .. })) => Some(v.clone()),
+                                _ => None,
+                            });
+                            let Some(v) = last else {
+                                return Err("a pattern comprehension needs `| expression`".into());
+                            };
+                            format!("to_jsonb({})", c.var_value(&v)?)
+                        }
+                    };
+                    format!("coalesce(jsonb_agg({value}), '[]'::jsonb)")
+                }
+            })
+        })(&mut child);
+        self.n = child.n;
+        self.notes.append(&mut child.notes);
+        let select = compiled?;
+        if !child.ctes.is_empty() {
+            self.ctes.append(&mut child.ctes);
+        }
+        // The first relation of the subquery's FROM may be the hop out of an
+        // outer node, written as a join onto what came before it.
+        if let Some(first) = child.from.first_mut() {
+            if let Some(rest) = first.strip_prefix("CROSS JOIN ") {
+                *first = rest.to_string();
+            }
+        }
+        let from = if child.from.is_empty() { String::new() } else { format!(" FROM {}", child.from.join("\n  ")) };
+        let wheres = if child.wheres.is_empty() { String::new() } else { format!(" WHERE {}", child.wheres.join(" AND ")) };
+        Ok(match kind {
+            SubqueryKind::Exists => format!("(EXISTS (SELECT 1{from}{wheres}))"),
+            _ => format!("(SELECT {select}{from}{wheres})"),
+        })
+    }
+
     /// The declared type of `p` on the node a carried name stands for.
     fn carried_prop_type(&self, v: &str, p: &str) -> Option<String> {
         let t = *self.carried_tid.get(v)?;
@@ -2038,9 +2316,13 @@ impl Compiler {
                     return Ok(format!("({ls} IN ({}))", vs.join(", ")));
                 }
             }
-            let ls = self.expr(l, None)?;
+            // The left side as jsonb, as written: a bare string literal has no
+            // SQL type for `to_jsonb()` to take (`'X' IN labels(n)` failed with
+            // "could not determine polymorphic type"), and a parameter read as
+            // text made `$n IN [1, 2]` look for the string "1".
+            let ls = self.jsonb_of(l)?;
             let rs = self.expr(r, Some("jsonb"))?;
-            return Ok(format!("(({rs}) @> to_jsonb({ls}))"));
+            return Ok(format!("(({rs}) @> {ls})"));
         }
 
         // String predicates work on text, so both sides are compiled *as* text
@@ -2080,6 +2362,25 @@ impl Compiler {
             if let Some(sql) = self.bool_against_number(op, l, r, lt.as_deref(), rt.as_deref())? {
                 return Ok(sql);
             }
+        }
+        // A value carried as jsonb (a WITH or YIELD column, an UNWIND element)
+        // against a parameter or another such value, neither with a known
+        // type: compared as JSON. As text against jsonb it was "operator does
+        // not exist: jsonb = text" (`SHOW INDEXES YIELD name WHERE name = $n`).
+        if lt.is_none()
+            && rt.is_none()
+            && matches!(op, BinOp::Eq | BinOp::Ne | BinOp::Lt | BinOp::Le | BinOp::Gt | BinOp::Ge)
+            && (self.jsonb_valued(l) || self.jsonb_valued(r))
+        {
+            let (a, b) = (self.jsonb_of(l)?, self.jsonb_of(r)?);
+            return Ok(match op {
+                BinOp::Eq => format!("({a} = {b})"),
+                BinOp::Ne => format!("({a} <> {b})"),
+                BinOp::Lt => format!("({a} < {b})"),
+                BinOp::Le => format!("({a} <= {b})"),
+                BinOp::Gt => format!("({a} > {b})"),
+                _ => format!("({a} >= {b})"),
+            });
         }
         let mut ls = self.expr(l, rt.as_deref().or(lt.as_deref()))?;
         let mut rs = self.expr(r, lt.as_deref().or(rt.as_deref()))?;
@@ -2185,7 +2486,7 @@ impl Compiler {
             return Ok(None);
         }
         if op == BinOp::Add {
-            if is_list_expr(l) || is_list_expr(r) {
+            if self.is_list_value(l) || self.is_list_value(r) {
                 let (a, b) = (self.jsonb_of(l)?, self.jsonb_of(r)?);
                 return Ok(Some(format!("({a} || {b})")));
             }
@@ -2339,9 +2640,11 @@ impl Compiler {
             Expr::Not(_) | Expr::IsNull(..) | Expr::HasLabels { .. } | Expr::ListPred { .. } => {
                 Some("bool".into())
             }
+            Expr::Subquery { kind: SubqueryKind::Exists, .. } => Some("bool".into()),
+            Expr::Subquery { kind: SubqueryKind::Count, .. } => Some("int8".into()),
             Expr::Binary(op, l, r) => match op {
                 BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div | BinOp::Mod => {
-                    if *op == BinOp::Add && (is_list_expr(l) || is_list_expr(r)) {
+                    if *op == BinOp::Add && (self.is_list_value(l) || self.is_list_value(r)) {
                         return None;
                     }
                     arithmetic_type(*op, self.type_of(l).as_deref(), self.type_of(r).as_deref())
@@ -2362,7 +2665,7 @@ impl Compiler {
                     "duration" => Some("interval".into()),
                     "tointeger" => Some("int8".into()),
                     "tofloat" => Some("float8".into()),
-                    "tostring" => Some("text".into()),
+                    "tostring" | "randomuuid" => Some("text".into()),
                     "count" => Some("int8".into()),
                     "size" | "length" => Some("int4".into()),
                     "stdev" | "ceil" | "floor" | "sqrt" => Some("float8".into()),
@@ -2586,6 +2889,73 @@ impl Compiler {
         })
     }
 
+    /// Is this value a list — as written, or a name carried through WITH that
+    /// holds one, or a sum of lists?
+    fn is_list_value(&self, e: &Expr) -> bool {
+        match e {
+            Expr::Var(v) => self.carried_lists.contains(v),
+            Expr::Binary(BinOp::Add, a, b) => self.is_list_value(a) || self.is_list_value(b),
+            Expr::Reduce { init, .. } => self.is_list_value(init),
+            Expr::Case { whens, else_, .. } => {
+                whens.iter().any(|(_, v)| self.is_list_value(v)) || else_.as_ref().is_some_and(|x| self.is_list_value(x))
+            }
+            Expr::Func { name, .. } if name.eq_ignore_ascii_case("coalesce") => {
+                matches!(e, Expr::Func { args, .. } if args.iter().any(|a| self.is_list_value(a)))
+            }
+            _ => is_list_expr(e),
+        }
+    }
+
+    /// Is this value jsonb that has no text form — a list, a map, an element,
+    /// a value carried through WITH or UNWIND whose type was not kept?
+    fn jsonb_valued(&self, e: &Expr) -> bool {
+        match e {
+            Expr::List(_) | Expr::Map(_) | Expr::MapProjection { .. } | Expr::ListComp { .. } | Expr::Slice { .. } => true,
+            Expr::Reduce { .. } => true,
+            Expr::Binary(BinOp::Add, ..) if self.is_list_value(e) => true,
+            Expr::Func { name, .. } => {
+                is_list_expr(e)
+                    || matches!(
+                        name.to_ascii_lowercase().as_str(),
+                        "properties" | "head" | "last" | "element_at" | "startnode" | "endnode" | "coalesce"
+                    ) && self.type_of(e).is_none()
+            }
+            Expr::Var(v) => match self.binds.get(v) {
+                Some(Bind::Node { .. } | Bind::Rel { .. } | Bind::Path { .. }) => true,
+                Some(Bind::Scalar { .. }) => !self.scalar_types.contains_key(v),
+                None => false,
+            },
+            _ => false,
+        }
+    }
+
+    /// Should `coalesce(…)` be computed over jsonb rather than SQL scalars?
+    ///
+    /// SQL wants one type for every branch. A branch whose type is a known
+    /// number, date or boolean sets it (`coalesce(n.qty, 0)`), as before. When
+    /// none does, a branch that only jsonb can hold — a list, a map, a node —
+    /// makes it jsonb (`coalesce(n.tags, [])` failed with "COALESCE types text
+    /// and jsonb cannot be matched"). In a result, where the value ends up as
+    /// JSON anyway, a branch of unknown type does too: `coalesce(n.tags, $list)`
+    /// returned the list as a JSON *string* when both were read as text.
+    fn coalesce_as_jsonb(&self, args: &[Expr], for_output: bool) -> bool {
+        let typed = |e: &Expr| self.type_of(e).filter(|t| t != "text" && t != "jsonb");
+        if args.iter().any(|x| typed(x).is_some()) {
+            return false;
+        }
+        args.iter().any(|x| self.jsonb_valued(x))
+            || (for_output && args.iter().any(|x| self.type_of(x).is_none() && !matches!(x, Expr::Lit(Lit::Null))))
+    }
+
+    /// `coalesce` over jsonb: a JSON null is skipped like an SQL one.
+    fn coalesce_jsonb(&mut self, args: &[Expr]) -> CResult<String> {
+        let mut parts = Vec::new();
+        for x in args {
+            parts.push(format!("NULLIF({}, 'null'::jsonb)", self.jsonb_of(x)?));
+        }
+        Ok(format!("coalesce({})", parts.join(", ")))
+    }
+
     fn func(&mut self, name: &str, args: &[Expr], distinct: bool) -> CResult<String> {
         let lname = name.to_ascii_lowercase();
         let d = if distinct { "DISTINCT " } else { "" };
@@ -2718,7 +3088,33 @@ impl Compiler {
                 let tid = self.type_id_sql(v, "type")?;
                 format!("og_type_name({tid})")
             }
-            "length" | "size" => format!("jsonb_array_length({})", a[0]),
+            // `size(list)`, `size(string)`; `length(path)` (and, leniently,
+            // `length` of a list or string). Decided by the type where it is
+            // known and by the value where it is not — a parameter, an
+            // undeclared property, a value carried through WITH. Null for null,
+            // as everywhere in Cypher: it used to be `jsonb_array_length(text)`,
+            // which does not exist, for any property that was not declared.
+            "length" | "size" => {
+                let [x] = args else { return Err(format!("{name}() takes one argument")) };
+                if matches!(x, Expr::Map(_) | Expr::MapProjection { .. }) {
+                    return Err(format!("{name}() takes a string or a list; a map has no size in Cypher"));
+                }
+                match self.type_of(x).as_deref() {
+                    Some("text") => format!("char_length(({})::text)", self.expr(x, Some("text"))?),
+                    Some(t) if is_scalar_type(t) => {
+                        return Err(format!("{name}() takes a string or a list, not a {t}"))
+                    }
+                    _ => {
+                        let j = self.jsonb_of(x)?;
+                        format!(
+                            "(CASE jsonb_typeof({j}) WHEN 'array' THEN jsonb_array_length({j}) \
+                             WHEN 'string' THEN char_length({j} #>> '{{}}') \
+                             WHEN 'object' THEN CASE WHEN {j} ? '_path' \
+                               THEN jsonb_array_length({j} -> 'relationships') END END)"
+                        )
+                    }
+                }
+            }
             "toupper" | "upper" => format!("upper(({})::text)", a[0]),
             "tolower" | "lower" => format!("lower(({})::text)", a[0]),
             "trim" => format!("btrim(({})::text)", a[0]),
@@ -2735,6 +3131,7 @@ impl Compiler {
             // every branch have one type — and an undeclared property reads out
             // as text. Pick the first branch whose type is known and read the
             // untyped ones at that type.
+            "coalesce" if self.coalesce_as_jsonb(args, false) => self.coalesce_jsonb(args)?,
             "coalesce" => {
                 let want = args.iter().find_map(|x| self.type_of(x));
                 let branches: Vec<String> = match &want {
@@ -2793,12 +3190,34 @@ impl Compiler {
                     ),
                 }
             }
-            "nodes" | "relationships" => a[0].clone(),
+            // A path is `{"_path": true, "nodes": […], "relationships": […]}`.
+            "nodes" => format!("(({}) -> 'nodes')", self.jsonb_of(&args[0])?),
+            "relationships" | "rels" => {
+                let j = self.jsonb_of(&args[0])?;
+                // `[r*1..3]` binds the list of relationships itself.
+                format!("(CASE WHEN jsonb_typeof({j}) = 'array' THEN {j} ELSE {j} -> 'relationships' END)")
+            }
+            "startnode" | "endnode" => {
+                let end = if lname == "startnode" { "_src" } else { "_dst" };
+                let r = self.jsonb_of(&args[0])?;
+                format!("og_node_json((({r}) ->> '{end}')::int8)")
+            }
+            // Neo4j's randomUUID(): a version-4 UUID as a string.
+            "randomuuid" => "gen_random_uuid()::text".into(),
             // spec 004 — vector surface
             "vector.similarity" | "similarity" => {
                 format!("(1 - (({})::vector <=> ({})::vector))", a[0], a[1])
             }
             "vector.distance" => format!("(({})::vector <=> ({})::vector)", a[0], a[1]),
+            // Neo4j 5's similarity functions, both normalised to [0, 1] as
+            // Neo4j defines them: (1 + cos) / 2, and 1 / (1 + d²). A list
+            // property or parameter reads as a vector through its text form.
+            "vector.similarity.cosine" => {
+                format!("((2 - (({})::text::vector <=> ({})::text::vector)) / 2)", a[0], a[1])
+            }
+            "vector.similarity.euclidean" => {
+                format!("(1 / (1 + (({})::text::vector <-> ({})::text::vector) ^ 2))", a[0], a[1])
+            }
             "vector.l2" => format!("(({})::vector <-> ({})::vector)", a[0], a[1]),
             // Neo4j's `genai.vector.encode(resource, provider, configuration)`.
             // Off by default, and the endpoint is configuration rather than an
@@ -2839,6 +3258,51 @@ fn is_numeric_type(t: &str) -> bool {
 fn is_scalar_type(t: &str) -> bool {
     is_numeric_type(t)
         || matches!(t, "text" | "bool" | "date" | "timestamptz" | "timestamp" | "interval" | "uuid")
+}
+
+/// The variables and properties an aggregate expression reads outside its
+/// aggregates — what the rows are grouped by.
+fn bare_references(e: &Expr) -> Vec<Expr> {
+    let mut out = Vec::new();
+    fn walk(e: &Expr, out: &mut Vec<Expr>) {
+        match e {
+            Expr::Func { .. } if e.is_aggregate() && !matches!(e, Expr::Func { args, .. } if args.iter().any(|a| a.is_aggregate())) => {}
+            Expr::Var(_) => out.push(e.clone()),
+            Expr::Prop(b, _) if matches!(&**b, Expr::Var(_)) => out.push(e.clone()),
+            Expr::Func { args, .. } => args.iter().for_each(|a| walk(a, out)),
+            Expr::Binary(_, a, b) => {
+                walk(a, out);
+                walk(b, out);
+            }
+            Expr::Not(a) | Expr::Neg(a) | Expr::IsNull(a, _) | Expr::Prop(a, _) => walk(a, out),
+            Expr::List(xs) => xs.iter().for_each(|x| walk(x, out)),
+            Expr::Map(kv) => kv.iter().for_each(|(_, v)| walk(v, out)),
+            Expr::Case { operand, whens, else_ } => {
+                if let Some(o) = operand {
+                    walk(o, out);
+                }
+                for (c, v) in whens {
+                    walk(c, out);
+                    walk(v, out);
+                }
+                if let Some(x) = else_ {
+                    walk(x, out);
+                }
+            }
+            Expr::Slice { list, from, to } => {
+                walk(list, out);
+                if let Some(f) = from {
+                    walk(f, out);
+                }
+                if let Some(t) = to {
+                    walk(t, out);
+                }
+            }
+            _ => {}
+        }
+    }
+    walk(e, &mut out);
+    out
 }
 
 /// Is this, as written, a list? `+` concatenates lists.
@@ -2897,17 +3361,29 @@ fn arithmetic_type(op: BinOp, l: Option<&str>, r: Option<&str>) -> Option<String
     }
 }
 
-/// Does `n.id` name a column of the source rather than the node identifier?
-///
-/// It does on a virtual type that maps a source column to a property called
-/// `id` — the most common key name there is. Read as the identifier, which a
-/// virtual node derives from its key, `n.id` returned 68719476737 for the row
-/// whose `id` is 1, `{id: 1}` matched nothing, and every virtual relationship
-/// joining on that key was silently empty. Stored types keep `n.id` as the
-/// identifier, as before; `_id` is the identifier everywhere.
-fn declares_source_id(tid: Option<i32>) -> bool {
-    let Some(t) = tid else { return false };
-    views::view_properties(t).contains_key("id") && crate::fabric::virtual_source(t).is_some()
+/// The relationships a variable-length hop walked (`og_vlp`'s `path`, edge ids
+/// in order), as a jsonb list of relationships; null where an OPTIONAL MATCH
+/// found no walk.
+fn var_hop_rels(w: &str) -> String {
+    format!(
+        "(CASE WHEN {w}.path IS NULL THEN NULL ELSE (SELECT coalesce(jsonb_agg(og_edge_json(vx.e) \
+         ORDER BY vx.o), '[]'::jsonb) FROM unnest({w}.path) WITH ORDINALITY AS vx(e, o)) END)"
+    )
+}
+
+/// The nodes a variable-length hop from `start` reached, in order and ending at
+/// its far end (the start itself not included): each edge's other end, walked
+/// from the start — the only reading that is right for undirected hops too.
+fn var_hop_nodes(start: &str, w: &str) -> String {
+    format!(
+        "(CASE WHEN {w}.path IS NULL THEN NULL ELSE (WITH RECURSIVE pn(i, node) AS (\
+         SELECT 0, {start}.id UNION ALL \
+         SELECT pn.i + 1, CASE WHEN pe.src = pn.node THEN pe.dst ELSE pe.src END \
+           FROM pn JOIN og_data.og_edge pe ON pe.id = ({w}.path)[pn.i + 1] \
+          WHERE pn.i < cardinality({w}.path)) \
+         SELECT coalesce(jsonb_agg(og_node_json(pn.node) ORDER BY pn.i), '[]'::jsonb) \
+           FROM pn WHERE pn.i > 0) END)"
+    )
 }
 
 /// The key property of a virtual type: the property mapped from its key column.

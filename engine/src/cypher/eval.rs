@@ -169,6 +169,26 @@ pub fn eval(e: &Expr, env: &Env, params: &Value) -> Result<Value, String> {
             Some(Value::String(t)) => json!(alts.iter().any(|alt| alt.iter().all(|l| l == t))),
             _ => Value::Null,
         },
+        Expr::Reduce { acc, init, var, list, expr } => {
+            let mut value = eval(init, env, params)?;
+            let items = match eval(list, env, params)? {
+                Value::Array(xs) => xs,
+                Value::Null => return Ok(Value::Null),
+                other => return Err(format!("reduce() needs a list, got {other}")),
+            };
+            let mut local = env.clone();
+            for item in items {
+                local.insert(acc.clone(), value);
+                local.insert(var.clone(), item);
+                value = eval(expr, &local, params)?;
+            }
+            value
+        }
+        Expr::Subquery { .. } => {
+            return Err("a pattern (EXISTS { … }, COUNT { … }, a pattern predicate or comprehension) \
+                        cannot be evaluated in a write clause — compute it in a WITH before the write"
+                .into())
+        }
         Expr::Star => Value::Null,
     })
 }
@@ -195,8 +215,13 @@ fn num(v: &Value) -> Option<f64> {
 fn binary(op: BinOp, a: &Value, b: &Value) -> Value {
     use BinOp::*;
     match op {
-        Add => match (num(a), num(b)) {
-            (Some(x), Some(y)) => json!(x + y),
+        Add => match (a, b) {
+            // Lists concatenate (a single value is appended or prepended).
+            (Value::Array(x), Value::Array(y)) => Value::Array(x.iter().chain(y).cloned().collect()),
+            (Value::Array(x), y) => Value::Array(x.iter().cloned().chain(std::iter::once(y.clone())).collect()),
+            (x, Value::Array(y)) => Value::Array(std::iter::once(x.clone()).chain(y.iter().cloned()).collect()),
+            (Value::Null, _) | (_, Value::Null) => Value::Null,
+            (Value::Number(_), Value::Number(_)) => arith_add(a, b),
             _ => json!(format!("{}{}", as_str(a), as_str(b))),
         },
         Sub | Mul | Div | Mod | Pow => match (num(a), num(b)) {
@@ -255,6 +280,14 @@ fn binary(op: BinOp, a: &Value, b: &Value) -> Value {
     }
 }
 
+/// `+` over two numbers: an integer while both are.
+fn arith_add(a: &Value, b: &Value) -> Value {
+    match (a.as_i64(), b.as_i64()) {
+        (Some(x), Some(y)) => x.checked_add(y).map(|v| json!(v)).unwrap_or_else(|| json!(x as f64 + y as f64)),
+        _ => json!(num(a).unwrap_or(0.0) + num(b).unwrap_or(0.0)),
+    }
+}
+
 fn as_str(v: &Value) -> String {
     match v {
         Value::String(s) => s.clone(),
@@ -266,7 +299,9 @@ fn as_str(v: &Value) -> String {
 /// Transaction time as ISO-8601, read from PostgreSQL rather than the wall
 /// clock so a write clause and the surrounding SQL agree on "now".
 fn now_iso() -> String {
-    crate::spiu::one::<String>("SELECT now()::text", &[])
+    // ISO 8601, as `datetime()` in a read gives it (`now()::text` has a space
+    // where the T goes).
+    crate::spiu::one::<String>("SELECT to_jsonb(now()) #>> '{}'", &[])
         .ok()
         .flatten()
         .unwrap_or_default()
@@ -291,6 +326,34 @@ fn func(name: &str, a: &[Value]) -> Result<Value, String> {
         "size" | "length" => match &a[0] {
             Value::Array(xs) => json!(xs.len()),
             Value::String(s) => json!(s.chars().count()),
+            Value::Object(o) if o.contains_key("_path") => {
+                json!(o.get("relationships").and_then(Value::as_array).map_or(0, |r| r.len()))
+            }
+            Value::Null => Value::Null,
+            other => return Err(format!("{name}() takes a string or a list, got {other}")),
+        },
+        "nodes" => a[0].get("nodes").cloned().unwrap_or(Value::Null),
+        "relationships" | "rels" => match &a[0] {
+            Value::Array(_) => a[0].clone(),
+            v => v.get("relationships").cloned().unwrap_or(Value::Null),
+        },
+        "startnode" | "endnode" => {
+            let end = if name.eq_ignore_ascii_case("startnode") { "_src" } else { "_dst" };
+            match a[0].get(end).and_then(Value::as_i64) {
+                Some(id) => crate::spiu::one::<pgrx::JsonB>("SELECT og_node_json($1)", &[id.into()])
+                    .ok()
+                    .flatten()
+                    .map(|j| j.0)
+                    .unwrap_or(Value::Null),
+                None => Value::Null,
+            }
+        }
+        "randomuuid" => crate::spiu::one::<String>("SELECT gen_random_uuid()::text", &[])
+            .map_err(|e| format!("randomUUID(): {e}"))?
+            .map(Value::String)
+            .unwrap_or(Value::Null),
+        "properties" => match &a[0] {
+            Value::Object(o) => Value::Object(o.iter().filter(|(k, _)| !k.starts_with('_')).map(|(k, v)| (k.clone(), v.clone())).collect()),
             _ => Value::Null,
         },
         "abs" => num(&a[0]).map(|f| json!(f.abs())).unwrap_or(Value::Null),
@@ -331,16 +394,17 @@ fn func(name: &str, a: &[Value]) -> Result<Value, String> {
         // `SET o.due = date('2024-03-05')`, `date()`: PostgreSQL reads the value
         // (and refuses one that is not a date), so a write stores what a read
         // of `date(…)` would compare against.
-        "date" | "datetime" => {
-            let (ty, now) = if name.eq_ignore_ascii_case("date") {
-                ("date", "current_date")
-            } else {
-                ("timestamptz", "now()")
+        "date" | "datetime" | "localdatetime" => {
+            let (ty, now) = match name.to_ascii_lowercase().as_str() {
+                "date" => ("date", "current_date"),
+                "datetime" => ("timestamptz", "now()"),
+                _ => ("timestamp", "localtimestamp"),
             };
+            // ISO 8601, the form a read of the same function returns.
             let sql = match a.first() {
-                None => format!("SELECT {now}::text"),
+                None => format!("SELECT to_jsonb({now}) #>> '{{}}'"),
                 Some(Value::Null) => return Ok(Value::Null),
-                Some(_) => format!("SELECT ($1::text)::{ty}::text"),
+                Some(_) => format!("SELECT to_jsonb(($1::text)::{ty}) #>> '{{}}'"),
             };
             let arg = a.first().map(|v| as_str(v).to_string());
             let got = match &arg {
