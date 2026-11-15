@@ -211,7 +211,7 @@ The acceptance evidence is not self-authored. `examples/typedb/bookstore/`
 holds the upstream TypeDB bookstore example verbatim, and
 
 ```bash
-python3 tests/typeql/run.py
+python3 tests/v1/typeql/run.py
 ```
 
 loads its `schema.tql` and `data.tql` unmodified, runs the queries printed in

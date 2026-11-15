@@ -142,7 +142,7 @@ $tql$);
 | 감사 로그 | 남긴다 | **남기지 않는다** |
 | 오류 위치 | `typeql error: <msg>` | `typeql error in block <i> of <n>: <msg>` ([mod.rs:109](../../engine/src/typeql/mod.rs#L109)) |
 
-**예제** (실제 [tests/typeql/run.py](../../tests/typeql/run.py) 방식)
+**예제** (실제 [tests/v1/typeql/run.py](../../tests/v1/typeql/run.py) 방식)
 
 ```sql
 SELECT og_typeql_script('bookstore', pg_read_file('/path/to/schema.tql'));
@@ -394,7 +394,7 @@ README 스펙 상태표의 "spec 010 — partial (UDF는 파싱/왕복만)"이 �
   오류 메시지에 블록 번호가 붙는다.
 - **필수**: 스키마 왕복을 검증하려면 `og_typeql_schema` → 새 그래프에
   `og_typeql_script` → 결과 비교 순서를 쓸 것(테스트 하네스가 하는 방식,
-  [tests/typeql/run.py](../../tests/typeql/run.py)).
+  [tests/v1/typeql/run.py](../../tests/v1/typeql/run.py)).
 
 ---
 

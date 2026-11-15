@@ -5,7 +5,7 @@
 | 상태 | **Proposed** (실험 브랜치 `exp/virtual-fabric`) |
 | 날짜 | 2026-10-09 |
 | 영향 범위 | interop, cypher, catalog, bolt(변경 없음) |
-| 근거 | `experiments/fabric/` (설정 SQL, 벤치마크, `results.json`), `engine/tests/sql/13_virtual_fabric.sql` |
+| 근거 | `experiments/fabric/` (설정 SQL, 벤치마크, `results.json`), `tests/common/sql/13_virtual_fabric.sql` |
 
 > **이 문서가 답하는 질문**
 > - 원천 시스템에 있는 행을 **사이퍼 한 번으로** — 그래프에 저장된 노드와 섞어서 — 질의할 수 있는가?

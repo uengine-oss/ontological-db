@@ -149,7 +149,7 @@ MATCH (a)-[:K*2..2]->(x) RETURN count(DISTINCT x)
 그리고 `prefer_reachability` 는 `max` 만 본다. 따라서 `*2..2` / `*3..5` / `*4` 처럼
 `minhop > 1` 인 다중도-불감 질의는 **경로에 따라 다른 답을 낸다.**
 
-- 회귀 스위트 [`engine/tests/sql/05_reachability.sql`](../../../engine/tests/sql/05_reachability.sql) 은
+- 회귀 스위트 [`tests/v1/sql/05_reachability.sql`](../../../tests/v1/sql/05_reachability.sql) 은
   `minhop = 1` 만 검사한다.
 - 벤치 하네스의 `n_hop` / `reach_hop` 도 `*1..k` 만 쓴다
   ([`bench/harness.py:363-373`](../../../bench/harness.py)).

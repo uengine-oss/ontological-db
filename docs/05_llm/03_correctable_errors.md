@@ -277,7 +277,7 @@ SELECT og_explain_error('default', 'MATCH (p:Persn) RETURN p');
 
 동일한 취지의 회귀 테스트가 존재하지만, 기대 출력이 저장소에 없어 무엇이 정답으로
 간주되는지 확인할 수 없다
-([engine/tests/sql/03_vector_agent_rdf.sql:41-42](../../engine/tests/sql/03_vector_agent_rdf.sql) —
+([tests/common/sql/03_vector_agent_rdf.sql:41-42](../../tests/common/sql/03_vector_agent_rdf.sql) —
 `og_explain_error('kb', 'MATCH (d:Docs) RETURN d')`; `engine/tests/expected/` 디렉터리 부재).
 
 **이 문서는 코드를 정답으로 삼는다.** 원문 수정은 이 카테고리의 범위 밖이며,

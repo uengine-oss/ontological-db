@@ -5,7 +5,7 @@
 | 상태 | Accepted |
 | 날짜 | 2026-09-30 (작성일. 커밋 전) |
 | 영향 범위 | storage, cypher, typeql, bolt, catalog |
-| 근거 | `engine/src/temporal/mod.rs`, `engine/sql/access.sql`(`og__temporal`, `og_valid_at`, `og_system_at`, `og_asof_active`, `og_require_current`), `engine/src/cypher/views.rs`(`build_view`), `engine/src/cypher/compile.rs`(`join_rel`, `guard_untyped_nodes`), `engine/tests/sql/09_bitemporal.sql`, `engine/tests/sql/10_evolution_temporal_coverage.sql`, [spec 013](../../specs/013-bitemporal-graph/plan.md) |
+| 근거 | `engine/src/temporal/mod.rs`, `engine/sql/access.sql`(`og__temporal`, `og_valid_at`, `og_system_at`, `og_asof_active`, `og_require_current`), `engine/src/cypher/views.rs`(`build_view`), `engine/src/cypher/compile.rs`(`join_rel`, `guard_untyped_nodes`), `tests/v1/sql/09_bitemporal.sql`, `tests/v1/sql/10_evolution_temporal_coverage.sql`, [spec 013](../../specs/013-bitemporal-graph/plan.md) |
 
 > **이 문서가 답하는 질문**
 > - 유효 시각과 기록 시각은 어디에 저장되는가?
@@ -74,7 +74,7 @@
 - **이력은 기록이다.** 쓰기 역할은 `h_*` 에 DML 을 갖지 않고(`catalog/privileges.rs`
   `protect_records`, `apply_to_table` 의 `record_only`), 트리거가 소유자 권한으로 쓴다.
 - **Bolt 에서도 같은 설정.** 드라이버가 이미 가진 `tx_metadata` 를 `set_config(…, true)` 로
-  옮기므로 새 API 가 없다(`tests/bolt-context/run.py`).
+  옮기므로 새 API 가 없다(`tests/v1/bolt-context/run.py`).
 
 ## 결과
 

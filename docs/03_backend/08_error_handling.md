@@ -386,7 +386,7 @@ VALUES ($1, 'cypher', $2, $3, $4)
   **내부 불변식 위반**에만 쓰고, 문자열은 그 불변식을 설명한다
   (`storage/traverse.rs:272` 참고).
 - **금지**: 오류 메시지 문구를 바꾸면서 `bolt/src/session.rs:578-593`의 매칭 목록과
-  `engine/tests/sql/*.sql`의 `EXPECT_ERROR` 주석을 확인하지 않는 것.
+  `tests/{common,v1}/sql/*.sql`의 `EXPECT_ERROR` 주석을 확인하지 않는 것.
 - **금지**: 성공적으로 실행된 부작용을 오류 하나 때문에 되돌리지 않는 것.
   트랜잭션이 abort하므로 자동으로 되돌아가지만, 백엔드-로컬 상태
   (`stats`, `PLAN_CACHE`, `CSR`)는 되돌아가지 않는다.

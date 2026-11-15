@@ -15,20 +15,23 @@
 | 1 | Rust 유닛 테스트 | `cargo test` (`engine/`, `bolt/`) | 없음 | 렉서·파서·식별자 인코딩·RDF 파싱·PackStream |
 | 2 | SQL 회귀 스위트 | `tests/run.sh` | **필요** | 확장의 인-데이터베이스 동작 전체 + 백업 왕복 + 무결성 |
 | 3 | pg_regress 스캐폴딩 | (미배선) | — | **현재 동작하지 않음** — 아래 §3 |
-| 4 | TypeQL 적합성 | `python3 tests/typeql/run.py` | **필요** | TypeDB 상류 예제 파일이 그대로 도는가 |
-| 5 | Neo4j Movie Graph | `python3 tests/neo4j-movies/run.py` | **필요** (+ Bolt) | Neo4j 샘플 앱이 그대로 도는가, 드라이버 수준까지 |
+| 4 | TypeQL 적합성 | `python3 tests/v1/typeql/run.py` | **필요** | TypeDB 상류 예제 파일이 그대로 도는가 |
+| 5 | Neo4j Movie Graph | `python3 tests/common/neo4j-movies/run.py` | **필요** (+ Bolt) | Neo4j 샘플 앱이 그대로 도는가, 드라이버 수준까지 |
 | 6 | MCP 호환 | `python3 examples/meeting-rooms/verify_mcp.py` | **필요** (+ Bolt) | 공개 `mcp-neo4j-cypher` 서버가 무수정으로 도는가 |
 | 7 | 벤치마크 회귀 게이트 | `python3 bench/harness.py --compare-baseline …` | **필요** | 성능 20% 회귀 — [05_benchmarking.md](05_benchmarking.md) |
 
-> **CI 설정 파일은 존재하지 않는다.** 저장소 루트에 `.github/` 디렉터리가 없고,
-> `Makefile`·`Jenkinsfile`·`.gitlab-ci.yml` 류도 없다. 위 스위트는 전부 수동 실행이다.
+> **CI**: [`.github/workflows/tests.yml`](../../.github/workflows/tests.yml) 이 `scripts/test-all.sh` 를
+> {v1, age} × {PostgreSQL 16, 17} 으로 부른다(age 칸은 그 판의 엔진이 생길 때까지 「건너뜀」). 같은 스크립트 한 번이면
+> 로컬에서도 임시 클러스터를 만들어 위 스위트(7 제외)와 Bolt 시험·튜토리얼을 차례로 돌리고 요약을 낸다.
+> 시험은 `tests/common/`(두 판 공용)·`tests/v1/`·`tests/age/` 로 나뉜다 — 기준과 분류는 [`tests/README.md`](../../tests/README.md).
+> 이 문서의 아래 절들은 그 전, 스위트를 하나씩 손으로 돌리던 때를 기준으로 쓰였다(행 번호 인용도 그때의 것이다).
 > → [10_improvements_ops.md](10_improvements_ops.md) `OPS-13`
 
 `engine/src/lib.rs:45-48`이 이 배치를 직접 설명한다:
 
 ```
 // In-database behaviour is covered by the SQL regression suite in
-// `engine/tests/sql/`, run with `tests/run.sh` against a live server. Pure Rust
+// `tests/{common,v1}/sql/`, run with `tests/run.sh` against a live server. Pure Rust
 // units (lexer, parser, identifier encoding, RDF parsing) live beside their
 // modules and run under `cargo test`.
 ```
@@ -106,7 +109,7 @@ PGHOST=localhost PGPORT=28816 ./tests/run.sh
 
 **단계 A — 파일별 회귀 (`tests/run.sh:14-34`)**
 
-`engine/tests/sql/*.sql`을 하나씩, 매번 **새 데이터베이스**에서 실행한다:
+`tests/{common,v1}/sql/*.sql`을 하나씩, 매번 **새 데이터베이스**에서 실행한다:
 
 ```bash
 psql -d postgres -c "DROP DATABASE IF EXISTS $DB"
@@ -128,11 +131,11 @@ if [ "$actual" -le "$expected" ]; then  # ok
 
 | 파일 | `EXPECT_ERROR` 수 | 검증 대상 |
 |---|---|---|
-| `engine/tests/sql/01_catalog_storage.sql` | 1 | 타입 계층, 구간 라벨, 저장, 인접 (spec 001 + 002) |
-| `engine/tests/sql/02_cypher.sql` | 1 | Cypher 파싱 → 컴파일 → 실행 (spec 003) |
-| `engine/tests/sql/03_vector_agent_rdf.sql` | 0 | 벡터 / RDF / 에이전트 (spec 004 · 006 · 008) |
-| `engine/tests/sql/04_neo4j_compat.sql` | 0 | Neo4j 호환 표면 — "재작성 없이 도는가" (243줄) |
-| `engine/tests/sql/05_reachability.sql` | 0 | `og_reach` / `og_reach_sql` / CSR, 그리고 재작성 스위치. 모든 단언이 **`og_vlp`와의 등가 비교**다 |
+| `tests/v1/sql/01_catalog_storage.sql` | 1 | 타입 계층, 구간 라벨, 저장, 인접 (spec 001 + 002) |
+| `tests/common/sql/02_cypher.sql` | 1 | Cypher 파싱 → 컴파일 → 실행 (spec 003) |
+| `tests/common/sql/03_vector_agent_rdf.sql` | 0 | 벡터 / RDF / 에이전트 (spec 004 · 006 · 008) |
+| `tests/common/sql/04_neo4j_compat.sql` | 0 | Neo4j 호환 표면 — "재작성 없이 도는가" (243줄) |
+| `tests/v1/sql/05_reachability.sql` | 0 | `og_reach` / `og_reach_sql` / CSR, 그리고 재작성 스위치. 모든 단언이 **`og_vlp`와의 등가 비교**다 |
 
 `05_reachability.sql`의 헤더가 이 파일의 성격을 못 박는다:
 "nothing in this file measures anything — it only checks answers."
@@ -212,37 +215,37 @@ CREATE EXTENSION engine;
 
 ---
 
-## 4. TypeQL 적합성 — `tests/typeql/run.py`
+## 4. TypeQL 적합성 — `tests/v1/typeql/run.py`
 
 ### 실행
 
 ```bash
-python3 tests/typeql/run.py
-python3 tests/typeql/run.py --db my_typeql_test
+python3 tests/v1/typeql/run.py
+python3 tests/v1/typeql/run.py --db my_typeql_test
 ```
 
-- 옵션은 `--db` **하나뿐**이다 (`tests/typeql/run.py:95`, 기본값 `og_typeql_test`).
-- 환경변수: `PGHOST`(localhost), `PGPORT`(28816) (`tests/typeql/run.py:25-26`).
+- 옵션은 `--db` **하나뿐**이다 (`tests/v1/typeql/run.py:95`, 기본값 `og_typeql_test`).
+- 환경변수: `PGHOST`(localhost), `PGPORT`(28816) (`tests/v1/typeql/run.py:25-26`).
 - 스크립트가 `DROP DATABASE IF EXISTS <db>` 후 `CREATE DATABASE` → `CREATE EXTENSION
   ontological CASCADE` → `og_create_graph('bookstore')`를 수행한다
-  (`tests/typeql/run.py:100-110` 부근).
+  (`tests/v1/typeql/run.py:100-110` 부근).
 
 ### 무엇이 검증되는가
 
-docstring이 원칙을 명시한다 (`tests/typeql/run.py:4-9`):
+docstring이 원칙을 명시한다 (`tests/v1/typeql/run.py:4-9`):
 스키마·데이터·질의가 전부 상류 TypeDB 예제 파일(`examples/typedb/bookstore/`)이며 **무수정**,
 기대 결과는 그 예제의 README에 인쇄된 값이다.
 
 판정은 순서 무관 집합 비교이고, 부동소수는 소수점 6자리로 반올림해 비교한다
-(`tests/typeql/run.py:63-71`).
+(`tests/v1/typeql/run.py:63-71`).
 
 결과는 세 상태로 표시된다: `ok` / `FAIL` / `unsupported`
-(`tests/typeql/run.py:39-46`). `unsupported`는 실패가 아니라 **미구현 표기**다 —
+(`tests/v1/typeql/run.py:39-46`). `unsupported`는 실패가 아니라 **미구현 표기**다 —
 spec 010이 partial 상태인 것과 대응한다.
 
 ---
 
-## 5. Neo4j Movie Graph — `tests/neo4j-movies/run.py`
+## 5. Neo4j Movie Graph — `tests/common/neo4j-movies/run.py`
 
 `bolt/README.md:97-100`이 이 스위트를 "the real gate"라 부른다:
 Neo4j의 **자체 드라이버**로 구동하기 때문이다 — "Testing our server with our own client
@@ -252,20 +255,20 @@ would not be evidence."
 
 ```bash
 # Ontological 양쪽 경로(PostgreSQL + Bolt)만
-python3 tests/neo4j-movies/run.py
+python3 tests/common/neo4j-movies/run.py
 
 # 살아 있는 Neo4j와 비교까지
 docker run -d --name bench-neo4j -p 27687:7687 \
   -e NEO4J_AUTH=neo4j/benchpass123 neo4j:5
-python3 tests/neo4j-movies/run.py --neo4j bolt://localhost:27687
+python3 tests/common/neo4j-movies/run.py --neo4j bolt://localhost:27687
 
 # 공식 샘플 애플리케이션 — URI만 바꾸고 나머지 그대로
-python3 tests/neo4j-movies/sample_app.py
+python3 tests/common/neo4j-movies/sample_app.py
 ```
 
-(`tests/neo4j-movies/README.md:32-43`)
+(`tests/common/neo4j-movies/README.md:32-43`)
 
-### 옵션과 환경변수 (`tests/neo4j-movies/run.py:226-237`)
+### 옵션과 환경변수 (`tests/common/neo4j-movies/run.py:226-237`)
 
 | 옵션 | 기본값 (환경변수) |
 |---|---|
@@ -280,7 +283,7 @@ python3 tests/neo4j-movies/sample_app.py
 | `--neo4j-password` | `NEO4J_PASSWORD` |
 | `--no-neo4j` | Neo4j 비교 건너뜀 |
 
-### 무엇이 검증되는가 (`tests/neo4j-movies/README.md:8-25`)
+### 무엇이 검증되는가 (`tests/common/neo4j-movies/README.md:8-25`)
 
 1. **어느 포트가 Bolt를 말하는가** — raw 핸드셰이크로 확인한다. PostgreSQL 포트는
    Bolt를 말하지 않으며 앞으로도 그럴 것이다 (spec 003 FR-024). 게이트웨이는 말한다.
@@ -294,10 +297,10 @@ python3 tests/neo4j-movies/sample_app.py
 
 의존성: `psycopg2` (필수), `neo4j` (Bolt·Neo4j 단계). `movies.cypher`는 최초 실행 시
 `raw.githubusercontent.com`에서 내려받아 파일 옆에 캐시한다
-(`tests/neo4j-movies/run.py:40-43`) — **네트워크가 필요하다.**
+(`tests/common/neo4j-movies/run.py:40-43`) — **네트워크가 필요하다.**
 
 종료 코드 0의 조건: 데이터셋이 깨끗이 적재되고, 가능한 모든 경로에서 모든 질의가 일치하고,
-드라이버 검사가 통과할 때 (`tests/neo4j-movies/README.md:49-50`).
+드라이버 검사가 통과할 때 (`tests/common/neo4j-movies/README.md:49-50`).
 
 ---
 
@@ -330,8 +333,8 @@ docker exec ontological-dev bash -lc 'cd /work/engine && \
 docker exec ontological-dev bash -lc 'cd /work && ./tests/run.sh'
 
 # 3. 언어 표면 적합성
-python3 tests/typeql/run.py
-python3 tests/neo4j-movies/run.py
+python3 tests/v1/typeql/run.py
+python3 tests/common/neo4j-movies/run.py
 
 # 4. 성능 회귀
 python3 bench/harness.py --compare-baseline bench/results/baseline.json

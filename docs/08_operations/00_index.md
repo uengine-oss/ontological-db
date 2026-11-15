@@ -70,6 +70,6 @@
 - [`docs/deep-traversal.md`](../deep-traversal.md) — `og_reach` / `og_csr_*` 설계와 비용.
 - [`bench/README.md`](../../bench/README.md), [`bench/csr/README.md`](../../bench/csr/README.md)
 - [`bolt/README.md`](../../bolt/README.md) — Bolt 게이트웨이 환경변수와 지원 범위.
-- [`tests/neo4j-movies/README.md`](../../tests/neo4j-movies/README.md)
+- [`tests/common/neo4j-movies/README.md`](../../tests/common/neo4j-movies/README.md)
 
 <!-- affects: ops -->

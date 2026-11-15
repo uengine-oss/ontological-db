@@ -42,7 +42,7 @@ requires = 'vector'
 - `start.sh:50` — `CREATE EXTENSION ontological CASCADE`
 - `README.md:178` — `CREATE EXTENSION ontological CASCADE`
 - `tests/run.sh:19` — `CREATE EXTENSION ontological CASCADE`
-- `tests/typeql/run.py:110` 부근 — `CREATE EXTENSION ontological CASCADE`
+- `tests/v1/typeql/run.py:110` 부근 — `CREATE EXTENSION ontological CASCADE`
 
 pgvector가 실제로 쓰이는 곳은 벡터 검색 경로다 —
 `og_add_embedding`이 `vector(N)` 컬럼과 HNSW 인덱스를 만든다
@@ -161,7 +161,7 @@ docker exec og bash -lc 'cd /work/engine && \
 
 > **포트 28816은 pgrx의 pg16 기본 포트다.** 저장소 전체가 이 값을 기본으로 쓴다 —
 > `start.sh:8`, `tests/run.sh:7`, `bench/harness.py:47`,
-> `portal/server/index.js:23`, `tests/typeql/run.py:26`.
+> `portal/server/index.js:23`, `tests/v1/typeql/run.py:26`.
 
 ### A-3. `start.sh`는 설치를 하지 않는다 — 반드시 알아야 할 점
 

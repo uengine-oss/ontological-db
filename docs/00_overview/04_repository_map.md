@@ -188,9 +188,9 @@ bench/
 
 | 경로 | 무엇 | 실행 |
 |---|---|---|
-| `tests/run.sh` | SQL 회귀 스위트 (`engine/tests/sql/*.sql` 5개) | `./tests/run.sh` |
-| `tests/typeql/run.py` | TypeDB bookstore 예제 대조 (28개 속성) | `python3 tests/typeql/run.py` |
-| `tests/neo4j-movies/run.py` | Neo4j 공식 Movie 샘플을 postgres/bolt/neo4j 세 경로로 대조 | `python3 tests/neo4j-movies/run.py` |
+| `tests/run.sh` | SQL 회귀 스위트 (`tests/{common,v1}/sql/*.sql` 5개) | `./tests/run.sh` |
+| `tests/v1/typeql/run.py` | TypeDB bookstore 예제 대조 (28개 속성) | `python3 tests/v1/typeql/run.py` |
+| `tests/common/neo4j-movies/run.py` | Neo4j 공식 Movie 샘플을 postgres/bolt/neo4j 세 경로로 대조 | `python3 tests/common/neo4j-movies/run.py` |
 
 Rust 단위 테스트(파서, 렉서, RDF, 식별자)는 모듈 옆에 살고 `cargo test` 로 돈다
 ([`engine/src/lib.rs:42-47`](../../engine/src/lib.rs), 예: [`engine/src/id.rs:93-111`](../../engine/src/id.rs)).

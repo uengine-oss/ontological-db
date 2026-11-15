@@ -600,7 +600,7 @@ Cypher 쓰기 경로는 새 라벨을 자동 생성하므로
 - 새 프로퍼티 이름을 받는 경로를 추가하면 §5의 충돌 표를 재검토할 것.
 - `access.sql`에 plpgsql 함수를 추가하면 `SET search_path = og_catalog, og_data, pg_catalog`
   를 함께 선언할 것 (§8).
-- 회귀 테스트: `engine/tests/sql/` 에 (a) 작은따옴표를 포함한 프로퍼티 이름,
+- 회귀 테스트: `tests/{common,v1}/sql/` 에 (a) 작은따옴표를 포함한 프로퍼티 이름,
   (b) `a b` / `a-b` 충돌, (c) 시스템 뷰 이름과 겹치는 라벨 — 세 케이스를 추가할 것.
 
 <!-- affects: security, backend, data, api -->

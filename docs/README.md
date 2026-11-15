@@ -103,7 +103,7 @@
 
 상태는 [03_backend/12_fixed_correctness.md](03_backend/12_fixed_correctness.md)
 기준입니다. "증상" 열은 **감사 시점(`7d60c82`)의 기록**이며, 회귀 테스트는
-[`engine/tests/sql/06_correctness_regressions.sql`](../engine/tests/sql/06_correctness_regressions.sql)
+[`tests/common/sql/06_correctness_regressions.sql`](../tests/common/sql/06_correctness_regressions.sql)
 에 있으며, **수정 전 코드에서 다섯 단언이 전부 실패하는 것을 확인**했습니다.
 
 | 항목 | 상태 | 근거 | 감사 시점의 증상 |

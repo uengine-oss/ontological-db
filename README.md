@@ -290,7 +290,7 @@ $$);
 ```
 
 That is what TypeDB's documentation says the query returns.
-`python3 tests/typeql/run.py` re-checks it, and 27 other properties, against the
+`python3 tests/v1/typeql/run.py` re-checks it, and 27 other properties, against the
 vendored files on every run.
 
 **The same graph answers in Cypher**, because there is only one graph. TypeQL
@@ -324,7 +324,7 @@ functions, so two of four run today. That is the honest number.
 - [`docs/agents.md`](docs/agents.md) — using this from an LLM agent
 - [`bolt/README.md`](bolt/README.md) — the Bolt gateway: how to run it, and its support matrix
 - [`examples/meeting-rooms/`](examples/meeting-rooms/) — Neo4j's own MCP server, unmodified, answering a Korean question against this database
-- [`tests/neo4j-movies/README.md`](tests/neo4j-movies/README.md) — the official Neo4j Movie sample, run on all three paths
+- [`tests/common/neo4j-movies/README.md`](tests/common/neo4j-movies/README.md) — the official Neo4j Movie sample, run on all three paths
 - [`bench/README.md`](bench/README.md) — benchmark method and how to reproduce
 
 ## Testing
@@ -333,10 +333,10 @@ functions, so two of four run today. That is the honest number.
 docker exec og bash -lc 'cd /work/engine && cargo test'          # parser, lexer, RDF, ids
 docker exec og bash -lc 'cd /work && ./tests/run.sh'             # SQL regression suite
 ./tests/tutorials.sh                                         # every tutorial's examples, run as tests (FABRIC=1 adds the fabric one)
-docker exec og bash -lc 'cd /work && python3 tests/typeql/run.py'  # TypeQL vs the TypeDB example
+docker exec og bash -lc 'cd /work && python3 tests/v1/typeql/run.py'  # TypeQL vs the TypeDB example
 docker exec og bash -lc 'cd /work/bolt && cargo test'            # PackStream round trips
-docker exec og bash -lc 'cd /work && python3 tests/neo4j-movies/run.py'  # Neo4j sample, postgres + bolt + neo4j
-docker exec og bash -lc 'cd /work && python3 tests/bolt-context/run.py'  # tx_metadata → stamps, audit, valid time
+docker exec og bash -lc 'cd /work && python3 tests/common/neo4j-movies/run.py'  # Neo4j sample, postgres + bolt + neo4j
+docker exec og bash -lc 'cd /work && python3 tests/v1/bolt-context/run.py'  # tx_metadata → stamps, audit, valid time
 docker exec og bash -lc 'cd /work && python3 bench/harness.py'   # benchmark + integrity
 ```
 

@@ -99,7 +99,7 @@ loop)의 **판정 노드는 애플리케이션이 구현**한다. DB는 그 판�
   저장소에 그 측정을 수행하는 하네스는 없다 — `bench/harness.py` 에는 recall 측정
   코드가 없고([bench/harness.py](../../bench/harness.py) 내 "recall" 문자열 부재),
   ANN vs exact 비교는 3행짜리 회귀 테스트 한 건이 전부다
-  ([engine/tests/sql/03_vector_agent_rdf.sql:34-36](../../engine/tests/sql/03_vector_agent_rdf.sql)).
+  ([tests/common/sql/03_vector_agent_rdf.sql:34-36](../../tests/common/sql/03_vector_agent_rdf.sql)).
 - `docs/README.md` 및 기존 영문 `docs/*.md` 수정 금지.
 
 <!-- affects: llm, api, backend -->

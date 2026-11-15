@@ -5,7 +5,7 @@
 | 상태 | Accepted |
 | 날짜 | 2026-09-30 (작성일. 커밋 전) |
 | 영향 범위 | catalog, storage, cypher, security, temporal |
-| 근거 | `engine/src/catalog/evolution.rs`(모듈 주석과 종류별 `expand`/`migrate`/`contract`), `engine/sql/bootstrap.sql`(`og_catalog.schema_change`), `engine/sql/access.sql`(`og__shadow_write` — 이중 쓰기 트리거), `engine/tests/sql/08_schema_evolution.sql`, `engine/tests/sql/10_evolution_temporal_coverage.sql`, [spec 012](../../specs/012-schema-evolution/plan.md) |
+| 근거 | `engine/src/catalog/evolution.rs`(모듈 주석과 종류별 `expand`/`migrate`/`contract`), `engine/sql/bootstrap.sql`(`og_catalog.schema_change`), `engine/sql/access.sql`(`og__shadow_write` — 이중 쓰기 트리거), `tests/v1/sql/08_schema_evolution.sql`, `tests/v1/sql/10_evolution_temporal_coverage.sql`, [spec 012](../../specs/012-schema-evolution/plan.md) |
 
 > **이 문서가 답하는 질문**
 > - 속성 이름을 바꾸면 행이 다시 쓰이는가?

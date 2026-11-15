@@ -31,7 +31,7 @@ client ──pgwire──▶ ontological-sql ──pgwire──▶ PostgreSQL + 
 ```
 
 The grammar lives in the extension (`engine/src/fabric/sqlish.rs`) and is covered by the regression suite
-(`engine/tests/sql/14_fabric_statements.sql`). The gateway knows only which statements to ask about, and has no
+(`tests/v1/sql/14_fabric_statements.sql`). The gateway knows only which statements to ask about, and has no
 dependencies beyond the standard library. The same statements are also accepted wherever Cypher is — `og_cypher()`
 hands them to the same translator — which is how the Studio and Bolt drivers use them with no gateway at all.
 

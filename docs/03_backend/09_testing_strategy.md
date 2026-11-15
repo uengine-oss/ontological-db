@@ -15,12 +15,12 @@
 |---|---|---|---|
 | ① Rust 단위 테스트 | `cargo test` | 렉서, 파서, 식별자 인코딩, RDF, PackStream, 연결 성분 | ❌ |
 | ② SQL 회귀 스위트 | `tests/run.sh` | 확장 전체 (5개 파일) + 백업 왕복 + 무결성 | ✅ |
-| ③ Neo4j 적합성 | `python3 tests/neo4j-movies/run.py` | Movie Graph 데이터셋 + 24개 가이드 질의 + Bolt 핸드셰이크 | ✅ (+ 선택적 Neo4j) |
-| ④ TypeQL 적합성 | `python3 tests/typeql/run.py` | TypeDB bookstore 예제 원본 파일 + 그 README의 기대 출력 | ✅ |
+| ③ Neo4j 적합성 | `python3 tests/common/neo4j-movies/run.py` | Movie Graph 데이터셋 + 24개 가이드 질의 + Bolt 핸드셰이크 | ✅ (+ 선택적 Neo4j) |
+| ④ TypeQL 적합성 | `python3 tests/v1/typeql/run.py` | TypeDB bookstore 예제 원본 파일 + 그 README의 기대 출력 | ✅ |
 
 `engine/src/lib.rs:45-48`이 이 분할을 명시한다:
 
-> In-database behaviour is covered by the SQL regression suite in `engine/tests/sql/`,
+> In-database behaviour is covered by the SQL regression suite in `tests/{common,v1}/sql/`,
 > run with `tests/run.sh` against a live server. Pure Rust units (lexer, parser,
 > identifier encoding, RDF parsing) live beside their modules and run under `cargo test`.
 
@@ -52,7 +52,7 @@
 
 ### 3.1 테스트 파일
 
-`engine/tests/sql/`:
+`tests/{common,v1}/sql/`:
 
 | 파일 | 크기 | 대상 스펙 | 내용 |
 |---|---|---|---|
@@ -94,7 +94,7 @@ actual <= expected  →  ok
 **행 수를 세는 것이지 출력을 비교하는 것이 아니다.**
 
 `engine/tests/pg_regress/expected/`에는 `setup.out` 하나뿐이고,
-`engine/tests/sql/`에는 대응하는 `.out` 파일이 아예 없다.
+`tests/{common,v1}/sql/`에는 대응하는 `.out` 파일이 아예 없다.
 즉 **기대 출력 diff가 없다.**
 
 결과:
@@ -168,7 +168,7 @@ CREATE EXTENSION engine;
 
 ## 4. 사실 — ③ Neo4j Movies 적합성
 
-`tests/neo4j-movies/run.py` (12.4K). 헤더가 네 가지 질문을 명시한다:
+`tests/common/neo4j-movies/run.py` (12.4K). 헤더가 네 가지 질문을 명시한다:
 
 1. **어느 포트가 Bolt를 말하는가** — PostgreSQL 포트는 말하지 않고 앞으로도 안 한다
    (spec 003 FR-024). Bolt 게이트웨이는 말한다 (spec 011).
@@ -179,14 +179,14 @@ CREATE EXTENSION engine;
    여기서 실행하고, Neo4j가 도달 가능하면 거기서도 실행해 **행 수를 비교한다.**
 4. (헤더 4번째 항목 — 소스 참조)
 
-`tests/neo4j-movies/queries.py`(4.0K)에 질의 목록이 있고,
+`tests/common/neo4j-movies/queries.py`(4.0K)에 질의 목록이 있고,
 `sample_app.py`(1.3K)는 드라이버 수준 검증이다.
 
 ---
 
 ## 5. 사실 — ④ TypeQL Bookstore 적합성
 
-`tests/typeql/run.py` (19.6K). 헤더:
+`tests/v1/typeql/run.py` (19.6K). 헤더:
 
 > The point of this suite is that nothing in it is our own invention. The schema,
 > the data and the queries are the upstream TypeDB files in
@@ -197,7 +197,7 @@ CREATE EXTENSION engine;
 구조:
 
 ```
-tests/typeql/
+tests/v1/typeql/
   run.py
   queries/   q1.tql  q2.tql     ← 예제 README의 질의
   expected/  q1.json q2.json    ← 예제 README가 인쇄한 결과
@@ -287,10 +287,10 @@ cd bolt   && cargo test
 PGHOST=localhost PGPORT=28816 tests/run.sh
 
 # ③ Neo4j Movies
-python3 tests/neo4j-movies/run.py
+python3 tests/common/neo4j-movies/run.py
 
 # ④ TypeQL Bookstore
-python3 tests/typeql/run.py [--db NAME]
+python3 tests/v1/typeql/run.py [--db NAME]
 ```
 
 `tests/run.sh`의 기본값 (`run.sh:6-9`): `PGHOST=localhost`, `PGPORT=28816`, `OG_TEST_DB=og_test`.
@@ -307,7 +307,7 @@ python3 tests/typeql/run.py [--db NAME]
 | 인-데이터베이스 동작은 SQL 회귀로 | `lib.rs:45-48` | 출력 diff가 없어 답이 틀려도 통과 (`CODE-27`) |
 | 파일마다 새 데이터베이스 | `run.sh:17-20` | 느림 (파일당 DROP/CREATE/CREATE EXTENSION) |
 | 순수 함수만 `cargo test` | `lib.rs:47-48` | 순수 함수인데도 테스트 없는 곳이 많음 (`CODE-29`) |
-| 외부 데이터셋을 **수정 없이** 사용 | `tests/typeql/run.py:3-8`, `tests/neo4j-movies/run.py:9-13` | 상류 변경에 취약. 강력한 신뢰 신호 |
+| 외부 데이터셋을 **수정 없이** 사용 | `tests/v1/typeql/run.py:3-8`, `tests/common/neo4j-movies/run.py:9-13` | 상류 변경에 취약. 강력한 신뢰 신호 |
 | 백업 왕복을 별도 게이트로 | `run.sh:39-43` | — (좋은 결정) |
 | `#[pg_test]` 미사용 | 관례 | pgrx 통합 테스트 인프라가 유휴 상태 (`CODE-28`) |
 
@@ -315,12 +315,12 @@ python3 tests/typeql/run.py [--db NAME]
 
 ## 금지 / 필수
 
-- **금지**: `engine/tests/sql/`에 오류를 내는 문장을 추가하면서 `-- EXPECT_ERROR:` 주석을
+- **금지**: `tests/{common,v1}/sql/`에 오류를 내는 문장을 추가하면서 `-- EXPECT_ERROR:` 주석을
   달지 않는 것. 파일 전체가 FAIL로 뒤집힌다.
 - **금지**: `bootstrap.sql`에 사용자 데이터 테이블을 추가하면서
   `pg_extension_config_dump` 등록을 빠뜨리는 것. `tests/run.sh`의 백업 게이트가 잡지만,
   잡히기 전에 프로덕션에서 데이터가 사라질 수 있다.
-- **금지**: `engine/tests/sql/05_reachability.sql`의 어서션을 지우면서 컴파일러의
+- **금지**: `tests/v1/sql/05_reachability.sql`의 어서션을 지우면서 컴파일러의
   도달성 전환 조건을 바꾸는 것.
 - **필수**: `compile.rs` / `session.rs`처럼 순수 함수를 가진 파일에 로직을 추가하면
   같은 파일 `#[cfg(test)]`에 테스트를 추가한다. DB가 필요 없으므로 변명의 여지가 없다.

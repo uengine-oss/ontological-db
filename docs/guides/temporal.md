@@ -14,10 +14,10 @@
 트리거·설정 함수는 [`engine/sql/access.sql`](../../engine/sql/access.sql) 의
 `og__temporal`, `og__stamp`, `og_valid_at`, `og_system_at`, `og_require_current`, `og_meta`,
 Bolt 매핑은 [`bolt/src/session.rs`](../../bolt/src/session.rs) 의 `TX_SETTINGS`.
-검증: [`engine/tests/sql/09_bitemporal.sql`](../../engine/tests/sql/09_bitemporal.sql),
-[`07_write_security.sql`](../../engine/tests/sql/07_write_security.sql),
-[`10_evolution_temporal_coverage.sql`](../../engine/tests/sql/10_evolution_temporal_coverage.sql),
-[`tests/bolt-context/run.py`](../../tests/bolt-context/run.py).
+검증: [`tests/v1/sql/09_bitemporal.sql`](../../tests/v1/sql/09_bitemporal.sql),
+[`07_write_security.sql`](../../tests/v1/sql/07_write_security.sql),
+[`10_evolution_temporal_coverage.sql`](../../tests/v1/sql/10_evolution_temporal_coverage.sql),
+[`tests/v1/bolt-context/run.py`](../../tests/v1/bolt-context/run.py).
 
 ---
 
@@ -212,7 +212,7 @@ with driver.session(database="corp") as s:
     s.run(Query(q, metadata={"validAt": "2021-06-01"})).single()["s"]      # 100
 ```
 
-(이 흐름은 [`tests/bolt-context/run.py`](../../tests/bolt-context/run.py) 가 공식 드라이버로 검증합니다.)
+(이 흐름은 [`tests/v1/bolt-context/run.py`](../../tests/v1/bolt-context/run.py) 가 공식 드라이버로 검증합니다.)
 
 ### 4.3 가시성 규칙
 

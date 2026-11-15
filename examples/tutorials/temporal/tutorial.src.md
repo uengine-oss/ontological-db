@@ -335,7 +335,7 @@ SELECT m.label AS record, a.actor, a.source, left(regexp_replace(a.query, '\s+',
 ```
 
 Neo4j 드라이버에서는 `SET LOCAL` 대신 트랜잭션 메타데이터(`validAt`, `systemAt`, `validFrom`, `validTo`, `actor`, `source`)로
-같은 설정을 넘깁니다 (매핑: [`bolt/src/session.rs`](../../bolt/src/session.rs) 의 `TX_SETTINGS`, 검증: [`tests/bolt-context/run.py`](../../tests/bolt-context/run.py)).
+같은 설정을 넘깁니다 (매핑: [`bolt/src/session.rs`](../../bolt/src/session.rs) 의 `TX_SETTINGS`, 검증: [`tests/v1/bolt-context/run.py`](../../tests/v1/bolt-context/run.py)).
 이 문서의 빌드는 Bolt 를 실행하지 않습니다. 이 매핑이 들어가기 전에 빌드된 게이트웨이는 키를 **조용히 무시하고 현재를
 답하므로**, 처음 연결할 때 답을 아는 과거 시점 하나(예: 입사 전 → 0행)로 먼저 확인하세요.
 

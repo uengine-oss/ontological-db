@@ -37,7 +37,7 @@
 > 반환된다** — 각 분기를 서브쿼리로 감싸 `UNION [ALL]` 로 잇고, 분기 간 컬럼
 > 이름·순서가 다르면 오류를 낸다. 경위는
 > [`../03_backend/12_fixed_correctness.md`](../03_backend/12_fixed_correctness.md),
-> 회귀 테스트는 `engine/tests/sql/06_correctness_regressions.sql`.
+> 회귀 테스트는 `tests/common/sql/06_correctness_regressions.sql`.
 
 이것은 "명시적 오류"가 아니라 **조용한 오답**이었다. 다른 미구현 항목과 성격이 달랐다.
 

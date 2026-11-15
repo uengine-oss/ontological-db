@@ -122,7 +122,7 @@
 
 - 모든 그래프 구조는 일반 힙 릴레이션이어야 한다 (MVCC/WAL/`pg_dump` 상속) — ADR-001, 002.
 - 가변 길이 경로 재작성은 **두 게이트를 모두** 통과해야 한다: 다중도 관측 불가 +
-  손익분기 — ADR-013. 새 케이스는 `engine/tests/sql/05_reachability.sql`에 양방향으로
+  손익분기 — ADR-013. 새 케이스는 `tests/v1/sql/05_reachability.sql`에 양방향으로
   고정한다.
 - 인접 세그먼트를 읽는 컴파일 결과는 **항상 대상 노드 뷰와 조인**해야 한다 —
   `og_adj`의 RLS는 쓰기 정책뿐이고 읽기는 `USING (true)`이기 때문 (ADR-004, ADR-026, spec 005).

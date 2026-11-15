@@ -206,9 +206,9 @@ PostgreSQL 백엔드였으므로 accept 폭주가 양쪽을 동시에 소진시�
   레지스트리로 보인다.
 - 정책은 `FORCE` 되지 않는다. 소유자·슈퍼유저는 정책을 거치지 않는다(의도: 관리·벤치마크
   경로 무비용).
-- 검증: `engine/tests/sql/07_write_security.sql` — `og_grant_write` 로 `Person` 만 받은
+- 검증: `tests/v1/sql/07_write_security.sql` — `og_grant_write` 로 `Person` 만 받은
   역할이 `Doc` 타입의 `og_node` 행을 원시 SQL 로 INSERT 하면 `row-level security` 오류(42501).
-  `engine/tests/sql/10_evolution_temporal_coverage.sql` — 관계 타입 쓰기 부여가 없는 역할이
+  `tests/v1/sql/10_evolution_temporal_coverage.sql` — 관계 타입 쓰기 부여가 없는 역할이
   `og_edge`, `og_adj` 행을 원시 SQL 로 INSERT 하면 같은 오류(42501). `og_role_player` 정책은
   테스트가 없다.
 
@@ -217,7 +217,7 @@ PostgreSQL 백엔드였으므로 accept 폭주가 양쪽을 동시에 소진시�
 ## 6. 비소유자 역할로 돌려 보니 드러난 선행 결함 4건 (스펙 014)
 
 4절 끝에서 "PostgreSQL 에 실제로 설치해 돌려보지는 않았다"고 적었다. 스펙 014 의 테스트
-(`engine/tests/sql/07_write_security.sql`)는 **처음으로 비소유자 역할**(`og_t_reader`,
+(`tests/v1/sql/07_write_security.sql`)는 **처음으로 비소유자 역할**(`og_t_reader`,
 `og_t_writer`, `og_t_clerk`, `og_t_agent`, `og_t_runner`)로 기존 경로를 실행했고, ADR-025 의
 권한 모델에서 네 개의 결함이 나왔다. `tests/run.sh` 는 `ON_ERROR_STOP` 인 이 파일의 첫 오류에서
 실패하므로, 아래 단언들은 이제 회귀 게이트다.

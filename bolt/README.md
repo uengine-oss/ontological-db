@@ -112,7 +112,7 @@ prints the compatibility matrix as a test.
 
 ```bash
 cargo test                      # PackStream round trips, chunk boundaries
-python3 ../tests/neo4j-movies/run.py
+python3 ../tests/common/neo4j-movies/run.py
 ```
 
 The second one is the real gate: the official Neo4j Movie Graph sample, run

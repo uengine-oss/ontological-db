@@ -5,7 +5,7 @@
 | 상태 | Accepted |
 | 날짜 | 2026-09-30 (작성일. 커밋 전) |
 | 영향 범위 | security, storage, api, bolt, audit |
-| 근거 | `engine/src/security/mod.rs`, `engine/src/security/action.rs`, `engine/sql/access.sql`(Write-time security 절, `og__stamp`, `og__audit`), `engine/sql/bootstrap.sql`(`og_catalog.write_grant`, `og_catalog.action`, 스키마 `og_action`), `engine/tests/sql/07_write_security.sql`, `engine/tests/sql/10_evolution_temporal_coverage.sql`(014 구간), [spec 014](../../specs/014-write-security-context/plan.md) |
+| 근거 | `engine/src/security/mod.rs`, `engine/src/security/action.rs`, `engine/sql/access.sql`(Write-time security 절, `og__stamp`, `og__audit`), `engine/sql/bootstrap.sql`(`og_catalog.write_grant`, `og_catalog.action`, 스키마 `og_action`), `tests/v1/sql/07_write_security.sql`, `tests/v1/sql/10_evolution_temporal_coverage.sql`(014 구간), [spec 014](../../specs/014-write-security-context/plan.md) |
 
 > **이 문서가 답하는 질문**
 > - "이 역할은 Person 을 만들 수 있지만 salary 는 못 쓴다"를 어디서 판정하는가?

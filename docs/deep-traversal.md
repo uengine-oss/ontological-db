@@ -226,7 +226,7 @@ that deep. An unanalysed database has no statistics to answer with and falls
 back to depth alone.
 
 The regression suite asserts every one of these cases, in both directions, in
-[`engine/tests/sql/05_reachability.sql`](../engine/tests/sql/05_reachability.sql):
+[`tests/v1/sql/05_reachability.sql`](../tests/v1/sql/05_reachability.sql):
 that `count(DISTINCT y)` and `DISTINCT` rewrite, that `count(y)`, a bare
 `RETURN y.name`, a path variable, a relationship variable and a shallow hop do
 not, and that a graph with a cycle back to the start returns the same 4 nodes

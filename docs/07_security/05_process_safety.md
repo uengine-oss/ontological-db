@@ -442,7 +442,7 @@ P-D1(`panic = "unwind"`) 덕분에 이들은 모두 **PostgreSQL ERROR로 귀결
   상한을 도입할 것. 세 가지 모두 인증 이전 경로에 있다.
 - `PLAN_CACHE` 키에 `og_catalog.schema_version` 의 현재 값을 포함시킬 것.
 - 스키마 변경 후 기존 커넥션에서 캐시된 질의가 동작하는지 회귀 테스트를
-  `engine/tests/sql/` 에 추가할 것.
+  `tests/{common,v1}/sql/` 에 추가할 것.
 
 <!-- affects: security, backend, ops -->
 <!-- requires-update: 07_security/09_improvements_security.md, 07_security/06_network_exposure.md -->

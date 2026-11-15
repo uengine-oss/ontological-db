@@ -136,8 +136,8 @@ Studio는 이 셋을 `POST /api/diagnose` 하나로 묶어 노출한다
 | `role '{name}' of relation '{rel_type}' requires a '{expected}', got '{got}'` | `engine/src/typeql/write.rs` 부근 | 역할 플레이어 타입 불일치 |
 | `'{rel_type}' is not a relation type; roles only exist on relations` | `engine/src/catalog/types.rs` | entity에 역할을 붙이려 함 |
 
-spec 010은 partial 상태다. `tests/typeql/run.py`는 미지원 항목을 실패가 아니라
-`unsupported`로 표시한다 (`tests/typeql/run.py:39-46`).
+spec 010은 partial 상태다. `tests/v1/typeql/run.py`는 미지원 항목을 실패가 아니라
+`unsupported`로 표시한다 (`tests/v1/typeql/run.py:39-46`).
 
 ---
 
@@ -279,7 +279,7 @@ SELECT a.type_id, t.name, a.next_id
 | 인증 실패 | 사용자 저장소가 없다. `HELLO`의 자격증명은 **PostgreSQL 역할과 비밀번호**다 (`bolt/README.md:43`) | PostgreSQL 역할로 psql 접속이 되는지 먼저 확인 |
 | `CALL {}` / GDS 오류 | spec 003이 지원하지 않으며 전송 계층이 의미를 추가하지 않는다 (`bolt/README.md:71`) | — |
 
-Bolt 경로 자체를 확인하는 정식 방법은 `tests/neo4j-movies/run.py`다 —
+Bolt 경로 자체를 확인하는 정식 방법은 `tests/common/neo4j-movies/run.py`다 —
 raw 핸드셰이크로 어느 포트가 Bolt를 말하는지 검사한다
 ([04_testing_and_ci.md](04_testing_and_ci.md) §5).
 

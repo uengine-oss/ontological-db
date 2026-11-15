@@ -695,7 +695,7 @@ SELECT count(*) AS orphan_embedding_state FROM og_data.og_embedding_state s
 - 인덱스를 추가/삭제하면 [`09_query_access_paths.md`](09_query_access_paths.md) 1절의
   전수 목록을 갱신할 것.
 - 스키마를 바꾸면 `pg_dump` → `pg_restore` 왕복 테스트를 할 것.
-  현재 그 테스트는 **존재하지 않는다** (`engine/tests/sql/`에 관련 항목 없음).
+  현재 그 테스트는 **존재하지 않는다** (`tests/{common,v1}/sql/`에 관련 항목 없음).
 
 ---
 

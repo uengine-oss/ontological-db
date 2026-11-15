@@ -116,7 +116,7 @@ spec 003 FR-026은 "사용자 값은 절대 SQL 텍스트로 보간하지 않는
   **주의**: 반환 `score` 는 정규화되지 않은 **원시 거리**다
   ([vector/mod.rs:430](../../engine/src/vector/mod.rs)) — `og_vector_search` 의 `score` 와
   직접 비교할 수 없다. 비교는 id 집합으로만 해야 한다
-  ([engine/tests/sql/03_vector_agent_rdf.sql:34-36](../../engine/tests/sql/03_vector_agent_rdf.sql) 가
+  ([tests/common/sql/03_vector_agent_rdf.sql:34-36](../../tests/common/sql/03_vector_agent_rdf.sql) 가
   그렇게 한다).
 
 ---
@@ -290,7 +290,7 @@ WITH RECURSIVE walk(node, depth, path) AS (
 | 청킹 | ❌ **없음** — 아래 3.1절 |
 | MMR / 다양성 제어 | ❌ 없음 |
 | ANN 재현율 튜닝 (`ef_search`) | ❌ 없음 | 1.2절 |
-| ANN 재현율 **측정 하네스** | ❌ 없음. 3행 회귀 테스트 1건이 전부 | [engine/tests/sql/03_vector_agent_rdf.sql:34-36](../../engine/tests/sql/03_vector_agent_rdf.sql), `bench/harness.py` 에 recall 코드 부재 |
+| ANN 재현율 **측정 하네스** | ❌ 없음. 3행 회귀 테스트 1건이 전부 | [tests/common/sql/03_vector_agent_rdf.sql:34-36](../../tests/common/sql/03_vector_agent_rdf.sql), `bench/harness.py` 에 recall 코드 부재 |
 | 경로/서브그래프 임베딩 (FR-003) | ❌ 미구현 (T015) | [specs/004-vector-hybrid-search/tasks.md:30](../../specs/004-vector-hybrid-search/tasks.md) |
 | groundedness / 근거성 판정 훅 | ❌ 없음 | [07_grounding_and_provenance.md](07_grounding_and_provenance.md) |
 

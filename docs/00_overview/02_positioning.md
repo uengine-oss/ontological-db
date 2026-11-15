@@ -173,7 +173,7 @@ Bolt 3.x/5.x 미지원, `Path` 구조체 미인코딩(경로 변수는 홉 리�
   바이트 단위로 무수정 적재되고, 예제 README의 질의가 문서에 적힌 그대로의 결과를 낸다
   ([`README.md`](../../README.md) "Running a TypeDB example",
   [`examples/typedb/bookstore/`](../../examples/typedb/bookstore/),
-  `python3 tests/typeql/run.py`).
+  `python3 tests/v1/typeql/run.py`).
 - **같은 그래프를 Cypher로도 묻는다**: TypeQL이 관계를 노드로 reify하고 속성을
   값 중복 제거된 공유 인스턴스로 저장하는 매핑이 숨겨져 있지 않다 —
   `og_typeql_attribute` / `og_typeql_role` 뷰로 SQL에서 직접 읽힌다

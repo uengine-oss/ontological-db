@@ -220,9 +220,9 @@
 | | |
 |---|---|
 | **심각도** | **High** |
-| **근거** | `.github/` 부재. `bench/harness.py:1221` `compare()`는 `"""CI regression gate — spec 009 FR-019..FR-023."""`라는 docstring을 달고 있지만, 이것을 호출하는 자동화가 저장소에 없다. `tests/run.sh`, `tests/typeql/run.py`, `tests/neo4j-movies/run.py`, `examples/meeting-rooms/verify_mcp.py`도 마찬가지다 |
+| **근거** | `.github/` 부재. `bench/harness.py:1221` `compare()`는 `"""CI regression gate — spec 009 FR-019..FR-023."""`라는 docstring을 달고 있지만, 이것을 호출하는 자동화가 저장소에 없다. `tests/run.sh`, `tests/v1/typeql/run.py`, `tests/common/neo4j-movies/run.py`, `examples/meeting-rooms/verify_mcp.py`도 마찬가지다 |
 | **현상** | 잘 만들어진 게이트가 여러 개 있는데(정확성 게이트, 백업 왕복, 무결성, 20% 성능 회귀) 아무도 자동으로 돌리지 않는다. 회귀가 커밋 시점이 아니라 누군가 수동으로 돌릴 때 발견된다 |
-| **제안** | 단계적으로 도입한다. **1단계**: `cargo test` + `tests/run.sh`(도커 서비스 위에서). **2단계**: `tests/typeql/run.py`. **3단계**: `bench/harness.py --scale 50000 --degree 20 --systems ontological,ontological_raw,cte --compare-baseline bench/results/baseline.json` — 외부 서버가 필요 없는 시스템만으로 회귀 게이트를 돌린다. **4단계**: Neo4j 컨테이너를 서비스로 띄워 `tests/neo4j-movies/run.py` |
+| **제안** | 단계적으로 도입한다. **1단계**: `cargo test` + `tests/run.sh`(도커 서비스 위에서). **2단계**: `tests/v1/typeql/run.py`. **3단계**: `bench/harness.py --scale 50000 --degree 20 --systems ontological,ontological_raw,cte --compare-baseline bench/results/baseline.json` — 외부 서버가 필요 없는 시스템만으로 회귀 게이트를 돌린다. **4단계**: Neo4j 컨테이너를 서비스로 띄워 `tests/common/neo4j-movies/run.py` |
 | **예상 효과** | `bench/README.md:109-120`이 정의한 회귀 규율이 실제로 작동한다 |
 | **리스크** | CI 러너의 성능 변동이 20% 임계값을 흔든다. 벤치 게이트는 전용 러너나 더 큰 임계값으로 시작하고, 정확성 게이트(`agree`)와 무결성(`integrity_violations`)을 우선 신호로 삼는 편이 안전하다 |
 

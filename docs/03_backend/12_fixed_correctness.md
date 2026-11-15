@@ -21,7 +21,7 @@
 | CODE-34 | `count(DISTINCT)` 가 `Vec::dedup()` | 연속 중복만 제거 → 틀린 수 | 값 단위 중복 제거 |
 | [PERF-20](../01_architecture/09_performance/07_improvements_performance.md) | `min > 1` 에서 재작성이 다른 답 | 노드 누락 | `min > 1` 이면 재작성하지 않음 |
 
-**모두 회귀 테스트가 붙었다** — [`engine/tests/sql/06_correctness_regressions.sql`](../../engine/tests/sql/06_correctness_regressions.sql).
+**모두 회귀 테스트가 붙었다** — [`tests/common/sql/06_correctness_regressions.sql`](../../tests/common/sql/06_correctness_regressions.sql).
 수정 전 코드에서 다섯 단언이 **전부 실패하는 것을 확인했다**(6절). 회귀 테스트로서
 의미가 있으려면 그것이 먼저다.
 

@@ -21,7 +21,7 @@
 | **회귀 비교** | [`harness.py:1221-1241`](../../../bench/harness.py) | 베이스라인 대비 20% 이상 느려지면 종료 코드 1 |
 | **구조 무결성** | [`harness.py:1155-1157`](../../../bench/harness.py) → `og_check_integrity()` | 벤치 끝에 위반 수를 결과에 기록 |
 | **깊은 순회 답 기록** | [`bench/csr/deep.py`](../../../bench/csr/deep.py) | 변형별 답을 JSON에 남기고 불일치 시 종료 코드 ≠ 0 |
-| **의미 조건 회귀 파일** | [`engine/tests/sql/05_reachability.sql`](../../../engine/tests/sql/05_reachability.sql) | 재작성이 언제 일어나고 언제 일어나면 안 되는지 6가지 경우 |
+| **의미 조건 회귀 파일** | [`tests/v1/sql/05_reachability.sql`](../../../tests/v1/sql/05_reachability.sql) | 재작성이 언제 일어나고 언제 일어나면 안 되는지 6가지 경우 |
 | **A/B 스크립트** | [`bench/csr/cypher_ab.sql`](../../../bench/csr/cypher_ab.sql) | 하나의 바이너리·하나의 연결에서 재작성 유무를 나란히 비교 |
 
 **이 정도의 자기 검증은 드물다.** 정확성 게이트가 있는 그래프 벤치마크는 흔하지 않고,
@@ -40,7 +40,7 @@ if [ "$actual" -le "$expected" ]; then echo "ok" …
 
 기대 출력과의 비교가 없다. `engine/tests/pg_regress/expected/` 에 있는 것은 `setup.out` 하나뿐이다.
 
-결과적으로 [`engine/tests/sql/05_reachability.sql`](../../../engine/tests/sql/05_reachability.sql) 의
+결과적으로 [`tests/v1/sql/05_reachability.sql`](../../../tests/v1/sql/05_reachability.sql) 의
 다음 단언들은 **`f` 를 출력해도 테스트가 통과한다**:
 
 ```sql

@@ -13,8 +13,8 @@
 
 근거 코드: [`engine/src/catalog/evolution.rs`](../../engine/src/catalog/evolution.rs),
 스냅샷은 [`engine/sql/access.sql`](../../engine/sql/access.sql) 의 `og__schema_snapshot`,
-동작 검증은 [`engine/tests/sql/08_schema_evolution.sql`](../../engine/tests/sql/08_schema_evolution.sql)
-과 [`engine/tests/sql/10_evolution_temporal_coverage.sql`](../../engine/tests/sql/10_evolution_temporal_coverage.sql).
+동작 검증은 [`tests/v1/sql/08_schema_evolution.sql`](../../tests/v1/sql/08_schema_evolution.sql)
+과 [`tests/v1/sql/10_evolution_temporal_coverage.sql`](../../tests/v1/sql/10_evolution_temporal_coverage.sql).
 
 ---
 

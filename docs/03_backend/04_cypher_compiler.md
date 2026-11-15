@@ -486,7 +486,7 @@ fn multiplicity_blind(q: &Query) -> bool {
 > The test is deliberately narrow, because being wrong here changes answers
 > rather than timings.
 
-**검증**: `engine/tests/sql/05_reachability.sql:72-91`이 6개 케이스를 고정한다.
+**검증**: `tests/v1/sql/05_reachability.sql:72-91`이 6개 케이스를 고정한다.
 
 | 질의 | 기대 |
 |---|---|
@@ -545,7 +545,7 @@ fn prefer_reachability(max: u32) -> bool {
 `reltuples`는 `ANALYZE` 전에는 `-1` 또는 `0`이다. 그러면 `_ => return max >= DEEP`,
 즉 **깊이 4 이상이면 무조건 전환**한다.
 
-`engine/tests/sql/05_reachability.sql:73-77`이 이 폴백을 명시적으로 이용한다 —
+`tests/v1/sql/05_reachability.sql:73-77`이 이 폴백을 명시적으로 이용한다 —
 `ANALYZE` 전에 12홉으로 테스트해서 **의미론 조건만** 격리한다.
 
 ### 9.3 평균 out-degree — `compile.rs:58`
@@ -578,7 +578,7 @@ let degree = (edges / nodes).max(1.0);
 
 ### 9.6 검증
 
-`engine/tests/sql/05_reachability.sql:93-96`:
+`tests/v1/sql/05_reachability.sql:93-96`:
 
 ```sql
 ANALYZE;
@@ -588,7 +588,7 @@ SELECT og_cypher_sql('r', $$MATCH (x:N {name:'a'})-[:E*1..2]->(y:N) RETURN count
 
 4노드/5엣지 그래프에서 degree ≈ 1.25, 2홉이면 walks ≈ 2.8 < 512 → `og_vlp` 유지.
 
-`engine/tests/sql/05_reachability.sql:98-101`은 세 경로가 **같은 답**을 내는지도 확인한다.
+`tests/v1/sql/05_reachability.sql:98-101`은 세 경로가 **같은 답**을 내는지도 확인한다.
 
 ### 9.7 비용
 
@@ -730,7 +730,7 @@ rand toString toInteger toFloat timestamp datetime exists keys length size`.
   라벨/프로퍼티 이름 같은 식별자는 `quote_ident`, 문자열 리터럴은 `sql_str`.
 - **금지**: `multiplicity_blind` / `blind_expr`의 판정을 넓히는 것.
   여기서 틀리면 **성능이 아니라 답이 바뀐다** (`compile.rs:327-328`).
-  넓힐 때는 `engine/tests/sql/05_reachability.sql`에 케이스를 먼저 추가한다.
+  넓힐 때는 `tests/v1/sql/05_reachability.sql`에 케이스를 먼저 추가한다.
 - **금지**: `og_reach`와 `og_vlp` 중 하나의 시그니처만 바꾸는 것.
   `join_rel:874-876`이 같은 자리에 글자만 바꿔 끼운다.
 - **금지**: `og_vlp` / `og_reach`의 `ROWS` 추정치를 한쪽만 바꾸는 것 (`access.sql:192-197`).

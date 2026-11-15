@@ -467,7 +467,7 @@ error!("type '{name}' does not exist. did you mean: {}", hint.join(", "));
 > rather than timings.
 
 **근거**: `multiplicity_blind`(`compile.rs:339-349`), `blind_expr`(`compile.rs:82-100`).
-고정 테스트: `engine/tests/sql/05_reachability.sql:72-96` (6개 케이스 + 손익분기 1개).
+고정 테스트: `tests/v1/sql/05_reachability.sql:72-96` (6개 케이스 + 손익분기 1개).
 
 **리뷰 확인법**: 이 두 함수를 건드린 diff를 보면, 같은 커밋에
 `05_reachability.sql` 변경이 있는지 확인한다. 없으면 거부.

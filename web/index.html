@@ -1809,22 +1809,22 @@ Node 역직렬화 · 필드 순서 · 파라미터 · 트랜잭션
         <span class="tag">직접 재현하기</span>
         <h3>하네스도, 샘플 앱도 저장소에 있습니다</h3>
         <p>
-          <code class="inline-code">tests/neo4j-movies/</code>. 데이터셋은 첫 실행에 내려받아 캐시하고,
+          <code class="inline-code">tests/common/neo4j-movies/</code>. 데이터셋은 첫 실행에 내려받아 캐시하고,
           어느 포트가 Bolt를 말하는지는 주장하지 않고 <b>실제 핸드셰이크</b>로 확인합니다.
           Neo4j가 떠 있으면 세 경로를 대조하고, 없으면 그 단계만 건너뜁니다.
           <code class="inline-code">sample_app.py</code> 는 공식 샘플 앱 원본에서 URI 두 줄만 바꾼 것입니다.
         </p>
         <pre class="block" style="border:0;padding:0;background:transparent"><span class="c"># PostgreSQL 경로 + Bolt 경로</span>
-python3 tests/neo4j-movies/run.py
+python3 tests/common/neo4j-movies/run.py
 
 <span class="c"># Neo4j까지 세 경로 대조</span>
 docker run -d --name bench-neo4j -p 27687:7687 \
   -e NEO4J_AUTH=neo4j/benchpass123 neo4j:5
-python3 tests/neo4j-movies/run.py \
+python3 tests/common/neo4j-movies/run.py \
   --neo4j bolt://localhost:27687
 
 <span class="c"># 공식 샘플 앱 그대로</span>
-python3 tests/neo4j-movies/sample_app.py</pre>
+python3 tests/common/neo4j-movies/sample_app.py</pre>
       </div>
     </div>
   </div>
@@ -1946,7 +1946,7 @@ SELECT og_cypher_sql('default',
           <tr><td>docs/api.md</td><td>모든 SQL 함수</td></tr>
           <tr><td>docs/agents.md</td><td>LLM 에이전트에서 사용하기 (워크드 프롬프트 포함)</td></tr>
           <tr><td>bench/README.md</td><td>벤치마크 방법과 재현 절차</td></tr>
-          <tr><td>tests/neo4j-movies/README.md</td><td>Neo4j Movie 샘플을 그대로 돌린 결과 — 세 경로 대조</td></tr>
+          <tr><td>tests/common/neo4j-movies/README.md</td><td>Neo4j Movie 샘플을 그대로 돌린 결과 — 세 경로 대조</td></tr>
           <tr><td>bolt/README.md</td><td>Bolt 게이트웨이 — 운영 방법과 <b>지원 매트릭스</b></td></tr>
         </tbody>
       </table>

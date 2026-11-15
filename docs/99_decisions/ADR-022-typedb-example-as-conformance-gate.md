@@ -5,7 +5,7 @@
 | 상태 | Accepted |
 | 날짜 | 2026-08-06 (`specs/010-typeql-query-surface/plan.md` 기준일) |
 | 영향 범위 | typeql, testing, docs |
-| 근거 | `specs/010-typeql-query-surface/spec.md` SC-001~SC-003·SC-010, `specs/010-.../plan.md` "Verification", `README.md` "Running a TypeDB example", `examples/typedb/bookstore/`, `tests/typeql/run.py` |
+| 근거 | `specs/010-typeql-query-surface/spec.md` SC-001~SC-003·SC-010, `specs/010-.../plan.md` "Verification", `README.md` "Running a TypeDB example", `examples/typedb/bookstore/`, `tests/v1/typeql/run.py` |
 
 > **이 문서가 답하는 질문**
 > - TypeQL 지원이 "된다"는 것을 무엇으로 증명하는가?
@@ -51,7 +51,7 @@
   > `schema.tql` and `data.tql` byte for byte as upstream publishes them. Nothing in
   > them was adjusted to run here.
 - 회귀 스위트가 매 실행마다 이를 재검증한다:
-  `python3 tests/typeql/run.py` — *"re-checks it, and 27 other properties, against the
+  `python3 tests/v1/typeql/run.py` — *"re-checks it, and 27 other properties, against the
   vendored files on every run."*
 - **이 기준의 가치는 실패를 숨길 수 없다는 데 있다.** README가 그 실패를 그대로 적는다:
   > TypeDB **functions** (`fun`) are parsed, stored and reproduced by
@@ -68,7 +68,7 @@
 - 호환성 주장이 외부에서 검증 가능하다. 예제 파일은 업스트림 것이고 기대 결과는 업스트림
   문서 것이다.
 - 미지원 항목이 "조용히 빠지는" 경로가 없다. 명시적 오류를 내고 문서에 적힌다.
-- 같은 원칙이 Neo4j 쪽에도 적용된다 — 공식 Movie 샘플(`tests/neo4j-movies/`)과 Neo4j 자체
+- 같은 원칙이 Neo4j 쪽에도 적용된다 — 공식 Movie 샘플(`tests/common/neo4j-movies/`)과 Neo4j 자체
   MCP 서버(`examples/meeting-rooms/`)가 무수정으로 검증에 쓰인다.
 
 **부정적 / 감수한 대가**

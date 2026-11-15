@@ -480,6 +480,6 @@ application above it does not change — same sessions, same transactions, same
 `Node` and `Relationship` objects. Both paths call the same `og_cypher()`, so
 neither has semantics the other lacks: what fails here fails there, identically.
 
-`tests/neo4j-movies/` runs the official Movie Graph sample — its dataset and all
+`tests/common/neo4j-movies/` runs the official Movie Graph sample — its dataset and all
 24 guide queries — over **both** paths and compares every result against a Neo4j
 instance holding the same data.

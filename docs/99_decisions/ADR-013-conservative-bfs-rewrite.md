@@ -5,7 +5,7 @@
 | 상태 | Accepted |
 | 날짜 | 2026-08-17 (커밋 `f9e64fd`, 규칙 개정 `7d60c82`) |
 | 영향 범위 | cypher, performance, correctness |
-| 근거 | `engine/src/cypher/compile.rs:20-77`(`prefer_reachability`), `:318-349`(`multiplicity_blind`), `docs/deep-traversal.md` "When the compiler rewrites, and when it must not", `engine/tests/sql/05_reachability.sql` |
+| 근거 | `engine/src/cypher/compile.rs:20-77`(`prefer_reachability`), `:318-349`(`multiplicity_blind`), `docs/deep-traversal.md` "When the compiler rewrites, and when it must not", `tests/v1/sql/05_reachability.sql` |
 
 > **이 문서가 답하는 질문**
 > - 어떤 질의가 BFS로 재작성되고 어떤 질의가 안 되는가?
@@ -79,7 +79,7 @@ ADR-012의 재작성은 **답을 바꿀 수 있는** 변환이다. `count(b)`는
   | 8 | **277.39 ms** | 완료되지 않음 |
 
 - 모든 경우가 **양방향으로** 회귀 스위트에 고정되어 있다
-  (`engine/tests/sql/05_reachability.sql`): 재작성되는 경우, 재작성되지 않는 경우, 그리고
+  (`tests/v1/sql/05_reachability.sql`): 재작성되는 경우, 재작성되지 않는 경우, 그리고
   시작점으로 되돌아오는 순환 그래프에서 양쪽이 같은 4노드를 반환하되 `count(y)`는 여전히
   6개 트레일을 반환한다는 것까지.
 

@@ -288,8 +288,8 @@ docker exec ontological-dev bash -lc 'pgrep -af ontological-bolt'
 docker exec ontological-dev bash -lc 'tail -5 /tmp/ontological-bolt.log'
 ```
 
-Bolt 프로토콜 수준의 확인은 `tests/neo4j-movies/run.py`가 raw 핸드셰이크로 수행한다
-(`tests/neo4j-movies/run.py:47-48`의 `BOLT_MAGIC` / `BOLT_PROPOSALS`).
+Bolt 프로토콜 수준의 확인은 `tests/common/neo4j-movies/run.py`가 raw 핸드셰이크로 수행한다
+(`tests/common/neo4j-movies/run.py:47-48`의 `BOLT_MAGIC` / `BOLT_PROPOSALS`).
 자세한 것은 [04_testing_and_ci.md](04_testing_and_ci.md).
 
 ---

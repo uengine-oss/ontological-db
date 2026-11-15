@@ -47,6 +47,6 @@ fn ontological_version() -> &'static str {
 }
 
 // In-database behaviour is covered by the SQL regression suite in
-// `engine/tests/sql/`, run with `tests/run.sh` against a live server. Pure Rust
+// `tests/{common,v1}/sql/`, run with `tests/run.sh` against a live server. Pure Rust
 // units (lexer, parser, identifier encoding, RDF parsing) live beside their
 // modules and run under `cargo test`.

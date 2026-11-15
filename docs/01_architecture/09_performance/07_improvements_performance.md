@@ -50,7 +50,7 @@
 | PERF-16 | Bolt RUN 1회에 PostgreSQL 왕복 3회, Cypher 파싱 4~5회 | Med | `bolt/src/session.rs:283-299,444-461` | `og_cypher_check` + `og_cypher_columns` + `og_cypher` | 컬럼과 write 판정을 `og_cypher` 결과에 함께 실어 1회로 | RUN당 왕복 3 → 1 (추정) | 반환 시그니처 변경 |
 | PERF-17 | PackStream 경로가 레코드마다 clone·flush·시스템 콜 | Med | `session.rs:353`, `packstream.rs:254-262`, `session.rs:291-299` | `pending[i].clone()` 깊은 복사, 레코드마다 `flush()`, 무버퍼 `TcpStream`, `::text` 캐스트 | `BufWriter` 로 감싸고 PULL 끝에서만 flush, `into_iter()` 로 소유권 이동, 바이너리 jsonb 전송 | 대량 결과의 시스템 콜 1/N (추정) | Bolt 프레이밍 규칙 준수 확인 필요 |
 | PERF-18 | Studio 서버가 전체 결과를 메모리에 적재 | **High** | `portal/server/index.js:188-215,317-342,39-45` | `pg.query()` 버퍼링 → `map` → `projectGraph` → `JSON.stringify`. 행 상한·타임아웃 없음 | 커서(`pg-cursor`) 스트리밍 + 행 상한 + `statement_timeout` | Node 프로세스 OOM 제거 | UI가 부분 결과를 다뤄야 함 |
-| PERF-19 | 회귀 스위트가 단언 값을 검사하지 않는다 | **High** | `tests/run.sh:14-36`, `engine/tests/sql/05_reachability.sql` | `ERROR` 개수만 센다. `f` 를 출력해도 통과 | `pg_regress` 기대 출력 도입 또는 `\if`/`ASSERT` 로 실패시키기 | 전환 판정 회귀가 실제로 잡힘 | 기대 출력 유지 비용 |
+| PERF-19 | 회귀 스위트가 단언 값을 검사하지 않는다 | **High** | `tests/run.sh:14-36`, `tests/v1/sql/05_reachability.sql` | `ERROR` 개수만 센다. `f` 를 출력해도 통과 | `pg_regress` 기대 출력 도입 또는 `\if`/`ASSERT` 로 실패시키기 | 전환 판정 회귀가 실제로 잡힘 | 기대 출력 유지 비용 |
 | PERF-20 | `minhop > 1` 에서 재작성이 다른 답을 낸다 | **High** · **fixed** | `traverse.rs:143-153`, `compile.rs:865,874-876` | `og_vlp` 는 트레일 길이, `og_reach` 는 최단 거리 | `min > 1` 이면 재작성 금지, 또는 `og_reach` 에 최단-거리 아닌 의미 추가 | 정확성 확보 (성능은 소폭 손해) | 그만큼 열거 경로로 돌아감 |
 | PERF-21 | `ROWS` 고정 추정치가 계획을 왜곡한다 | Med | `access.sql:140,171,197` | 계획에 실제로 쓰이는 두 개(`og_vlp` 100, `og_reach` 100)가 최대 67만 배 빗나감 | `maxhop`·`reltuples` 기반의 `support function`(`SUPPORT`)으로 동적 추정 | 상위 조인이 해시/머지로 바뀔 여지 | 추정이 커지면 다른 계획이 더 나빠질 수 있음 |
 | PERF-22 | 벡터 검색이 뷰 위에서 실행되고 `ef_search` 를 설정하지 않는다 | Med | `vector/mod.rs:112,126-132,115-118` | `UNION ALL` 뷰 위 `ORDER BY … LIMIT k`. `filter` 는 텍스트 보간. `hnsw.ef_search` 미설정 | 서브타입이 1개면 구체 테이블 직접 지정, `SET LOCAL hnsw.ef_search`, 필터 선택도에 따른 경로 분기 | HNSW 인덱스 유지 + recall 제어 | pgvector 버전별 동작 차이 |
@@ -94,7 +94,7 @@
   `IS NOT DISTINCT FROM` 은 Cypher `=` 의 정의와 다르다는 점도 함께 검토한다.
 - **예상 효과**: 라벨 스캔이 시퀀셜 → 인덱스로 전환 (추정). 1홉/프로퍼티 스캔 지연과 페이지 수 모두 감소.
 - **리스크**: `NULL = NULL` 의 결과가 `true` 에서 `NULL` 로 바뀐다. 기존 질의의 결과가 달라질 수 있다.
-  `engine/tests/sql/02_cypher.sql` 에 NULL 비교 케이스를 먼저 추가할 것.
+  `tests/common/sql/02_cypher.sql` 에 NULL 비교 케이스를 먼저 추가할 것.
 - **검증 방법**:
   ```sql
   -- 1) 두 표기가 다른 SQL을 만드는지
@@ -282,7 +282,7 @@
 - **예상 효과**: 위 유형의 질의가 초/무한 → 밀리초. **측정된 691배 구간에 해당**.
 - **리스크**: **판정을 틀리면 답이 바뀐다.** `WITH` 는 `SKIP`/`LIMIT`/`ORDER BY` 를 가질 수 있고,
   `LIMIT` 은 행 수에 의존하므로 다중도를 관측한다. `LIMIT`/`SKIP` 이 있으면 무조건 거부해야 한다.
-- **검증 방법**: [`engine/tests/sql/05_reachability.sql`](../../../engine/tests/sql/05_reachability.sql) 에
+- **검증 방법**: [`tests/v1/sql/05_reachability.sql`](../../../tests/v1/sql/05_reachability.sql) 에
   `WITH` 케이스를 양방향으로 추가하고(그리고 PERF-19를 먼저 고쳐 단언이 실제로 검사되게 하고),
   ```sql
   SELECT og_cypher('r', $$MATCH (x:N {name:'a'})-[:E*1..12]->(y:N) WITH DISTINCT y RETURN count(y)$$)
@@ -633,7 +633,7 @@
 - **심각도**: High
 - **근거**: [`tests/run.sh:14-36`](../../../tests/run.sh) — `grep -c '^ERROR'` 만 본다.
   `engine/tests/pg_regress/expected/` 에는 `setup.out` 하나뿐.
-  대상: [`engine/tests/sql/05_reachability.sql:74-96`](../../../engine/tests/sql/05_reachability.sql) 의
+  대상: [`tests/v1/sql/05_reachability.sql:74-96`](../../../tests/v1/sql/05_reachability.sql) 의
   `count_distinct_uses_reach` / `plain_count_keeps_vlp` / `path_variable_keeps_vlp` /
   `rel_variable_keeps_vlp` / `shallow_keeps_vlp` 등.
 - **현상**: 이 불리언들이 `f` 를 내도 테스트는 통과한다.

@@ -140,7 +140,7 @@ Neo4j 드라이버 ──bolt://──> ontological-bolt ──postgres(NoTls)�
 
 ### 검증 방식
 
-`tests/neo4j-movies/run.py` 가 Neo4j **공식 드라이버**로 Neo4j **공식 Movie 샘플**을
+`tests/common/neo4j-movies/run.py` 가 Neo4j **공식 드라이버**로 Neo4j **공식 Movie 샘플**을
 돌려 PostgreSQL 경로 / Bolt 경로 / 실제 Neo4j 세 곳의 답을 대조한다.
 "우리가 만든 클라이언트로 우리 서버를 테스트하는 것은 증거가 아니다"
 ([`specs/011-bolt-protocol-gateway/plan.md`](../../specs/011-bolt-protocol-gateway/plan.md)).

@@ -620,7 +620,7 @@ MCP 경로로 운영하는 사용자는 staleness 추적을 전혀 받지 못한
 
 **근거**: 전수 grep 결과 `hnsw.ef_search` / `hnsw.iterative_scan` 설정 코드 **0건**;
 `bench/harness.py` 에 `recall` 문자열 **0건**;
-[engine/tests/sql/03_vector_agent_rdf.sql:34-36](../../engine/tests/sql/03_vector_agent_rdf.sql)
+[tests/common/sql/03_vector_agent_rdf.sql:34-36](../../tests/common/sql/03_vector_agent_rdf.sql)
 (비교 테스트 3행);
 [specs/004-vector-hybrid-search/plan.md:86](../../specs/004-vector-hybrid-search/plan.md)
 
