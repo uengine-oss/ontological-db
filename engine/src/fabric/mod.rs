@@ -55,11 +55,13 @@ fn need(params: &Map<String, Value>, k: &str) -> String {
     param(params, k).unwrap_or_else(|| error!("datasource parameter '{k}' is required"))
 }
 
-/// Register an external database. `engine` is `postgres`, `mysql`, or
+/// Register an external database. `engine` is `postgres`, `mysql` (or `mariadb`),
 /// `mindsdb` (MindsDB's MySQL wire endpoint, so that MindsDB itself can be the
-/// thing a virtual type points at).
+/// thing a virtual type points at), `oracle` (oracle_fdw + Oracle Instant Client)
+/// or `sqlserver` (tds_fdw + FreeTDS).
 ///
-/// `params`: `host`, `port`, `database` (postgres only), `user`, `password`.
+/// `params`: `host`, `port`, `user`, `password`, and per engine `database` +
+/// `schema` (postgres, sqlserver), `database` (mysql), `service` + `schema` (oracle).
 /// The password goes into a user mapping and nowhere else.
 #[pg_extern]
 fn og_create_datasource(name: &str, engine: &str, params: JsonB) -> String {
@@ -90,16 +92,49 @@ fn og_create_datasource(name: &str, engine: &str, params: JsonB) -> String {
                 format!("user {}, password {}", lit(&user), lit(&password)),
             )
         }
-        "mysql" | "mindsdb" => {
+        "mysql" | "mariadb" | "mindsdb" => {
             let port = param(&p, "port")
                 .unwrap_or_else(|| if engine == "mindsdb" { "47335".into() } else { "3306".into() });
             (
                 "mysql_fdw",
-                format!("host {}, port {}", lit(&host), lit(&port)),
+                // the connection's character set; mysql_fdw's default ("auto") follows the server
+                // process locale, which is C here — Korean text would come back as '?'
+                format!("host {}, port {}, character_set 'utf8mb4'", lit(&host), lit(&port)),
                 format!("username {}, password {}", lit(&user), lit(&password)),
             )
         }
-        other => error!("unsupported datasource engine '{other}': postgres, mysql, mindsdb"),
+        // Oracle: an Easy Connect string. The schema is the owner, in Oracle's own case (usually upper).
+        "oracle" => {
+            let port = param(&p, "port").unwrap_or_else(|| "1521".into());
+            let service = param(&p, "service")
+                .or_else(|| param(&p, "database"))
+                .unwrap_or_else(|| error!("datasource parameter 'service' is required"));
+            (
+                "oracle_fdw",
+                format!("dbserver {}", lit(&format!("//{host}:{port}/{service}"))),
+                format!("user {}, password {}", lit(&user), lit(&password)),
+            )
+        }
+        // SQL Server (and Azure SQL) over TDS 7.2. With 7.3+ the server sends DATE/TIME/DATETIME2 as
+        // native types that DB-Library turns into text like "Sep 30 2026 12:00:00:AM", which a
+        // PostgreSQL date column cannot read (FreeTDS' format comes from a compiled-in locales.conf
+        // path). Under 7.2 the server sends them as ISO strings. SQL Server 2005+ and Azure SQL speak 7.2.
+        "sqlserver" | "mssql" => {
+            let port = param(&p, "port").unwrap_or_else(|| "1433".into());
+            let db = need(&p, "database");
+            (
+                "tds_fdw",
+                format!(
+                    // FreeTDS converts to ISO-8859-1 unless told otherwise
+                    "servername {}, port {}, database {}, tds_version '7.2', character_set 'UTF-8'",
+                    lit(&host), lit(&port), lit(&db)
+                ),
+                format!("username {}, password {}", lit(&user), lit(&password)),
+            )
+        }
+        other => error!(
+            "unsupported datasource engine '{other}': postgres, mysql, mariadb, mindsdb, oracle, sqlserver"
+        ),
     };
 
     Spi::run(&format!("CREATE EXTENSION IF NOT EXISTS {fdw}"))
@@ -197,9 +232,13 @@ fn protect_server(server: &str) {
 /// `pg_collation` catalog — and read-only accounts on locked-down servers may not see it
 /// ("permission denied for table pg_collation"). Reading through the fabric does not need
 /// the remote collations, so they are not imported.
+///
+/// mysql_fdw would map each MySQL ENUM column to a PostgreSQL enum type it expects to exist
+/// already ("type … does not exist"); read them as text.
 fn import_options(engine: &str) -> &'static str {
     match engine {
         "postgres" | "postgresql" => " OPTIONS (import_collate 'false')",
+        "mysql" | "mariadb" | "mindsdb" => " OPTIONS (import_enum_as_text 'true')",
         _ => "",
     }
 }
@@ -208,7 +247,9 @@ fn import_options(engine: &str) -> &'static str {
 fn default_remote_schema(engine: &str, p: &Map<String, Value>) -> Option<String> {
     match engine {
         "postgres" | "postgresql" => param(p, "schema"),
-        "mysql" => param(p, "database"),
+        "mysql" | "mariadb" => param(p, "database"),
+        "oracle" => param(p, "schema"),
+        "sqlserver" | "mssql" => Some(param(p, "schema").unwrap_or_else(|| "dbo".into())),
         _ => None,
     }
 }
