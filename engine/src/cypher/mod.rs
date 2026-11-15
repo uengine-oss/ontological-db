@@ -11,6 +11,7 @@ pub mod compile;
 pub mod eval;
 pub mod lexer;
 pub mod parser;
+pub mod timeout;
 pub mod views;
 
 use ast::*;
@@ -132,6 +133,10 @@ fn og_cypher(
 /// through here so that it is parsed, checked and audited the same way.
 pub fn run_query(graph: &str, query: &str, params: &Value) -> Vec<Value> {
     let started = std::time::Instant::now();
+    // Every statement gets a deadline (`og.statement_timeout`, two minutes
+    // unless set): a pattern over virtual nodes is a query on a source system,
+    // and a cartesian product of two of them otherwise runs for hours.
+    timeout::arm();
     // Each call reports what *it* changed, so the count starts here rather than
     // accumulating over the connection. See `crate::stats`.
     crate::stats::reset();
@@ -191,7 +196,16 @@ fn exec_json(sql: &str, params: &Value) -> Vec<Value> {
         let table = client
             .select(sql, None, &[JsonB(params.clone()).into()])
             .unwrap_or_else(|e| error!("cypher execution failed: {e}\n--- compiled SQL ---\n{sql}"));
-        table.filter_map(|r| r.get::<JsonB>(1).ok().flatten().map(|j| j.0)).collect()
+        // Reading the rows out is Rust's loop, not the executor's, so nothing in
+        // it looked at a pending cancel: a timeout or a cancel request that
+        // arrived after SPI finished waited until every row had been converted
+        // (seconds per million rows).
+        table
+            .filter_map(|r| {
+                pgrx::check_for_interrupts!();
+                r.get::<JsonB>(1).ok().flatten().map(|j| j.0)
+            })
+            .collect()
     })
 }
 
@@ -346,6 +360,9 @@ fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
 
     let mut out = Vec::new();
     for env in envs.iter_mut() {
+        // One binding's writes are a handful of SPI calls; a MATCH that bound a
+        // million rows makes this loop long, and a cancel has to reach it.
+        pgrx::check_for_interrupts!();
         for clause in &write_clauses {
             if renamed && matches!(clause, Clause::Set(items) | Clause::Remove(items)
                 if items.iter().all(|i| matches!(i, SetOp::Label { .. })))

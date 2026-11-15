@@ -89,13 +89,40 @@ conditional   CASE … WHEN … THEN … ELSE … END
 | graph | `id`, `labels`, `type`, `nodes`, `relationships`, `length`, `size` |
 | string | `toUpper`, `toLower`, `trim`, `substring`, `replace`, `split` |
 | numeric | `abs`, `ceil`, `floor`, `round`, `sqrt`, `rand` |
-| conversion | `toString`, `toInteger`, `toFloat` |
-| temporal | `timestamp`, `datetime` |
+| conversion | `toString`, `toInteger`, `toFloat` — a number truncates toward zero, a string that is not a number gives `null` |
+| temporal | `date()`, `date('2016-01-31')`, `date({year, month, day})`, `datetime()`, `datetime('…')`, `localdatetime(…)`, `duration('P30D')`, `duration({days: 30})`, `timestamp()`; fields `.year` `.quarter` `.month` `.week` `.day` `.ordinalDay` `.dayOfWeek` `.hour` `.minute` `.second` `.millisecond` `.epochSeconds` `.epochMillis` |
 | other | `coalesce`, `keys`, `exists` |
 | **vector** | `vector.similarity(a, b)`, `vector.distance(a, b)`, `vector.l2(a, b)`, `genai.vector.encode(text, provider, config)` |
 
 `vector.similarity` compiles to `1 - (a <=> b)` on a pgvector column, so it uses
 the HNSW index when the query is shaped for it.
+
+A date literal is converted when the statement is planned, so on a virtual node
+`o.placed >= date('2016-01-01')` reaches the source as `placed >= '2016-01-01'`.
+`date()` (today) and field access (`o.placed.year = 2016`) are evaluated here,
+after the rows arrive: postgres_fdw sends neither a non-immutable function nor
+`extract()`, whose field argument carries a collation. A date moved by a
+duration stays a date. `datetime` is a `timestamptz`, so its fields are read in
+the session's time zone.
+
+### Statement time limit
+
+Every Cypher statement — and every fabric statement — runs under
+`og.statement_timeout`, two minutes unless set. When it runs out the statement is
+cancelled the way PostgreSQL's `statement_timeout` cancels one (SQLSTATE 57014,
+"canceling statement due to statement timeout"), and on virtual nodes
+postgres_fdw cancels the source's half too. A stricter `statement_timeout` is
+not loosened.
+
+```sql
+SET og.statement_timeout = '30s';             -- 30000, '2min'; 0 = no limit
+ALTER DATABASE og SET og.statement_timeout = '5min';
+SELECT og_statement_timeout();                -- the limit now, in ms
+```
+
+Over Bolt a driver's transaction timeout (`Query(…, timeout=…)`,
+`begin_transaction(timeout=…)`) sets it for that transaction, and the error is
+`Neo.ClientError.Transaction.TransactionTimedOut`; see `bolt/README.md`.
 
 ### Parameters
 
@@ -126,7 +153,7 @@ original names**, so an application moves by changing its URI.
 | `CALL … YIELD …` | the procedures below; yielded columns bind like anything else |
 | `[x IN xs WHERE p \| e]` | list comprehension, both halves optional |
 | `any` / `all` / `none` / `single` `(x IN xs WHERE p)` | list predicates |
-| multi-label patterns `(a:A:B)` | the most specific label decides; see "Differences" |
+| multi-label patterns `(a:A:B)` | the most specific label decides; see "Differences". Beside a single virtual type, a label naming a supertype it is not placed under (an umbrella such as `_Entity`) is set aside, with a note |
 | `CREATE`/`DROP INDEX`, `CREATE`/`DROP CONSTRAINT` | see below |
 
 ### Procedures

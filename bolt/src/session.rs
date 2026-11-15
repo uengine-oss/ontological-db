@@ -3,10 +3,15 @@
 
 use crate::packstream::{self as ps, map, string, Value};
 use crate::Config;
-use postgres::{Client, NoTls};
-use std::collections::BTreeMap;
+use postgres::error::SqlState;
+use postgres::{CancelToken, Client, NoTls};
+use std::collections::{BTreeMap, VecDeque};
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::thread;
+use std::time::{Duration, Instant};
 
 const MAGIC: [u8; 4] = [0x60, 0x60, 0xB0, 0x17];
 /// Bolt 4.4, encoded as the protocol does it: major in the low byte.
@@ -62,6 +67,15 @@ struct Session<'a> {
     /// Settings from the open transaction's `tx_metadata` (spec 014 FR-010,
     /// spec 013 FR-009), re-applied with every RUN inside it.
     tx_meta: Vec<(String, String)>,
+    /// Bytes the client sent while a query ran. They were read so that a
+    /// closed connection could be seen (see [`Watch`]); the message loop
+    /// consumes them before reading the socket again.
+    early: VecDeque<u8>,
+    /// The session's statement limit in milliseconds, as the engine reports it
+    /// (`og_statement_timeout()`); 0 when there is none or it is unknown.
+    timeout_ms: i64,
+    /// The open transaction's own limit, from BEGIN's `tx_timeout`.
+    tx_timeout_ms: Option<i64>,
 }
 
 /// The `tx_metadata` keys the gateway understands, and the setting each one
@@ -83,6 +97,14 @@ const TX_SETTINGS: &[(&str, &str)] = &[
     ("valid_to", "og.valid_to"),
     ("validTo", "og.valid_to"),
 ];
+
+/// A driver's transaction timeout — `extra.tx_timeout`, in milliseconds, which
+/// Neo4j drivers send for `Query(…, timeout=…)` and `begin_transaction(timeout=…)`.
+/// It becomes the engine's `og.statement_timeout` for that transaction; 0 means
+/// no limit, as it does for Neo4j.
+fn tx_timeout(extra: &Value) -> Option<i64> {
+    extra.map_get("tx_timeout").and_then(Value::as_i64).filter(|ms| *ms >= 0)
+}
 
 /// `extra.tx_metadata` → (setting, value) pairs.
 fn tx_settings(extra: &Value) -> Vec<(String, String)> {
@@ -121,8 +143,31 @@ pub fn serve(mut stream: TcpStream, config: &Config) -> io::Result<()> {
         cursor: 0,
         qtype: "r",
         tx_meta: Vec::new(),
+        early: VecDeque::new(),
+        timeout_ms: 0,
+        tx_timeout_ms: None,
     };
     sess.run(&mut stream)
+}
+
+/// The message loop's view of the connection: bytes read ahead first, then
+/// the socket.
+struct Incoming<'a> {
+    early: &'a mut VecDeque<u8>,
+    stream: &'a mut TcpStream,
+}
+
+impl Read for Incoming<'_> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        if self.early.is_empty() {
+            return self.stream.read(buf);
+        }
+        let n = buf.len().min(self.early.len());
+        for (slot, byte) in buf.iter_mut().zip(self.early.drain(..n)) {
+            *slot = byte;
+        }
+        Ok(n)
+    }
 }
 
 /// Magic preamble plus four proposed versions; we answer with the one we speak
@@ -155,7 +200,7 @@ fn speaks(proposal: u32) -> bool {
 impl Session<'_> {
     fn run(&mut self, stream: &mut TcpStream) -> io::Result<()> {
         loop {
-            let msg = ps::read_message(stream)?;
+            let msg = ps::read_message(&mut Incoming { early: &mut self.early, stream: &mut *stream })?;
             let Value::Struct(sig, fields) = msg else {
                 return Err(io::Error::new(io::ErrorKind::InvalidData, "bolt: not a message"));
             };
@@ -183,7 +228,7 @@ impl Session<'_> {
     ) -> io::Result<Option<Value>> {
         let result = match sig {
             HELLO => self.hello(fields.pop().unwrap_or(Value::Null)),
-            RUN => self.run_query(fields),
+            RUN => self.run_query(fields, stream),
             PULL => return self.pull(fields.pop().unwrap_or(Value::Null), stream, true),
             DISCARD => return self.pull(fields.pop().unwrap_or(Value::Null), stream, false),
             BEGIN => self.begin(fields.pop().unwrap_or(Value::Null)),
@@ -224,9 +269,26 @@ impl Session<'_> {
         if !password.is_empty() {
             cfg.password(&password);
         }
-        let client = cfg.connect(NoTls).map_err(|e| {
+        let mut client = cfg.connect(NoTls).map_err(|e| {
             Failure::client("Neo.ClientError.Security.Unauthorized", pg_message(&e))
         })?;
+        // If this process dies mid-query its PostgreSQL connection closes, but a
+        // busy backend only finds out when it next writes — after the query, which
+        // may be never. With a check interval it looks while it works. Windows
+        // has no way to ask, and refuses the setting; that is not worth failing
+        // a login over.
+        let _ = client.batch_execute("SET client_connection_check_interval = '2s'");
+        if let Some(limit) = &self.config.statement_timeout {
+            client
+                .execute("SELECT set_config('og.statement_timeout', $1, false)", &[limit])
+                .map_err(|e| Failure::from_pg(&e))?;
+        }
+        // What the limit is, to say so when it is hit and to stand behind it
+        // (see `Watch`). An engine without the function simply has none here.
+        self.timeout_ms = client
+            .query_one("SELECT og_statement_timeout()", &[])
+            .map(|r| r.get::<_, i64>(0))
+            .unwrap_or(0);
         self.pg = Some(client);
 
         Ok(map(vec![
@@ -246,6 +308,8 @@ impl Session<'_> {
             }
             self.in_tx = false;
         }
+        self.tx_meta.clear();
+        self.tx_timeout_ms = None;
         self.state = State::Ready;
         Ok(Value::Map(BTreeMap::new()))
     }
@@ -255,6 +319,10 @@ impl Session<'_> {
         self.sql("BEGIN")?;
         self.in_tx = true;
         self.tx_meta = tx_settings(&extra);
+        self.tx_timeout_ms = tx_timeout(&extra);
+        if let Some(ms) = self.tx_timeout_ms {
+            self.tx_meta.push(("og.statement_timeout".into(), ms.to_string()));
+        }
         let meta = self.tx_meta.clone();
         self.apply_settings(&meta)?;
         Ok(Value::Map(BTreeMap::new()))
@@ -274,6 +342,7 @@ impl Session<'_> {
         self.sql(verb)?;
         self.in_tx = false;
         self.tx_meta.clear();
+        self.tx_timeout_ms = None;
         Ok(map(vec![("bookmark", string("ontological:0"))]))
     }
 
@@ -298,7 +367,7 @@ impl Session<'_> {
 
     // --------------------------------------------------------------- query
 
-    fn run_query(&mut self, mut fields: Vec<Value>) -> Result<Value, Failure> {
+    fn run_query(&mut self, mut fields: Vec<Value>, stream: &mut TcpStream) -> Result<Value, Failure> {
         let extra = if fields.len() > 2 { fields.remove(2) } else { Value::Null };
         let params = if fields.len() > 1 { fields.remove(1) } else { Value::Null };
         let query = fields
@@ -347,9 +416,18 @@ impl Session<'_> {
             row.get(0)
         };
 
-        // An auto-commit RUN may carry its own tx_metadata. Settings are
-        // transaction-local, so the query gets a transaction to hold them.
-        let own = if self.in_tx { Vec::new() } else { tx_settings(&extra) };
+        // An auto-commit RUN may carry its own tx_metadata and timeout. Settings
+        // are transaction-local, so the query gets a transaction to hold them.
+        let (own, limit_ms) = if self.in_tx {
+            (Vec::new(), self.tx_timeout_ms.unwrap_or(self.timeout_ms))
+        } else {
+            let mut own = tx_settings(&extra);
+            let limit = tx_timeout(&extra);
+            if let Some(ms) = limit {
+                own.push(("og.statement_timeout".into(), ms.to_string()));
+            }
+            (own, limit.unwrap_or(self.timeout_ms))
+        };
         let wrap = !own.is_empty();
         if wrap {
             self.sql("BEGIN")?;
@@ -361,11 +439,17 @@ impl Session<'_> {
         let rows = {
             let graph = self.graph.clone();
             let pg = self.client()?;
-            pg.query(
+            // While PostgreSQL works this thread is blocked, so another one
+            // watches the client: a closed connection or a RESET cancels the
+            // query, which otherwise ran on with nobody left to read it.
+            let watch = Watch::start(stream, pg.cancel_token(), limit_ms);
+            let result = pg.query(
                 "SELECT og_cypher($1::text, $2::text, $3::text::jsonb)::text",
                 &[&graph, &query, &params_json],
-            )
-            .map_err(|e| Failure::from_pg(&e))
+            );
+            let seen = watch.finish(stream);
+            self.early.extend(seen.bytes);
+            result.map_err(|e| Failure::from_query(&e, seen.interrupt, limit_ms))
         };
         let rows = match (rows, wrap) {
             (Ok(r), true) => {
@@ -649,6 +733,141 @@ fn to_json(v: &Value) -> serde_json::Value {
     }
 }
 
+// ------------------------------------------------------------ watching
+
+/// Why a running query was cancelled from this side.
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Interrupt {
+    /// The client closed the connection, or it broke.
+    ClientGone,
+    /// The client sent RESET: Bolt's way of interrupting what is running.
+    Reset,
+    /// The engine's own limit should have ended it by now and has not.
+    Deadline,
+}
+
+/// What a watch saw: the bytes it read, and whether it cancelled the query.
+struct Seen {
+    bytes: Vec<u8>,
+    interrupt: Option<Interrupt>,
+}
+
+/// A second thread that reads the client while the session thread waits on
+/// PostgreSQL.
+///
+/// Before this, a query outlived everyone who wanted it. The session thread
+/// sat in `query()` and read nothing, so a client that gave up — a driver
+/// timeout, Ctrl-C, a closed tab — went unnoticed; the gateway never asked
+/// PostgreSQL to stop, and PostgreSQL, whose client (this gateway) was still
+/// connected, had no reason to. A cartesian product over two source tables
+/// ran until the source finished.
+///
+/// Reading is the only way to see a close: the driver has usually pipelined
+/// PULL behind RUN, so the end of the stream sits behind bytes that must be
+/// consumed first. They are kept and handed back to the message loop.
+///
+/// The deadline is a backstop. The engine cancels at `og.statement_timeout`
+/// itself; this cancels a few seconds later only if that did not happen.
+struct Watch {
+    stop: Arc<AtomicBool>,
+    handle: Option<thread::JoinHandle<Seen>>,
+}
+
+/// How long past the engine's limit the gateway waits before cancelling itself.
+const DEADLINE_GRACE: Duration = Duration::from_secs(5);
+/// How often the watcher looks at the socket, the clock and the stop flag.
+const WATCH_TICK: Duration = Duration::from_millis(100);
+
+impl Watch {
+    fn start(stream: &TcpStream, token: CancelToken, limit_ms: i64) -> Watch {
+        let stop = Arc::new(AtomicBool::new(false));
+        // Non-blocking rather than a read timeout: on Windows a timed-out
+        // receive leaves the socket in an undefined state. The session thread
+        // is blocked in PostgreSQL and does not touch the socket meanwhile.
+        let sock = match stream.try_clone() {
+            Ok(s) if s.set_nonblocking(true).is_ok() => s,
+            // No second handle on the socket: run unwatched, as before.
+            _ => return Watch { stop, handle: None },
+        };
+        let deadline = (limit_ms > 0)
+            .then(|| Instant::now() + Duration::from_millis(limit_ms as u64) + DEADLINE_GRACE);
+        let flag = stop.clone();
+        let handle = thread::spawn(move || {
+            let mut bytes = Vec::new();
+            let mut buf = [0u8; 4096];
+            let mut interrupt = None;
+            while !flag.load(Ordering::SeqCst) {
+                match (&sock).read(&mut buf) {
+                    Ok(0) => interrupt = Some(Interrupt::ClientGone),
+                    Ok(n) => {
+                        bytes.extend_from_slice(&buf[..n]);
+                        if holds_reset(&bytes) {
+                            interrupt = Some(Interrupt::Reset);
+                        }
+                    }
+                    Err(e) if e.kind() == io::ErrorKind::WouldBlock => thread::sleep(WATCH_TICK),
+                    Err(e) if e.kind() == io::ErrorKind::Interrupted => {}
+                    Err(_) => interrupt = Some(Interrupt::ClientGone),
+                }
+                if interrupt.is_none() && deadline.is_some_and(|d| Instant::now() >= d) {
+                    interrupt = Some(Interrupt::Deadline);
+                }
+                if interrupt.is_some() {
+                    // The query may have finished a moment ago; a cancel request
+                    // that finds the backend idle is ignored.
+                    if !flag.load(Ordering::SeqCst) {
+                        let _ = token.cancel_query(NoTls);
+                    }
+                    break;
+                }
+            }
+            Seen { bytes, interrupt }
+        });
+        Watch { stop, handle: Some(handle) }
+    }
+
+    /// Stop watching and take what was read. Restores blocking reads.
+    fn finish(mut self, stream: &TcpStream) -> Seen {
+        let watched = self.handle.is_some();
+        self.stop.store(true, Ordering::SeqCst);
+        let seen = self
+            .handle
+            .take()
+            .and_then(|h| h.join().ok())
+            .unwrap_or(Seen { bytes: Vec::new(), interrupt: None });
+        // The mode was set through the clone, but it belongs to the socket.
+        if watched {
+            let _ = stream.set_nonblocking(false);
+        }
+        seen
+    }
+}
+
+/// Does this run of Bolt chunks hold a complete RESET message?
+fn holds_reset(buf: &[u8]) -> bool {
+    let mut i = 0;
+    let mut message_start = true;
+    while i + 2 <= buf.len() {
+        let n = u16::from_be_bytes([buf[i], buf[i + 1]]) as usize;
+        i += 2;
+        if n == 0 {
+            message_start = true;
+            continue;
+        }
+        if i + n > buf.len() {
+            return false;
+        }
+        // A message is one structure: its marker (0xB0 | field count), then
+        // its signature.
+        if message_start && n >= 2 && buf[i] & 0xF0 == 0xB0 && buf[i + 1] == RESET {
+            return true;
+        }
+        message_start = false;
+        i += n;
+    }
+    false
+}
+
 // ----------------------------------------------------------------- failures
 
 struct Failure {
@@ -659,6 +878,35 @@ struct Failure {
 impl Failure {
     fn client(code: &str, message: String) -> Self {
         Failure { code: code.to_string(), message }
+    }
+
+    /// A query that did not finish because it was cancelled says why, under the
+    /// code a Neo4j driver expects for that reason: over its time limit, or
+    /// stopped (a RESET, or someone cancelling the backend). Anything else is
+    /// [`Failure::from_pg`].
+    fn from_query(e: &postgres::Error, interrupt: Option<Interrupt>, limit_ms: i64) -> Self {
+        if e.code() != Some(&SqlState::QUERY_CANCELED) {
+            return Failure::from_pg(e);
+        }
+        let message = pg_message(e);
+        let timed_out = message.contains("statement timeout") || interrupt == Some(Interrupt::Deadline);
+        if timed_out {
+            let limit = if limit_ms > 0 {
+                format!("its time limit ({} s, og.statement_timeout)", (limit_ms + 999) / 1000)
+            } else {
+                "its time limit (og.statement_timeout)".to_string()
+            };
+            return Failure::client(
+                "Neo.ClientError.Transaction.TransactionTimedOut",
+                format!(
+                    "the query ran past {limit} and was cancelled, here and at the source. \
+                     Narrow it — label every node, connect the patterns through relationships \
+                     (comma-separated patterns are a cartesian product), filter early, add LIMIT — \
+                     or give this transaction a longer timeout. ({message})"
+                ),
+            );
+        }
+        Failure::client("Neo.TransientError.Transaction.Terminated", message)
     }
 
     /// The compiler's message is the valuable part — it names the construct and
@@ -720,5 +968,44 @@ mod tx_metadata_tests {
     fn no_metadata_no_settings() {
         assert!(tx_settings(&Value::Null).is_empty());
         assert!(tx_settings(&map(vec![("db", string("g"))])).is_empty());
+    }
+}
+
+#[cfg(test)]
+mod watch_tests {
+    use super::*;
+
+    /// `msg` as one Bolt chunk plus the end marker.
+    fn chunked(msg: &[u8]) -> Vec<u8> {
+        let mut out = (msg.len() as u16).to_be_bytes().to_vec();
+        out.extend_from_slice(msg);
+        out.extend_from_slice(&[0, 0]);
+        out
+    }
+
+    #[test]
+    fn reset_is_found_behind_a_pipelined_pull() {
+        // PULL {n: -1}, then RESET.
+        let mut buf = chunked(&[0xB1, PULL, 0xA1, 0x81, b'n', 0xFF]);
+        assert!(!holds_reset(&buf));
+        buf.extend(chunked(&[0xB0, RESET]));
+        assert!(holds_reset(&buf));
+    }
+
+    #[test]
+    fn a_reset_byte_inside_another_message_is_not_a_reset() {
+        // A RUN whose query text happens to contain 0xB0 0x0F.
+        let buf = chunked(&[0xB3, RUN, 0x82, 0xB0, RESET, 0xA0, 0xA0]);
+        assert!(!holds_reset(&buf));
+        // An incomplete chunk is not a message yet.
+        assert!(!holds_reset(&[0x00, 0x02, 0xB0]));
+    }
+
+    #[test]
+    fn driver_timeout_is_milliseconds_and_zero_means_none() {
+        assert_eq!(tx_timeout(&map(vec![("tx_timeout", Value::Int(1500))])), Some(1500));
+        assert_eq!(tx_timeout(&map(vec![("tx_timeout", Value::Int(0))])), Some(0));
+        assert_eq!(tx_timeout(&map(vec![("tx_timeout", Value::Int(-1))])), None);
+        assert_eq!(tx_timeout(&map(vec![("db", string("g"))])), None);
     }
 }

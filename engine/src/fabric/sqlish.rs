@@ -866,6 +866,9 @@ fn og_fabric(statement: &str, params: default!(JsonB, "'{}'")) -> SetOfIterator<
 /// `og_fabric`. The statement is recorded with its parameter block blanked.
 pub fn run(statement: &str, graph: Option<&str>, params: &Map<String, Value>) -> Vec<Value> {
     let started = std::time::Instant::now();
+    // Profiling and previews read source tables; they get the same deadline as
+    // a Cypher statement (a no-op when `og_cypher` already armed it).
+    crate::cypher::timeout::arm();
     let shown = format!("[{}] {}", graph.unwrap_or("-"), redacted(statement));
     let audit = |rows: i64, err: Option<&str>| {
         Spi::run_with_args(

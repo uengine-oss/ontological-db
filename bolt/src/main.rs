@@ -14,6 +14,10 @@
 //!     OG_BOLT_PGDATABASE  default og
 //!     OG_BOLT_GRAPH       default "default" — used when a session names no database
 //!     OG_BOLT_MAX_SESSIONS default 256
+//!     OG_BOLT_STATEMENT_TIMEOUT  unset — the engine's og.statement_timeout
+//!                         (two minutes) applies. "300s", "2min", 120000 (ms),
+//!                         "0" for no limit. A driver's transaction timeout
+//!                         (`tx_timeout`) overrides it for one transaction.
 //!
 //! The listen default is loopback. Bolt carries the password in the clear on
 //! the way in — there is no TLS here — and this process authenticates by
@@ -56,6 +60,8 @@ pub struct Config {
     pub pg_database: String,
     pub default_graph: String,
     pub advertised: String,
+    /// `og.statement_timeout` for every session, when the deployment sets one.
+    pub statement_timeout: Option<String>,
 }
 
 fn env_or(key: &str, default: &str) -> String {
@@ -73,6 +79,7 @@ fn main() {
         pg_database: env_or("OG_BOLT_PGDATABASE", "og"),
         default_graph: env_or("OG_BOLT_GRAPH", "default"),
         advertised: env_or("OG_BOLT_ADVERTISED", &listen),
+        statement_timeout: env::var("OG_BOLT_STATEMENT_TIMEOUT").ok().filter(|v| !v.trim().is_empty()),
     };
 
     let listener = match TcpListener::bind(&listen) {

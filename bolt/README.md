@@ -31,6 +31,27 @@ OG_BOLT_PGPORT=28816 OG_BOLT_PGDATABASE=og \
 | `OG_BOLT_PGDATABASE` | `og` | PostgreSQL database |
 | `OG_BOLT_GRAPH` | `default` | graph used when a session names no database |
 | `OG_BOLT_ADVERTISED` | same as `OG_BOLT_LISTEN` | address returned in the routing table |
+| `OG_BOLT_STATEMENT_TIMEOUT` | unset: the engine's `og.statement_timeout` (2 min) | every session's statement limit: `300s`, `2min`, `120000` (ms), `0` for none |
+
+## Time limits and cancellation
+
+A statement is cancelled — in PostgreSQL and, on virtual nodes, at the source —
+when any of these happens:
+
+| Event | Bolt answer |
+|---|---|
+| it runs past its limit: the driver's transaction timeout (`tx_timeout`, ms) if it sent one, otherwise the session's (`OG_BOLT_STATEMENT_TIMEOUT`, otherwise the engine's two minutes) | `FAILURE Neo.ClientError.Transaction.TransactionTimedOut`, with what to change; the session goes on after `RESET`, as after any failure |
+| the client closes the connection, or it breaks | nobody to answer — the query stops instead of running on |
+| the client sends `RESET` while it runs | `FAILURE Neo.TransientError.Transaction.Terminated`, then `IGNORED`, `SUCCESS` |
+| the backend is cancelled from outside (`pg_cancel_backend`) | `FAILURE Neo.TransientError.Transaction.Terminated` |
+| the gateway itself dies | PostgreSQL notices within about two seconds (`client_connection_check_interval`, not available on Windows) |
+
+The limit is the engine's (`og.statement_timeout`, see `docs/cypher.md`): the
+gateway only passes the driver's value on. While a query runs a second thread
+reads the client socket — that is the only way to see a close behind the PULL a
+driver has already pipelined — and sends PostgreSQL a cancel request when the
+client is gone or sends `RESET`. It also cancels a few seconds after the limit
+if the engine has not, as a backstop.
 
 `start.sh` starts it alongside PostgreSQL. Nothing on the PostgreSQL path
 depends on it: stop the gateway and every `og_cypher()` caller is unaffected.

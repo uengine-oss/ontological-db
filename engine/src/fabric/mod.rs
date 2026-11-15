@@ -965,6 +965,10 @@ fn og_fabric_explain(
     ),
 > {
     let (sql, _) = crate::cypher::compile_cached(graph, query).unwrap_or_else(|e| error!("{e}"));
+    if analyze {
+        // ANALYZE runs the query: same deadline as running it through og_cypher.
+        crate::cypher::timeout::arm();
+    }
     let opts = if analyze { "ANALYZE, VERBOSE, FORMAT JSON" } else { "VERBOSE, FORMAT JSON" };
     // EXPLAIN's JSON format is `json`, not `jsonb`.
     let plan = crate::spiu::one_mut::<pgrx::Json>(&format!("EXPLAIN ({opts}) {sql}"), &[params.into()])

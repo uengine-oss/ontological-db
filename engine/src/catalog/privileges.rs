@@ -65,6 +65,8 @@ const READ: &[&str] = &[
     "og_schema_changes", "og_schema_snapshot",
     // Releases and timelines: comparing, listing and reading history change nothing.
     "og_schema_diff", "og_releases", "og_timeline",
+    // What the statement time limit is (`og.statement_timeout`): reads a setting.
+    "og_statement_timeout",
 ];
 
 /// Data manipulation. `og_genai_encode` is here rather than under `admin`

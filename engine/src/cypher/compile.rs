@@ -128,6 +128,8 @@ pub struct Compiler {
     /// The type each node alias was bound to — a virtual relationship joins on
     /// the endpoints' columns, so it has to know whose columns they are.
     alias_tid: HashMap<String, Option<i32>>,
+    /// Node aliases whose label set can match nothing.
+    unmatchable: std::collections::HashSet<String>,
 }
 
 /// The joins and predicates of one OPTIONAL MATCH.
@@ -166,6 +168,7 @@ impl Compiler {
             optional: None,
             reachability_only: false,
             alias_tid: HashMap::new(),
+            unmatchable: std::collections::HashSet::new(),
         }
     }
 
@@ -775,8 +778,65 @@ impl Compiler {
         match types::resolve_label_set(self.gid, &self.graph, labels)? {
             types::LabelMatch::Any => Ok((None, true)),
             types::LabelMatch::Type(t) => Ok((Some(t), true)),
-            types::LabelMatch::Nothing => Ok((None, false)),
+            types::LabelMatch::Nothing => match self.virtual_under_umbrella(labels) {
+                Some(t) => Ok((Some(t), true)),
+                None => Ok((None, false)),
+            },
         }
+    }
+
+    /// `(:_Entity:Customer)` where `Customer` is a virtual type.
+    ///
+    /// A label set means "the most specific of these, which is a subtype of the
+    /// rest". A virtual type usually is not under the umbrella supertype an
+    /// application puts every class beneath (`_Entity` in Ontology Studio):
+    /// its rows live in the source, so the marker write that places a stored
+    /// type there cannot be made for it, and a type mapped before it was
+    /// published starts as a root. The set then resolved to nothing — an empty
+    /// MATCH, and over a virtual relationship an error about unlabelled ends —
+    /// although the application meant exactly the virtual type.
+    ///
+    /// So beside exactly one virtual type, a label that names a *supertype* —
+    /// a type others descend from, or an abstract one — is read as that
+    /// umbrella and set aside, with a note. A label that names nothing, or a
+    /// concrete type with no subtypes, still empties the match.
+    fn virtual_under_umbrella(&mut self, labels: &[String]) -> Option<i32> {
+        if labels.len() < 2 {
+            return None;
+        }
+        let ids: Vec<i32> =
+            labels.iter().map(|l| types::try_type_id(self.gid, l)).collect::<Option<_>>()?;
+        let virtuals: Vec<i32> = ids
+            .iter()
+            .copied()
+            .filter(|t| crate::fabric::virtual_source(*t).is_some())
+            .collect();
+        let [v] = virtuals.as_slice() else { return None };
+        let mut set_aside = Vec::new();
+        for (name, &t) in labels.iter().zip(&ids) {
+            if t == *v || crate::catalog::labeling::og_is_subtype(*v, t) {
+                continue;
+            }
+            let umbrella = crate::spiu::one::<bool>(
+                "SELECT t.is_abstract OR EXISTS (
+                     SELECT 1 FROM og_catalog.type_parent p WHERE p.parent_id = t.type_id)
+                   FROM og_catalog.type t WHERE t.type_id = $1",
+                &[t.into()],
+            )
+            .ok()
+            .flatten()
+            .unwrap_or(false);
+            if !umbrella {
+                return None;
+            }
+            set_aside.push(name.as_str());
+        }
+        let vname = types::try_type_name(*v).unwrap_or_default();
+        self.notes.push(format!(
+            "label(s) :{} set aside — virtual type {vname} is not placed under them",
+            set_aside.join(":")
+        ));
+        Some(*v)
     }
 
     fn resolve_label(&mut self, labels: &[String]) -> CResult<Option<i32>> {
@@ -871,6 +931,9 @@ impl Compiler {
         self.note_optional_join(&alias);
 
         self.alias_tid.insert(alias.clone(), tid);
+        if !matchable {
+            self.unmatchable.insert(alias.clone());
+        }
         if let Some(v) = &np.var {
             self.binds.insert(v.clone(), Bind::Node { alias: alias.clone(), tid });
         }
@@ -956,13 +1019,23 @@ impl Compiler {
             (to_alias, tt, from_alias, ft)
         };
         if s_tid.is_none() || d_tid.is_none() {
+            // An end whose labels can match nothing (`(:Unrelated:Other)`) has
+            // already emptied the match; the hop then has nothing to join and
+            // is not the error worth reporting.
+            let unmatchable = |a: &str| self.unmatchable.contains(a);
+            if (s_tid.is_none() && unmatchable(s_alias)) || (d_tid.is_none() && unmatchable(d_alias)) {
+                self.constrain(never(s_alias, d_alias));
+                return Ok("NULL::jsonb".into());
+            }
             return Err(format!(
                 "virtual relationship '{rname}' needs both ends labelled — it is a join on their keys"
             ));
         }
         if !is(s_tid, v.src_type) || !is(d_tid, v.dst_type) {
             // Wrong endpoint types: the relationship cannot exist between them.
-            self.constrain("false".into());
+            // Said about the hop's ends, so that under OPTIONAL MATCH it lands
+            // on the optional join (NULLs) rather than emptying the whole query.
+            self.constrain(never(s_alias, d_alias));
         }
         let (lhs, _) = self.prop_sql(s_alias, s_tid, &v.src_prop);
         let (rhs, _) = self.prop_sql(d_alias, d_tid, &v.dst_prop);
@@ -1282,6 +1355,9 @@ impl Compiler {
     /// SQL type that `jsonb_build_object` renders faithfully.
     fn expr_for_output(&mut self, e: &Expr) -> CResult<String> {
         if let Expr::Prop(base, prop) = e {
+            if let Some(sql) = self.temporal_field(base, prop, true)? {
+                return Ok(sql);
+            }
             if let Expr::Var(v) = &**base {
                 match self.binds.get(v).cloned() {
                     Some(Bind::Node { alias, tid }) => {
@@ -1442,8 +1518,13 @@ impl Compiler {
                 }
             }
             Expr::Prop(base, p) => {
+                if let Some(sql) = self.temporal_field(base, p, false)? {
+                    return Ok(sql);
+                }
                 let Expr::Var(v) = &**base else {
-                    return Err("property access is only supported on pattern variables".into());
+                    return Err("property access is only supported on pattern variables \
+                                and on dates and times (.year, .month, .day …)"
+                        .into());
                 };
                 match self.binds.get(v).cloned() {
                     Some(Bind::Node { alias, tid }) => self.prop_sql(&alias, tid, p).0,
@@ -1671,6 +1752,18 @@ impl Compiler {
             }
         }
 
+        // A source that keeps dates as text, compared with a date or a time:
+        // read the text at that type rather than refuse `text >= date`.
+        const TEMPORAL: &[&str] = &["date", "timestamptz", "timestamp"];
+        if let (Some(lt), Some(rt)) = (&rhint, &lhint) {
+            if lt == "text" && TEMPORAL.contains(&rt.as_str()) && matches!(l, Expr::Prop(..)) {
+                ls = format!("({ls})::{rt}");
+            }
+            if rt == "text" && TEMPORAL.contains(&lt.as_str()) && matches!(r, Expr::Prop(..)) {
+                rs = format!("({rs})::{lt}");
+            }
+        }
+
         // Against a constant, plain `=` is both Cypher's answer (null = 'x' is
         // null, not false) and the form a source database can use an index for
         // — `IS NOT DISTINCT FROM` reaches a foreign server intact but no
@@ -1678,9 +1771,15 @@ impl Compiler {
         let constant = |e: &Expr| matches!(e, Expr::Param(_)) || matches!(e, Expr::Lit(x) if !matches!(x, Lit::Null));
         let plain = constant(l) || constant(r);
 
+        // A date moved by a duration is still a date in Cypher; SQL's
+        // `date ± interval` is a timestamp.
+        let date_shift = rhint.as_deref() == Some("date") && lhint.as_deref() == Some("interval");
+
         Ok(match op {
             BinOp::Eq if plain => format!("({ls} = {rs})"),
             BinOp::Ne if plain => format!("({ls} <> {rs})"),
+            BinOp::Add if date_shift => format!("(({ls} + {rs})::date)"),
+            BinOp::Sub if date_shift => format!("(({ls} - {rs})::date)"),
             BinOp::Add => format!("({ls} + {rs})"),
             BinOp::Sub => format!("({ls} - {rs})"),
             BinOp::Mul => format!("({ls} * {rs})"),
@@ -1730,8 +1829,214 @@ impl Compiler {
             Expr::Lit(Lit::Float(_)) => Some("float8".into()),
             Expr::Lit(Lit::Bool(_)) => Some("bool".into()),
             Expr::Lit(Lit::Str(_)) => Some("text".into()),
+            // Constructors and conversions say what they make, so the other side
+            // of a comparison is read at that type: `o.placed >= date('2016-01-01')`
+            // is `date >= date`, which a source can be sent.
+            Expr::Func { name, .. } => match name.to_ascii_lowercase().as_str() {
+                "date" => Some("date".into()),
+                "datetime" => Some("timestamptz".into()),
+                "localdatetime" => Some("timestamp".into()),
+                "duration" => Some("interval".into()),
+                "tointeger" => Some("int8".into()),
+                "tofloat" => Some("float8".into()),
+                "tostring" => Some("text".into()),
+                _ => None,
+            },
             _ => None,
         }
+    }
+
+    /// `x.year`, `x.month` … on a temporal value. `None` when `base` is a
+    /// pattern variable — then `.year` is a property like any other — or when
+    /// `p` is not a temporal field.
+    fn temporal_field(&mut self, base: &Expr, p: &str, for_output: bool) -> CResult<Option<String>> {
+        let Some(field) = temporal_unit(p) else { return Ok(None) };
+        if let Expr::Var(v) = base {
+            match self.binds.get(v) {
+                Some(Bind::Scalar { .. }) => {}
+                _ => return Ok(None),
+            }
+        }
+        // A column whose type is known: plain `extract`, which a source can be
+        // sent when the column is a date.
+        if let Some(ty) = self.type_of(base) {
+            if matches!(ty.as_str(), "date" | "timestamptz" | "timestamp") {
+                let sql = self.expr(base, None)?;
+                if ty == "date" && matches!(field, "hour" | "minute" | "second" | "millisecond") {
+                    return Err(format!("a date has no .{p} — use datetime() for a point in time"));
+                }
+                let part = extract_sql(&sql, field);
+                return Ok(Some(if for_output { format!("to_jsonb({part})") } else { part }));
+            }
+        }
+        // Anything else is decided per row: a map keeps `.year` as a key lookup,
+        // a date or datetime string is read as one. Plain SQL, no helper
+        // function: a database whose extension was created before this release
+        // has no new catalog objects, and compiled Cypher must run there too.
+        let j = match base {
+            // The parameter as jsonb, so a map parameter is still a map.
+            Expr::Param(name) => format!("({PARAM} -> {})", sql_str(name)),
+            _ => format!("to_jsonb({})", self.expr(base, None)?),
+        };
+        let part = extract_sql(&format!("({j} #>> '{{}}')::timestamptz"), field);
+        let value = format!(
+            "(CASE jsonb_typeof({j}) WHEN 'object' THEN {j} -> {key} \
+             WHEN 'string' THEN to_jsonb({part}) END)",
+            key = sql_str(p)
+        );
+        Ok(Some(if for_output { value } else { format!("({value} #>> '{{}}')") }))
+    }
+
+    /// `date(…)`, `datetime(…)`, `localdatetime(…)`: now, a string, a map of
+    /// fields, or another temporal value.
+    fn temporal_ctor(&mut self, ctor: &str, args: &[Expr]) -> CResult<String> {
+        let (ty, now) = match ctor {
+            "date" => ("date", "current_date"),
+            "datetime" => ("timestamptz", "now()"),
+            _ => ("timestamp", "localtimestamp"),
+        };
+        match args {
+            [] => Ok(now.into()),
+            // A literal is converted once, when the statement is planned — and a
+            // constant of the column's type is what a foreign server is sent.
+            [Expr::Lit(Lit::Str(s))] => Ok(format!("{}::{ty}", sql_str(s))),
+            [Expr::Lit(Lit::Null)] => Ok(format!("NULL::{ty}")),
+            [Expr::Map(kv)] => {
+                let mut get = |k: &str, default: &str| -> CResult<String> {
+                    match kv.iter().find(|(key, _)| key.eq_ignore_ascii_case(k)) {
+                        Some((_, v)) => Ok(format!("({})::int", self.expr(v, Some("int8"))?)),
+                        None => Ok(default.into()),
+                    }
+                };
+                let year = get("year", "")?;
+                if year.is_empty() {
+                    return Err(format!("{ctor}({{…}}) needs at least a year"));
+                }
+                let (month, day) = (get("month", "1")?, get("day", "1")?);
+                if ty == "date" {
+                    return Ok(format!("make_date({year}, {month}, {day})"));
+                }
+                let (hour, minute) = (get("hour", "0")?, get("minute", "0")?);
+                let second = match kv.iter().find(|(key, _)| key.eq_ignore_ascii_case("second")) {
+                    Some((_, v)) => format!("({})::float8", self.expr(v, Some("float8"))?),
+                    None => "0".into(),
+                };
+                let make = if ty == "timestamp" { "make_timestamp" } else { "make_timestamptz" };
+                Ok(format!("{make}({year}, {month}, {day}, {hour}, {minute}, {second})"))
+            }
+            [x] => {
+                let have = self.type_of(x);
+                if have.as_deref() == Some(ty) {
+                    return self.expr(x, None);
+                }
+                // A parameter or an unwound value arrives as text or jsonb; ask
+                // for text, which reads a jsonb string without its quotes.
+                Ok(format!("({})::{ty}", self.expr(x, Some("text"))?))
+            }
+            _ => Err(format!("{ctor}() takes one argument: a string, a map, or another date or time")),
+        }
+    }
+
+    /// `duration('P30D')`, `duration({days: 30})` — an SQL interval, which a
+    /// date or datetime can be moved by.
+    fn duration(&mut self, args: &[Expr]) -> CResult<String> {
+        match args {
+            [Expr::Lit(Lit::Str(s))] => Ok(format!("{}::interval", sql_str(s))),
+            [Expr::Map(kv)] => {
+                let mut parts = Vec::new();
+                for (k, v) in kv {
+                    let (arg, scale) = match k.to_ascii_lowercase().as_str() {
+                        "years" => ("years", 1.0),
+                        "months" => ("months", 1.0),
+                        "quarters" => ("months", 3.0),
+                        "weeks" => ("weeks", 1.0),
+                        "days" => ("days", 1.0),
+                        "hours" => ("hours", 1.0),
+                        "minutes" => ("mins", 1.0),
+                        "seconds" => ("secs", 1.0),
+                        "milliseconds" => ("secs", 0.001),
+                        other => return Err(format!("duration() has no field '{other}'")),
+                    };
+                    let val = self.expr(v, Some("float8"))?;
+                    parts.push(if arg == "secs" {
+                        format!("secs => ({val})::float8 * {scale}")
+                    } else if scale != 1.0 {
+                        format!("{arg} => (({val})::int * {})", scale as i64)
+                    } else {
+                        format!("{arg} => ({val})::int")
+                    });
+                }
+                Ok(format!("make_interval({})", parts.join(", ")))
+            }
+            [x] => Ok(format!("({})::interval", self.expr(x, Some("text"))?)),
+            _ => Err("duration() takes one argument: an ISO 8601 string such as 'P30D', or a map such as {days: 30}".into()),
+        }
+    }
+
+    /// `toInteger(x)` / `toFloat(x)` as Cypher means them: a number is
+    /// truncated (toInteger(2.7) is 2), a string that is not a number gives
+    /// null, and what the value is decides that — not what SQL can cast.
+    ///
+    /// The SQL used to be a bare `::int8`, which rounds 2.5 to 3, fails the
+    /// whole query on one non-numeric string, and cannot read a jsonb value at
+    /// all ("cannot cast jsonb string to type bigint") — so `sum(toInteger(x))`
+    /// over anything read from a map, an UNWIND or an undeclared property failed.
+    fn to_number(&mut self, int: bool, args: &[Expr]) -> CResult<String> {
+        let [x] = args else {
+            return Err(format!("{}() takes one argument", if int { "toInteger" } else { "toFloat" }));
+        };
+        let target = if int { "int8" } else { "float8" };
+        if matches!(x, Expr::Lit(Lit::Null)) {
+            return Ok(format!("NULL::{target}"));
+        }
+        // A string is a number only if it reads as one; then toInteger truncates.
+        let from_text = |t: &str| {
+            let read = if int {
+                format!("trunc(btrim({t})::numeric)::int8")
+            } else {
+                format!("btrim({t})::float8")
+            };
+            format!("(CASE WHEN {t} ~ '{NUMERIC_TEXT}' THEN {read} END)")
+        };
+        let ty = self.type_of(x);
+        let sql = self.expr(x, None)?;
+        Ok(match ty.as_deref() {
+            Some("int2" | "int4" | "int8") => format!("({sql})::{target}"),
+            Some("numeric" | "float4" | "float8") if int => format!("trunc({sql})::int8"),
+            Some("numeric" | "float4" | "float8") => format!("({sql})::float8"),
+            Some("bool") if int => format!("({sql})::int::int8"),
+            Some("text") => from_text(&format!("({sql})::text")),
+            // jsonb, or a type known only at run time: let the value decide.
+            _ => {
+                let j = format!("to_jsonb({sql})");
+                let number = if int { format!("trunc(({j})::numeric)::int8") } else { format!("({j})::float8") };
+                let boolean = if int { format!("(({j})::bool)::int::int8") } else { "NULL::float8".into() };
+                format!(
+                    "(CASE jsonb_typeof({j}) WHEN 'number' THEN {number} WHEN 'string' THEN {} \
+                     WHEN 'boolean' THEN {boolean} END)",
+                    from_text(&format!("({j} #>> '{{}}')"))
+                )
+            }
+        })
+    }
+
+    /// `toString(x)`. A value carried through WITH or UNWIND is jsonb, and
+    /// `jsonb::text` spells a string with its JSON quotes — `"abc"` came back as
+    /// `"\"abc\""`. When the type is not known, the value decides.
+    fn to_text(&mut self, args: &[Expr]) -> CResult<String> {
+        let [x] = args else { return Err("toString() takes one argument".into()) };
+        if matches!(x, Expr::Lit(Lit::Null)) {
+            return Ok("NULL::text".into());
+        }
+        let ty = self.type_of(x);
+        let sql = self.expr(x, None)?;
+        Ok(match ty {
+            Some(_) => format!("({sql})::text"),
+            None => {
+                let j = format!("to_jsonb({sql})");
+                format!("(CASE jsonb_typeof({j}) WHEN 'string' THEN {j} #>> '{{}}' WHEN 'null' THEN NULL ELSE ({j})::text END)")
+            }
+        })
     }
 
     fn func(&mut self, name: &str, args: &[Expr], distinct: bool) -> CResult<String> {
@@ -1763,6 +2068,11 @@ impl Compiler {
                 let a = self.expr(&args[0], None)?;
                 return Ok(format!("stddev_samp(({a})::float8)"));
             }
+            "date" | "datetime" | "localdatetime" => return self.temporal_ctor(&lname, args),
+            "duration" => return self.duration(args),
+            "tointeger" => return self.to_number(true, args),
+            "tofloat" => return self.to_number(false, args),
+            "tostring" => return self.to_text(args),
             _ => {}
         }
 
@@ -1850,11 +2160,7 @@ impl Compiler {
             "round" => format!("round(({})::numeric)", a[0]),
             "sqrt" => format!("sqrt(({})::float8)", a[0]),
             "rand" => "random()".into(),
-            "tostring" => format!("({})::text", a[0]),
-            "tointeger" => format!("({})::int8", a[0]),
-            "tofloat" => format!("({})::float8", a[0]),
             "timestamp" => "extract(epoch from now())::int8".into(),
-            "datetime" => "now()".into(),
             "exists" => format!("({} IS NOT NULL)", a[0]),
             "keys" => format!("to_jsonb(ARRAY(SELECT jsonb_object_keys({})))", a[0]),
             // `properties(n)` is the map a node or relationship already
@@ -1917,11 +2223,54 @@ impl Compiler {
                     "unknown function '{other}'. supported: count, sum, avg, min, max, collect, \
                      id, elementId, labels, type, length, size, toUpper, toLower, trim, substring, \
                      replace, split, coalesce, abs, ceil, floor, round, sqrt, rand, toString, \
-                     toInteger, toFloat, timestamp, datetime, exists, keys, vector.similarity, \
-                     vector.distance, genai.vector.encode"
+                     toInteger, toFloat, timestamp, date, datetime, localdatetime, duration, exists, \
+                     keys, vector.similarity, vector.distance, genai.vector.encode"
                 ))
             }
         })
+    }
+}
+
+/// A predicate that is always false but names both ends of a hop, so the
+/// OPTIONAL MATCH machinery places it on the hop's join (see `close_optional`).
+fn never(a: &str, b: &str) -> String {
+    format!("({a}.id IS NULL AND {b}.id IS NULL AND false)")
+}
+
+/// A string toInteger()/toFloat() reads as a number: optional sign, digits with
+/// an optional fraction, optional exponent, surrounding blanks.
+const NUMERIC_TEXT: &str = r"^\s*[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?\s*$";
+
+/// The Cypher temporal field `p` names, lower-cased, if it names one.
+fn temporal_unit(p: &str) -> Option<&'static str> {
+    Some(match p.to_ascii_lowercase().as_str() {
+        "year" => "year",
+        "quarter" => "quarter",
+        "month" => "month",
+        "week" => "week",
+        "day" => "day",
+        "ordinalday" => "ordinalday",
+        "dayofweek" | "weekday" => "dayofweek",
+        "hour" => "hour",
+        "minute" => "minute",
+        "second" => "second",
+        "millisecond" => "millisecond",
+        "epochseconds" => "epochseconds",
+        "epochmillis" => "epochmillis",
+        _ => return None,
+    })
+}
+
+/// `extract` for one temporal field, as the integer Cypher returns.
+fn extract_sql(sql: &str, field: &str) -> String {
+    match field {
+        "ordinalday" => format!("extract(doy FROM {sql})::int8"),
+        "dayofweek" => format!("extract(isodow FROM {sql})::int8"),
+        "second" => format!("floor(extract(second FROM {sql}))::int8"),
+        "millisecond" => format!("(floor(extract(milliseconds FROM {sql}))::int8 % 1000)"),
+        "epochseconds" => format!("floor(extract(epoch FROM {sql}))::int8"),
+        "epochmillis" => format!("floor(extract(epoch FROM {sql}) * 1000)::int8"),
+        f => format!("extract({f} FROM {sql})::int8"),
     }
 }
 

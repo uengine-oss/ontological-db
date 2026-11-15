@@ -290,7 +290,28 @@ fn func(name: &str, a: &[Value]) -> Result<Value, String> {
         // function there is. Returning null here — which is what happened before
         // — loses the value silently, which is worse than refusing it.
         "timestamp" => json!(now_epoch()),
-        "datetime" => json!(now_iso()),
+        "datetime" if a.is_empty() => json!(now_iso()),
+        // `SET o.due = date('2024-03-05')`, `date()`: PostgreSQL reads the value
+        // (and refuses one that is not a date), so a write stores what a read
+        // of `date(…)` would compare against.
+        "date" | "datetime" => {
+            let (ty, now) = if name.eq_ignore_ascii_case("date") {
+                ("date", "current_date")
+            } else {
+                ("timestamptz", "now()")
+            };
+            let sql = match a.first() {
+                None => format!("SELECT {now}::text"),
+                Some(Value::Null) => return Ok(Value::Null),
+                Some(_) => format!("SELECT ($1::text)::{ty}::text"),
+            };
+            let arg = a.first().map(|v| as_str(v).to_string());
+            let got = match &arg {
+                None => crate::spiu::one::<String>(&sql, &[]),
+                Some(t) => crate::spiu::one::<String>(&sql, &[t.as_str().into()]),
+            };
+            got.map_err(|e| format!("{name}(): {e}"))?.map(Value::String).unwrap_or(Value::Null)
+        }
         other => return Err(format!("function '{other}' is not available in a write clause")),
     })
 }
