@@ -27,6 +27,7 @@ use crate::catalog::types;
 use crate::spiu::{ident, lit, one};
 use pgrx::prelude::*;
 
+pub mod profile;
 pub mod sqlish;
 use pgrx::JsonB;
 use serde_json::{json, Map, Value};

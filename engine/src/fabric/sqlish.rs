@@ -18,6 +18,8 @@
 //! ALTER DATASOURCE erp SET CREDENTIALS = {user: 'erp_ro', credentials: 'keychain:erp'}
 //! SHOW DATASOURCES               SHOW CREDENTIALS               SHOW TABLES FROM erp
 //! SHOW COLUMNS FROM erp.item
+//! SHOW COLUMN STATS FROM erp.item [SAMPLE 1000]
+//! SHOW VALUE OVERLAP FROM erp.po(supplier_id) IN erp.supplier(supplier_id) [SAMPLE 200]
 //! CREATE GRAPH scm               SHOW GRAPHS              USE GRAPH scm
 //! CREATE VIRTUAL NODE Item FROM erp.item KEY item_id [PROPERTIES (name, safety_stock AS safety)]
 //! CREATE VIRTUAL RELATIONSHIP SHIPS FROM Shipment(ref_po_no) TO PurchaseOrder(po_id)
@@ -357,7 +359,7 @@ pub fn is_statement(stmt: &str) -> bool {
         }
         "DROP" => matches!(w1, "DATASOURCE" | "VIRTUAL"),
         "ALTER" => w1 == "DATASOURCE",
-        "SHOW" => matches!(w1, "DATASOURCES" | "CREDENTIALS" | "TABLES" | "COLUMNS" | "VIRTUAL" | "GRAPHS"),
+        "SHOW" => matches!(w1, "DATASOURCES" | "CREDENTIALS" | "TABLES" | "COLUMNS" | "COLUMN" | "VALUE" | "VIRTUAL" | "GRAPHS"),
         "REFRESH" => w1 == "DATASOURCE",
         "MATERIALIZE" => true,
         "EXPLAIN" => w1 == "FABRIC",
@@ -381,6 +383,12 @@ pub fn columns(stmt: &str) -> Vec<String> {
         ["SHOW", "CREDENTIALS", ..] => &["name", "engine", "credentials", "user", "host", "port", "database", "file"],
         ["SHOW", "TABLES", ..] => &["table", "columns", "virtual_node"],
         ["SHOW", "COLUMNS", ..] => &["column", "type", "nullable", "key"],
+        ["SHOW", "COLUMN", ..] => &[
+            "column", "type", "nullable", "key", "sampled", "nulls", "distinct", "unique", "top_values", "samples",
+        ],
+        ["SHOW", "VALUE", ..] => &[
+            "sampled", "matched", "ratio", "parent_sampled", "parent_distinct", "parent_unique", "parent_key", "compare",
+        ],
         ["SHOW", "VIRTUAL", "NODES"] => &["node", "source", "key", "properties", "storage"],
         ["SHOW", "VIRTUAL", ..] => &["relationship", "from", "to"],
         ["EXPLAIN", "FABRIC", ..] => &["step", "place", "operation", "rows", "detail"],
@@ -722,6 +730,43 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
                 lit(ds),
                 lit(rel)
             )
+        } else if p.kw("COLUMN") {
+            p.expect_kw("STATS")?;
+            if !(p.kw("FROM") || p.kw("IN")) {
+                return Err(format!("expected FROM <datasource>.<table>{}", p.near()));
+            }
+            let (ds, rel) = ds_table(&mut p)?;
+            let n = sample(&mut p, 1000)?;
+            format!(
+                "SELECT x->>'column' AS \"column\", x->>'type' AS type, (x->>'nullable')::boolean AS nullable, \
+                        (x->>'key')::boolean AS key, (x->>'sampled')::bigint AS sampled, (x->>'nulls')::bigint AS nulls, \
+                        (x->>'distinct')::bigint AS \"distinct\", (x->>'unique')::boolean AS \"unique\", \
+                        x->'top_values' AS top_values, x->'samples' AS samples \
+                   FROM jsonb_array_elements(og_fabric_column_stats({}, {}, {n})) x",
+                lit(&ds),
+                lit(&rel)
+            )
+        } else if p.kw("VALUE") {
+            p.expect_kw("OVERLAP")?;
+            if !p.kw("FROM") {
+                return Err(format!("expected FROM <datasource>.<table>(<column>){}", p.near()));
+            }
+            let (cds, ct) = ds_table(&mut p)?;
+            let cc = paren_word(&mut p, "the child column")?;
+            if !(p.kw("IN") || p.kw("WITH") || p.kw("TO")) {
+                return Err(format!("expected IN <datasource>.<table>(<column>){}", p.near()));
+            }
+            let (pds, pt) = ds_table(&mut p)?;
+            let pcn = paren_word(&mut p, "the parent column")?;
+            let n = sample(&mut p, 200)?;
+            format!(
+                "SELECT (x->>'sampled')::bigint AS sampled, (x->>'matched')::bigint AS matched, \
+                        (x->>'ratio')::float8 AS ratio, (x->>'parent_sampled')::bigint AS parent_sampled, \
+                        (x->>'parent_distinct')::bigint AS parent_distinct, (x->>'parent_unique')::boolean AS parent_unique, \
+                        (x->>'parent_key')::boolean AS parent_key, x->>'compare' AS compare \
+                   FROM (SELECT og_fabric_value_overlap({}, {}, {}, {}, {}, {}, {n}) AS x) s",
+                lit(&cds), lit(&ct), lit(&cc), lit(&pds), lit(&pt), lit(&pcn)
+            )
         } else if p.kw("VIRTUAL") {
             if p.kw("NODES") {
                 let graph = p.graph()?;
@@ -758,6 +803,32 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
     };
     p.end()?;
     Ok((sql, args))
+}
+
+/// `datasource.table`, split.
+fn ds_table(p: &mut P) -> R<(String, String)> {
+    let q = p.qualified("a datasource table")?;
+    match q.split_once('.') {
+        Some((ds, t)) => Ok((ds.to_string(), t.to_string())),
+        None => Err(format!("expected <datasource>.<table>, found '{q}'")),
+    }
+}
+
+/// `(name)`.
+fn paren_word(p: &mut P, what: &str) -> R<String> {
+    p.expect_sym('(')?;
+    let w = p.word(what)?;
+    p.expect_sym(')')?;
+    Ok(w)
+}
+
+/// An optional `SAMPLE n`.
+fn sample(p: &mut P, default: i64) -> R<i64> {
+    if !p.kw("SAMPLE") {
+        return Ok(default);
+    }
+    let w = p.word("a sample size")?;
+    w.parse::<i64>().map_err(|_| format!("SAMPLE takes a number, found '{w}'"))
 }
 
 /// `Type(property)`.
