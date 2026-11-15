@@ -114,6 +114,52 @@ pub fn plan(
                 columns: vec![scalar("value", format!("{alias}.value"))],
             })
         }
+        // `SHOW CONSTRAINTS` / `SHOW INDEXES`. Administration commands in
+        // Neo4j, planned here as ordinary relations so the parser can desugar
+        // them into `CALL` and reuse YIELD / WHERE / RETURN unchanged.
+        //
+        // Both live in `og_catalog.compat_index`, told apart by `kind`. The
+        // column names and shapes follow Neo4j's, because the callers are the
+        // same tools: `labelsOrTypes` and `properties` are lists there, so they
+        // are jsonb arrays here rather than the text[] the table stores.
+        "show.constraints" | "show.indexes" => {
+            let constraints = lname == "show.constraints";
+            let filter = if constraints { "= 'constraint'" } else { "<> 'constraint'" };
+            // Neo4j reports a uniqueness constraint as UNIQUENESS; an index
+            // reports the index kind. `kind` here is our own vocabulary, so map
+            // it rather than leak it.
+            let type_sql = if constraints {
+                "'UNIQUENESS'".to_string()
+            } else {
+                format!("upper({alias}.kind)")
+            };
+            let mut columns = vec![
+                scalar("id", format!("hashtext({alias}.name)::int8")),
+                scalar("name", format!("{alias}.name")),
+            ];
+            if !constraints {
+                // Indexes are built synchronously here, so there is no
+                // population phase to report.
+                columns.push(scalar("state", "'ONLINE'".into()));
+            }
+            columns.extend([
+                scalar("type", type_sql),
+                scalar(
+                    "entityType",
+                    format!("CASE {alias}.entity WHEN 'e' THEN 'NODE' ELSE 'RELATIONSHIP' END"),
+                ),
+                scalar("labelsOrTypes", format!("to_jsonb(ARRAY[{alias}.type_name])")),
+                scalar("properties", format!("to_jsonb({alias}.props)")),
+            ]);
+            Ok(Plan {
+                from: format!(
+                    "(SELECT name, kind, entity, type_name, props FROM og_catalog.compat_index \
+                      WHERE graph_id = {gid} AND kind {filter}) AS {alias}"
+                ),
+                lateral: false,
+                columns,
+            })
+        }
         "db.labels" => Ok(Plan {
             from: format!(
                 "(SELECT name FROM og_catalog.type WHERE graph_id = {gid} AND kind = 'e') \
