@@ -71,7 +71,8 @@ Bolt 로만 돈다. v2 를 대조하려면:
 3. 다른 것마다 고치거나, 달라도 되는 까닭이 있으면 `expected/known-differences.json` 에 `{"id", "reason"}` 으로 적는다.
 
 비교 규칙(`run.py` 의 `same`): 실패는 **오류 코드만** 같으면 같다(메시지는 사람이 보라고 남긴다). `subset` 이 붙은
-답은 열과 행 수만 본다. 나머지는 `columns`·`row_count`·`rows`·`rows_sha1`·`effect` 가 모두 같아야 한다.
+답은 열과 행 수만 본다. 나머지는 `columns`·`row_count`·`rows`·`rows_sha1`·`effect` 가 모두 같아야 한다. 준비 데이터도 비교한다:
+`_setup.json` 에서 파일마다 실패한 문장(줄 번호)과 그 오류 코드가 같아야 한다.
 `row_order` 가 `server, ties server` 인 답(정렬 키를 반환하지 않는 ORDER BY)은 동점 행의 순서가 판마다 다를 수
 있으니, 다르게 나오면 그 쿼리를 보고 판단한다.
 
