@@ -146,8 +146,8 @@ fn og_create_datasource(name: &str, engine: &str, params: JsonB) -> String {
             }
             Spi::run(&format!("CREATE SCHEMA IF NOT EXISTS {local}")).expect("schema");
             Spi::run(&format!(
-                "IMPORT FOREIGN SCHEMA {} FROM SERVER {} INTO {local}",
-                ident(&remote), ident(&srv)
+                "IMPORT FOREIGN SCHEMA {} FROM SERVER {} INTO {local}{}",
+                ident(&remote), ident(&srv), import_options(&engine)
             ))
             .unwrap_or_else(|e| error!("failed to import '{remote}' from '{name}': {e}"));
             protect_server(&srv);
@@ -190,6 +190,17 @@ fn protect_server(server: &str) {
              FOR EACH STATEMENT EXECUTE FUNCTION og_catalog.og_refuse_source_write()"
         ))
         .unwrap_or_else(|e| error!("failed to protect {t}: {e}"));
+    }
+}
+
+/// postgres_fdw copies each column's collation by default, which means reading the remote
+/// `pg_collation` catalog — and read-only accounts on locked-down servers may not see it
+/// ("permission denied for table pg_collation"). Reading through the fabric does not need
+/// the remote collations, so they are not imported.
+fn import_options(engine: &str) -> &'static str {
+    match engine {
+        "postgres" | "postgresql" => " OPTIONS (import_collate 'false')",
+        _ => "",
     }
 }
 
@@ -283,8 +294,8 @@ fn og_refresh_datasource(name: &str) -> String {
         format!(" EXCEPT ({})", have.iter().map(|t| ident(t)).collect::<Vec<_>>().join(", "))
     };
     Spi::run(&format!(
-        "IMPORT FOREIGN SCHEMA {}{except} FROM SERVER {} INTO {}",
-        ident(&remote), ident(&srv), ident(name)
+        "IMPORT FOREIGN SCHEMA {}{except} FROM SERVER {} INTO {}{}",
+        ident(&remote), ident(&srv), ident(name), import_options(&engine)
     ))
     .unwrap_or_else(|e| error!("failed to refresh '{name}': {e}"));
     protect_server(&srv);
@@ -380,9 +391,13 @@ fn import_foreign(datasource: &str, remote: &str) -> (String, String) {
     if exists {
         return (lschema, rtable.to_string());
     }
+    let engine = one::<String>("SELECT engine FROM og_catalog.datasource WHERE name = $1", &[datasource.into()])
+        .ok()
+        .flatten()
+        .unwrap_or_default();
     Spi::run(&format!(
-        "IMPORT FOREIGN SCHEMA {} LIMIT TO ({}) FROM SERVER {} INTO {}",
-        ident(rschema), ident(rtable), ident(&srv), ident(&lschema)
+        "IMPORT FOREIGN SCHEMA {} LIMIT TO ({}) FROM SERVER {} INTO {}{}",
+        ident(rschema), ident(rtable), ident(&srv), ident(&lschema), import_options(&engine)
     ))
     .unwrap_or_else(|e| error!("failed to import {remote} from '{datasource}': {e}"));
     protect_server(&srv);
