@@ -187,8 +187,10 @@ SHOW TABLES FROM erp
 
 `kind` (`table`, `view`, `materialized`, `foreign`) and `primary_key` (the columns of the primary
 key **at the source**, `[]` for none) are read from the source's own catalog when the datasource
-is created or refreshed. They are known for `postgres` sources; for any other engine, or a
-datasource made before this was kept, they are `null` until `REFRESH DATASOURCE`. `SHOW COLUMNS`
+is created or refreshed — PostgreSQL from `pg_catalog`, MySQL and MariaDB from
+`information_schema` (`TABLES.TABLE_TYPE`, `KEY_COLUMN_USAGE` of `PRIMARY`; a MySQL view is
+`view`, everything else `table`). For any other engine, or a datasource made before this was
+kept, they are `null` until `REFRESH DATASOURCE`. `SHOW COLUMNS`
 and `SHOW COLUMN STATS` carry `primary_key` per column, separate from `key`, which marks the
 column a virtual node uses as its id.
 
@@ -198,7 +200,13 @@ column a virtual node uses as its id.
 `credentials: 'keychain:erp'`(또는 `vault:kv/ontological/erp#password`) 같은 **참조**를 주세요. 이 경우
 `ontological.fabric_credentials_dir` 가 가리키는 폴더에 비밀을 관리하는 쪽(앱)이 `<서버>.pgpass` · `.cnf` · `.pw`
 파일을 쓰고, 커넥터가 그 파일에서 읽습니다. 데이터베이스에는 참조와 파일 경로만 남습니다
-(`SHOW CREDENTIALS` 로 어떤 파일을 써야 하는지 볼 수 있고, `ALTER DATASOURCE … SET CREDENTIALS` 로 바꿉니다). 원천 계정은 **읽기 전용**으로 만드는 것을 권합니다. 이 튜토리얼의
+(`SHOW CREDENTIALS` 로 어떤 파일을 써야 하는지 볼 수 있고, `ALTER DATASOURCE … SET CREDENTIALS` 로 바꿉니다).
+비밀을 관리하는 쪽이 있는 배포(데스크톱 앱의 키체인, Vault 에이전트)는 PostgreSQL 을
+`-c ontological.fabric_inline_passwords=refuse` 로 띄워 참조 방식을 **기본이자 유일한 방식**으로 만들 수 있습니다.
+그러면 `password:` 를 직접 넘긴 `CREATE DATASOURCE` · `ALTER DATASOURCE … SET CREDENTIALS` 는 아무것도 만들지 않고
+`42501`(Bolt `Neo.ClientError.Security.Forbidden`)로 거절되며, 참조를 넘기라고 알려 줍니다. 기본값은 `allow`(지금처럼 저장하고
+경고)이고, 빈 비밀번호나 참조는 거절하지 않습니다. 이 설정은 superuser 만 바꿀 수 있습니다(`-c`, `postgresql.conf`,
+`ALTER SYSTEM` / `ALTER DATABASE`, superuser 의 `SET`) — 다른 역할은 `SET` 으로 끌 수 없습니다. 원천 계정은 **읽기 전용**으로 만드는 것을 권합니다. 이 튜토리얼의
 `fabric_ro` 에는 `SELECT` 권한만 있습니다. 지원 엔진은 `postgres`, `mysql` 입니다.
 
 ## 2단계. 첫 가상 노드 — 테이블이 라벨이 된다

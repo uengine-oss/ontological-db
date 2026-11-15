@@ -348,12 +348,83 @@ fn func(name: &str, a: &[Value]) -> Result<Value, String> {
                 None => Value::Null,
             }
         }
+        "range" => {
+            let n = |i: usize| a.get(i).and_then(num).map(|f| f as i64);
+            let (Some(from), Some(to)) = (n(0), n(1)) else { return Ok(Value::Null) };
+            let step = if a.len() > 2 { n(2).unwrap_or(0) } else { 1 };
+            if step == 0 {
+                return Err("range(): the step cannot be zero".into());
+            }
+            let mut out = Vec::new();
+            let mut v = from;
+            while (step > 0 && v <= to) || (step < 0 && v >= to) {
+                out.push(json!(v));
+                if out.len() > 10_000_000 {
+                    return Err("range(): too many elements".into());
+                }
+                v += step;
+            }
+            Value::Array(out)
+        }
+        "left" | "right" => match (&a[0], a.get(1).and_then(num)) {
+            (Value::String(s), Some(k)) => {
+                let k = k.max(0.0) as usize;
+                let chars: Vec<char> = s.chars().collect();
+                let n = k.min(chars.len());
+                let part: String = if name.eq_ignore_ascii_case("left") {
+                    chars[..n].iter().collect()
+                } else {
+                    chars[chars.len() - n..].iter().collect()
+                };
+                json!(part)
+            }
+            _ => Value::Null,
+        },
+        "ltrim" => json!(as_str(&a[0]).trim_start()),
+        "rtrim" => json!(as_str(&a[0]).trim_end()),
+        "reverse" => match &a[0] {
+            Value::String(s) => json!(s.chars().rev().collect::<String>()),
+            Value::Array(xs) => Value::Array(xs.iter().rev().cloned().collect()),
+            _ => Value::Null,
+        },
+        "sign" => num(&a[0]).map(|f| json!(if f > 0.0 { 1 } else if f < 0.0 { -1 } else { 0 })).unwrap_or(Value::Null),
+        "nullif" => {
+            if a.first() == a.get(1) {
+                Value::Null
+            } else {
+                a.first().cloned().unwrap_or(Value::Null)
+            }
+        }
+        "isempty" => match &a[0] {
+            Value::Array(xs) => json!(xs.is_empty()),
+            Value::Object(o) => json!(o.is_empty()),
+            Value::String(s) => json!(s.is_empty()),
+            _ => Value::Null,
+        },
+        "toboolean" => match &a[0] {
+            Value::Bool(b) => json!(b),
+            Value::String(s) => match s.trim().to_ascii_lowercase().as_str() {
+                "true" => json!(true),
+                "false" => json!(false),
+                _ => Value::Null,
+            },
+            Value::Number(n) => json!(n.as_f64().is_some_and(|f| f != 0.0)),
+            _ => Value::Null,
+        },
         "randomuuid" => crate::spiu::one::<String>("SELECT gen_random_uuid()::text", &[])
             .map_err(|e| format!("randomUUID(): {e}"))?
             .map(Value::String)
             .unwrap_or(Value::Null),
         "properties" => match &a[0] {
-            Value::Object(o) => Value::Object(o.iter().filter(|(k, _)| !k.starts_with('_')).map(|(k, v)| (k.clone(), v.clone())).collect()),
+            Value::Object(o) => {
+                let element = o.contains_key("_id");
+                Value::Object(
+                    o.iter()
+                        .filter(|(k, _)| !(element && matches!(k.as_str(), "_id" | "_type" | "_src" | "_dst")))
+                        .map(|(k, v)| (k.clone(), v.clone()))
+                        .collect(),
+                )
+            }
             _ => Value::Null,
         },
         "abs" => num(&a[0]).map(|f| json!(f.abs())).unwrap_or(Value::Null),
@@ -383,7 +454,10 @@ fn func(name: &str, a: &[Value]) -> Result<Value, String> {
             None => Value::Null,
         },
         "keys" => match &a[0] {
-            Value::Object(o) => json!(o.keys().collect::<Vec<_>>()),
+            Value::Object(o) => {
+                let element = o.contains_key("_id");
+                json!(o.keys().filter(|k| !(element && matches!(k.as_str(), "_id" | "_type" | "_src" | "_dst"))).collect::<Vec<_>>())
+            }
             _ => Value::Null,
         },
         // `SET n.created_at = datetime()` is the single most common write-clause

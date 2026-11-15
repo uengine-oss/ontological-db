@@ -53,7 +53,7 @@ fn schema_epoch() -> i64 {
         .unwrap_or(0)
 }
 
-fn is_write(q: &Query) -> bool {
+pub(crate) fn is_write(q: &Query) -> bool {
     if let Some((_, tail)) = &q.union {
         if is_write(tail) {
             return true;
@@ -69,7 +69,7 @@ fn is_write(q: &Query) -> bool {
                 | Clause::Delete { .. }
                 | Clause::Foreach { .. }
                 | Clause::Ddl(_)
-        )
+        ) || matches!(c, Clause::Subquery { body, .. } if is_write(body))
     })
 }
 
@@ -217,6 +217,7 @@ fn exec_json(sql: &str, params: &Value) -> Vec<Value> {
 /// Clauses that only read: they turn rows of bindings into rows of bindings.
 fn is_read_clause(c: &Clause) -> bool {
     matches!(c, Clause::Match { .. } | Clause::Unwind { .. } | Clause::With { .. } | Clause::Call { .. })
+        || matches!(c, Clause::Subquery { body, .. } if !is_write(body))
 }
 
 /// The parameter a read segment after a write receives the rows so far in.
@@ -248,23 +249,45 @@ fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
 
     // The query runs as a pipeline of rows, clause by clause, as Cypher reads.
     //
-    // A run of reading clauses (MATCH, UNWIND, WITH, CALL … YIELD) is compiled
-    // to one SQL statement and turns the rows so far into new rows; a writing
-    // clause is applied to each row. The reading part used to be allowed only
-    // in front: `WITH` before a write could only pass plain variables through,
-    // and a reading clause *after* a write — `MERGE (a:A {k: 1}) WITH a MATCH
-    // (b:B {k: 2}) MERGE (a)-[:R]->(b)`, the ordinary way to link two nodes —
-    // was skipped without a word, so `b` was a new, empty node. Now each run of
-    // reading clauses after the first starts from the rows written so far.
-    let mut envs: Vec<eval::Env> = vec![HashMap::new()];
-    // The variables in scope: the rows may be too few (none) to tell.
-    let mut names: Vec<String> = Vec::new();
-    let clauses = &q.clauses;
+    // A run of reading clauses (MATCH, UNWIND, WITH, CALL … YIELD, a CALL { … }
+    // that only reads) is compiled to one SQL statement and turns the rows so
+    // far into new rows; a writing clause is applied to each row. The reading
+    // part used to be allowed only in front: `WITH` before a write could only
+    // pass plain variables through, and a reading clause *after* a write —
+    // `MERGE (a:A {k: 1}) WITH a MATCH (b:B {k: 2}) MERGE (a)-[:R]->(b)`, the
+    // ordinary way to link two nodes — was skipped without a word, so `b` was a
+    // new, empty node. Now each run of reading clauses after the first starts
+    // from the rows written so far.
+    let mut rename = Rename { clauses: write_clauses, done: renamed.take() };
+    run_clauses(graph, gid, &q.clauses, None, params, Some(&mut rename)).map(|(rows, _)| rows).unwrap_or_default()
+}
+
+/// The one rename a top-level `REMOVE n:Old SET n:New` stands for, decided at
+/// the first write.
+struct Rename<'q> {
+    clauses: Vec<&'q Clause>,
+    done: Option<bool>,
+}
+
+/// Run `clauses` over rows: from the start of a query (`start` = None), or from
+/// `start`'s rows and variables (a subquery's body, one outer row at a time).
+/// Returns the rows of a final RETURN and their column names, or None when the
+/// clauses end without one.
+fn run_clauses(
+    graph: &str,
+    gid: i32,
+    clauses: &[Clause],
+    start: Option<(Vec<eval::Env>, Vec<String>)>,
+    params: &Value,
+    mut rename: Option<&mut Rename>,
+) -> Option<(Vec<Value>, Vec<String>)> {
+    let seeded = start.is_some();
+    let (mut envs, mut names) = start.unwrap_or_else(|| (vec![HashMap::new()], Vec::new()));
     let mut i = 0;
     while i < clauses.len() {
         if is_read_clause(&clauses[i]) {
             let end = clauses[i..].iter().position(|c| !is_read_clause(c)).map_or(clauses.len(), |k| i + k);
-            let seed = if i == 0 { None } else { Some((envs.as_slice(), names.as_slice())) };
+            let seed = if i == 0 && !seeded { None } else { Some((envs.as_slice(), names.as_slice())) };
             let (rows, bound) = read_segment(graph, &clauses[i..end], None, seed, params);
             names = bound;
             envs = rows
@@ -285,9 +308,21 @@ fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
             // The result is projected by SQL over the rows the writes produced,
             // so RETURN after a write has everything RETURN has elsewhere —
             // ORDER BY, SKIP, LIMIT, DISTINCT, aggregates, every function.
-            return read_segment(graph, &[], Some(proj), Some((&envs, &names)), params).0;
+            let (rows, _) = read_segment(graph, &[], Some(proj), Some((&envs, &names)), params);
+            let cols = proj.items.iter().map(|it| it.alias.clone().unwrap_or_else(|| it.expr.default_alias())).collect();
+            return Some((rows, cols));
         }
-        let renamed = *renamed.get_or_insert_with(|| rename_label(gid, &write_clauses));
+        if let Clause::Subquery { scope, body, optional } = &clauses[i] {
+            let (e, n) = run_subquery(graph, gid, scope.as_deref(), body, *optional, envs, names, params);
+            envs = e;
+            names = n;
+            i += 1;
+            continue;
+        }
+        let renamed = match rename.as_deref_mut() {
+            Some(r) => *r.done.get_or_insert_with(|| rename_label(gid, &r.clauses)),
+            None => false,
+        };
         for env in envs.iter_mut() {
             // One binding's writes are a handful of SPI calls; a MATCH that bound a
             // million rows makes this loop long, and a cancel has to reach it.
@@ -313,7 +348,108 @@ fn run_write(graph: &str, q: &Query, params: &Value) -> Vec<Value> {
         names.dedup();
         i += 1;
     }
-    Vec::new()
+    None
+}
+
+/// `[OPTIONAL] CALL { … }` whose body writes: the body runs once per row, in
+/// order, each run seeing what the runs before it wrote — Cypher's semantics,
+/// which a single SQL statement cannot have. The body starts from the row's
+/// imported variables only. Each row the body RETURNs joins its outer row (no
+/// rows: the outer row is dropped, or kept with nulls under OPTIONAL); a body
+/// without RETURN (a "unit" subquery) leaves the rows as they were.
+#[allow(clippy::too_many_arguments)]
+fn run_subquery(
+    graph: &str,
+    gid: i32,
+    scope: Option<&[String]>,
+    body: &Query,
+    optional: bool,
+    envs: Vec<eval::Env>,
+    names: Vec<String>,
+    params: &Value,
+) -> (Vec<eval::Env>, Vec<String>) {
+    let mut branches: Vec<(&Query, bool)> = vec![(body, true)];
+    let mut q = body;
+    while let Some((all, tail)) = &q.union {
+        branches.push((tail, *all));
+        q = tail;
+    }
+    let distinct = branches.iter().skip(1).any(|(_, all)| !*all);
+    let mut out = Vec::new();
+    let mut returned: Option<Vec<String>> = None;
+    for env in envs {
+        pgrx::check_for_interrupts!();
+        let mut rows: Vec<Value> = Vec::new();
+        let mut any_return = false;
+        let mut imported_all: Vec<String> = Vec::new();
+        for (branch, _) in &branches {
+            let (imports, clauses) =
+                compile::subquery_imports(scope, branch, &names).unwrap_or_else(|e| error!("cypher error: {e}"));
+            for v in &imports {
+                if !names.contains(v) {
+                    error!("cypher error: CALL {{ … }} imports `{v}`, which is not defined before it");
+                }
+            }
+            let seed: eval::Env = env.iter().filter(|(k, _)| imports.contains(k)).map(|(k, v)| (k.clone(), v.clone())).collect();
+            if let Some((rs, cols)) = run_clauses(graph, gid, clauses, Some((vec![seed], imports.clone())), params, None) {
+                any_return = true;
+                if returned.is_none() {
+                    returned = Some(cols);
+                }
+                rows.extend(rs);
+            }
+            imported_all.extend(imports);
+        }
+        // The outer row's elements as the body left them.
+        let mut env = env;
+        for k in &imported_all {
+            let fresh = env.get(k).and_then(|v| {
+                let id = v.get("_id").and_then(Value::as_i64)?;
+                let sql = if v.get("_src").is_some() { "SELECT og_edge_json($1)" } else { "SELECT og_node_json($1)" };
+                crate::spiu::one::<JsonB>(sql, &[id.into()]).ok().flatten().map(|j| j.0)
+            });
+            if let Some(f) = fresh {
+                env.insert(k.clone(), f);
+            }
+        }
+        if !any_return {
+            out.push(env);
+            continue;
+        }
+        if distinct {
+            let mut seen = std::collections::HashSet::new();
+            rows.retain(|r| seen.insert(r.to_string()));
+        }
+        if rows.is_empty() {
+            if optional {
+                let mut e = env.clone();
+                for c in returned.iter().flatten() {
+                    e.entry(c.clone()).or_insert(Value::Null);
+                }
+                out.push(e);
+            }
+            continue;
+        }
+        for r in rows {
+            let mut e = env.clone();
+            if let Value::Object(m) = r {
+                for (k, v) in m {
+                    if k != ROW_MARK && !imported_all.contains(&k) {
+                        if names.contains(&k) {
+                            error!("cypher error: the subquery returns `{k}`, which is already defined outside it — return it under another name");
+                        }
+                        e.insert(k, v);
+                    }
+                }
+            }
+            out.push(e);
+        }
+    }
+    let mut names = names;
+    names.extend(returned.unwrap_or_default());
+    names.sort();
+    names.dedup();
+    (out, names)
 }
 
 /// A column every read segment projects, so that a segment binding no
@@ -372,7 +508,22 @@ fn read_segment(
         } else {
             p = json!({ ROWS_PARAM: list });
         }
-        c.seed_rows(ROWS_PARAM, &names, &types);
+        let flags: Vec<String> = names
+            .iter()
+            .filter(|n| {
+                let mut any = false;
+                rows.iter().all(|e| match e.get(*n) {
+                    Some(Value::Bool(_)) => {
+                        any = true;
+                        true
+                    }
+                    Some(Value::Null) | None => true,
+                    _ => false,
+                }) && any
+            })
+            .cloned()
+            .collect();
+        c.seed_rows(ROWS_PARAM, &names, &types, &flags);
     }
     for clause in clauses {
         let r = match clause {
@@ -380,6 +531,7 @@ fn read_segment(
             Clause::Unwind { expr, alias } => c.compile_unwind(expr, alias),
             Clause::With { proj, where_ } => c.compile_with(proj, where_.as_ref()),
             Clause::Call { name, args, yields } => c.compile_call(name, args, yields),
+            Clause::Subquery { scope, body, optional } => c.compile_subquery(scope.as_deref(), body, *optional),
             _ => Err("this clause cannot be part of a read".into()),
         };
         if let Err(e) = r {
@@ -420,12 +572,12 @@ fn apply_write(graph: &str, gid: i32, clause: &Clause, env: &mut eval::Env, para
         Clause::Merge { pattern, on_create, on_match } => {
             merge_pattern(graph, gid, pattern, on_create, on_match, env, params);
         }
-        Clause::Set(items) => apply_set(items, env, params),
-        Clause::Remove(items) => apply_set(items, env, params),
+        Clause::Set(items) => apply_set(gid, items, env, params),
+        Clause::Remove(items) => apply_set(gid, items, env, params),
         Clause::Delete { exprs, detach } => {
             for e in exprs {
                 let v = eval_or_fail(e, env, params);
-                if let Some(id) = v.get("_id").and_then(|x| x.as_i64()) {
+                if let Some(id) = element_id(gid, &v, "DELETE") {
                     let is_edge = v.get("_src").is_some();
                     if is_edge {
                         crate::storage::delete_edge_inner(id);
@@ -489,6 +641,7 @@ fn clause_name(c: &Clause) -> &'static str {
         Clause::Delete { .. } => "DELETE",
         Clause::Call { .. } => "CALL",
         Clause::Foreach { .. } => "FOREACH",
+        Clause::Subquery { .. } => "CALL { … }",
         Clause::Ddl(_) => "a schema command",
     }
 }
@@ -508,7 +661,9 @@ fn create_pattern(graph: &str, gid: i32, p: &Pattern, env: &mut eval::Env, param
         match elem {
             PatElem::Node(np) => {
                 let id = match np.var.as_ref().and_then(|v| env.get(v)) {
-                    Some(v) if v.get("_id").is_some() => v["_id"].as_i64().unwrap(),
+                    Some(v) if v.get("_id").is_some() => {
+                        element_id(gid, v, "CREATE").unwrap_or_else(|| error!("CREATE: '{}' is not a node", np.var.as_deref().unwrap_or("")))
+                    }
                     _ => {
                         let tid = crate::catalog::types::resolve_or_create_label_set(
                             gid,
@@ -615,7 +770,7 @@ fn merge_pattern(
     // edge between *these* two nodes. Without pinning, the pattern matches
     // any DIRECTED edge in the graph and MERGE never creates a second one.
     for v in &vars {
-        let Some(id) = env.get(v).and_then(|e| e.get("_id")).and_then(Value::as_i64) else {
+        let Some(id) = env.get(v).and_then(|e| element_id(gid, e, "MERGE")) else {
             continue;
         };
         match c.binding(v) {
@@ -642,11 +797,11 @@ fn merge_pattern(
                 env.insert(k, v);
             }
         }
-        apply_set(on_match, env, params);
+        apply_set(gid, on_match, env, params);
         return;
     }
     create_pattern(graph, gid, &pat, env, params);
-    apply_set(on_create, env, params);
+    apply_set(gid, on_create, env, params);
 }
 
 /// Recognise `REMOVE n:Old SET n:New` and carry it out as a rename.
@@ -719,14 +874,52 @@ fn rename_label(gid: i32, clauses: &[&Clause]) -> bool {
     true
 }
 
-fn apply_set(items: &[SetOp], env: &mut eval::Env, params: &Value) {
+/// The identifier of the element a row's value stands for — when it is one of
+/// this graph's.
+///
+/// A write takes its target from the row: a node a MATCH bound, or anything
+/// else carrying an `_id`. A map parameter carries one as easily
+/// (`WITH $m AS n SET n.x = 1`, `$m = {_id: …}`), and such a map used to reach
+/// whatever node that number named — in another graph (project) as readily as
+/// in this one: SET wrote to it, CREATE hung a relationship off it, DETACH
+/// DELETE removed it. Reads were already confined to the graph; writes are now
+/// too. A map that is not an element at all (`{_id: 'x'}`) is no target.
+fn element_id(gid: i32, v: &Value, clause: &str) -> Option<i64> {
+    let id = v.get("_id").and_then(Value::as_i64)?;
+    let tid = crate::id::id_type(id);
+    if type_graph(tid) != Some(gid) {
+        error!(
+            "{clause}: {id} is not a node or relationship of this graph — a map with an `_id` \
+             key does not stand for an element; MATCH the element instead"
+        );
+    }
+    Some(id)
+}
+
+thread_local! {
+    /// Type → graph. A type never moves between graphs, so this cannot go stale.
+    static TYPE_GRAPH: std::cell::RefCell<HashMap<i32, i32>> = std::cell::RefCell::new(HashMap::new());
+}
+
+fn type_graph(tid: i32) -> Option<i32> {
+    if let Some(g) = TYPE_GRAPH.with(|m| m.borrow().get(&tid).copied()) {
+        return Some(g);
+    }
+    let g = crate::spiu::one::<i32>("SELECT graph_id FROM og_catalog.type WHERE type_id = $1", &[tid.into()])
+        .ok()
+        .flatten()?;
+    TYPE_GRAPH.with(|m| m.borrow_mut().insert(tid, g));
+    Some(g)
+}
+
+fn apply_set(gid: i32, items: &[SetOp], env: &mut eval::Env, params: &Value) {
     for item in items {
         match item {
             SetOp::Prop { var, prop, value } => {
                 let Some(entity) = env.get(var).cloned() else {
                     error!("SET refers to unbound variable '{var}'");
                 };
-                let Some(id) = entity.get("_id").and_then(|x| x.as_i64()) else { continue };
+                let Some(id) = element_id(gid, &entity, "SET") else { continue };
                 let v = eval_or_fail(value, env, params);
                 let mut m = Map::new();
                 m.insert(prop.clone(), v.clone());
@@ -744,7 +937,7 @@ fn apply_set(items: &[SetOp], env: &mut eval::Env, params: &Value) {
                 let Some(entity) = env.get(var).cloned() else {
                     error!("SET refers to unbound variable '{var}'");
                 };
-                let Some(id) = entity.get("_id").and_then(|x| x.as_i64()) else { continue };
+                let Some(id) = element_id(gid, &entity, "SET") else { continue };
                 let v = eval_or_fail(value, env, params);
                 let is_edge = entity.get("_src").is_some();
                 if !*merge {
@@ -763,7 +956,7 @@ fn apply_set(items: &[SetOp], env: &mut eval::Env, params: &Value) {
                 let Some(entity) = env.get(var).cloned() else {
                     error!("SET/REMOVE refers to unbound variable '{var}'");
                 };
-                let Some(id) = entity.get("_id").and_then(|x| x.as_i64()) else { continue };
+                let Some(id) = element_id(gid, &entity, "SET") else { continue };
                 let tid = crate::id::id_type(id);
                 let gid = crate::spiu::one::<i32>(
                     "SELECT graph_id FROM og_catalog.type WHERE type_id = $1",

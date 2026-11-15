@@ -188,6 +188,10 @@ pub enum Clause {
     Call { name: String, args: Vec<Expr>, yields: Vec<(String, String)> },
     /// `FOREACH (x IN list | <write clauses>)`.
     Foreach { var: String, list: Expr, body: Vec<Clause> },
+    /// `[OPTIONAL] CALL [(a, b) | (*)] { … }` — a subquery run for every row.
+    /// `scope` is the Neo4j 5 scope clause; without one, a leading `WITH a, b`
+    /// of each branch imports (see `compile::subquery_imports`).
+    Subquery { scope: Option<Vec<String>>, body: Box<Query>, optional: bool },
     /// Index and constraint DDL. Cypher applications send these at startup, so
     /// accepting them is part of speaking Cypher, not an extra.
     Ddl(Ddl),

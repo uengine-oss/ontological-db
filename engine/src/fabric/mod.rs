@@ -250,11 +250,16 @@ fn disconnect(engine: &str) {
 /// kept in the datasource's options as
 /// `source_catalog = {"schema": …, "relations": {"item": {"kind": "table", "pk": ["id"]}}}`.
 ///
-/// PostgreSQL sources only; any other engine, a source whose catalog cannot be
-/// read, and a datasource made before this existed have none, and
-/// `SHOW TABLES` / `SHOW COLUMNS` answer null for what they do not know
+/// PostgreSQL sources from `pg_catalog`; MySQL and MariaDB from
+/// `information_schema` (TABLES.TABLE_TYPE, KEY_COLUMN_USAGE of the constraint
+/// named PRIMARY), through the same server. Any other engine, a source whose
+/// catalog cannot be read, and a datasource made before this existed have none,
+/// and `SHOW TABLES` / `SHOW COLUMNS` answer null for what they do not know
 /// (`REFRESH DATASOURCE` reads it again).
 fn probe_source_catalog(srv: &str, engine: &str, remote_schema: &str) -> Option<Value> {
+    if matches!(engine, "mysql" | "mariadb") {
+        return probe_mysql_catalog(srv, remote_schema);
+    }
     if !matches!(engine, "postgres" | "postgresql") {
         return None;
     }
@@ -293,6 +298,107 @@ fn probe_source_catalog(srv: &str, engine: &str, remote_schema: &str) -> Option<
         one::<JsonB>(&q, &[]).ok().flatten().map(|j| j.0)
     };
     in_rolled_back_subtransaction(probe).flatten()
+}
+
+/// `probe_source_catalog` for a MySQL or MariaDB database: two foreign tables
+/// over its `information_schema`, in the same throwaway schema and rolled-back
+/// subtransaction. A MySQL database has tables and views; no materialized or
+/// foreign ones.
+fn probe_mysql_catalog(srv: &str, database: &str) -> Option<Value> {
+    let probe = || -> Option<Value> {
+        let s = ident(srv);
+        let ddl = [
+            "CREATE SCHEMA og_probe".to_string(),
+            format!("CREATE FOREIGN TABLE og_probe.mt (table_schema text, table_name text, table_type text) SERVER {s} OPTIONS (dbname 'information_schema', table_name 'TABLES')"),
+            format!("CREATE FOREIGN TABLE og_probe.mk (constraint_name text, table_schema text, table_name text, column_name text, ordinal_position int8) SERVER {s} OPTIONS (dbname 'information_schema', table_name 'KEY_COLUMN_USAGE')"),
+        ];
+        for d in &ddl {
+            Spi::run(d).ok()?;
+        }
+        let q = format!(
+            "WITH pks AS (
+                 SELECT k.table_name AS t, jsonb_agg(k.column_name ORDER BY k.ordinal_position) AS pk
+                   FROM og_probe.mk k
+                  WHERE k.constraint_name = 'PRIMARY' AND k.table_schema = {db}
+                  GROUP BY 1)
+             SELECT jsonb_build_object('schema', {db}, 'relations', coalesce(jsonb_object_agg(t.table_name,
+                        jsonb_build_object('kind', CASE WHEN t.table_type IN ('VIEW', 'SYSTEM VIEW') THEN 'view' ELSE 'table' END,
+                                           'pk', coalesce(p.pk, '[]'::jsonb))), '{{}}'::jsonb))
+               FROM og_probe.mt t LEFT JOIN pks p ON p.t = t.table_name
+              WHERE t.table_schema = {db}",
+            db = lit(database)
+        );
+        one::<JsonB>(&q, &[]).ok().flatten().map(|j| j.0)
+    };
+    in_rolled_back_subtransaction(probe).flatten()
+}
+
+/// `ontological.fabric_inline_passwords`: whether `CREATE DATASOURCE` and
+/// `ALTER DATASOURCE … SET CREDENTIALS` may store a password given inline
+/// (`password: …` rather than `credentials: '<reference>'`), which the user
+/// mapping then holds in clear.
+///
+/// * `allow` (the default) — store it, with the warning in the result and a
+///   PostgreSQL WARNING;
+/// * `refuse` — fail the statement and ask for a credentials reference. This is
+///   what a host that keeps the secrets itself (the desktop app's keychain, a
+///   Vault agent) passes at server start: `-c ontological.fabric_inline_passwords=refuse`,
+///   beside `-c ontological.fabric_credentials_dir=…`.
+///
+/// An empty password, or none, stores no secret and is never refused.
+///
+/// Unlike `ontological.fabric_credentials_dir` this is a defined setting —
+/// defined the first time a datasource statement reads it — so that it can be
+/// superuser-only (`PGC_SUSET`): the host's `-c`, `postgresql.conf`, `ALTER
+/// SYSTEM` / `ALTER DATABASE`, or a superuser's `SET`. Another role cannot turn
+/// the refusal off with a `SET` of its own.
+#[derive(pgrx::guc::PostgresGucEnum, Clone, Copy, PartialEq, Eq, Debug)]
+pub enum InlinePasswords {
+    #[name = c"allow"]
+    Allow,
+    #[name = c"refuse"]
+    Refuse,
+}
+
+static INLINE_PASSWORDS: pgrx::guc::GucSetting<InlinePasswords> =
+    pgrx::guc::GucSetting::<InlinePasswords>::new(InlinePasswords::Allow);
+static INLINE_PASSWORDS_DEFINED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+fn inline_passwords() -> InlinePasswords {
+    use std::sync::atomic::Ordering;
+    if !INLINE_PASSWORDS_DEFINED.swap(true, Ordering::Relaxed) {
+        pgrx::guc::GucRegistry::define_enum_guc(
+            c"ontological.fabric_inline_passwords",
+            c"Whether CREATE DATASOURCE may store a password given inline: allow or refuse.",
+            c"An inline password is stored in clear in pg_user_mapping. refuse requires a credentials reference \
+              (PARAMETERS = {credentials: 'keychain:…'}) whose secret the host writes under \
+              ontological.fabric_credentials_dir.",
+            &INLINE_PASSWORDS,
+            pgrx::guc::GucContext::Suset,
+            pgrx::guc::GucFlags::default(),
+        );
+    }
+    INLINE_PASSWORDS.get()
+}
+
+/// Refuse an inline password when `ontological.fabric_inline_passwords = refuse`.
+/// Called before anything is created or changed.
+fn check_inline_password(name: &str, login: &Login) {
+    if !matches!(login, Login::Inline(pw) if !pw.is_empty()) {
+        return;
+    }
+    if inline_passwords() == InlinePasswords::Refuse {
+        ereport!(
+            ERROR,
+            PgSqlErrorCode::ERRCODE_INSUFFICIENT_PRIVILEGE,
+            format!(
+                "datasource {name}: a password given inline is refused here (ontological.fabric_inline_passwords = refuse) — \
+                 pass a credentials reference instead: PARAMETERS = {{…, credentials: 'keychain:ds/{name}'}} or \
+                 'vault:<mount>/<path>#<field>', whose secret the application that keeps it writes under \
+                 ontological.fabric_credentials_dir (SHOW CREDENTIALS says which file)"
+            )
+        );
+    }
 }
 
 /// Run `f` in a subtransaction that is rolled back whatever happens; an error
@@ -369,6 +475,7 @@ fn og_create_datasource(name: &str, engine: &str, params: JsonB) -> String {
     let srv = server_name(name);
     let engine = engine.to_ascii_lowercase();
     let login = login_of(&p, &srv, &engine).unwrap_or(Login::Inline(String::new()));
+    check_inline_password(name, &login);
     let (fdw, server_opts, mapping_opts) = connection(&engine, &p, &login);
 
     Spi::run(&format!("CREATE EXTENSION IF NOT EXISTS {fdw}"))
@@ -459,6 +566,7 @@ fn og_alter_datasource_credentials(name: &str, params: JsonB) -> String {
     }
     let login = login_of(&np, &srv, &engine)
         .unwrap_or_else(|| error!("SET CREDENTIALS needs a password or a credentials reference"));
+    check_inline_password(name, &login);
     if let Some(r) = param(&np, "credentials") {
         p.insert("credentials".into(), Value::String(r));
     }

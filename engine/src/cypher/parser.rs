@@ -19,13 +19,15 @@ pub struct Parser {
     /// (`[x IN xs WHERE x:A | x.name]`), so it cannot also separate label
     /// alternatives there.
     in_comprehension_filter: usize,
+    /// Inside `CALL { … }`: a `}` ends the query being parsed.
+    subquery_depth: usize,
 }
 
 type PResult<T> = Result<T, String>;
 
 pub fn parse(src: &str) -> PResult<Query> {
     let toks = Lexer::new(src).tokenize()?;
-    let mut p = Parser { toks, i: 0, src: src.to_string(), in_comprehension_filter: 0 };
+    let mut p = Parser { toks, i: 0, src: src.to_string(), in_comprehension_filter: 0, subquery_depth: 0 };
     let q = p.parse_query()?;
     p.expect_eof()?;
     Ok(q)
@@ -131,6 +133,14 @@ impl Parser {
             match self.peek().clone() {
                 Tok::Keyword(k) => match k.as_str() {
                     "match" => clauses.push(self.parse_match(false)?),
+                    "optional" if self.peek_at(1) == &Tok::Keyword("call".into()) => {
+                        self.bump();
+                        let c = self.parse_call()?;
+                        let Clause::Subquery { scope, body, .. } = c else {
+                            return Err(self.err("OPTIONAL CALL is supported for subqueries (`OPTIONAL CALL { … }`), not procedures"));
+                        };
+                        clauses.push(Clause::Subquery { scope, body, optional: true });
+                    }
                     "optional" => {
                         self.bump();
                         self.expect_kw("match")?;
@@ -165,6 +175,7 @@ impl Parser {
                     clauses.push(self.parse_foreach()?)
                 }
                 Tok::Eof => break,
+                Tok::Punct(p) if p == "}" && self.subquery_depth > 0 => break,
                 _ => return Err(self.err("expected a clause keyword")),
             }
         }
@@ -385,6 +396,41 @@ impl Parser {
 
     fn parse_call(&mut self) -> PResult<Clause> {
         self.expect_kw("call")?;
+        // `CALL { … }`, `CALL (a, b) { … }`, `CALL (*) { … }` — a subquery.
+        let scope = if self.at_punct("(") && self.scope_clause_ahead() {
+            self.bump();
+            let mut names = Vec::new();
+            if self.eat_punct("*") {
+                names.push("*".to_string());
+            } else if !self.at_punct(")") {
+                loop {
+                    names.push(self.name()?);
+                    if !self.eat_punct(",") {
+                        break;
+                    }
+                }
+            }
+            self.expect_punct(")")?;
+            Some(names)
+        } else {
+            None
+        };
+        if self.at_punct("{") || scope.is_some() {
+            self.expect_punct("{")?;
+            self.subquery_depth += 1;
+            let body = self.parse_query();
+            self.subquery_depth -= 1;
+            let body = body?;
+            self.expect_punct("}")?;
+            if self.at_kw("in") && self.word_at(1).as_deref() == Some("transactions") {
+                return Err(self.err(
+                    "CALL { … } IN TRANSACTIONS is not supported: it commits each batch on its own, and a \
+                     statement here runs in one transaction. Send the batches as separate statements, or \
+                     leave out IN TRANSACTIONS to write them all in this one",
+                ));
+            }
+            return Ok(Clause::Subquery { scope, body: Box::new(body), optional: false });
+        }
         let mut name = self.name()?;
         while self.eat_punct(".") {
             name.push('.');
@@ -1301,6 +1347,25 @@ impl Parser {
         }
     }
 
+    /// After `CALL`, is `( … )` a scope clause followed by `{` — rather than
+    /// the start of a procedure name? (A procedure name never starts with `(`,
+    /// so only the shape has to be checked.)
+    fn scope_clause_ahead(&self) -> bool {
+        let mut n = 1;
+        loop {
+            match self.peek_at(n) {
+                Tok::Punct(p) if p == ")" => return self.peek_at(n + 1) == &Tok::Punct("{".into()),
+                Tok::Punct(p) if p == "," || p == "*" => {}
+                Tok::Ident(_) | Tok::QuotedIdent(_) | Tok::Keyword(_) => {}
+                _ => return false,
+            }
+            n += 1;
+            if n > 256 {
+                return false;
+            }
+        }
+    }
+
     /// A pattern with at least one relationship, if one starts here; the
     /// position is left where it was when none does.
     fn try_relationship_pattern(&mut self) -> Option<Pattern> {
@@ -1486,6 +1551,22 @@ mod tests {
         let q = parse("MATCH (n) FOREACH (x IN [1, 2] | SET n.y = x CREATE (:T {v: x}))").unwrap();
         assert!(matches!(&q.clauses[1], Clause::Foreach { body, .. } if body.len() == 2));
         assert!(parse("FOREACH (x IN [1] | MATCH (n) SET n.y = 1)").is_err());
+    }
+
+    #[test]
+    fn call_subqueries() {
+        let q = parse("MATCH (p) CALL { WITH p MATCH (p)-->(q) RETURN count(q) AS n } RETURN p, n").unwrap();
+        assert!(matches!(&q.clauses[1], Clause::Subquery { scope: None, optional: false, body } if body.clauses.len() == 3));
+        let q = parse("MATCH (p) CALL (p) { MATCH (p)-->(q) RETURN q } RETURN q").unwrap();
+        assert!(matches!(&q.clauses[1], Clause::Subquery { scope: Some(s), .. } if s == &vec!["p".to_string()]));
+        let q = parse("MATCH (p) OPTIONAL CALL (*) { RETURN 1 AS x UNION RETURN 2 AS x } RETURN x").unwrap();
+        assert!(matches!(&q.clauses[1], Clause::Subquery { optional: true, body, .. } if body.union.is_some()));
+        // A map literal inside does not end the body; a procedure call is still a procedure call.
+        parse("CALL { WITH 1 AS a RETURN {k: a} AS m } RETURN m").unwrap();
+        assert!(matches!(&parse("CALL db.labels() YIELD label RETURN label").unwrap().clauses[0], Clause::Call { .. }));
+        let e = parse("UNWIND [1] AS i CALL { WITH i CREATE (:T) } IN TRANSACTIONS OF 10 ROWS").unwrap_err();
+        assert!(e.contains("IN TRANSACTIONS is not supported"), "{e}");
+        assert!(parse("OPTIONAL CALL db.labels()").is_err());
     }
 
     #[test]

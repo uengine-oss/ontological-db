@@ -127,7 +127,11 @@ this, `n.id` on a stored type was the identifier, and `{id: 'x'}` failed with
 
 **Unlabelled patterns stay in the session's graph.** `MATCH (n)` and
 `MATCH (a)-[r]->(b)` read the graph the session is on, not every graph in the
-database; so `MATCH (n) DETACH DELETE n` empties one graph.
+database; so `MATCH (n) DETACH DELETE n` empties one graph. Writes are confined
+the same way: a map carrying an `_id` (`WITH $m AS n SET n.x = 1`, `$m = {_id: …}`)
+reaches only an element of this graph — one of another graph is refused by `SET`,
+`CREATE`, `MERGE` and `DELETE` ("is not a node or relationship of this graph"), and
+matches nothing in a pattern.
 
 **Pattern predicates and subqueries** (Neo4j 5): `WHERE EXISTS { (a)-[:R]->(:B) }`,
 `EXISTS { MATCH … WHERE … }`, `exists((a)-[:R]->())`, a bare `WHERE NOT (a)-[:R]->()`,
@@ -143,6 +147,28 @@ by a property of a projected map or node.
 (a null key is refused, as Neo4j refuses it); `WITH x AS alias`, or any expression,
 may precede a write clause, and a reading clause after a write runs for each row.
 
+**Subqueries: `CALL { … }`.** `CALL { WITH a, b … }` imports `a` and `b` (a leading
+`WITH` of plain variables, or `WITH *`); the Neo4j 5 scope clause `CALL (a, b) { … }` /
+`CALL (*) { … }` does the same. Only imported variables are visible inside, and a
+subquery may not return a name already defined outside it. It runs once per incoming
+row:
+
+- one that only reads is a correlated `LATERAL` join — each row it returns joins its
+  outer row, none drops the row; `ORDER BY … LIMIT` inside is per row; an aggregate
+  inside returns a row over nothing (`count()` is 0);
+- one that writes runs its body row by row, in order, each run seeing what the runs
+  before it wrote; a body without `RETURN` (a unit subquery) leaves the rows as they
+  were, and what it did to an imported node is what the query sees after it;
+- `OPTIONAL CALL { … }` keeps a row the body has nothing for, with nulls;
+- `UNION` / `UNION ALL` inside combine branches that return the same columns; nested
+  subqueries work;
+- `CALL { … } IN TRANSACTIONS` is refused: a statement here runs in one transaction,
+  so send batches as separate statements (or drop `IN TRANSACTIONS`).
+
+**Null in a list is null.** An element of an `UNWIND`ed list, of a comprehension's
+list, or a value carried across a write that is `null` counts as null —
+`count(x)` skips it, `x IS NULL` holds.
+
 **Parameters over Bolt.** A date, time, datetime or duration parameter is the ISO 8601
 text Neo4j prints it as (`date($d)` and comparisons with a date column work); a point
 parameter is refused by name. A path result is a Bolt `Path`. A map parameter's
@@ -155,11 +181,11 @@ properties read: `$row.name`, `WITH $row AS r RETURN r.name`.
 | aggregate | `count` (incl. `DISTINCT` and `count(*)`), `sum`, `avg`, `min`, `max`, `collect`, `stdev` |
 | list | `head`, `last`, `tail`, slices `xs[a..b]` (from inclusive, to exclusive, negative from the end) |
 | graph | `id`, `elementId`, `labels`, `type`, `nodes`, `relationships`, `length`, `size` (a string's characters, a list's items, `null` for `null`; a map has none and is refused), `startNode`, `endNode` |
-| string | `toUpper`, `toLower`, `trim`, `substring`, `replace`, `split` |
-| numeric | `abs`, `ceil`, `floor`, `round`, `sqrt`, `rand` |
+| string | `toUpper`, `toLower`, `trim`, `ltrim`, `rtrim`, `left`, `right`, `substring`, `replace`, `split` |
+| numeric | `abs`, `ceil`, `floor`, `round`, `sqrt`, `rand`, `sign` (an integer) |
 | conversion | `toString`, `toInteger`, `toFloat` — a number truncates toward zero, a string that is not a number gives `null` |
 | temporal | `date()`, `date('2016-01-31')`, `date({year, month, day})`, `datetime()`, `datetime('…')`, `localdatetime(…)`, `duration('P30D')`, `duration({days: 30})`, `timestamp()`; fields `.year` `.quarter` `.month` `.week` `.day` `.ordinalDay` `.dayOfWeek` `.hour` `.minute` `.second` `.millisecond` `.epochSeconds` `.epochMillis` |
-| list / other | `reduce(acc = init, x IN xs \| e)`, `coalesce` (keeps a list a list), `keys`, `exists` (a property, or a pattern: `exists((a)-[:R]->())`), `randomUUID()`, `vector.similarity.cosine(a, b)` |
+| list / other | `reduce(acc = init, x IN xs \| e)`, `range(from, to[, step])` (both ends included), `reverse` (a list or a string), `coalesce` (keeps a list a list), `nullIf(v, w)`, `isEmpty` (a list, a map or a string), `toBoolean`, `keys` (an element's properties only), `properties`, `exists` (a property, or a pattern: `exists((a)-[:R]->())`), `randomUUID()`, `vector.similarity.cosine(a, b)`, `vector.similarity.euclidean(a, b)` |
 | **vector** | `vector.similarity(a, b)`, `vector.distance(a, b)`, `vector.l2(a, b)`, `genai.vector.encode(text, provider, config)` |
 
 `vector.similarity` compiles to `1 - (a <=> b)` on a pgvector column, so it uses
@@ -357,8 +383,9 @@ new column, because "write first, index later" is the ordinary order.
 
 | Construct | What happens | Alternative |
 |---|---|---|
-| `UNION` | parsed, not compiled | `UNION` the two `og_cypher()` calls in SQL |
-| `CALL { … }` subqueries | rejected at parse time | `WITH` + the clauses inline; `UNWIND` for a per-row loop |
+| `UNION` in a query that writes | refused | run the branches as separate statements (`UNION` inside `CALL { … }` works) |
+| `CALL { … } IN TRANSACTIONS` | refused at parse time | separate statements per batch, or the subquery without `IN TRANSACTIONS` |
+| spatial values — `point()`, `point.distance()`, point parameters | refused by name | keep coordinates as numbers |
 | `SET a:Label` adding a *new* label | rejected with the reason | a node's type is part of its identifier here. To rename a class write `REMOVE n:Old SET n:New`; to move a node between types, create it under the target type |
 | `shortestPath` | not implemented | `og_vlp()` ordered by depth |
 | user-defined procedures | no mechanism | the `og_*` SQL function surface |

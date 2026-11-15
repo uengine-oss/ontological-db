@@ -263,7 +263,9 @@ impl Compiler {
         self.from
             .push(format!("{joiner}LATERAL jsonb_array_elements(({src})::jsonb) AS {a}(v)"));
         self.forget_carried(alias);
-        self.binds.insert(alias.to_string(), Bind::Scalar { sql: format!("{a}.v") });
+        // A JSON null in the list is Cypher's null: `count(x)` skips it and
+        // `x IS NULL` holds (as jsonb it was a value like any other).
+        self.binds.insert(alias.to_string(), Bind::Scalar { sql: format!("NULLIF({a}.v, 'null'::jsonb)") });
         Ok(())
     }
 
@@ -273,13 +275,17 @@ impl Compiler {
     /// after it writes. The rows so far travel as the jsonb list `param_key` of
     /// the parameters; each one's variables become bindings here, and a node
     /// whose type every row agrees on (`types`) anchors a pattern on its view.
-    pub fn seed_rows(&mut self, param_key: &str, names: &[String], types: &HashMap<String, i32>) {
+    pub fn seed_rows(&mut self, param_key: &str, names: &[String], types: &HashMap<String, i32>, flags: &[String]) {
         let a = self.fresh("rw");
         self.from.push(format!("jsonb_array_elements({PARAM} -> {}) AS {a}(v)", sql_str(param_key)));
         for n in names {
-            self.binds.insert(n.clone(), Bind::Scalar { sql: format!("({a}.v -> {})", sql_str(n)) });
+            self.binds.insert(n.clone(), Bind::Scalar { sql: format!("NULLIF({a}.v -> {}, 'null'::jsonb)", sql_str(n)) });
             if let Some(t) = types.get(n) {
                 self.carried_tid.insert(n.clone(), *t);
+            }
+            // A variable every row holds a boolean in reads as one.
+            if flags.contains(n) {
+                self.scalar_types.insert(n.clone(), "bool".into());
             }
         }
     }
@@ -411,7 +417,7 @@ impl Compiler {
     /// A pattern that binds a path or relationship variable is rejected later,
     /// at the hop itself: those observe multiplicity no matter what RETURN does.
     fn multiplicity_blind(q: &Query) -> bool {
-        if q.clauses.iter().any(|c| matches!(c, Clause::With { .. })) {
+        if q.clauses.iter().any(|c| matches!(c, Clause::With { .. } | Clause::Subquery { .. })) {
             return false;
         }
         let Some(Clause::Return(p)) = q.clauses.last() else { return false };
@@ -473,6 +479,9 @@ impl Compiler {
                 }
                 Clause::Unwind { expr, alias } => self.compile_unwind(expr, alias)?,
                 Clause::Call { name, args, yields } => self.compile_call(name, args, yields)?,
+                Clause::Subquery { scope, body, optional } => {
+                    self.compile_subquery(scope.as_deref(), body, *optional)?
+                }
                 Clause::Return(p) => projection = Some(p),
                 Clause::With { proj, where_ } => self.compile_with(proj, where_.as_ref())?,
                 _ => return Err("this clause is only valid in a write query".into()),
@@ -506,6 +515,44 @@ impl Compiler {
     pub(crate) fn compile_with(&mut self, proj: &Projection, where_: Option<&Expr>) -> CResult<()> {
         // What each projected name is, decided while the names it is computed
         // from are still bound.
+        let (carried_tid, scalar_types, carried_lists) = self.projected_types(proj);
+        let inner = self.build_tabular(proj)?;
+        let alias = self.fresh("w");
+
+        // Names the segment exported, in the order the SELECT produced them.
+        let cols: Vec<String> = inner.columns.clone();
+        let quoted: Vec<String> = cols.iter().map(|c| quote_ident(c)).collect();
+
+        self.from = vec![format!("({}) AS {alias}({})", inner.sql, quoted.join(", "))];
+        self.wheres.clear();
+        self.rel_ids.clear();
+        self.binds = cols
+            .iter()
+            .zip(&quoted)
+            .map(|(name, q)| {
+                (name.clone(), Bind::Scalar { sql: format!("{alias}.{q}") })
+            })
+            .collect();
+        self.carried_tid = carried_tid;
+        self.scalar_types = scalar_types;
+        self.carried_lists = carried_lists;
+
+        // `WITH … WHERE` filters what the horizon produced, so it is compiled
+        // against the new bindings, not the old ones.
+        if let Some(w) = where_ {
+            let sql = self.expr(w, Some("bool"))?;
+            self.wheres.push(sql);
+        }
+        Ok(())
+    }
+
+    /// What each name a projection makes stands for — a node of a known type,
+    /// a value of a known SQL type, a list — for whatever compiles against
+    /// those names next (the segment after a WITH, the query around a CALL).
+    fn projected_types(
+        &self,
+        proj: &Projection,
+    ) -> (HashMap<String, i32>, HashMap<String, String>, std::collections::HashSet<String>) {
         let mut carried_tid: HashMap<String, i32> = HashMap::new();
         let mut scalar_types: HashMap<String, String> = HashMap::new();
         let mut carried_lists = std::collections::HashSet::new();
@@ -544,34 +591,175 @@ impl Compiler {
                 }
             }
         }
-        let inner = self.build_tabular(proj)?;
-        let alias = self.fresh("w");
+        (carried_tid, scalar_types, carried_lists)
+    }
 
-        // Names the segment exported, in the order the SELECT produced them.
-        let cols: Vec<String> = inner.columns.clone();
+    /// `[OPTIONAL] CALL [(a, b)] { … }` that only reads: a correlated subquery,
+    /// joined LATERAL, so it runs once per row of what came before.
+    ///
+    /// Only the imported variables are visible inside (Cypher's rule); they keep
+    /// their outer aliases, which is the correlation. Each row of the subquery's
+    /// result joins its outer row; a subquery that returns no rows drops the row
+    /// (`OPTIONAL CALL` keeps it, with nulls). An aggregate inside returns one row
+    /// even over nothing — `count()` is then 0 — as in Cypher. A UNION inside is
+    /// one subquery per branch, combined.
+    pub(crate) fn compile_subquery(&mut self, scope: Option<&[String]>, body: &Query, optional: bool) -> CResult<()> {
+        let mut branches: Vec<(&Query, bool)> = vec![(body, true)];
+        let mut q = body;
+        while let Some((all, tail)) = &q.union {
+            branches.push((tail, *all));
+            q = tail;
+        }
+        let outer: Vec<String> = self.bound_vars();
+        let mut sqls: Vec<(String, bool)> = Vec::new();
+        let mut columns: Option<Vec<String>> = None;
+        let mut imported_all: Vec<String> = Vec::new();
+        let mut types = None;
+        for (branch, all) in &branches {
+            let (imports, clauses) = subquery_imports(scope, branch, &outer)?;
+            let mut child = self.child_scope(&imports)?;
+            let compiled = (|c: &mut Compiler| -> CResult<(Compiled, _)> {
+                let mut ret: Option<&Projection> = None;
+                for clause in clauses {
+                    match clause {
+                        Clause::Match { patterns, optional, where_ } => c.compile_match(patterns, *optional, where_.as_ref())?,
+                        Clause::Unwind { expr, alias } => c.compile_unwind(expr, alias)?,
+                        Clause::Call { name, args, yields } => c.compile_call(name, args, yields)?,
+                        Clause::With { proj, where_ } => c.compile_with(proj, where_.as_ref())?,
+                        Clause::Subquery { scope, body, optional } => c.compile_subquery(scope.as_deref(), body, *optional)?,
+                        Clause::Return(p) => ret = Some(p),
+                        _ => return Err("this clause is only valid in a write query".into()),
+                    }
+                }
+                let Some(p) = ret else {
+                    return Err("a CALL { … } subquery that only reads must end with RETURN".into());
+                };
+                if p.items.iter().any(|i| matches!(i.expr, Expr::Star)) {
+                    return Err("RETURN * is not supported inside CALL { … } — name what it returns".into());
+                }
+                let types = c.projected_types(p);
+                Ok((c.build_tabular(p)?, types))
+            })(&mut child);
+            self.n = child.n;
+            self.notes.append(&mut child.notes);
+            let (compiled, t) = compiled?;
+            match &columns {
+                None => columns = Some(compiled.columns.clone()),
+                Some(have) if *have != compiled.columns => {
+                    return Err(format!(
+                        "all branches of a UNION inside CALL {{ … }} must return the same columns — ({}) and ({})",
+                        have.join(", "),
+                        compiled.columns.join(", ")
+                    ))
+                }
+                _ => {}
+            }
+            if types.is_none() {
+                types = Some(t);
+            }
+            imported_all.extend(imports);
+            sqls.push((compiled.sql, *all));
+        }
+        let cols = columns.unwrap_or_default();
+        for name in &cols {
+            if self.binds.contains_key(name) && !imported_all.contains(name) {
+                return Err(format!(
+                    "the subquery returns `{name}`, which is already defined outside it — return it under another name"
+                ));
+            }
+        }
+        let inner = if sqls.len() == 1 {
+            sqls.remove(0).0
+        } else {
+            let mut out = String::new();
+            for (i, (sql, all)) in sqls.iter().enumerate() {
+                if i > 0 {
+                    out.push_str(if *all { "\nUNION ALL\n" } else { "\nUNION\n" });
+                }
+                out.push_str(&format!("SELECT * FROM ({sql}) AS cu{i}"));
+            }
+            out
+        };
+        let alias = self.fresh("cq");
         let quoted: Vec<String> = cols.iter().map(|c| quote_ident(c)).collect();
-
-        self.from = vec![format!("({}) AS {alias}({})", inner.sql, quoted.join(", "))];
-        self.wheres.clear();
-        self.rel_ids.clear();
-        self.binds = cols
-            .iter()
-            .zip(&quoted)
-            .map(|(name, q)| {
-                (name.clone(), Bind::Scalar { sql: format!("{alias}.{q}") })
-            })
-            .collect();
-        self.carried_tid = carried_tid;
-        self.scalar_types = scalar_types;
-        self.carried_lists = carried_lists;
-
-        // `WITH … WHERE` filters what the horizon produced, so it is compiled
-        // against the new bindings, not the old ones.
-        if let Some(w) = where_ {
-            let sql = self.expr(w, Some("bool"))?;
-            self.wheres.push(sql);
+        let rel = if quoted.is_empty() {
+            format!("({inner}) AS {alias}")
+        } else {
+            format!("({inner}) AS {alias}({})", quoted.join(", "))
+        };
+        if self.from.is_empty() && optional {
+            let one = self.fresh("om");
+            self.from.push(format!("(SELECT 1) AS {one}"));
+        }
+        if self.from.is_empty() {
+            self.from.push(rel);
+        } else if optional {
+            self.from.push(format!("LEFT JOIN LATERAL {rel} ON true"));
+        } else {
+            self.from.push(format!("CROSS JOIN LATERAL {rel}"));
+        }
+        // A single branch says what its names are; a UNION only that they are jsonb.
+        let (tids, scalars, lists) = if branches.len() == 1 { types.unwrap_or_default() } else { Default::default() };
+        for (name, q) in cols.iter().zip(&quoted) {
+            if imported_all.contains(name) && self.binds.contains_key(name) {
+                continue;
+            }
+            self.forget_carried(name);
+            self.binds.insert(name.clone(), Bind::Scalar { sql: format!("{alias}.{q}") });
+            if let Some(t) = tids.get(name) {
+                self.carried_tid.insert(name.clone(), *t);
+            }
+            if let Some(t) = scalars.get(name) {
+                self.scalar_types.insert(name.clone(), t.clone());
+            }
+            if lists.contains(name) {
+                self.carried_lists.insert(name.clone());
+            }
         }
         Ok(())
+    }
+
+    /// A compiler for a subquery that sees only `imports` of this one's
+    /// bindings, under the same aliases. Its FROM starts with one row, so that
+    /// whatever it joins first — even a hop out of an imported node — is a
+    /// join onto something.
+    fn child_scope(&mut self, imports: &[String]) -> CResult<Compiler> {
+        let mut binds = HashMap::new();
+        for name in imports {
+            let b = self
+                .binds
+                .get(name)
+                .cloned()
+                .ok_or_else(|| format!("CALL {{ … }} imports `{name}`, which is not defined before it"))?;
+            binds.insert(name.clone(), b);
+        }
+        let keep = |m: &HashMap<String, i32>| m.iter().filter(|(k, _)| imports.contains(k)).map(|(k, v)| (k.clone(), *v)).collect();
+        let one = self.fresh("cs");
+        Ok(Compiler {
+            graph: self.graph.clone(),
+            gid: self.gid,
+            binds,
+            from: vec![format!("(SELECT 1) AS {one}")],
+            wheres: Vec::new(),
+            ctes: Vec::new(),
+            n: self.n,
+            rel_ids: Vec::new(),
+            notes: Vec::new(),
+            optional: None,
+            reachability_only: false,
+            alias_tid: self.alias_tid.clone(),
+            unmatchable: self.unmatchable.clone(),
+            carried_tid: keep(&self.carried_tid),
+            scalar_types: self
+                .scalar_types
+                .iter()
+                .filter(|(k, _)| imports.contains(k))
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect(),
+            last_var_hop: None,
+            carried_lists: self.carried_lists.iter().filter(|k| imports.contains(k)).cloned().collect(),
+            last_yields: Vec::new(),
+        })
     }
 
     /// `CALL proc(args) YIELD a, b AS c`.
@@ -1013,7 +1201,9 @@ impl Compiler {
                     "CROSS JOIN "
                 };
                 let on = if self.optional.is_some() { " ON true" } else { "" };
-                self.from.push(format!("{joiner}og_data.og_node {alias}{on}"));
+                // Confined to this graph like any other node scan: a map
+                // parameter with an `_id` must not reach another graph's node.
+                self.from.push(format!("{joiner}{} {alias}{on}", self.graph_nodes()));
                 self.note_optional_join(&alias);
                 self.constrain(format!("{alias}.id = (({sql}) ->> '_id')::int8"));
                 self.guard_untyped_nodes();
@@ -1849,13 +2039,27 @@ impl Compiler {
                         _ => format!("(({j}) ->> {key})"),
                     });
                 };
+                // A read with no type of its own (an undeclared property, a key
+                // of a carried value) is text; asked for another scalar type —
+                // compared with a typed column, a pattern's key — it is cast,
+                // or `bigint = text` would have no operator.
+                let cast = |sql: String, own: Option<String>| match (own, hint) {
+                    (None, Some(t)) if t != "text" && is_scalar_type(t) => format!("(({sql})::{t})"),
+                    _ => sql,
+                };
                 match self.binds.get(v).cloned() {
-                    Some(Bind::Node { alias, tid }) => self.prop_sql(&alias, tid, p).0,
-                    Some(Bind::Rel { alias: Some(a), tid, .. }) => self.prop_sql(&a, tid, p).0,
-                    Some(Bind::Rel { id_expr, .. }) => {
-                        format!("(og_edge_json({id_expr}) ->> {})", sql_str(p))
+                    Some(Bind::Node { alias, tid }) => {
+                        let (sql, own) = self.prop_sql(&alias, tid, p);
+                        cast(sql, own)
                     }
-                    Some(Bind::Scalar { sql }) => format!("({sql} ->> {})", sql_str(p)),
+                    Some(Bind::Rel { alias: Some(a), tid, .. }) => {
+                        let (sql, own) = self.prop_sql(&a, tid, p);
+                        cast(sql, own)
+                    }
+                    Some(Bind::Rel { id_expr, .. }) => {
+                        cast(format!("(og_edge_json({id_expr}) ->> {})", sql_str(p)), None)
+                    }
+                    Some(Bind::Scalar { sql }) => cast(format!("({sql} ->> {})", sql_str(p)), None),
                     Some(Bind::Path { .. }) => {
                         return Err(format!("'{v}' is a path; use length({v}) or nodes({v})"))
                     }
@@ -1911,7 +2115,7 @@ impl Compiler {
                 let carried = self.forget_carried(var);
                 let shadowed = self
                     .binds
-                    .insert(var.clone(), Bind::Scalar { sql: format!("{a}.v") });
+                    .insert(var.clone(), Bind::Scalar { sql: format!("NULLIF({a}.v, 'null'::jsonb)") });
                 let body = (|slf: &mut Self| -> CResult<(String, String)> {
                     let proj = match project {
                         Some(p) => slf.jsonb_arg(p)?,
@@ -1937,7 +2141,7 @@ impl Compiler {
                 let carried = self.forget_carried(var);
                 let shadowed = self
                     .binds
-                    .insert(var.clone(), Bind::Scalar { sql: format!("{a}.v") });
+                    .insert(var.clone(), Bind::Scalar { sql: format!("NULLIF({a}.v, 'null'::jsonb)") });
                 let cond = self.expr(filter, Some("bool"));
                 self.restore_bind(var, shadowed);
                 self.restore_carried(var, carried);
@@ -2005,7 +2209,10 @@ impl Compiler {
                 let mut body = String::new();
                 for (c, v) in whens {
                     let value = if as_jsonb { self.jsonb_of(v)? } else { self.expr_own(v)? };
-                    body.push_str(&format!("WHEN {} THEN {} ", self.expr_own(c)?, value));
+                    // `CASE WHEN cond …` — a condition is a boolean, whatever
+                    // carried it (a jsonb `true` from a WITH is not one to SQL).
+                    let cond = if operand.is_some() { self.expr_own(c)? } else { self.bool_operand(c)? };
+                    body.push_str(&format!("WHEN {cond} THEN {value} "));
                 }
                 let tail = match else_ {
                     Some(e) if as_jsonb => format!("ELSE {} ", self.jsonb_of(e)?),
@@ -2034,6 +2241,17 @@ impl Compiler {
                 self.pattern_subquery(*kind, patterns, where_.as_deref(), project.as_deref())?
             }
             Expr::Star => "*".into(),
+        })
+    }
+
+    /// An expression read as a boolean: a jsonb binding or an undeclared
+    /// property (text) is cast.
+    fn bool_operand(&mut self, e: &Expr) -> CResult<String> {
+        let sql = self.expr(e, Some("bool"))?;
+        Ok(match self.type_of(e).as_deref() {
+            Some("bool") => sql,
+            None if matches!(e, Expr::Prop(..)) => format!("({sql})::bool"),
+            _ => sql,
         })
     }
 
@@ -2172,7 +2390,7 @@ impl Compiler {
         let acc_carried = self.forget_carried(acc);
         let acc_shadowed = self.binds.insert(acc.to_string(), Bind::Scalar { sql: format!("{r}.acc") });
         let var_carried = self.forget_carried(var);
-        let var_shadowed = self.binds.insert(var.to_string(), Bind::Scalar { sql: format!("(({l}) -> {r}.i)") });
+        let var_shadowed = self.binds.insert(var.to_string(), Bind::Scalar { sql: format!("NULLIF(({l}) -> {r}.i, 'null'::jsonb)") });
         if let Some(t) = &acc_type {
             self.scalar_types.insert(acc.to_string(), t.clone());
         }
@@ -2323,6 +2541,16 @@ impl Compiler {
             let ls = self.jsonb_of(l)?;
             let rs = self.expr(r, Some("jsonb"))?;
             return Ok(format!("(({rs}) @> {ls})"));
+        }
+
+        // `a AND b`: both sides are booleans, however they were carried.
+        if matches!(op, BinOp::And | BinOp::Or | BinOp::Xor) {
+            let (ls, rs) = (self.bool_operand(l)?, self.bool_operand(r)?);
+            return Ok(match op {
+                BinOp::And => format!("({ls} AND {rs})"),
+                BinOp::Or => format!("({ls} OR {rs})"),
+                _ => format!("(({ls}) <> ({rs}))"),
+            });
         }
 
         // String predicates work on text, so both sides are compiled *as* text
@@ -2665,7 +2893,13 @@ impl Compiler {
                     "duration" => Some("interval".into()),
                     "tointeger" => Some("int8".into()),
                     "tofloat" => Some("float8".into()),
-                    "tostring" | "randomuuid" => Some("text".into()),
+                    "tostring" | "randomuuid" | "elementid" | "left" | "right" | "ltrim" | "rtrim" => Some("text".into()),
+                    "sign" => Some("int8".into()),
+                    "isempty" | "toboolean" => Some("bool".into()),
+                    "nullif" => args.first().and_then(|a| self.type_of(a)).filter(|t| is_scalar_type(t)),
+                    "reverse" => arg().filter(|t| t == "text"),
+                    // `WHERE id(n) = $id` reads the parameter as a number.
+                    "id" => Some("int8".into()),
                     "count" => Some("int8".into()),
                     "size" | "length" => Some("int4".into()),
                     "stdev" | "ceil" | "floor" | "sqrt" => Some("float8".into()),
@@ -3157,7 +3391,15 @@ impl Compiler {
             "rand" => "random()".into(),
             "timestamp" => "extract(epoch from now())::int8".into(),
             "exists" => format!("({} IS NOT NULL)", a[0]),
-            "keys" => format!("to_jsonb(ARRAY(SELECT jsonb_object_keys({})))", a[0]),
+            // An element's keys are its properties; the identity fields the
+            // engine adds (`_id`, `_type`, `_src`, `_dst`) are not among them.
+            "keys" => {
+                let x = self.jsonb_of(&args[0])?;
+                format!(
+                    "to_jsonb(ARRAY(SELECT k FROM jsonb_object_keys({x}) AS k \
+                     WHERE NOT ({x} ? '_id' AND k IN ('_id', '_type', '_src', '_dst'))))"
+                )
+            }
             // `properties(n)` is the map a node or relationship already
             // compiles to — the same value `keys()` reads. Neo4j has it and
             // drivers reach for it whenever they want the whole property bag
@@ -3166,7 +3408,10 @@ impl Compiler {
             // The bookkeeping keys come off. In Neo4j this returns a *map*, and
             // leaving `_id`/`_type` in would both invent properties the caller
             // never set and make the driver hydrate the result as a node.
-            "properties" => format!("(({}) - '_id' - '_type')", a[0]),
+            "properties" => {
+                let x = self.jsonb_of(&args[0])?;
+                format!("(CASE WHEN {x} ? '_id' THEN {x} - '_id' - '_type' - '_src' - '_dst' ELSE {x} END)")
+            }
             // `x[i]` is two different operations wearing one syntax: list
             // indexing when `i` is a number, map lookup when it is a string.
             // Compiling it as `-> int` unconditionally made
@@ -3204,6 +3449,85 @@ impl Compiler {
             }
             // Neo4j's randomUUID(): a version-4 UUID as a string.
             "randomuuid" => "gen_random_uuid()::text".into(),
+            // `range(1, 5)`, `range(10, 0, -2)`: the ends included, as in Cypher.
+            "range" => {
+                if !(2..=3).contains(&args.len()) {
+                    return Err("range() takes a start, an end and an optional step".into());
+                }
+                let n = |c: &mut Self, e: &Expr| -> CResult<String> {
+                    Ok(match c.type_of(e).as_deref() {
+                        Some("int2" | "int4" | "int8") => format!("({})::int8", c.expr(e, Some("int8"))?),
+                        _ => format!("trunc({})::int8", c.numeric_read(e)?),
+                    })
+                };
+                let (from, to) = (n(self, &args[0])?, n(self, &args[1])?);
+                let step = if args.len() == 3 { n(self, &args[2])? } else { "1".into() };
+                // A zero step is Neo4j's error too; PostgreSQL's message says so.
+                format!("coalesce(to_jsonb(ARRAY(SELECT generate_series({from}, {to}, {step}))), '[]'::jsonb)")
+            }
+            "left" | "right" => {
+                let [x, k] = args else { return Err(format!("{name}() takes a string and a length")) };
+                let t = self.expr(x, Some("text"))?;
+                let k = self.expr(k, Some("int8"))?;
+                format!("{lname}(({t})::text, ({k})::int)")
+            }
+            "ltrim" | "rtrim" => format!("{lname}(({})::text)", self.expr(&args[0], Some("text"))?),
+            // A string reversed, or a list.
+            "reverse" => {
+                let [x] = args else { return Err("reverse() takes one argument".into()) };
+                if self.type_of(x).as_deref() == Some("text") {
+                    format!("reverse(({})::text)", self.expr(x, Some("text"))?)
+                } else {
+                    let j = self.jsonb_of(x)?;
+                    format!(
+                        "(CASE jsonb_typeof({j}) WHEN 'array' THEN (SELECT coalesce(jsonb_agg(rv.e ORDER BY rv.o DESC), '[]'::jsonb) \
+                         FROM jsonb_array_elements({j}) WITH ORDINALITY AS rv(e, o)) \
+                         WHEN 'string' THEN to_jsonb(reverse({j} #>> '{{}}')) END)"
+                    )
+                }
+            }
+            // An integer, as in Cypher.
+            "sign" => {
+                let [x] = args else { return Err("sign() takes one argument".into()) };
+                match self.type_of(x) {
+                    Some(t) if is_numeric_type(&t) => format!("sign({})::int8", self.expr(x, Some(&t))?),
+                    _ => format!("sign({})::int8", self.numeric_read(x)?),
+                }
+            }
+            // `nullIf(v, w)`: null when they are equal, v otherwise.
+            "nullif" => {
+                let [x, y] = args else { return Err("nullIf() takes two arguments".into()) };
+                match self.type_of(x).filter(|t| is_scalar_type(t)) {
+                    Some(t) => format!("NULLIF({}, {})", self.expr(x, Some(&t))?, self.expr(y, Some(&t))?),
+                    None => format!("NULLIF({}, {})", self.jsonb_of(x)?, self.jsonb_of(y)?),
+                }
+            }
+            "isempty" => {
+                let [x] = args else { return Err("isEmpty() takes one argument".into()) };
+                let j = self.jsonb_of(x)?;
+                format!(
+                    "(CASE jsonb_typeof({j}) WHEN 'array' THEN jsonb_array_length({j}) = 0 \
+                     WHEN 'object' THEN {j} = '{{}}'::jsonb WHEN 'string' THEN ({j} #>> '{{}}') = '' END)"
+                )
+            }
+            "toboolean" => {
+                let [x] = args else { return Err("toBoolean() takes one argument".into()) };
+                if self.type_of(x).as_deref() == Some("bool") {
+                    self.expr(x, Some("bool"))?
+                } else {
+                    let j = self.jsonb_of(x)?;
+                    format!(
+                        "(CASE jsonb_typeof({j}) WHEN 'boolean' THEN ({j})::bool \
+                         WHEN 'string' THEN CASE lower(btrim({j} #>> '{{}}')) WHEN 'true' THEN true WHEN 'false' THEN false END \
+                         WHEN 'number' THEN ({j})::numeric <> 0 END)"
+                    )
+                }
+            }
+            "point" | "point.distance" | "distance" | "point.withinbbox" => {
+                return Err(format!(
+                    "{name}(): spatial values are not supported — keep coordinates as numbers (x, y / latitude, longitude)"
+                ))
+            }
             // spec 004 — vector surface
             "vector.similarity" | "similarity" => {
                 format!("(1 - (({})::vector <=> ({})::vector))", a[0], a[1])
@@ -3242,7 +3566,9 @@ impl Compiler {
                      id, elementId, labels, type, length, size, toUpper, toLower, trim, substring, \
                      replace, split, coalesce, abs, ceil, floor, round, sqrt, rand, toString, \
                      toInteger, toFloat, timestamp, date, datetime, localdatetime, duration, exists, \
-                     keys, vector.similarity, vector.distance, genai.vector.encode"
+                     keys, properties, nodes, relationships, startNode, endNode, randomUUID, range, left, right, \
+                     ltrim, rtrim, reverse, sign, nullIf, isEmpty, toBoolean, reduce, vector.similarity, \
+                     vector.similarity.cosine, vector.similarity.euclidean, vector.distance, genai.vector.encode"
                 ))
             }
         })
@@ -3359,6 +3685,35 @@ fn arithmetic_type(op: BinOp, l: Option<&str>, r: Option<&str>) -> Option<String
         (Some(a), None) | (None, Some(a)) if a.starts_with("float") => Some("float8".into()),
         _ => Some("numeric".into()),
     }
+}
+
+/// The variables one branch of `CALL { … }` imports, and the clauses it runs.
+///
+/// With a scope clause — `CALL (a, b) { … }`, `CALL (*) { … }` — those. Without
+/// one, a leading `WITH` of plain variables (`WITH a, b` or `WITH *`) imports
+/// them; it stays a clause of the branch only when it also filters, orders or
+/// limits. Anything else imports nothing: the subquery is uncorrelated.
+pub fn subquery_imports<'q>(scope: Option<&[String]>, branch: &'q Query, outer: &[String]) -> CResult<(Vec<String>, &'q [Clause])> {
+    if let Some(sc) = scope {
+        let names = if sc.iter().any(|n| n == "*") { outer.to_vec() } else { sc.to_vec() };
+        return Ok((names, &branch.clauses));
+    }
+    let Some(Clause::With { proj, where_ }) = branch.clauses.first() else {
+        return Ok((Vec::new(), &branch.clauses));
+    };
+    let plain = proj.items.iter().all(|i| {
+        matches!(&i.expr, Expr::Star) || matches!(&i.expr, Expr::Var(v) if i.alias.as_deref().map_or(true, |a| a == v))
+    });
+    if !plain || proj.items.iter().any(|i| i.expr.is_aggregate()) {
+        return Ok((Vec::new(), &branch.clauses));
+    }
+    let names: Vec<String> = if proj.items.iter().any(|i| matches!(i.expr, Expr::Star)) {
+        outer.to_vec()
+    } else {
+        proj.items.iter().filter_map(|i| if let Expr::Var(v) = &i.expr { Some(v.clone()) } else { None }).collect()
+    };
+    let shaping = where_.is_some() || proj.distinct || !proj.order.is_empty() || proj.skip.is_some() || proj.limit.is_some();
+    Ok((names, if shaping { &branch.clauses } else { &branch.clauses[1..] }))
 }
 
 /// The relationships a variable-length hop walked (`og_vlp`'s `path`, edge ids
