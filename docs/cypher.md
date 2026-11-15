@@ -47,6 +47,32 @@ label takes its type from the relationship: `(o:Order)-[:PLACED_BY]->(c)`,
 `(c)-[:PLACED_BY]-(o:Order)` (undirected: the labelled end decides) and a node
 carried through `WITH` (`MATCH (c:Customer) WITH c MATCH (c)<-[:PLACED_BY]-(o)`)
 all work. Only an undirected hop with no label on either end is refused.
+
+**A hop without a type** — `(c:Crate)-[r]->(d:Depot)`, `(c:Crate)-[r]-(d:Depot)`,
+`(c:Crate)-->(d:Depot)` — is every relationship between its ends, as in Neo4j: the union of
+each virtual relationship whose ends fit the two labels and the direction, and
+the stored edges. It returns the rows the typed hops return together, and
+`type(r)` is each row's own type. `[r:A|B]` is the union of `A` and `B`; when
+every type named is virtual and they agree on an unlabelled end, that end takes
+the type, as for one type. The ends' types are what is joined on, so:
+
+- with one end unlabelled, a virtual node at the other end is refused ("needs
+  both ends labelled", naming its relationships) — label the end or name the
+  type; at a stored node the hop reads its stored edges only, as before, with
+  a note naming the virtual relationships it did not follow;
+- a variable-length hop without a type follows stored edges only, and is
+  refused at a virtual node that has virtual relationships;
+- a property filter on the hop (`-[r {x: 1}]->`) matches stored edges only —
+  a virtual relationship has no properties.
+
+It is one join on (alternative, key) — each end lists its key for every
+alternative — so it costs a few times the typed hop, not a join per type; the
+typed hop stays the one a source can be sent whole. Under `OPTIONAL MATCH` the
+near end is read again and matched back on its id, so an optional untyped hop
+reads both ends' types in full even from one bound node. Between two nodes of
+one type, the undirected form reads each relationship once, as the typed hop
+does. A pattern with no label at all reads the stored graph, as `MATCH (n)` does.
+
 On a virtual type whose source has a column `id`, `n.id` is that column (so
 `{id: 1}` and a relationship joining on it work); `id(n)` and `n._id` are the
 node's identifier. On stored types `n.id` is the identifier, as before.

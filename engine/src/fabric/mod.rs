@@ -1063,6 +1063,7 @@ fn og_create_virtual_rel(
 }
 
 /// A virtual relationship's definition, if `rel_tid` is one.
+#[derive(Clone)]
 pub struct VirtualRel {
     pub src_type: i32,
     pub src_prop: String,
@@ -1089,6 +1090,38 @@ pub fn virtual_rel(rel_tid: i32) -> Option<VirtualRel> {
                     dst_prop: r.get::<String>(4).ok()??,
                 })
             })
+    })
+}
+
+/// Every virtual relationship of a graph: its type id, its name and its
+/// definition, in the order they were declared. A hop that names no type may
+/// be any of them.
+pub fn virtual_rels(gid: i32) -> Vec<(i32, String, VirtualRel)> {
+    Spi::connect(|client| {
+        client
+            .select(
+                "SELECT v.type_id, t.name, v.src_type, v.src_prop, v.dst_type, v.dst_prop
+                   FROM og_catalog.virtual_rel v JOIN og_catalog.type t ON t.type_id = v.type_id
+                  WHERE t.graph_id = $1 ORDER BY v.type_id",
+                None,
+                &[gid.into()],
+            )
+            .map(|rows| {
+                rows.filter_map(|r| {
+                    Some((
+                        r.get::<i32>(1).ok()??,
+                        r.get::<String>(2).ok()??,
+                        VirtualRel {
+                            src_type: r.get::<i32>(3).ok()??,
+                            src_prop: r.get::<String>(4).ok()??,
+                            dst_type: r.get::<i32>(5).ok()??,
+                            dst_prop: r.get::<String>(6).ok()??,
+                        },
+                    ))
+                })
+                .collect()
+            })
+            .unwrap_or_default()
     })
 }
 

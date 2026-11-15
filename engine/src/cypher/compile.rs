@@ -102,7 +102,10 @@ fn blind_expr(e: &Expr) -> bool {
 #[derive(Debug, Clone)]
 pub enum Bind {
     Node { alias: String, tid: Option<i32> },
-    Rel { alias: Option<String>, tid: Option<i32>, id_expr: String },
+    /// `value` is the relationship as jsonb when it is not simply the stored
+    /// edge `id_expr` names — a hop without one type, whose rows may be
+    /// virtual relationships too (see `Compiler::join_rel_union`).
+    Rel { alias: Option<String>, tid: Option<i32>, id_expr: String, value: Option<String> },
     /// A path variable: `hops_expr` is the path's value — jsonb
     /// `{"_path": true, "nodes": [...], "relationships": [...]}`, or null when an
     /// OPTIONAL MATCH found none.
@@ -1066,7 +1069,8 @@ impl Compiler {
                     let node_join_added = self.from.len() > mark;
                     if let (Some(prev), Some(rel)) = (prev_node.clone(), pending_rel.take()) {
                         self.last_var_hop = None;
-                        let hop = self.join_rel(&prev, rel, &alias, optional)?;
+                        let fresh_join = node_join_added.then_some(mark);
+                        let hop = self.join_rel(&prev, rel, &alias, optional, fresh_join)?;
                         if p.path_var.is_some() {
                             path_rels.push(hop);
                             path_nodes.push(match self.last_var_hop.take() {
@@ -1331,9 +1335,30 @@ impl Compiler {
         crate::fabric::virtual_rel(rtid).map(|v| (rtid, v))
     }
 
+    /// Every type a hop names, when each of them is a virtual relationship.
+    fn named_virtual_rels(&self, rel: &RelPat) -> Option<Vec<(i32, crate::fabric::VirtualRel)>> {
+        if rel.types.is_empty() {
+            return None;
+        }
+        let mut out: Vec<(i32, crate::fabric::VirtualRel)> = Vec::new();
+        for t in &rel.types {
+            let rtid = types::try_type_id(self.gid, t)?;
+            let v = crate::fabric::virtual_rel(rtid)?;
+            if !out.iter().any(|(r, _)| *r == rtid) {
+                out.push((rtid, v));
+            }
+        }
+        Some(out)
+    }
+
     /// `MATCH (s:Supplier)<-[:ORDERED_FROM]-(po)` — the unlabelled end of a
     /// virtual hop has only one type it can be, and without that type there are
     /// no columns to join on. Stored adjacency does not need this; a join does.
+    ///
+    /// `[:R1|R2]` where every type named is virtual is decided the same way when
+    /// the relationships that fit the other end agree on this one. A hop that
+    /// may also be a stored edge — no type, or a stored one among those named —
+    /// can reach a node of any type, and decides nothing.
     fn infer_virtual_label(
         &mut self,
         p: &Pattern,
@@ -1360,32 +1385,51 @@ impl Compiler {
         ];
         for (elem, is_far_end) in sides {
             let Some(PatElem::Rel(rel)) = elem else { continue };
-            let Some((_, v)) = self.virtual_rel_of(rel) else { continue };
-            let tid = match (&rel.dir, is_far_end) {
-                (Dir::Out, true) | (Dir::In, false) => v.dst_type,
-                (Dir::In, true) | (Dir::Out, false) => v.src_type,
-                // Undirected: the other end's type says which end this is.
-                (Dir::Both, _) => {
-                    let other = if is_far_end {
-                        prev_alias.and_then(|a| self.alias_tid.get(a).copied().flatten())
-                    } else {
-                        match p.elems.get(idx + 2) {
-                            Some(PatElem::Node(o)) => self.node_pat_type(o),
-                            _ => None,
-                        }
-                    };
-                    let Some(o) = other else { continue };
-                    let is = |t: i32, want: i32| {
-                        t == want || crate::catalog::labeling::og_is_subtype(t, want)
-                    };
-                    match (is(o, v.src_type), is(o, v.dst_type)) {
-                        (true, false) => v.dst_type,
-                        (false, true) => v.src_type,
-                        (true, true) if v.src_type == v.dst_type => v.src_type,
-                        _ => continue,
-                    }
+            let Some(defs) = self.named_virtual_rels(rel) else { continue };
+            // The other end's type: which end this is on an undirected hop, and
+            // which of several relationships can be the hop at all.
+            let other = if !matches!(rel.dir, Dir::Both) && defs.len() == 1 {
+                None
+            } else if is_far_end {
+                prev_alias.and_then(|a| self.alias_tid.get(a).copied().flatten())
+            } else {
+                match p.elems.get(idx + 2) {
+                    Some(PatElem::Node(o)) => self.node_pat_type(o),
+                    _ => None,
                 }
             };
+            let is = |t: i32, want: i32| t == want || crate::catalog::labeling::og_is_subtype(t, want);
+            let mut ends: Vec<i32> = Vec::new();
+            for (_, v) in &defs {
+                let t = match (&rel.dir, is_far_end) {
+                    (Dir::Out, true) | (Dir::In, false) => {
+                        if other.is_some_and(|o| !is(o, v.src_type)) {
+                            continue;
+                        }
+                        v.dst_type
+                    }
+                    (Dir::In, true) | (Dir::Out, false) => {
+                        if other.is_some_and(|o| !is(o, v.dst_type)) {
+                            continue;
+                        }
+                        v.src_type
+                    }
+                    // Undirected: the other end's type says which end this is.
+                    (Dir::Both, _) => {
+                        let Some(o) = other else { continue };
+                        match (is(o, v.src_type), is(o, v.dst_type)) {
+                            (true, false) => v.dst_type,
+                            (false, true) => v.src_type,
+                            (true, true) if v.src_type == v.dst_type => v.src_type,
+                            _ => continue,
+                        }
+                    }
+                };
+                if !ends.contains(&t) {
+                    ends.push(t);
+                }
+            }
+            let &[tid] = ends.as_slice() else { continue };
             let name = types::try_type_name(tid)?;
             let mut out = np.clone();
             out.labels = vec![name];
@@ -1423,9 +1467,9 @@ impl Compiler {
         rel: &RelPat,
         to_alias: &str,
         rtid: i32,
+        rname: &str,
         v: crate::fabric::VirtualRel,
     ) -> CResult<String> {
-        let rname = &rel.types[0];
         if rel.range.is_some() {
             return Err(format!(
                 "virtual relationship '{rname}' cannot be traversed with a variable length yet"
@@ -1481,17 +1525,297 @@ impl Compiler {
             ));
         }
 
-        let rel_json = format!(
-            "jsonb_build_object('_id', og_make_id(0, {rtid}, \
-             hashtextextended({s_alias}.id::text || ':' || {d_alias}.id::text, 0) & {mask}), \
-             '_type', {tn}, '_src', {s_alias}.id, '_dst', {d_alias}.id)",
-            mask = (1_i64 << 36) - 1,
-            tn = sql_str(rname),
-        );
+        let rel_json = virtual_rel_json(rtid, rname, s_alias, d_alias);
         if let Some(var) = &rel.var {
             self.binds.insert(var.clone(), Bind::Scalar { sql: rel_json.clone() });
         }
         Ok(format!("jsonb_build_array({rel_json})"))
+    }
+
+    /// A hop that names no single type — `-[r]->`, `-[r:A|B]->` — where a
+    /// virtual relationship may be one of the types it can be.
+    ///
+    /// Such a hop used to read only the stored adjacency, which holds no
+    /// virtual relationship: `(c:Crate)-[r]->(d:Depot)` found nothing where
+    /// `-[r:STORED_AT]->` found the rows, and said nothing. It is the union of
+    /// what each type matches, as in Neo4j: every virtual relationship whose
+    /// ends fit the hop's ends and direction, read as `join_virtual_rel` reads
+    /// it, and the stored edges — of any stored type, or of the stored types
+    /// named. `type(r)` is each row's own type.
+    ///
+    /// Each end lists one key per alternative, `(alternative, key)` — a stored
+    /// edge keyed by the node it reaches — and the hop is the equality of the
+    /// two lists: one equi-join, which the planner can hash or merge, however
+    /// many alternatives there are, where an OR of the joins could only run as
+    /// a nested loop. Keys are compared as jsonb, so alternatives whose key
+    /// columns differ in type share a column (numbers compare as numbers).
+    ///
+    /// `Ok(None)` leaves the hop to the stored adjacency: no virtual
+    /// relationship can be it, or one end's type is unknown — unlabelled, the
+    /// stored graph — and the joins have no columns there. Where reading only
+    /// stored edges would silently find nothing — the known end a virtual
+    /// node type with relationships of its own — that is an error instead.
+    fn join_rel_union(
+        &mut self,
+        from_alias: &str,
+        rel: &RelPat,
+        to_alias: &str,
+        optional: bool,
+        fresh_join: Option<usize>,
+    ) -> CResult<Option<String>> {
+        let named = !rel.types.is_empty();
+        let defs: Vec<(i32, String, crate::fabric::VirtualRel)> = if named {
+            let mut out: Vec<(i32, String, crate::fabric::VirtualRel)> = Vec::new();
+            for t in &rel.types {
+                let Some(id) = types::try_type_id(self.gid, t) else { continue };
+                if out.iter().any(|(r, ..)| *r == id) {
+                    continue;
+                }
+                if let Some(v) = crate::fabric::virtual_rel(id) {
+                    out.push((id, t.clone(), v));
+                }
+            }
+            out
+        } else {
+            crate::fabric::virtual_rels(self.gid)
+        };
+        if defs.is_empty() {
+            return Ok(None);
+        }
+        // What the typed hop refuses, refused here when a virtual type is named.
+        if named && rel.range.is_some() {
+            return Err(format!(
+                "virtual relationship '{}' cannot be traversed with a variable length yet",
+                defs[0].1
+            ));
+        }
+        if named && !rel.props.is_empty() {
+            return Err(format!("virtual relationship '{}' has no properties to match", defs[0].1));
+        }
+        // An end whose labels can match nothing has emptied the match already;
+        // an unlabelled pattern reads the stored graph, as `MATCH (n)` does.
+        let ft = self.alias_tid.get(from_alias).copied().flatten();
+        let tt = self.alias_tid.get(to_alias).copied().flatten();
+        if self.unmatchable.contains(from_alias)
+            || self.unmatchable.contains(to_alias)
+            || (ft.is_none() && tt.is_none())
+        {
+            return Ok(None);
+        }
+        let quoted = |names: &[&str]| names.iter().map(|n| format!("'{n}'")).collect::<Vec<_>>().join(", ");
+        // The virtual relationships at the end whose type is known, the other
+        // end left open: what a missing type there would miss.
+        let open = |t: Option<i32>, want: i32| t.map_or(true, |t| type_fits(Some(t), want));
+        let touching: Vec<&str> = defs
+            .iter()
+            .filter(|(_, _, v)| virtual_orientation(&rel.dir, ft, tt, v, open).is_some())
+            .map(|(_, n, _)| n.as_str())
+            .collect();
+        let virtual_end = [ft, tt].into_iter().flatten().find(|t| crate::fabric::virtual_source(*t).is_some());
+        if rel.range.is_some() {
+            if let (Some(t), false) = (virtual_end, touching.is_empty()) {
+                let tn = types::try_type_name(t).unwrap_or_default();
+                return Err(format!(
+                    "a variable-length hop without a type follows stored relationships only, and the \
+                     relationships {} of the virtual node type '{tn}' are joins on keys, which cannot be \
+                     traversed with a variable length yet — write the hops out one by one",
+                    quoted(&touching)
+                ));
+            }
+            return Ok(None);
+        }
+        // A virtual relationship has no properties: only stored edges can match.
+        if !rel.props.is_empty() {
+            return Ok(None);
+        }
+        if ft.is_none() || tt.is_none() {
+            if touching.is_empty() {
+                return Ok(None);
+            }
+            let kn = ft.or(tt).and_then(types::try_type_name).unwrap_or_default();
+            if named {
+                return Err(format!(
+                    "virtual relationships {} need both ends labelled — they are joins on their keys, \
+                     and an end without a label takes a type only when every type named is virtual and \
+                     they agree on it. Label that end",
+                    quoted(&touching)
+                ));
+            }
+            if virtual_end.is_some() {
+                return Err(format!(
+                    "a relationship without a type at the virtual node type '{kn}' needs both ends labelled: \
+                     its relationships {} are joins on their keys, and the unlabelled end could be any type. \
+                     Label that end — (a:{kn})-[r]-(b:Label) — or name the type — [r:{}]",
+                    quoted(&touching),
+                    touching[0]
+                ));
+            }
+            self.notes.push(format!(
+                "relationship without a type at '{kn}': stored edges only — the virtual relationships {} \
+                 are joins and need the other end labelled",
+                quoted(&touching)
+            ));
+            return Ok(None);
+        }
+
+        let virtual_ids: Vec<i32> = defs.iter().map(|(id, ..)| *id).collect();
+        let alts: Vec<(i32, String, crate::fabric::VirtualRel, bool)> = defs
+            .into_iter()
+            .filter_map(|(id, n, v)| {
+                let forward = virtual_orientation(&rel.dir, ft, tt, &v, type_fits)?;
+                Some((id, n, v, forward))
+            })
+            .collect();
+        if alts.is_empty() {
+            return Ok(None);
+        }
+        // Stored edges: of any stored type when the hop names none — a
+        // relationship type that is virtual is a join, not its stored rows,
+        // as `-[:V]->` reads it — or of the stored types it names.
+        let stored: Option<(Vec<i32>, bool)> = if named {
+            let names: Vec<String> = rel
+                .types
+                .iter()
+                .filter(|t| types::try_type_id(self.gid, t).map_or(true, |id| !virtual_ids.contains(&id)))
+                .cloned()
+                .collect();
+            let mut ids = self.rel_type_ids(&names);
+            ids.retain(|i| !virtual_ids.contains(i));
+            (!ids.is_empty()).then_some((ids, false))
+        } else {
+            Some((virtual_ids, true))
+        };
+        if let ([(rtid, name, v, _)], None) = (alts.as_slice(), &stored) {
+            // `[:A|B]` of which one fits: that relationship's own join.
+            let (rtid, name, v) = (*rtid, name.clone(), v.clone());
+            return self.join_virtual_rel(from_alias, rel, to_alias, rtid, &name, v).map(Some);
+        }
+
+        // Where the hop's far end was joined just now, its keys are read with
+        // it. Under OPTIONAL MATCH the near end is read again inside that
+        // join and matched back on its id: then the node, both key lists and
+        // the near end are one optional join that matches or leaves one row of
+        // NULLs — a join per list would leave a row per alternative — and
+        // nothing in it depends on the row it is joined to, so it is hashed
+        // against those rows rather than run once for each of them.
+        let fresh = fresh_join.filter(|i| *i < self.from.len());
+        let rescan = match (fresh, optional, ft) {
+            (Some(_), true, Some(t)) => Some((self.fresh("n"), views::ensure_view(t, false))),
+            _ => None,
+        };
+        let near_alias = rescan.as_ref().map_or(from_alias, |(a, _)| a.as_str()).to_string();
+        let near_alias = near_alias.as_str();
+        let ka = self.fresh("ka");
+        let kb = self.fresh("kb");
+        let mut near: Vec<String> = Vec::new();
+        let mut far: Vec<String> = Vec::new();
+        let mut values: Vec<String> = Vec::new();
+        let mut ids: Vec<String> = Vec::new();
+        let mut parts: Vec<String> = Vec::new();
+        if let Some((list, exclude)) = &stored {
+            let adj = self.fresh("adj");
+            let arr = format!("ARRAY[{}]::int4[]", list.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(","));
+            let type_pred = if *exclude {
+                format!(" AND {adj}.etype <> ALL({arr})")
+            } else {
+                format!(" AND {adj}.etype = ANY({arr})")
+            };
+            let temporal = self.temporal_rel_types(if *exclude { None } else { Some(list) });
+            let rows = self.stored_hop_rows(near_alias, &adj, &rel.dir, &type_pred, &temporal);
+            if !temporal.is_empty() && rel.var.is_some() {
+                // As for any hop without one type: rendered from the registry.
+                self.constrain(
+                    "og_require_current('a relationship variable without a single type')".into(),
+                );
+            }
+            let sn = self.fresh("sn");
+            near.push(format!("SELECT 0, to_jsonb({sn}.nbr), {sn}.eid FROM ({rows}) {sn}"));
+            far.push(format!("(0, to_jsonb({to_alias}.id))"));
+            values.push(format!("WHEN 0 THEN og_edge_json({ka}.eid)"));
+            ids.push(format!("WHEN 0 THEN {ka}.eid"));
+            parts.push("stored edges".into());
+        }
+        let mut keyed: Vec<String> = Vec::new();
+        for (i, (rtid, name, v, forward)) in alts.iter().enumerate() {
+            let n = i + 1;
+            let (s, st, d, dt) = if *forward {
+                (near_alias, ft, to_alias, tt)
+            } else {
+                (to_alias, tt, near_alias, ft)
+            };
+            let (sk, _) = self.prop_sql(s, st, &v.src_prop);
+            let (dk, _) = self.prop_sql(d, dt, &v.dst_prop);
+            let (nk, fk) = if *forward { (&sk, &dk) } else { (&dk, &sk) };
+            keyed.push(format!("({n}, to_jsonb({nk}), NULL::int8)"));
+            far.push(format!("({n}, to_jsonb({fk}))"));
+            values.push(format!("WHEN {n} THEN {}", virtual_rel_json(*rtid, name, s, d)));
+            ids.push(format!("WHEN {n} THEN {}", virtual_rel_id(*rtid, s, d)));
+            parts.push(format!("'{name}' ({sk} = {dk})"));
+        }
+        near.push(format!("VALUES {}", keyed.join(", ")));
+        let near_join = format!("LATERAL ({}) {ka}(c, k, eid)", near.join(" UNION ALL "));
+        let far_join = format!("LATERAL (VALUES {}) {kb}(c, k)", far.join(", "));
+
+        let mut in_scope: Vec<(String, usize)> = Vec::new();
+        match (fresh, rescan) {
+            (Some(i), Some((again, rel_sql))) => {
+                let entry = self.from[i].clone();
+                let (joiner, node, on) = split_join(&entry);
+                self.from[i] = format!(
+                    "{joiner}({rel_sql} {again} CROSS JOIN {near_join} CROSS JOIN {node} CROSS JOIN {far_join}){on}"
+                );
+                for a in [&again, &ka, &kb] {
+                    in_scope.push((a.clone(), i));
+                }
+                self.constrain(format!("{again}.id = {from_alias}.id"));
+            }
+            // The far end keeps its keys; the near end's follow the near end,
+            // and `compile_pattern` moves the node's join after them, as after
+            // any hop that reaches it.
+            (Some(i), None) => {
+                let entry = self.from[i].clone();
+                let (joiner, node, on) = split_join(&entry);
+                self.from[i] = format!("{joiner}({node} CROSS JOIN {far_join}){on}");
+                self.from.push(format!("CROSS JOIN {near_join}"));
+            }
+            // Both ends bound before: a filter on the pair, one optional join.
+            (None, _) if optional => {
+                self.from.push(format!("LEFT JOIN ({near_join} CROSS JOIN {far_join}) ON true"));
+                let at = self.from.len() - 1;
+                in_scope.push((ka.clone(), at));
+                in_scope.push((kb.clone(), at));
+            }
+            (None, _) => {
+                let joiner = if self.from.is_empty() { "" } else { "CROSS JOIN " };
+                self.from.push(format!("{joiner}{near_join}"));
+                self.from.push(format!("CROSS JOIN {far_join}"));
+            }
+        }
+        if let Some(scope) = &mut self.optional {
+            scope.joins.extend(in_scope);
+        }
+        self.constrain(format!("{ka}.c = {kb}.c AND {ka}.k = {kb}.k"));
+        self.notes.push(format!(
+            "relationship without a single type: the union of {}, one join on (alternative, key)",
+            parts.join(", ")
+        ));
+
+        let value = format!("(CASE {ka}.c {} END)", values.join(" "));
+        let id = format!("(CASE {ka}.c {} END)", ids.join(" "));
+        if !optional {
+            for other in std::mem::take(&mut self.rel_ids) {
+                self.constrain(format!("{id} <> {other}"));
+                self.rel_ids.push(other);
+            }
+            self.rel_ids.push(id.clone());
+        }
+        if let Some(v) = &rel.var {
+            self.binds.insert(
+                v.clone(),
+                Bind::Rel { alias: None, tid: None, id_expr: id, value: Some(value.clone()) },
+            );
+        }
+        Ok(Some(format!("jsonb_build_array({value})")))
     }
 
     fn push_prop_filters(
@@ -1546,33 +1870,26 @@ impl Compiler {
 
     /// Join a relationship. Returns a jsonb expression describing the hop, used
     /// when the pattern binds a path variable.
+    ///
+    /// `fresh_join` is the index in `from` of the join that bound `to_alias`
+    /// just now, if this pattern bound it.
     fn join_rel(
         &mut self,
         from_alias: &str,
         rel: &RelPat,
         to_alias: &str,
         optional: bool,
+        fresh_join: Option<usize>,
     ) -> CResult<String> {
         if let Some((rtid, v)) = self.virtual_rel_of(rel) {
-            return self.join_virtual_rel(from_alias, rel, to_alias, rtid, v);
+            return self.join_virtual_rel(from_alias, rel, to_alias, rtid, &rel.types[0], v);
         }
-        let etypes = if rel.types.is_empty() {
-            None
-        } else {
-            // A relationship type nobody has written yet simply contributes no
-            // ids; the hop then finds no neighbours. That keeps an inner MATCH
-            // empty and leaves an OPTIONAL MATCH with its NULLs, which is what
-            // Cypher does — and is why this must not push a global `false`.
-            let mut ids = Vec::new();
-            for t in &rel.types {
-                if let Some(tid) = types::try_type_id(self.gid, t) {
-                    ids.extend(crate::catalog::labeling::og_subtypes(tid));
-                }
+        if rel.types.len() != 1 {
+            if let Some(hop) = self.join_rel_union(from_alias, rel, to_alias, optional, fresh_join)? {
+                return Ok(hop);
             }
-            ids.sort_unstable();
-            ids.dedup();
-            Some(ids)
-        };
+        }
+        let etypes = if rel.types.is_empty() { None } else { Some(self.rel_type_ids(&rel.types)) };
         let etype_pred = match &etypes {
             Some(ids) => format!(
                 "ARRAY[{}]::int4[]",
@@ -1586,20 +1903,7 @@ impl Compiler {
             Dir::Both => "'b'",
         };
 
-        // Temporal relation types this hop may cross. Their adjacency segments
-        // know only the present, so a hop reads them from the edge tables —
-        // current and history, filtered to the session's instant (spec 013).
-        let temporal_rels: Vec<i32> = match &etypes {
-            Some(ids) => ids
-                .iter()
-                .copied()
-                .filter(|t| {
-                    types::storage_table(*t).is_some_and(|s| s.starts_with("og_data.e_"))
-                        && crate::temporal::is_temporal(*t)
-                })
-                .collect(),
-            None => crate::temporal::temporal_tables(self.gid, 'e'),
-        };
+        let temporal_rels = self.temporal_rel_types(etypes.as_deref());
 
         if let Some((min, max)) = rel.range {
             if !temporal_rels.is_empty() {
@@ -1663,47 +1967,14 @@ impl Compiler {
             Some(_) => format!(" AND {a}.etype = ANY({etype_pred})"),
             None => String::new(),
         };
-        let dir_pred = match rel.dir {
-            Dir::Both => format!("{a}.dir IN ('o','i')"),
-            _ => format!("{a}.dir = {dir_lit}::\"char\""),
-        };
-        if temporal_rels.is_empty() {
-            self.from.push(format!(
-                "{joiner} (SELECT u.nbr, u.eid FROM og_data.og_adj {a}, \
-                 LATERAL unnest({a}.nbr, {a}.eid) AS u(nbr, eid) \
-                 WHERE {a}.src = {from_alias}.id AND {dir_pred}{type_pred}) {u}{on}"
-            ));
-        } else {
-            let tlist = temporal_rels.iter().map(|t| t.to_string()).collect::<Vec<_>>().join(",");
-            let mut parts = vec![format!(
-                "SELECT u.nbr, u.eid FROM og_data.og_adj {a}, \
-                 LATERAL unnest({a}.nbr, {a}.eid) AS u(nbr, eid) \
-                 WHERE {a}.src = {from_alias}.id AND {dir_pred}{type_pred} \
-                   AND {a}.etype <> ALL(ARRAY[{tlist}]::int4[])"
-            )];
-            for t in &temporal_rels {
-                let Some(erel) = crate::temporal::edge_relation(*t) else { continue };
-                let te = self.fresh("te");
-                if matches!(rel.dir, Dir::Out | Dir::Both) {
-                    parts.push(format!(
-                        "SELECT {te}.dst, {te}.id FROM {erel} {te} WHERE {te}.src = {from_alias}.id"
-                    ));
-                }
-                if matches!(rel.dir, Dir::In | Dir::Both) {
-                    let te2 = self.fresh("te");
-                    parts.push(format!(
-                        "SELECT {te2}.src, {te2}.id FROM {erel} {te2} WHERE {te2}.dst = {from_alias}.id"
-                    ));
-                }
-            }
-            self.from.push(format!("{joiner} ({}) {u}{on}", parts.join(" UNION ALL ")));
-            // A relationship variable without one known type is rendered from
-            // the edge registry, which has no history.
-            if rel.var.is_some() && rel.types.len() != 1 {
-                self.constrain(
-                    "og_require_current('a relationship variable without a single type')".into(),
-                );
-            }
+        let rows = self.stored_hop_rows(from_alias, &a, &rel.dir, &type_pred, &temporal_rels);
+        self.from.push(format!("{joiner} ({rows}) {u}{on}"));
+        // A relationship variable without one known type is rendered from
+        // the edge registry, which has no history.
+        if !temporal_rels.is_empty() && rel.var.is_some() && rel.types.len() != 1 {
+            self.constrain(
+                "og_require_current('a relationship variable without a single type')".into(),
+            );
         }
         self.note_optional_join(&u);
         self.constrain(format!("{to_alias}.id = {u}.nbr"));
@@ -1731,14 +2002,14 @@ impl Compiler {
                     self.note_optional_join(&ea);
                     self.binds.insert(
                         v.clone(),
-                        Bind::Rel { alias: Some(ea.clone()), tid: Some(t), id_expr: format!("{u}.eid") },
+                        Bind::Rel { alias: Some(ea.clone()), tid: Some(t), id_expr: format!("{u}.eid"), value: None },
                     );
                     self.push_rel_prop_filters(&ea, Some(t), &rel.props)?;
                     return Ok(format!("jsonb_build_array({})", self.rel_json(&ea, t)));
                 }
             }
             self.binds
-                .insert(v.clone(), Bind::Rel { alias: None, tid: None, id_expr: format!("{u}.eid") });
+                .insert(v.clone(), Bind::Rel { alias: None, tid: None, id_expr: format!("{u}.eid"), value: None });
         } else if !rel.props.is_empty() {
             let rtid = if rel.types.len() == 1 {
                 types::try_type_id(self.gid, &rel.types[0])
@@ -1755,6 +2026,87 @@ impl Compiler {
             }
         }
         Ok(format!("jsonb_build_array(og_edge_json({u}.eid))"))
+    }
+
+    /// The relation types a list of names stands for, subtypes included.
+    ///
+    /// A relationship type nobody has written yet simply contributes no ids;
+    /// the hop then finds no neighbours. That keeps an inner MATCH empty and
+    /// leaves an OPTIONAL MATCH with its NULLs, which is what Cypher does — and
+    /// is why this must not push a global `false`.
+    fn rel_type_ids(&self, names: &[String]) -> Vec<i32> {
+        let mut ids = Vec::new();
+        for t in names {
+            if let Some(tid) = types::try_type_id(self.gid, t) {
+                ids.extend(crate::catalog::labeling::og_subtypes(tid));
+            }
+        }
+        ids.sort_unstable();
+        ids.dedup();
+        ids
+    }
+
+    /// Temporal relation types a hop over `etypes` (any type, for `None`) may
+    /// cross. Their adjacency segments know only the present, so a hop reads
+    /// them from the edge tables — current and history, filtered to the
+    /// session's instant (spec 013).
+    fn temporal_rel_types(&self, etypes: Option<&[i32]>) -> Vec<i32> {
+        match etypes {
+            Some(ids) => ids
+                .iter()
+                .copied()
+                .filter(|t| {
+                    types::storage_table(*t).is_some_and(|s| s.starts_with("og_data.e_"))
+                        && crate::temporal::is_temporal(*t)
+                })
+                .collect(),
+            None => crate::temporal::temporal_tables(self.gid, 'e'),
+        }
+    }
+
+    /// The stored edges of one hop out of `from_alias`, as rows `(nbr, eid)`:
+    /// the adjacency segments, narrowed by `type_pred` (which names the
+    /// segments' alias `a`), and the edge table of each temporal relation type
+    /// in `temporal_rels`, read in place of its segments.
+    fn stored_hop_rows(
+        &mut self,
+        from_alias: &str,
+        a: &str,
+        dir: &Dir,
+        type_pred: &str,
+        temporal_rels: &[i32],
+    ) -> String {
+        let dir_pred = match dir {
+            Dir::Both => format!("{a}.dir IN ('o','i')"),
+            Dir::Out => format!("{a}.dir = 'o'::\"char\""),
+            Dir::In => format!("{a}.dir = 'i'::\"char\""),
+        };
+        let segments = format!(
+            "SELECT u.nbr, u.eid FROM og_data.og_adj {a}, \
+             LATERAL unnest({a}.nbr, {a}.eid) AS u(nbr, eid) \
+             WHERE {a}.src = {from_alias}.id AND {dir_pred}{type_pred}"
+        );
+        if temporal_rels.is_empty() {
+            return segments;
+        }
+        let tlist = temporal_rels.iter().map(|t| t.to_string()).collect::<Vec<_>>().join(",");
+        let mut parts = vec![format!("{segments} AND {a}.etype <> ALL(ARRAY[{tlist}]::int4[])")];
+        for t in temporal_rels {
+            let Some(erel) = crate::temporal::edge_relation(*t) else { continue };
+            let te = self.fresh("te");
+            if matches!(dir, Dir::Out | Dir::Both) {
+                parts.push(format!(
+                    "SELECT {te}.dst, {te}.id FROM {erel} {te} WHERE {te}.src = {from_alias}.id"
+                ));
+            }
+            if matches!(dir, Dir::In | Dir::Both) {
+                let te2 = self.fresh("te");
+                parts.push(format!(
+                    "SELECT {te2}.src, {te2}.id FROM {erel} {te2} WHERE {te2}.dst = {from_alias}.id"
+                ));
+            }
+        }
+        parts.join(" UNION ALL ")
     }
 
     fn push_rel_prop_filters(
@@ -1855,6 +2207,9 @@ impl Compiler {
                     Some(Bind::Rel { alias: Some(al), tid, .. }) => {
                         return Ok(self.prop_sql_json(&al, tid, prop))
                     }
+                    Some(Bind::Rel { value: Some(j), .. }) => {
+                        return Ok(format!("(({j}) -> {})", sql_str(prop)))
+                    }
                     Some(Bind::Scalar { sql }) => {
                         return Ok(format!("(({sql}) -> {})", sql_str(prop)))
                     }
@@ -1910,8 +2265,9 @@ impl Compiler {
     fn var_value(&mut self, v: &str) -> CResult<String> {
         match self.binds.get(v).cloned() {
             Some(Bind::Node { alias, tid }) => Ok(self.node_json(&alias, tid)),
-            Some(Bind::Rel { alias, tid, id_expr }) => Ok(match (alias, tid) {
-                (Some(a), Some(t)) => self.rel_json(&a, t),
+            Some(Bind::Rel { alias, tid, id_expr, value }) => Ok(match (alias, tid, value) {
+                (_, _, Some(v)) => v,
+                (Some(a), Some(t), None) => self.rel_json(&a, t),
                 _ => format!("og_edge_json({id_expr})"),
             }),
             Some(Bind::Path { hops_expr }) => Ok(hops_expr),
@@ -2056,6 +2412,7 @@ impl Compiler {
                         let (sql, own) = self.prop_sql(&a, tid, p);
                         cast(sql, own)
                     }
+                    Some(Bind::Rel { value: Some(j), .. }) => cast(format!("({j} ->> {})", sql_str(p)), None),
                     Some(Bind::Rel { id_expr, .. }) => {
                         cast(format!("(og_edge_json({id_expr}) ->> {})", sql_str(p)), None)
                     }
@@ -3765,6 +4122,65 @@ fn is_umbrella(t: i32) -> bool {
     .ok()
     .flatten()
     .unwrap_or(false)
+}
+
+/// Does a node of type `t` have the type `want` (or one under it)?
+fn type_fits(t: Option<i32>, want: i32) -> bool {
+    t.is_some_and(|t| t == want || crate::catalog::labeling::og_is_subtype(t, want))
+}
+
+/// How a hop in direction `dir` from an end of type `ft` to one of type `tt`
+/// reads the virtual relationship `v`: from its source to its destination
+/// (`Some(true)`), from its destination (`Some(false)`), or not at all. An
+/// undirected hop takes the first way that fits, as `join_virtual_rel` does.
+fn virtual_orientation(
+    dir: &Dir,
+    ft: Option<i32>,
+    tt: Option<i32>,
+    v: &crate::fabric::VirtualRel,
+    fits: impl Fn(Option<i32>, i32) -> bool,
+) -> Option<bool> {
+    let forward = fits(ft, v.src_type) && fits(tt, v.dst_type);
+    let backward = fits(tt, v.src_type) && fits(ft, v.dst_type);
+    match dir {
+        Dir::Out => forward.then_some(true),
+        Dir::In => backward.then_some(false),
+        Dir::Both if forward => Some(true),
+        Dir::Both => backward.then_some(false),
+    }
+}
+
+/// A join of `from` taken apart: its joiner, the relation with its alias, and
+/// its `ON` — the shapes `bind_node` writes a node's join in.
+fn split_join(entry: &str) -> (&'static str, &str, &'static str) {
+    let (joiner, rest) = ["CROSS JOIN ", "LEFT JOIN "]
+        .iter()
+        .find_map(|j| entry.strip_prefix(j).map(|r| (*j, r)))
+        .unwrap_or(("", entry));
+    let (node, on) = [" ON true", " ON false"]
+        .iter()
+        .find_map(|o| rest.strip_suffix(o).map(|n| (n, *o)))
+        .unwrap_or((rest, ""));
+    (joiner, node, on)
+}
+
+/// A virtual relationship between the nodes `s` (its source) and `d`, as
+/// jsonb. It is no row anywhere: its identifier is derived from its type and
+/// its two ends, so the same pair always names the same relationship.
+fn virtual_rel_json(rtid: i32, rname: &str, s: &str, d: &str) -> String {
+    format!(
+        "jsonb_build_object('_id', {}, '_type', {}, '_src', {s}.id, '_dst', {d}.id)",
+        virtual_rel_id(rtid, s, d),
+        sql_str(rname),
+    )
+}
+
+/// The identifier of that relationship.
+fn virtual_rel_id(rtid: i32, s: &str, d: &str) -> String {
+    format!(
+        "og_make_id(0, {rtid}, hashtextextended({s}.id::text || ':' || {d}.id::text, 0) & {mask})",
+        mask = (1_i64 << 36) - 1,
+    )
 }
 
 /// A predicate that is always false but names both ends of a hop, so the
