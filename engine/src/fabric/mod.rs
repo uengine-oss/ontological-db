@@ -55,14 +55,202 @@ fn need(params: &Map<String, Value>, k: &str) -> String {
     param(params, k).unwrap_or_else(|| error!("datasource parameter '{k}' is required"))
 }
 
+/// A parameter whose value is a secret, under any of its usual names: never
+/// written to the catalog.
+fn is_secret_key(k: &str) -> bool {
+    let k = k.to_ascii_lowercase();
+    ["password", "passwd", "pwd", "secret", "token", "api_key", "apikey", "private_key"]
+        .iter()
+        .any(|s| k.contains(s))
+}
+
+/// What the catalog may keep of a datasource's parameters.
+fn shown_params(p: &Map<String, Value>) -> Map<String, Value> {
+    p.iter().filter(|(k, _)| !is_secret_key(k)).map(|(k, v)| (k.clone(), v.clone())).collect()
+}
+
+/// How a datasource logs in to its source.
+enum Login {
+    /// The password itself, in the user mapping — so in the catalog and the WAL, in clear.
+    Inline(String),
+    /// A file outside the database that the application keeping the secrets
+    /// writes (from an OS keychain, Vault …): the catalog holds only its path and
+    /// the reference (`PARAMETERS = {…, credentials: 'keychain:erp'}`).
+    File(String),
+}
+
+/// `ontological.fabric_credentials_dir`: where credential files are written, set
+/// by whoever starts the server (it is a placeholder setting, not a GUC this
+/// extension defines, so it needs no preloading).
+fn credentials_dir() -> String {
+    let dir = one::<String>("SELECT current_setting('ontological.fabric_credentials_dir', true)", &[])
+        .ok()
+        .flatten()
+        .unwrap_or_default();
+    let dir = dir.trim().trim_end_matches(|c| c == '/' || c == '\\').to_string();
+    if dir.is_empty() {
+        error!(
+            "a credentials reference needs ontological.fabric_credentials_dir: the directory where \
+             the application that keeps the secrets writes them for the connectors"
+        );
+    }
+    if !(dir.starts_with('/') || dir.as_bytes().get(1) == Some(&b':')) {
+        error!("ontological.fabric_credentials_dir must be an absolute path");
+    }
+    dir
+}
+
+/// The file the connector of `engine` reads the secret from: a libpq passfile, a
+/// MySQL option file, or the bare password (oracle_fdw / tds_fdw `password_file`).
+fn credentials_file(srv: &str, engine: &str) -> String {
+    let ext = match engine {
+        "postgres" | "postgresql" => "pgpass",
+        "mysql" | "mariadb" | "mindsdb" => "cnf",
+        _ => "pw",
+    };
+    format!("{}/{srv}.{ext}", credentials_dir())
+}
+
+/// The server option that names the credentials file, for engines that take it there.
+fn file_option(engine: &str) -> Option<&'static str> {
+    match engine {
+        "postgres" | "postgresql" => Some("passfile"),
+        "mysql" | "mariadb" | "mindsdb" => Some("mysql_default_file"),
+        _ => None,
+    }
+}
+
+fn record_login(shown: &mut Map<String, Value>, login: &Login) {
+    match login {
+        Login::File(f) => {
+            shown.insert("credentials_file".into(), Value::String(f.clone()));
+        }
+        Login::Inline(_) => {
+            shown.insert("credentials".into(), Value::String("inline".into()));
+            shown.remove("credentials_file");
+        }
+    }
+}
+
+/// The login a parameter block asks for.
+fn login_of(p: &Map<String, Value>, srv: &str, engine: &str) -> Option<Login> {
+    match (param(p, "credentials"), param(p, "password")) {
+        (Some(_), Some(_)) => error!("give either a password or a credentials reference, not both"),
+        (Some(r), None) if r == "inline" => error!("'inline' is not a credentials reference"),
+        (Some(_), None) => Some(Login::File(credentials_file(srv, engine))),
+        (None, Some(pw)) => Some(Login::Inline(pw)),
+        (None, None) => None,
+    }
+}
+
+/// The FDW, its server options and its user mapping options for one source.
+fn connection(engine: &str, p: &Map<String, Value>, login: &Login) -> (&'static str, String, String) {
+    let host = need(p, "host");
+    let user = need(p, "user");
+    match engine {
+        "postgres" | "postgresql" => {
+            let port = param(p, "port").unwrap_or_else(|| "5432".into());
+            let db = need(p, "database");
+            let mut server = format!(
+                "host {}, port {}, dbname {}, use_remote_estimate 'true', fetch_size '1000'",
+                lit(&host), lit(&port), lit(&db)
+            );
+            let mapping = match login {
+                Login::Inline(pw) => format!("user {}, password {}", lit(&user), lit(pw)),
+                // libpq reads the password from the passfile. A mapping without one needs
+                // password_required off, which only a superuser may set.
+                Login::File(f) => {
+                    server.push_str(&format!(", passfile {}", lit(f)));
+                    format!("user {}, password_required 'false'", lit(&user))
+                }
+            };
+            ("postgres_fdw", server, mapping)
+        }
+        "mysql" | "mariadb" | "mindsdb" => {
+            let port = param(p, "port")
+                .unwrap_or_else(|| if engine == "mindsdb" { "47335".into() } else { "3306".into() });
+            // the connection's character set; mysql_fdw's default ("auto") follows the server
+            // process locale, which is C here — Korean text would come back as '?'
+            let mut server = format!("host {}, port {}, character_set 'utf8mb4'", lit(&host), lit(&port));
+            let mapping = match login {
+                Login::Inline(pw) => format!("username {}, password {}", lit(&user), lit(pw)),
+                // mysql_fdw then takes host, port, user and password from the file's [client] group
+                Login::File(f) => {
+                    server.push_str(&format!(", mysql_default_file {}", lit(f)));
+                    String::new()
+                }
+            };
+            ("mysql_fdw", server, mapping)
+        }
+        // Oracle: an Easy Connect string. The schema is the owner, in Oracle's own case (usually upper).
+        "oracle" => {
+            let port = param(p, "port").unwrap_or_else(|| "1521".into());
+            let service = param(p, "service")
+                .or_else(|| param(p, "database"))
+                .unwrap_or_else(|| error!("datasource parameter 'service' is required"));
+            let mapping = match login {
+                Login::Inline(pw) => format!("user {}, password {}", lit(&user), lit(pw)),
+                Login::File(f) => format!("user {}, password_file {}", lit(&user), lit(f)),
+            };
+            ("oracle_fdw", format!("dbserver {}", lit(&format!("//{host}:{port}/{service}"))), mapping)
+        }
+        // SQL Server (and Azure SQL) over TDS 7.2. With 7.3+ the server sends DATE/TIME/DATETIME2 as
+        // native types that DB-Library turns into text like "Sep 30 2026 12:00:00:AM", which a
+        // PostgreSQL date column cannot read (FreeTDS' format comes from a compiled-in locales.conf
+        // path). Under 7.2 the server sends them as ISO strings. SQL Server 2005+ and Azure SQL speak 7.2.
+        "sqlserver" | "mssql" => {
+            let port = param(p, "port").unwrap_or_else(|| "1433".into());
+            let db = need(p, "database");
+            let mapping = match login {
+                Login::Inline(pw) => format!("username {}, password {}", lit(&user), lit(pw)),
+                Login::File(f) => format!("username {}, password_file {}", lit(&user), lit(f)),
+            };
+            (
+                "tds_fdw",
+                format!(
+                    // FreeTDS converts to ISO-8859-1 unless told otherwise
+                    "servername {}, port {}, database {}, tds_version '7.2', character_set 'UTF-8'",
+                    lit(&host), lit(&port), lit(&db)
+                ),
+                mapping,
+            )
+        }
+        other => error!(
+            "unsupported datasource engine '{other}': postgres, mysql, mariadb, mindsdb, oracle, sqlserver"
+        ),
+    }
+}
+
+fn create_mapping(name: &str, srv: &str, mapping_opts: &str) {
+    let opts = if mapping_opts.is_empty() { String::new() } else { format!(" OPTIONS ({mapping_opts})") };
+    Spi::run(&format!("CREATE USER MAPPING FOR PUBLIC SERVER {}{opts}", ident(srv)))
+        .unwrap_or_else(|e| error!("failed to create user mapping for '{name}': {e}"));
+}
+
+/// Close the connector's cached connections, so the next query logs in again.
+fn disconnect(engine: &str) {
+    let f = match engine {
+        "postgres" | "postgresql" => "postgres_fdw_disconnect_all()",
+        "oracle" => "oracle_close_connections()",
+        _ => return,
+    };
+    let exists = one::<bool>("SELECT to_regprocedure($1) IS NOT NULL", &[f.into()]).ok().flatten().unwrap_or(false);
+    if exists {
+        Spi::run(&format!("SELECT {f}")).ok();
+    }
+}
+
 /// Register an external database. `engine` is `postgres`, `mysql` (or `mariadb`),
 /// `mindsdb` (MindsDB's MySQL wire endpoint, so that MindsDB itself can be the
 /// thing a virtual type points at), `oracle` (oracle_fdw + Oracle Instant Client)
 /// or `sqlserver` (tds_fdw + FreeTDS).
 ///
-/// `params`: `host`, `port`, `user`, `password`, and per engine `database` +
-/// `schema` (postgres, sqlserver), `database` (mysql), `service` + `schema` (oracle).
-/// The password goes into a user mapping and nowhere else.
+/// `params`: `host`, `port`, `user`, and per engine `database` + `schema`
+/// (postgres, sqlserver), `database` (mysql), `service` + `schema` (oracle); then
+/// either `password` — which goes into a user mapping, in clear — or
+/// `credentials`, a reference to a secret the application keeps (`keychain:erp`,
+/// `vault:kv/ontological/erp#password`): the connector then reads it from a file
+/// under `ontological.fabric_credentials_dir`, and the database never holds it.
 #[pg_extern]
 fn og_create_datasource(name: &str, engine: &str, params: JsonB) -> String {
     let Value::Object(p) = params.0 else { error!("params must be a JSON object") };
@@ -75,67 +263,8 @@ fn og_create_datasource(name: &str, engine: &str, params: JsonB) -> String {
     }
     let srv = server_name(name);
     let engine = engine.to_ascii_lowercase();
-    let host = need(&p, "host");
-    let user = need(&p, "user");
-    let password = param(&p, "password").unwrap_or_default();
-
-    let (fdw, server_opts, mapping_opts) = match engine.as_str() {
-        "postgres" | "postgresql" => {
-            let port = param(&p, "port").unwrap_or_else(|| "5432".into());
-            let db = need(&p, "database");
-            (
-                "postgres_fdw",
-                format!(
-                    "host {}, port {}, dbname {}, use_remote_estimate 'true', fetch_size '1000'",
-                    lit(&host), lit(&port), lit(&db)
-                ),
-                format!("user {}, password {}", lit(&user), lit(&password)),
-            )
-        }
-        "mysql" | "mariadb" | "mindsdb" => {
-            let port = param(&p, "port")
-                .unwrap_or_else(|| if engine == "mindsdb" { "47335".into() } else { "3306".into() });
-            (
-                "mysql_fdw",
-                // the connection's character set; mysql_fdw's default ("auto") follows the server
-                // process locale, which is C here — Korean text would come back as '?'
-                format!("host {}, port {}, character_set 'utf8mb4'", lit(&host), lit(&port)),
-                format!("username {}, password {}", lit(&user), lit(&password)),
-            )
-        }
-        // Oracle: an Easy Connect string. The schema is the owner, in Oracle's own case (usually upper).
-        "oracle" => {
-            let port = param(&p, "port").unwrap_or_else(|| "1521".into());
-            let service = param(&p, "service")
-                .or_else(|| param(&p, "database"))
-                .unwrap_or_else(|| error!("datasource parameter 'service' is required"));
-            (
-                "oracle_fdw",
-                format!("dbserver {}", lit(&format!("//{host}:{port}/{service}"))),
-                format!("user {}, password {}", lit(&user), lit(&password)),
-            )
-        }
-        // SQL Server (and Azure SQL) over TDS 7.2. With 7.3+ the server sends DATE/TIME/DATETIME2 as
-        // native types that DB-Library turns into text like "Sep 30 2026 12:00:00:AM", which a
-        // PostgreSQL date column cannot read (FreeTDS' format comes from a compiled-in locales.conf
-        // path). Under 7.2 the server sends them as ISO strings. SQL Server 2005+ and Azure SQL speak 7.2.
-        "sqlserver" | "mssql" => {
-            let port = param(&p, "port").unwrap_or_else(|| "1433".into());
-            let db = need(&p, "database");
-            (
-                "tds_fdw",
-                format!(
-                    // FreeTDS converts to ISO-8859-1 unless told otherwise
-                    "servername {}, port {}, database {}, tds_version '7.2', character_set 'UTF-8'",
-                    lit(&host), lit(&port), lit(&db)
-                ),
-                format!("username {}, password {}", lit(&user), lit(&password)),
-            )
-        }
-        other => error!(
-            "unsupported datasource engine '{other}': postgres, mysql, mariadb, mindsdb, oracle, sqlserver"
-        ),
-    };
+    let login = login_of(&p, &srv, &engine).unwrap_or(Login::Inline(String::new()));
+    let (fdw, server_opts, mapping_opts) = connection(&engine, &p, &login);
 
     Spi::run(&format!("CREATE EXTENSION IF NOT EXISTS {fdw}"))
         .unwrap_or_else(|e| error!("{fdw} is not available: {e}"));
@@ -145,14 +274,10 @@ fn og_create_datasource(name: &str, engine: &str, params: JsonB) -> String {
         ident(&srv)
     ))
     .unwrap_or_else(|e| error!("failed to create server for '{name}': {e}"));
-    Spi::run(&format!(
-        "CREATE USER MAPPING FOR PUBLIC SERVER {} OPTIONS ({mapping_opts})",
-        ident(&srv)
-    ))
-    .unwrap_or_else(|e| error!("failed to create user mapping for '{name}': {e}"));
+    create_mapping(name, &srv, &mapping_opts);
 
-    let mut shown = p.clone();
-    shown.remove("password");
+    let mut shown = shown_params(&p);
+    record_login(&mut shown, &login);
     Spi::run_with_args(
         "INSERT INTO og_catalog.datasource (name, engine, server_name, options)
          VALUES ($1, $2, $3, $4)
@@ -200,6 +325,66 @@ fn og_create_datasource(name: &str, engine: &str, params: JsonB) -> String {
         Some(n) => format!("datasource {name} ({engine}): {n} tables as {name}.*"),
         None => format!("datasource {name} ({engine}): no schema named, import tables with og_import_foreign"),
     }
+}
+
+/// Change how a datasource logs in, without touching what it backs: the server
+/// and its foreign tables stay, so virtual nodes over them keep working. Takes
+/// `user` and either `password` or `credentials` (see `og_create_datasource`).
+#[pg_extern]
+fn og_alter_datasource_credentials(name: &str, params: JsonB) -> String {
+    let Value::Object(np) = params.0 else { error!("credentials must be a JSON object") };
+    let (srv, engine, opts) = Spi::connect(|c| {
+        c.select("SELECT server_name, engine, options FROM og_catalog.datasource WHERE name = $1", Some(1), &[name.into()])
+            .ok()?
+            .next()
+            .and_then(|r| Some((r.get::<String>(1).ok()??, r.get::<String>(2).ok()??, r.get::<JsonB>(3).ok()??)))
+    })
+    .unwrap_or_else(|| error!("datasource '{name}' is not registered"));
+    let engine = engine.to_ascii_lowercase();
+    let Value::Object(mut p) = opts.0 else { error!("datasource options are not an object") };
+    if let Some(u) = param(&np, "user") {
+        p.insert("user".into(), Value::String(u));
+    }
+    let login = login_of(&np, &srv, &engine)
+        .unwrap_or_else(|| error!("SET CREDENTIALS needs a password or a credentials reference"));
+    if let Some(r) = param(&np, "credentials") {
+        p.insert("credentials".into(), Value::String(r));
+    }
+    let (_, _, mapping_opts) = connection(&engine, &p, &login);
+
+    if let Some(key) = file_option(&engine) {
+        let has = one::<bool>(
+            "SELECT EXISTS (SELECT 1 FROM pg_foreign_server s, unnest(s.srvoptions) o
+                             WHERE s.srvname = $1 AND o LIKE $2)",
+            &[srv.as_str().into(), format!("{key}=%").as_str().into()],
+        )
+        .ok()
+        .flatten()
+        .unwrap_or(false);
+        let change = match (&login, has) {
+            (Login::File(f), true) => Some(format!("SET {key} {}", lit(f))),
+            (Login::File(f), false) => Some(format!("ADD {key} {}", lit(f))),
+            (Login::Inline(_), true) => Some(format!("DROP {key}")),
+            (Login::Inline(_), false) => None,
+        };
+        if let Some(c) = change {
+            Spi::run(&format!("ALTER SERVER {} OPTIONS ({c})", ident(&srv)))
+                .unwrap_or_else(|e| error!("failed to change the credentials of '{name}': {e}"));
+        }
+    }
+    Spi::run(&format!("DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER {}", ident(&srv))).ok();
+    create_mapping(name, &srv, &mapping_opts);
+
+    let mut shown = shown_params(&p);
+    record_login(&mut shown, &login);
+    Spi::run_with_args(
+        "UPDATE og_catalog.datasource SET options = $2 WHERE name = $1",
+        &[name.into(), JsonB(Value::Object(shown.clone())).into()],
+    )
+    .expect("datasource update failed");
+    disconnect(&engine);
+    let how = shown.get("credentials").and_then(Value::as_str).unwrap_or("inline").to_string();
+    format!("datasource {name}: credentials now {how}; its tables and virtual nodes are unchanged")
 }
 
 /// Give every foreign table of a server the trigger that refuses writes, where

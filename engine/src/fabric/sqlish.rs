@@ -15,7 +15,8 @@
 //! ```text
 //! CREATE DATASOURCE erp WITH ENGINE = 'postgres', PARAMETERS = {"host": …, "schema": "erp"}
 //! DROP DATASOURCE erp            REFRESH DATASOURCE erp
-//! SHOW DATASOURCES               SHOW TABLES FROM erp
+//! ALTER DATASOURCE erp SET CREDENTIALS = {user: 'erp_ro', credentials: 'keychain:erp'}
+//! SHOW DATASOURCES               SHOW CREDENTIALS               SHOW TABLES FROM erp
 //! SHOW COLUMNS FROM erp.item
 //! CREATE GRAPH scm               SHOW GRAPHS              USE GRAPH scm
 //! CREATE VIRTUAL NODE Item FROM erp.item KEY item_id [PROPERTIES (name, safety_stock AS safety)]
@@ -355,7 +356,8 @@ pub fn is_statement(stmt: &str) -> bool {
                 || (w1 == "DATABASE" && s.to_ascii_uppercase().split_whitespace().any(|x| x.starts_with("ENGINE")))
         }
         "DROP" => matches!(w1, "DATASOURCE" | "VIRTUAL"),
-        "SHOW" => matches!(w1, "DATASOURCES" | "TABLES" | "COLUMNS" | "VIRTUAL" | "GRAPHS"),
+        "ALTER" => w1 == "DATASOURCE",
+        "SHOW" => matches!(w1, "DATASOURCES" | "CREDENTIALS" | "TABLES" | "COLUMNS" | "VIRTUAL" | "GRAPHS"),
         "REFRESH" => w1 == "DATASOURCE",
         "MATERIALIZE" => true,
         "EXPLAIN" => w1 == "FABRIC",
@@ -375,7 +377,8 @@ pub fn columns(stmt: &str) -> Vec<String> {
     let w: Vec<&str> = w.iter().map(String::as_str).collect();
     let cols: &[&str] = match w.as_slice() {
         ["SHOW", "GRAPHS", ..] => &["graph", "types"],
-        ["SHOW", "DATASOURCES", ..] => &["name", "engine", "host", "tables"],
+        ["SHOW", "DATASOURCES", ..] => &["name", "engine", "host", "tables", "credentials"],
+        ["SHOW", "CREDENTIALS", ..] => &["name", "engine", "credentials", "user", "host", "port", "database", "file"],
         ["SHOW", "TABLES", ..] => &["table", "columns", "virtual_node"],
         ["SHOW", "COLUMNS", ..] => &["column", "type", "nullable", "key"],
         ["SHOW", "VIRTUAL", "NODES"] => &["node", "source", "key", "properties", "storage"],
@@ -461,12 +464,19 @@ fn split_as_query(s: &str) -> Option<(&str, &str)> {
 }
 
 fn translate(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) -> R<String> {
+    translate_args(stmt, graph, params).map(|(sql, _)| sql)
+}
+
+/// The SQL, and the text values its `$1 …` stand for. A datasource's parameters
+/// travel as such a value rather than inside the SQL text: SQL text is what a
+/// server log quotes when a statement fails, and they may hold a password.
+fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) -> R<(String, Vec<String>)> {
     let s = trim_statement(stmt);
     if s.is_empty() {
         return Err("empty statement".into());
     }
     if is_cypher(s) {
-        return cypher_sql(&default_graph(graph)?, s);
+        return Ok((cypher_sql(&default_graph(graph)?, s)?, vec![]));
     }
     if let Some((head, query)) = split_as_query(s) {
         // CREATE VIRTUAL NODE <Type> [IN g] KEY <col> AS <query>
@@ -476,24 +486,28 @@ fn translate(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) -> R<
         p.expect_kw("KEY")?;
         let key = p.word("the key column")?;
         p.end()?;
-        return Ok(format!(
-            "SELECT og_create_view_node({}, {}, {}, {}) AS result",
-            lit(&g), lit(&ty), lit(&key), dq(query)
+        return Ok((
+            format!("SELECT og_create_view_node({}, {}, {}, {}) AS result", lit(&g), lit(&ty), lit(&key), dq(query)),
+            vec![],
         ));
     }
     let head = first_words(s, 2);
     if head == ["EXPLAIN", "FABRIC"] {
         let at = s.to_ascii_uppercase().find("FABRIC").unwrap() + 6;
         let q = s[at..].trim();
-        return Ok(format!(
-            "SELECT step, place, operation, rows, detail FROM og_fabric_explain({}, {}, true, {}::jsonb)",
-            lit(&default_graph(graph)?),
-            dq(q),
-            lit(&Value::Object(params.clone()).to_string())
+        return Ok((
+            format!(
+                "SELECT step, place, operation, rows, detail FROM og_fabric_explain({}, {}, true, {}::jsonb)",
+                lit(&default_graph(graph)?),
+                dq(q),
+                lit(&Value::Object(params.clone()).to_string())
+            ),
+            vec![],
         ));
     }
 
     let mut p = P { t: tokenize(s)?, i: 0, graph, params };
+    let mut args: Vec<String> = Vec::new();
     let sql = if p.kw("CREATE") {
         if p.kw("GRAPH") {
             let name = p.word("a graph name")?;
@@ -523,10 +537,8 @@ fn translate(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) -> R<
                 _ => return Err(format!("expected PARAMETERS = {{ … }}{}", p.near())),
             };
             p.i += 1;
-            format!(
-                "SELECT og_create_datasource({}, {}, {}::jsonb) AS result",
-                lit(&name), lit(&engine), lit(&json)
-            )
+            args.push(json);
+            format!("SELECT og_create_datasource({}, {}, $1::jsonb) AS result", lit(&name), lit(&engine))
         } else if p.kw("VIRTUAL") {
             if p.kw("NODE") {
                 let ty = p.word("a node type name")?;
@@ -597,6 +609,19 @@ fn translate(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) -> R<
         } else {
             return Err("not a fabric statement".into());
         }
+    } else if p.kw("ALTER") {
+        p.expect_kw("DATASOURCE")?;
+        let name = p.word("a datasource name")?;
+        p.expect_kw("SET")?;
+        p.expect_kw("CREDENTIALS")?;
+        p.sym('=');
+        let json = match p.t.get(p.i) {
+            Some(Tok::Json(j)) => resolve_block(j, p.params)?,
+            _ => return Err(format!("expected CREDENTIALS = {{ … }}{}", p.near())),
+        };
+        p.i += 1;
+        args.push(json);
+        format!("SELECT og_alter_datasource_credentials({}, $1::jsonb) AS result", lit(&name))
     } else if p.kw("REFRESH") {
         p.expect_kw("DATASOURCE")?;
         let name = p.word("a datasource name")?;
@@ -621,9 +646,23 @@ fn translate(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) -> R<
                FROM og_catalog.graph g ORDER BY 1"
                 .to_string()
         } else if p.kw("DATASOURCES") {
+            // `credentials`: the reference the password comes from, or `inline` when the
+            // user mapping holds it (every datasource made before references existed)
             "SELECT d.name, d.engine, d.options->>'host' AS host, \
                     (SELECT count(*) FROM pg_foreign_table ft JOIN pg_foreign_server s ON s.oid = ft.ftserver \
-                      WHERE s.srvname = d.server_name) AS tables \
+                      WHERE s.srvname = d.server_name) AS tables, \
+                    coalesce(d.options->>'credentials', 'inline') AS credentials \
+               FROM og_catalog.datasource d ORDER BY d.name"
+                .to_string()
+        } else if p.kw("CREDENTIALS") {
+            // What the application that keeps the secrets must write, and where: never a secret.
+            "SELECT d.name, d.engine, coalesce(d.options->>'credentials', 'inline') AS credentials, \
+                    d.options->>'user' AS \"user\", d.options->>'host' AS host, \
+                    coalesce(d.options->>'port', CASE WHEN d.engine IN ('postgres', 'postgresql') THEN '5432' \
+                        WHEN d.engine IN ('mysql', 'mariadb') THEN '3306' WHEN d.engine = 'mindsdb' THEN '47335' \
+                        WHEN d.engine = 'oracle' THEN '1521' ELSE '1433' END) AS port, \
+                    coalesce(d.options->>'database', d.options->>'service') AS database, \
+                    d.options->>'credentials_file' AS file \
                FROM og_catalog.datasource d ORDER BY d.name"
                 .to_string()
         } else if p.kw("TABLES") {
@@ -718,7 +757,7 @@ fn translate(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) -> R<
         return Err("not a fabric statement".into());
     };
     p.end()?;
-    Ok(sql)
+    Ok((sql, args))
 }
 
 /// `Type(property)`.
@@ -770,16 +809,17 @@ pub fn run(statement: &str, graph: Option<&str>, params: &Map<String, Value>) ->
         )
         .ok();
     };
-    let sql = match translate(statement, graph, params) {
-        Ok(sql) => sql,
+    let (sql, args) = match translate_args(statement, graph, params) {
+        Ok(x) => x,
         Err(e) => {
             audit(0, Some(&e));
             error!("fabric statement: {e}")
         }
     };
+    let args: Vec<pgrx::datum::DatumWithOid> = args.iter().map(|a| a.as_str().into()).collect();
     let rows: Vec<Value> = Spi::connect_mut(|client| {
         client
-            .update(&format!("SELECT to_jsonb(t) FROM ({sql}) t"), None, &[])
+            .update(&format!("SELECT to_jsonb(t) FROM ({sql}) t"), None, &args)
             .unwrap_or_else(|e| error!("{e}"))
             .filter_map(|r| r.get::<JsonB>(1).ok().flatten().map(|j| j.0))
             .collect()
@@ -792,10 +832,9 @@ pub fn run(statement: &str, graph: Option<&str>, params: &Map<String, Value>) ->
 /// parameters are left out of it.
 pub fn shown_sql(statement: &str, graph: &str) -> R<String> {
     if first_words(trim_statement(statement), 2).get(1).map(String::as_str) == Some("DATASOURCE")
-        && first_words(statement, 1).first().map(String::as_str) == Some("CREATE")
+        && matches!(first_words(trim_statement(statement), 1).first().map(String::as_str), Some("CREATE" | "ALTER"))
     {
-        return Ok("-- CREATE DATASOURCE runs og_create_datasource(name, engine, parameters); \
-                   the parameters are not shown"
+        return Ok("-- a datasource's parameters (and so its credentials) are not shown"
             .to_string());
     }
     translate(statement, Some(graph), &Map::new())

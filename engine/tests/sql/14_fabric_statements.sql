@@ -70,7 +70,7 @@ BEGIN
     -- both call og_cypher — with the caller's graph and its parameters.
     SELECT count(*) INTO n FROM og_cypher('fab', 'SHOW VIRTUAL NODES');
     IF n <> 2 THEN RAISE EXCEPTION 'SHOW VIRTUAL NODES through og_cypher: expected 2, got %', n; END IF;
-    IF og_cypher_columns('SHOW DATASOURCES') <> ARRAY['name','engine','host','tables'] THEN
+    IF og_cypher_columns('SHOW DATASOURCES') <> ARRAY['name','engine','host','tables','credentials'] THEN
         RAISE EXCEPTION 'column order of a fabric statement: %', og_cypher_columns('SHOW DATASOURCES');
     END IF;
     IF (og_cypher_check('SHOW DATASOURCES')->>'write')::bool OR NOT (og_cypher_check('DROP DATASOURCE x')->>'write')::bool THEN
