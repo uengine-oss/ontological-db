@@ -1,0 +1,6 @@
+{
+ "change_id": "RequirementChange-1",
+ "node_id": "CreationIntent-1",
+ "reason": "compat-reason",
+ "impact_level": "compat-impactLevel"
+}

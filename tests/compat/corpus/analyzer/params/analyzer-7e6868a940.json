@@ -1,0 +1,15 @@
+{
+ "owner": {
+  "$ref": "prop",
+  "label": "COLUMN",
+  "prop": "_owner",
+  "nth": 0
+ },
+ "schema": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "schema",
+  "nth": 0
+ },
+ "limit": 10
+}

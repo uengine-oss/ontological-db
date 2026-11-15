@@ -1,0 +1,10 @@
+{
+ "status": {
+  "$ref": "prop",
+  "label": "Proposal",
+  "prop": "status",
+  "nth": 0
+ },
+ "offset": 0,
+ "limit": 10
+}

@@ -1,0 +1,6 @@
+{
+ "user": {
+  "$env": "COMPAT_PGUSER"
+ },
+ "password": ""
+}

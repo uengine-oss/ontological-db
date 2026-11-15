@@ -1,0 +1,10 @@
+{
+ "id": "compat-new-DocumentPassage",
+ "sid": "compat-session_id",
+ "heading": "compat-heading",
+ "text": "compat-text",
+ "page": "compat-page",
+ "cs": "compat-char_start",
+ "ce": "compat-char_end",
+ "method": "compat-chunk_method"
+}

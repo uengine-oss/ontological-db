@@ -1,0 +1,21 @@
+{
+ "sid": {
+  "$ref": "prop",
+  "label": "ActivityMapping",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "tid": {
+  "$ref": "prop",
+  "label": "ActivityMapping",
+  "prop": "task_id",
+  "nth": 0
+ },
+ "rid": {
+  "$ref": "prop",
+  "label": "ActivityMapping",
+  "prop": "rule_id",
+  "nth": 0
+ },
+ "role": "compat-evidence_role"
+}

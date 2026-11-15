@@ -1,0 +1,1 @@
+MATCH (t:BpmTask {session_id: $sid}) OPTIONAL MATCH (t)-[:NEXT]->(n:BpmTask {session_id: $sid}) OPTIONAL MATCH (a:BpmActor {session_id: $sid})-[:PERFORMS]->(t) RETURN t.id AS tid, t.name AS name, t.sequence_index AS seq,        collect(DISTINCT n.id) AS next_ids,        collect(DISTINCT a.name) AS actors

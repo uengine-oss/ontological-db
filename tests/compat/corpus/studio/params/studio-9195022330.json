@@ -1,0 +1,8 @@
+{
+ "document_id": "compat-document_id",
+ "document_name": "compat-name",
+ "source_path": "compat-source_path",
+ "document_sha256": "compat-document_sha256",
+ "page_count": 7,
+ "ocr_engine": "compat-ocr_engine"
+}

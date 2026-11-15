@@ -1,0 +1,8 @@
+{
+ "key": {
+  "$ref": "prop",
+  "label": "UI",
+  "prop": "key",
+  "nth": 0
+ }
+}

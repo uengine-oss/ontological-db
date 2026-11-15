@@ -1,0 +1,1 @@
+MATCH (n:_Entity:Customer) WITH DISTINCT n.grade AS v WHERE v IS NOT NULL RETURN v ORDER BY v

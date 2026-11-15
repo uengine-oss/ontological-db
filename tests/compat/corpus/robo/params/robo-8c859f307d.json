@@ -1,0 +1,12 @@
+{
+ "rows": [
+  {
+   "target_id": "Command-1",
+   "ui_id": "UI-1"
+  },
+  {
+   "target_id": "Command-2",
+   "ui_id": "UI-2"
+  }
+ ]
+}

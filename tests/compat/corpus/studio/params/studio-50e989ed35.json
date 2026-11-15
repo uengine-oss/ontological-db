@@ -1,0 +1,56 @@
+{
+ "document_id": {
+  "$ref": "prop",
+  "label": "Document",
+  "prop": "document_id",
+  "nth": 0
+ },
+ "chunks": [
+  {
+   "char_count": 7,
+   "chunk_id": "compat-chunk_id",
+   "chunk_index": "compat-chunk_index-1",
+   "chunk_ref": "compat-chunk_ref-1",
+   "document_id": "compat-document_id-1",
+   "document_name": "compat-document_name-1",
+   "embedding": [
+    0.0,
+    0.5,
+    1.0,
+    0.4,
+    0.9,
+    0.3,
+    0.8,
+    0.2
+   ],
+   "page_sha256": "compat-page_sha256-1",
+   "page_text_hash": "compat-page_text_hash-1",
+   "source_page": "compat-source_page-1",
+   "source_text": "compat-source_text-1",
+   "text_hash": "compat-text_hash-1"
+  },
+  {
+   "char_count": 7,
+   "chunk_id": "compat-chunk_id",
+   "chunk_index": "compat-chunk_index-2",
+   "chunk_ref": "compat-chunk_ref-2",
+   "document_id": "compat-document_id-2",
+   "document_name": "compat-document_name-2",
+   "embedding": [
+    0.0,
+    0.5,
+    1.0,
+    0.4,
+    0.9,
+    0.3,
+    0.8,
+    0.2
+   ],
+   "page_sha256": "compat-page_sha256-2",
+   "page_text_hash": "compat-page_text_hash-2",
+   "source_page": "compat-source_page-2",
+   "source_text": "compat-source_text-2",
+   "text_hash": "compat-text_hash-2"
+  }
+ ]
+}

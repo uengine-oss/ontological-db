@@ -1,0 +1,17 @@
+{
+ "id": "compat-new-Rule",
+ "sid": "compat-session_id",
+ "given": "compat-given",
+ "when": "compat-when",
+ "then": "compat-then",
+ "sf": "compat-source_function",
+ "sc": "compat-source_container",
+ "conf": 0.9,
+ "sfid": "compat-source_function_id",
+ "srid": "compat-source_rule_id",
+ "title": "compat-title",
+ "writes": "compat-write_effects_json",
+ "ctx": "compat-context_cluster",
+ "es_role": "compat-es_role",
+ "es_role_conf": "compat-es_role_confidence"
+}

@@ -1,0 +1,8 @@
+{
+ "parent_id": "Command-1",
+ "given_ref_json": "compat-givenRef",
+ "when_ref_json": "compat-whenRef",
+ "then_ref_json": "compat-thenRef",
+ "test_cases_json": "compat-testCases",
+ "parent_type": "Command"
+}

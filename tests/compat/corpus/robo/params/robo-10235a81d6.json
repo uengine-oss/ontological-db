@@ -1,0 +1,10 @@
+{
+ "bc_id": "BoundedContext-1",
+ "key": "compat-new-Aggregate",
+ "name": "compat-name",
+ "display_name": "compat-displayName",
+ "root_entity": "compat-rootEntity",
+ "invariants": "compat-invariants",
+ "enumerations_json": "compat-enumerations",
+ "value_objects_json": "compat-valueObjects"
+}

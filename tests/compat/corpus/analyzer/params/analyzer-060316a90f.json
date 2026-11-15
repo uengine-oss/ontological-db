@@ -1,0 +1,22 @@
+{
+ "analyzer_owner": {
+  "$ref": "prop",
+  "label": "PROCEDURE",
+  "prop": "_owner",
+  "nth": 0
+ },
+ "proc_name": {
+  "$ref": "prop",
+  "label": "PROCEDURE",
+  "prop": "name",
+  "nth": 0
+ },
+ "table_name": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "name",
+  "nth": 0
+ },
+ "catalog_owner": "compat-catalog_owner",
+ "operation_type": "compat-operation_type"
+}

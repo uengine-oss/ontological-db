@@ -1,0 +1,8 @@
+{
+ "name": "compat-name",
+ "displayName": "compat-displayName",
+ "sequence": 7,
+ "actor": "compat-actor",
+ "attachedToId": "compat-attachedToId",
+ "attachedToType": "compat-attachedToType"
+}

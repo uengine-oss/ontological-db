@@ -1,0 +1,7 @@
+{
+ "operation_id": "CQRSOperation-1",
+ "target_property_id": "Property-1",
+ "source_event_field_id": "Property-1",
+ "where_id": "compat-new-CQRSWhere",
+ "operator": "compat-operator"
+}

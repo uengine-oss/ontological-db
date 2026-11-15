@@ -1,0 +1,21 @@
+{
+ "journey_id": "00000000-0000-5000-8000-000000000001",
+ "steps": [
+  {
+   "id": "compat-id-1",
+   "key": "compat-new-JourneyStep-1",
+   "kind": "compat-kind-1",
+   "label": "compat-label-1",
+   "sequence": 7
+  },
+  {
+   "id": "compat-id-2",
+   "key": "compat-new-JourneyStep-2",
+   "kind": "compat-kind-2",
+   "label": "compat-label-2",
+   "sequence": 7
+  }
+ ],
+ "journey_slug": "compat-journeyId",
+ "source": "compat-source"
+}

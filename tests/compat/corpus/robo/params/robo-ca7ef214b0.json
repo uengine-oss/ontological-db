@@ -1,0 +1,8 @@
+{
+ "sid": {
+  "$ref": "prop",
+  "label": "GlossaryTerm",
+  "prop": "session_id",
+  "nth": 0
+ }
+}

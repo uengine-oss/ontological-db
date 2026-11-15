@@ -1,0 +1,6 @@
+{
+ "id": "Proposal-1",
+ "projectRoot": "compat-projectRoot",
+ "branch": "compat-sandboxBranch",
+ "path": "compat-sandboxWorktreePath"
+}

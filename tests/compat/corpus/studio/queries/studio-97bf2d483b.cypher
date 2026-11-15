@@ -1,0 +1,1 @@
+DROP CONSTRAINT customer_customer_id_key IF EXISTS

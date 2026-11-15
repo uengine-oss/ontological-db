@@ -1,0 +1,20 @@
+{
+ "items": [
+  {
+   "callee_module": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 0
+   },
+   "callee_package": "compat-new-PACKAGE-1"
+  },
+  {
+   "callee_module": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 1
+   },
+   "callee_package": "compat-new-PACKAGE-2"
+  }
+ ]
+}

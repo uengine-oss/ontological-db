@@ -1,0 +1,6 @@
+{
+ "id": "Proposal-1",
+ "plan": "compat-stagePlan",
+ "draftArts": "compat-stageDraftArtifacts",
+ "cur": "compat-currentStage"
+}

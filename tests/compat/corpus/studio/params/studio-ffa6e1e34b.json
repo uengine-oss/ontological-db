@@ -1,0 +1,20 @@
+{
+ "schema_id": "schema-1",
+ "class_name": "Customer",
+ "behavior_name": "compat-behavior_name",
+ "behavior_type": "compat-behavior_type",
+ "description": "compat-description",
+ "parameters": "compat-parameters",
+ "key_property": "compat-key_property",
+ "system": "compat-system",
+ "operation_id": "compat-operation_id",
+ "arg_mapping": "compat-arg_mapping",
+ "effect": "compat-effect",
+ "confirm_threshold": "compat-confirm_threshold",
+ "max_targets": "compat-max_targets",
+ "policy": "compat-policy",
+ "compensate": "compat-compensate",
+ "writeback_property": "compat-writeback_property",
+ "version": 7,
+ "steps": "compat-steps"
+}

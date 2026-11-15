@@ -1,0 +1,11 @@
+{
+ "cs_id": "CS-001",
+ "from_status": {
+  "$ref": "prop",
+  "label": "RequirementChange",
+  "prop": "status",
+  "nth": 0
+ },
+ "to_status": "compat-status",
+ "actor": "compat-actor"
+}

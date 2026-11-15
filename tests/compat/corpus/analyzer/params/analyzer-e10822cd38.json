@@ -1,0 +1,12 @@
+{
+ "items": [
+  {
+   "child_id": "COLUMN-1",
+   "parent_id": "TABLE-1"
+  },
+  {
+   "child_id": "COLUMN-2",
+   "parent_id": "TABLE-2"
+  }
+ ]
+}

@@ -1,0 +1,22 @@
+{
+ "rows": [
+  {
+   "bc_id": "BoundedContext-1",
+   "description": "compat-description-1",
+   "display_name": "compat-display_name-1",
+   "invoke_command_id": "Command-1",
+   "key": "compat-new-Policy-1",
+   "name": "compat-name-1",
+   "trigger_event_id": "Event-1"
+  },
+  {
+   "bc_id": "BoundedContext-2",
+   "description": "compat-description-2",
+   "display_name": "compat-display_name-2",
+   "invoke_command_id": "Command-2",
+   "key": "compat-new-Policy-2",
+   "name": "compat-name-2",
+   "trigger_event_id": "Event-2"
+  }
+ ]
+}

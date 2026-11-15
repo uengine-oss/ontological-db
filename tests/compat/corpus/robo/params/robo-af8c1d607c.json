@@ -1,0 +1,8 @@
+{
+ "name": {
+  "$ref": "prop",
+  "label": "Event",
+  "prop": "name",
+  "nth": 0
+ }
+}

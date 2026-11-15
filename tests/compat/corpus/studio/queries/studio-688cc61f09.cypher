@@ -1,0 +1,1 @@
+MATCH (n:_Entity) WHERE n._source_id IN $keys OPTIONAL MATCH (n)-[r]-(m:_Entity) RETURN elementId(n) AS nid, n.name AS nname, labels(n) AS nlabels, n._source_id AS nkey, elementId(r) AS rid, type(r) AS rtype, elementId(startNode(r)) AS rs, elementId(endNode(r)) AS re, r._confidence AS rconf, elementId(m) AS mid, m.name AS mname, labels(m) AS mlabels LIMIT 50

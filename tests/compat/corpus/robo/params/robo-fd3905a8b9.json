@@ -1,0 +1,9 @@
+{
+ "bc_id": "BoundedContext-1",
+ "journey_key": "compat-new-Journey",
+ "journey_id": "compat-id",
+ "journey_slug": "compat-journeyId",
+ "name": "compat-name",
+ "description": "compat-description",
+ "source": "compat-source"
+}

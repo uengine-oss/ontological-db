@@ -1,0 +1,14 @@
+{
+ "target_node_ids": [
+  {
+   "$ref": "elementId",
+   "label": "*",
+   "nth": 0
+  },
+  {
+   "$ref": "elementId",
+   "label": "*",
+   "nth": 1
+  }
+ ]
+}

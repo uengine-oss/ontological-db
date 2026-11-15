@@ -1,0 +1,9 @@
+{
+ "id": {
+  "$ref": "anyprop",
+  "prop": "id",
+  "nth": 0
+ },
+ "name": "compat-name",
+ "description": "compat-description"
+}

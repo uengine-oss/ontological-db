@@ -1,0 +1,1 @@
+UNWIND $terms AS t MATCH (n:_Entity:`Customer`) WHERE toLower(toString(n.`name`)) CONTAINS toLower(t) OR toLower(toString(n.`email`)) CONTAINS toLower(t) WITH n, count(DISTINCT t) AS hits RETURN n, elementId(n) AS _element_id, hits ORDER BY hits DESC LIMIT $limit

@@ -1,0 +1,1 @@
+MATCH (m:_OntologyModel)-[:HAS_CLASS]->(c:_OntologyClass {class_name: $class_name})-[:HAS_BEHAVIOR]->(h:_OntologyBehavior) WHERE $schema_name IS NULL OR m.name = $schema_name RETURN h.behavior_name AS name, h.description AS description,        h.behavior_type AS behavior_type, h.parameters AS parameters,        h.certified AS certified

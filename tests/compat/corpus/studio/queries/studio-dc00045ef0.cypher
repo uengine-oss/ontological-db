@@ -1,0 +1,1 @@
+MATCH (m:_OntologyModel {schema_id: $schema_id}) CREATE (c:_OntologyClass {class_name: $class_name}) SET c.description = $description, c.binding_kind = $binding_kind,     c.properties = $properties, c.synonyms = $synonyms, c.certified = $certified, c.certified_by = $certified_by, c.certified_at = $certified_at CREATE (m)-[:HAS_CLASS]->(c)

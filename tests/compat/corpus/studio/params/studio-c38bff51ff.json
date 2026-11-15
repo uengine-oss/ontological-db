@@ -1,0 +1,15 @@
+{
+ "from_id": {
+  "$ref": "prop",
+  "label": "_Entity",
+  "prop": "_source_id",
+  "nth": 0
+ },
+ "to_id": {
+  "$ref": "prop",
+  "label": "_Entity",
+  "prop": "_source_id",
+  "nth": 1
+ },
+ "channel": "compat-channel"
+}

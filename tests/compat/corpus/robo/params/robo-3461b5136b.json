@@ -1,0 +1,9 @@
+{
+ "id": "FigmaBinding-1",
+ "status": {
+  "$ref": "prop",
+  "label": "StoryboardPageMapping",
+  "prop": "status",
+  "nth": 0
+ }
+}

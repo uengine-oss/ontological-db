@@ -1,0 +1,1 @@
+MATCH (us:UserStory {session_id: $sid})-[:HAS_EVENT]->(e:Event {session_id: $sid}) MATCH (c:Command {session_id: $sid})-[:EMITS]->(e) WHERE us.sourceUnitId IS NOT NULL RETURN us.sourceUnitId AS tid, c.key AS ck, c.name AS cn, c.aggregate_id AS aid

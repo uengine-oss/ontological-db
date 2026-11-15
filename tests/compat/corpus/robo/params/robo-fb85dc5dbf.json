@@ -1,0 +1,16 @@
+{
+ "bc_id": "BoundedContext-1",
+ "key": "compat-new-UI",
+ "name": "compat-name",
+ "display_name": "compat-displayName",
+ "description": "compat-description",
+ "template": "compat-template",
+ "scene_graph": "compat-sceneGraph",
+ "attached_to_id": "compat-attachedToId",
+ "attached_to_type": "compat-attachedToType",
+ "attached_to_name": "compat-attachedToName",
+ "user_story_id": "compat-userStoryId",
+ "actor": "compat-actor",
+ "figma_file_key": "compat-figmaFileKey",
+ "figma_node_id": "compat-figmaNodeId"
+}

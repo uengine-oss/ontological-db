@@ -1,0 +1,9 @@
+{
+ "agg": "Aggregate-1",
+ "id": "compat-new-Invariant",
+ "decl": "compat-declaration",
+ "name": "compat-name",
+ "desc": "compat-description",
+ "seq": 7,
+ "pid": "compat-proposalSource"
+}

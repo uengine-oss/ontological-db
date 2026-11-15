@@ -1,0 +1,8 @@
+{
+ "id": {
+  "$ref": "prop",
+  "label": "FUNCTION",
+  "prop": "id",
+  "nth": 0
+ }
+}

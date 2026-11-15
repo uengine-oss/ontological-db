@@ -1,0 +1,8 @@
+{
+ "bc_id": "BoundedContext-1",
+ "key": "compat-new-Aggregate",
+ "id": "compat-id",
+ "name": "compat-name",
+ "root_entity": "compat-rootEntity",
+ "description": "compat-description"
+}

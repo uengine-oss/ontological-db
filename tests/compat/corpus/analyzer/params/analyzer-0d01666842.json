@@ -1,0 +1,32 @@
+{
+ "owner": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "_owner",
+  "nth": 0
+ },
+ "datasources": [
+  {
+   "$ref": "prop",
+   "label": "TABLE",
+   "prop": "datasource",
+   "nth": 0
+  },
+  {
+   "$ref": "prop",
+   "label": "TABLE",
+   "prop": "datasource",
+   "nth": 1
+  }
+ ],
+ "catalog_owner": {
+  "$ref": "anyprop",
+  "prop": "_owner",
+  "nth": 0
+ },
+ "inferred": {
+  "$ref": "anyprop",
+  "prop": "description",
+  "nth": 0
+ }
+}

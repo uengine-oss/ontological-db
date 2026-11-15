@@ -1,0 +1,8 @@
+{
+ "key": {
+  "$ref": "prop",
+  "label": "Invariant",
+  "prop": "key",
+  "nth": 0
+ }
+}

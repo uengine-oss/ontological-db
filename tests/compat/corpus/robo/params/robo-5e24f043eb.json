@@ -1,0 +1,8 @@
+{
+ "id": "compat-new-ActivityMapping",
+ "sid": "compat-session_id",
+ "tid": "compat-task_id",
+ "rid": "compat-rule_id",
+ "score": 0.9,
+ "method": "compat-method"
+}

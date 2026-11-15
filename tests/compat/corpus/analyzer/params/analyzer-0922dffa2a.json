@@ -1,0 +1,23 @@
+{
+ "analyzer_owner": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "_owner",
+  "nth": 0
+ },
+ "src_name": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "name",
+  "nth": 0
+ },
+ "tgt_name": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "name",
+  "nth": 1
+ },
+ "catalog_owner": "compat-catalog_owner",
+ "etl_name": "compat-etl_name",
+ "operation_type": "compat-description"
+}

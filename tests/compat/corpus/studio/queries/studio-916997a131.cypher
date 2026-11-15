@@ -1,0 +1,1 @@
+MATCH (c:Chunk) DETACH DELETE c

@@ -1,0 +1,14 @@
+{
+ "parent_type": {
+  "$ref": "prop",
+  "label": "GWT",
+  "prop": "parentType",
+  "nth": 0
+ },
+ "parent_id": {
+  "$ref": "prop",
+  "label": "GWT",
+  "prop": "parentId",
+  "nth": 0
+ }
+}

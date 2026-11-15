@@ -1,0 +1,7 @@
+{
+ "key": "compat-new-Policy",
+ "sid": "compat-session_id",
+ "name": "compat-name",
+ "desc": "compat-description",
+ "bcid": "compat-bc_id"
+}

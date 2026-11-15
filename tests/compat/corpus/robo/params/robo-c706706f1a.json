@@ -1,0 +1,20 @@
+{
+ "edges": [
+  {
+   "condition": "compat-condition-1",
+   "document_excerpt": "compat-document_excerpt-1",
+   "id": "compat-id-1",
+   "source": "compat-source-1",
+   "source_step_id": "JourneyStep-1",
+   "target_step_id": "JourneyStep-1"
+  },
+  {
+   "condition": "compat-condition-2",
+   "document_excerpt": "compat-document_excerpt-2",
+   "id": "compat-id-2",
+   "source": "compat-source-2",
+   "source_step_id": "JourneyStep-2",
+   "target_step_id": "JourneyStep-2"
+  }
+ ]
+}

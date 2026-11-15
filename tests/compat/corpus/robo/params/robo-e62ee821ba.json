@@ -1,0 +1,20 @@
+{
+ "pt": {
+  "$ref": "prop",
+  "label": "Property",
+  "prop": "parentType",
+  "nth": 0
+ },
+ "pid": {
+  "$ref": "prop",
+  "label": "Property",
+  "prop": "parentId",
+  "nth": 0
+ },
+ "name": {
+  "$ref": "prop",
+  "label": "Property",
+  "prop": "name",
+  "nth": 0
+ }
+}

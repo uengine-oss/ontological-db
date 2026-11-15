@@ -1,0 +1,12 @@
+{
+ "id": "US-001",
+ "role": "compat-role",
+ "action": "compat-action",
+ "benefit": "compat-benefit",
+ "priority": "compat-priority",
+ "status": "compat-status",
+ "acceptanceCriteria": "compat-acceptanceCriteria",
+ "user_name": "compat-userName",
+ "user_email": "compat-userEmail",
+ "changes_json": "compat-changes"
+}

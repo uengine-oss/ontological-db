@@ -1,0 +1,32 @@
+{
+ "items": [
+  {
+   "callee_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 0
+   },
+   "caller_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 2
+   },
+   "recursive": true,
+   "scope": "compat-scope-1"
+  },
+  {
+   "callee_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 1
+   },
+   "caller_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 3
+   },
+   "recursive": true,
+   "scope": "compat-scope-2"
+  }
+ ]
+}

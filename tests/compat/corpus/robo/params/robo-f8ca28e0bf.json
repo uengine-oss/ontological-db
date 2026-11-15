@@ -1,0 +1,16 @@
+{
+ "parent_ids": [
+  {
+   "$ref": "prop",
+   "label": "Property",
+   "prop": "parentId",
+   "nth": 0
+  },
+  {
+   "$ref": "prop",
+   "label": "Property",
+   "prop": "parentId",
+   "nth": 1
+  }
+ ]
+}

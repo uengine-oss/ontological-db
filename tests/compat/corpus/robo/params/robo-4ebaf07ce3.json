@@ -1,0 +1,10 @@
+{
+ "command_id": "Command-1",
+ "key": "compat-new-Event",
+ "name": "compat-name",
+ "display_name": "compat-displayName",
+ "version": 7,
+ "schema": "compat-schema",
+ "payload": "compat-payload",
+ "description": "compat-description"
+}

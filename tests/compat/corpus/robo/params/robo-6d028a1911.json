@@ -1,0 +1,8 @@
+{
+ "id": {
+  "$ref": "anyprop",
+  "prop": "id",
+  "nth": 0
+ },
+ "log": "compat-chatEditLog"
+}

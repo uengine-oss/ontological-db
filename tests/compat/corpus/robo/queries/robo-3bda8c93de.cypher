@@ -1,0 +1,1 @@
+MATCH (p:Proposal {id:$id}) RETURN p.decompositionMode AS mode, p.originalPrompt AS prompt, p.strategicDiff AS sd, p.stagePlan AS plan, p.stageArtifacts AS arts, p.stageDraftArtifacts AS draftArts, p.currentStage AS cur, p.projectRoot AS projectRoot, p.legacyReferences AS legacyRefs

@@ -1,0 +1,8 @@
+{
+ "t0": {
+  "$ref": "prop",
+  "label": "ErpSupplier",
+  "prop": "name",
+  "nth": 0
+ }
+}

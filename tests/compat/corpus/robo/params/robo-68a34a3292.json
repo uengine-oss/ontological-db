@@ -1,0 +1,18 @@
+{
+ "pairs": [
+  {
+   "task_id": "BpmTask-1",
+   "us_id": "compat-us_id-1"
+  },
+  {
+   "task_id": "BpmTask-2",
+   "us_id": "compat-us_id-2"
+  }
+ ],
+ "sid": {
+  "$ref": "prop",
+  "label": "BpmTask",
+  "prop": "session_id",
+  "nth": 0
+ }
+}

@@ -1,0 +1,12 @@
+{
+ "e0": {
+  "$ref": "elementId",
+  "label": "Customer",
+  "nth": 0
+ },
+ "e1": {
+  "$ref": "elementId",
+  "label": "Supplier",
+  "nth": 0
+ }
+}

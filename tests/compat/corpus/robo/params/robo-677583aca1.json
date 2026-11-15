@@ -1,0 +1,9 @@
+{
+ "id": "compat-new-UserStory",
+ "role": "compat-role",
+ "action": "compat-action",
+ "benefit": "compat-benefit",
+ "name": "compat-name",
+ "ac": "compat-acceptanceCriteria",
+ "pid": "compat-proposalSource"
+}

@@ -1,0 +1,8 @@
+{
+ "graph_owner": {
+  "$ref": "prop",
+  "label": "EMBED_META",
+  "prop": "graph_owner",
+  "nth": 0
+ }
+}

@@ -1,0 +1,1 @@
+MATCH (t:BpmTask {id: $tid, session_id: $sid}), (r:Rule {id: $rid, session_id: $sid}) MERGE (t)-[rel:REALIZED_BY]->(r) SET rel.confidence = $score, rel.method = $method, rel.reviewed = $reviewed,     rel.rationale = $rationale, rel.evidence_refs = $evidence_refs,     rel.evidence_path = $evidence_path, rel.agent_verdict = $agent_verdict,     rel.evidence_role = 'primary'

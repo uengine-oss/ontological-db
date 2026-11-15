@@ -1,0 +1,14 @@
+{
+ "seed_ids": [
+  {
+   "$ref": "anyprop",
+   "prop": "id",
+   "nth": 0
+  },
+  {
+   "$ref": "anyprop",
+   "prop": "id",
+   "nth": 1
+  }
+ ]
+}

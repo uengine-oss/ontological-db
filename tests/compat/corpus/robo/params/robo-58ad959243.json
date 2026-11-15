@@ -1,0 +1,14 @@
+{
+ "rows": [
+  {
+   "confidence": 0.9,
+   "readmodel_id": "ReadModel-1",
+   "user_story_id": "UserStory-1"
+  },
+  {
+   "confidence": 0.9,
+   "readmodel_id": "ReadModel-2",
+   "user_story_id": "UserStory-2"
+  }
+ ]
+}

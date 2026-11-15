@@ -1,0 +1,16 @@
+{
+ "items": [
+  {
+   "occurrence_id": "compat-occurrence_id-1",
+   "ordinal": "compat-ordinal-1",
+   "source_id": "RULE-1",
+   "target_id": "EXAMPLE-1"
+  },
+  {
+   "occurrence_id": "compat-occurrence_id-2",
+   "ordinal": "compat-ordinal-2",
+   "source_id": "RULE-2",
+   "target_id": "EXAMPLE-2"
+  }
+ ]
+}

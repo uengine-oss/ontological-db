@@ -1,0 +1,5 @@
+{
+ "cqrsId": "CQRSConfig-1",
+ "evtId": "Event-1",
+ "opId": "compat-new-CQRSOperation"
+}

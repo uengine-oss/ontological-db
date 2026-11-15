@@ -1,0 +1,1 @@
+SHOW VIRTUAL NODES IN analyzer_run

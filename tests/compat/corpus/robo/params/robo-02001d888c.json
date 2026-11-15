@@ -1,0 +1,20 @@
+{
+ "ek": {
+  "$ref": "prop",
+  "label": "Event",
+  "prop": "key",
+  "nth": 0
+ },
+ "sid": {
+  "$ref": "prop",
+  "label": "Event",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "pk": {
+  "$ref": "prop",
+  "label": "Policy",
+  "prop": "key",
+  "nth": 0
+ }
+}

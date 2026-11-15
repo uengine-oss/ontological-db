@@ -1,0 +1,1 @@
+MATCH (m:_OntologyModel)-[:HAS_RELATIONSHIP]->(r:_OntologyRelationship) WHERE $schema_name IS NULL OR m.name = $schema_name RETURN m.name AS schema_name, r.name AS name, r.from_class AS from_class,        r.to_class AS to_class, r.description AS description,        r.synonyms AS synonyms, r.certified AS certified

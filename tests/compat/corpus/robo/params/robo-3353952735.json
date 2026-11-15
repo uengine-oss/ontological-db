@@ -1,0 +1,9 @@
+{
+ "id": "compat-new-UI",
+ "name": "compat-name",
+ "description": "compat-description",
+ "template": "compat-template",
+ "attached_to_id": "compat-attachedToId",
+ "attached_to_type": "compat-attachedToType",
+ "attached_to_name": "compat-attachedToName"
+}

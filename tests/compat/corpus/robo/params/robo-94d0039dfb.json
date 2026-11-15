@@ -1,0 +1,8 @@
+{
+ "s": "BoundedContext-1",
+ "e": "Aggregate-1",
+ "props": {
+  "name": "compat",
+  "description": "compat"
+ }
+}

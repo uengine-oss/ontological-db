@@ -1,0 +1,1 @@
+MATCH (n:_Entity:`Customer`)-[:SAME_AS]-(m:_Entity:`Customer`) WHERE n.`grade` IS NULL AND m.`grade` IS NOT NULL RETURN n._source_id AS key, n.name AS name, toString(m.`grade`) AS v, m._source_system AS src, m.name AS mname LIMIT 500

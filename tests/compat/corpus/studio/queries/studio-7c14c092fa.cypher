@@ -1,0 +1,5 @@
+MATCH (parent:_Entity {_source_id: $parent_id})
+MATCH (child:_Entity {_source_id: $child_id})
+MERGE (parent)-[r:CONTAINS]->(child)
+ON CREATE SET r.created_at = datetime()
+SET r.updated_at = datetime()

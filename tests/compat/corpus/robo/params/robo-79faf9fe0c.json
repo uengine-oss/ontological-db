@@ -1,0 +1,10 @@
+{
+ "id": "compat-new-BpmTask",
+ "sid": "compat-session_id",
+ "name": "compat-name",
+ "description": "compat-description",
+ "seq": "compat-sequence_index",
+ "page": "compat-source_page",
+ "section": "compat-source_section",
+ "pid": "compat-process_id"
+}

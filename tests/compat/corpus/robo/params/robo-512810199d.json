@@ -1,0 +1,10 @@
+{
+ "cid": {
+  "$ref": "prop",
+  "label": "StoryboardPageMapping",
+  "prop": "commandId",
+  "nth": 0
+ },
+ "new_name": "compat-figmaPageName",
+ "now": "2026-01-15T09:00:00Z"
+}

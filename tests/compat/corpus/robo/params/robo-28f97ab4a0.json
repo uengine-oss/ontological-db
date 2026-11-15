@@ -1,0 +1,12 @@
+{
+ "tid": "BpmTask-1",
+ "sid": {
+  "$ref": "prop",
+  "label": "BpmTask",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "rid": "Rule-1",
+ "role": "compat-evidence_role",
+ "rationale": "compat-rationale"
+}

@@ -1,0 +1,10 @@
+{
+ "user_story_id": "US-001",
+ "role": "compat-role",
+ "action": "compat-action",
+ "benefit": "compat-benefit",
+ "priority": "compat-priority",
+ "status": "compat-status",
+ "criteria_present": "compat-criteria_present",
+ "criteria": "compat-criteria"
+}

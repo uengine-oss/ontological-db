@@ -1,0 +1,10 @@
+{
+ "pid": "BpmProcess-1",
+ "sid": {
+  "$ref": "prop",
+  "label": "BpmProcess",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "aid": "BpmActor-1"
+}

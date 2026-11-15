@@ -1,0 +1,9 @@
+{
+ "fk": {
+  "$ref": "prop",
+  "label": "SyncRun",
+  "prop": "bindingFileKey",
+  "nth": 0
+ },
+ "lim": 10
+}

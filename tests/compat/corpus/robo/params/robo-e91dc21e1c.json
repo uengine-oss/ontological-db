@@ -1,0 +1,9 @@
+{
+ "aid": "Aggregate-1",
+ "key": "compat-new-Invariant",
+ "declaration": "compat-declaration",
+ "name": "compat-name",
+ "description": "compat-description",
+ "source": "compat-source",
+ "seq": 7
+}

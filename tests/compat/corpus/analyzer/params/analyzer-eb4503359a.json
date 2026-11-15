@@ -1,0 +1,33 @@
+{
+ "table_name": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "name",
+  "nth": 0
+ },
+ "col_name": {
+  "$ref": "prop",
+  "label": "COLUMN",
+  "prop": "name",
+  "nth": 0
+ },
+ "owner": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "_owner",
+  "nth": 0
+ },
+ "datasource": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "datasource",
+  "nth": 0
+ },
+ "schema_name": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "schema",
+  "nth": 0
+ },
+ "description": "compat-description"
+}

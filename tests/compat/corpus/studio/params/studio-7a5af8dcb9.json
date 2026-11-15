@@ -1,0 +1,8 @@
+{
+ "schema_name": {
+  "$ref": "prop",
+  "label": "_OntologyModel",
+  "prop": "name",
+  "nth": 0
+ }
+}

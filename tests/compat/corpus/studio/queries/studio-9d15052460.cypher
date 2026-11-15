@@ -1,0 +1,1 @@
+MATCH (m:_OntologyModel) RETURN m.schema_id AS schema_id, m.name AS name, m.description AS description,        m.intent AS intent, m.golden_questions AS golden_questions,        m.golden_commands AS golden_commands,        m.format_version AS format_version, m.published_at AS published_at ORDER BY m.name

@@ -1,0 +1,11 @@
+{
+ "element_id": {
+  "$ref": "anyprop",
+  "prop": "id",
+  "nth": 0
+ },
+ "element_labels": [
+  "compat-element_labels-a",
+  "compat-element_labels-b"
+ ]
+}

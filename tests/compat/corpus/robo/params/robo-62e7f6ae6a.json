@@ -1,0 +1,10 @@
+{
+ "aid": "BpmActor-1",
+ "sid": {
+  "$ref": "prop",
+  "label": "BpmActor",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "tid": "BpmTask-1"
+}

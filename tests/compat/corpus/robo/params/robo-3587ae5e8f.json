@@ -1,0 +1,6 @@
+{
+ "id": "Aggregate-1",
+ "vo": "compat-valueObjects",
+ "enums": "compat-enumerations",
+ "inv": "compat-invariants"
+}

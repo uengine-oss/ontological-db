@@ -1,0 +1,1 @@
+MATCH (src) WHERE (src:BpmTask OR src:BpmGateway)   AND src.id = $src AND src.session_id = $sid MATCH (dst) WHERE (dst:BpmTask OR dst:BpmGateway)   AND dst.id = $dst AND dst.session_id = $sid MERGE (src)-[r:BPMN_FLOW {id: $fid}]->(dst) SET r.name = $name, r.condition = $cond

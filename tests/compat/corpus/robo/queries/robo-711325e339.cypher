@@ -1,0 +1,1 @@
+MATCH (t:BpmTask {session_id: $sid})-[m:REALIZED_BY]->(r:Rule {session_id: $sid}) MATCH (us:UserStory {session_id: $sid}) WHERE us.sourceUnitId = t.id MERGE (us)-[rel:SOURCED_FROM]->(r) SET rel.evidence_role = coalesce(m.evidence_role, 'primary'),     rel.via_task_id = t.id RETURN count(rel) AS c

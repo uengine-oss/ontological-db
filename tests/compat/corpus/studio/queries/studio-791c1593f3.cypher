@@ -1,0 +1,1 @@
+MATCH (n:Customer) WITH n LIMIT 1 RETURN n

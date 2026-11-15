@@ -1,0 +1,10 @@
+{
+ "a": "BpmTask-1",
+ "sid": {
+  "$ref": "prop",
+  "label": "BpmTask",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "b": "BpmTask-1"
+}

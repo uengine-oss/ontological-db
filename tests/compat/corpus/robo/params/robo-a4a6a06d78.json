@@ -1,0 +1,9 @@
+{
+ "key": {
+  "$ref": "prop",
+  "label": "Aggregate",
+  "prop": "key",
+  "nth": 0
+ },
+ "bc_id": "BoundedContext-1"
+}

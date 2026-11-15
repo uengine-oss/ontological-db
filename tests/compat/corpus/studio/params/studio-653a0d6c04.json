@@ -1,0 +1,15 @@
+{
+ "v": {
+  "$ref": "prop",
+  "label": "ErpSupplier",
+  "prop": "name",
+  "nth": 0
+ },
+ "lv": {
+  "$ref": "prop",
+  "label": "ErpSupplier",
+  "prop": "name",
+  "nth": 1
+ },
+ "limit": 10
+}

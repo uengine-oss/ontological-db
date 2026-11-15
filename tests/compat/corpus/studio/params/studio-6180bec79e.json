@@ -1,0 +1,7 @@
+{
+ "classes": [
+  "Customer",
+  "PurchaseOrder"
+ ],
+ "limit": 10
+}

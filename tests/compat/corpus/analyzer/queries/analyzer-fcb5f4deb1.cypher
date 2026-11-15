@@ -1,0 +1,1 @@
+MATCH (t:TABLE)-[:HAS_COLUMN]->(c:COLUMN) WHERE t._owner = $owner AND c._owner = $owner   AND ((t.name = $name AND ($schema = '' OR t.schema = $schema))     OR t._id = $fqn) RETURN c.name AS name, c.data_type AS data_type,        c.description AS description,        c.primary_key AS primary_key,        c.nullable AS nullable ORDER BY c.name

@@ -1,0 +1,7 @@
+{
+ "term": "compat-term",
+ "sid": "compat-session_id",
+ "aliases": "compat-aliases",
+ "candidates": "compat-code_candidates",
+ "source": "compat-source"
+}

@@ -1,0 +1,1 @@
+MATCH (t:BpmTask {id: $tid, session_id: $sid})-[rel:REALIZED_BY]->(r:Rule {id: $rid, session_id: $sid}) SET rel.evidence_role = $role,     rel.evidence_role_rationale = CASE WHEN $rationale IS NULL          THEN rel.evidence_role_rationale ELSE $rationale END

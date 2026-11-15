@@ -1,0 +1,1 @@
+MATCH (n:ChangeSet) DETACH DELETE n

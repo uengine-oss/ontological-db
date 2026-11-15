@@ -1,0 +1,18 @@
+{
+ "items": [
+  {
+   "id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 0
+   }
+  },
+  {
+   "id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 1
+   }
+  }
+ ]
+}

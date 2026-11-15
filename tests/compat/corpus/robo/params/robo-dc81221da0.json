@@ -1,0 +1,10 @@
+{
+ "bc_id": "BoundedContext-1",
+ "key": "compat-new-ReadModel",
+ "id": "compat-id",
+ "name": "compat-name",
+ "description": "compat-description",
+ "provisioning_type": "compat-provisioningType",
+ "actor": "compat-actor",
+ "is_multiple_result": true
+}

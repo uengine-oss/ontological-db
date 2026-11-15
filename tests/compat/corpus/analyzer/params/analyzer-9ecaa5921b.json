@@ -1,0 +1,8 @@
+{
+ "owner": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "_owner",
+  "nth": 0
+ }
+}

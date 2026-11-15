@@ -1,0 +1,10 @@
+{
+ "parent_id": "compat-parentId",
+ "name": "compat-name",
+ "type": "compat-type",
+ "description": "compat-description",
+ "is_key": true,
+ "is_fk": true,
+ "is_required": true,
+ "parent_type": "Aggregate"
+}

@@ -1,0 +1,22 @@
+{
+ "items": [
+  {
+   "component_id": "compat-component_id-1",
+   "component_name": "compat-component_name-1",
+   "id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 4
+   }
+  },
+  {
+   "component_id": "compat-component_id-2",
+   "component_name": "compat-component_name-2",
+   "id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 5
+   }
+  }
+ ]
+}

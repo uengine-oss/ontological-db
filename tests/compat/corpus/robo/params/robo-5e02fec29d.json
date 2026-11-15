@@ -1,0 +1,14 @@
+{
+ "sid": {
+  "$ref": "prop",
+  "label": "BpmProcess",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "id": "compat-new-BpmProcess",
+ "name": "compat-name",
+ "desc": "compat-description",
+ "keywords": "compat-domain_keywords",
+ "pdf_name": "compat-source_pdf_name",
+ "xml": "compat-bpmn_xml"
+}

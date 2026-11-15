@@ -1,0 +1,1 @@
+MATCH (us:UserStory {session_id: $sid})-[:HAS_EVENT]->(e:Event {session_id: $sid}) WHERE us.sourceUnitId IS NOT NULL RETURN us.sourceUnitId AS tid, e.key AS ek, e.name AS en, e.sequence AS sq ORDER BY e.sequence

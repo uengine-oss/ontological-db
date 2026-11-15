@@ -1,0 +1,10 @@
+{
+ "name": {
+  "$ref": "prop",
+  "label": "UI",
+  "prop": "displayName",
+  "nth": 0
+ },
+ "file_key": "compat-figmaFileKey",
+ "figma_node_id": "compat-figmaNodeId"
+}

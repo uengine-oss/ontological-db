@@ -1,0 +1,1 @@
+MERGE (m:_OntologyModel {schema_id: $schema_id}) SET m.name = $name, m.description = $description, m.intent = $intent,     m.golden_questions = $golden_questions, m.golden_commands = $golden_commands,     m.format_version = $format_version,     m.published_at = $published_at

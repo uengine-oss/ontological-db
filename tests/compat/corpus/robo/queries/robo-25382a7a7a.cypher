@@ -1,0 +1,1 @@
+MATCH (us:UserStory)-[:IMPLEMENTS]->(:BoundedContext {id:$bc}) WHERE NOT (us)-[:IMPLEMENTS]->(:Command) AND NOT (us)-[:IMPLEMENTS]->(:ReadModel) AND NOT (us)-[:IMPLEMENTS]->(:Event) AND NOT (us)-[:IMPLEMENTS]->(:Policy) RETURN us.id AS id, us.role AS role, us.action AS action ORDER BY us.id

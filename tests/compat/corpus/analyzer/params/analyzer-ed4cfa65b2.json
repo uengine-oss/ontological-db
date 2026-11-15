@@ -1,0 +1,12 @@
+{
+ "items": [
+  {
+   "id": "compat-new-PACKAGE-1",
+   "name": "compat-name-1"
+  },
+  {
+   "id": "compat-new-PACKAGE-2",
+   "name": "compat-name-2"
+  }
+ ]
+}

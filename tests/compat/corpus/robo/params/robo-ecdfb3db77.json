@@ -1,0 +1,8 @@
+{
+ "n": {
+  "$ref": "prop",
+  "label": "BoundedContext",
+  "prop": "name",
+  "nth": 0
+ }
+}

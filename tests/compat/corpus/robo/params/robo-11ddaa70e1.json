@@ -1,0 +1,32 @@
+{
+ "functions": [
+  {
+   "id": {
+    "$ref": "prop",
+    "label": "FUNCTION",
+    "prop": "_id",
+    "nth": 0
+   },
+   "name": {
+    "$ref": "prop",
+    "label": "FUNCTION",
+    "prop": "name",
+    "nth": 0
+   }
+  },
+  {
+   "id": {
+    "$ref": "prop",
+    "label": "FUNCTION",
+    "prop": "_id",
+    "nth": 1
+   },
+   "name": {
+    "$ref": "prop",
+    "label": "FUNCTION",
+    "prop": "name",
+    "nth": 1
+   }
+  }
+ ]
+}

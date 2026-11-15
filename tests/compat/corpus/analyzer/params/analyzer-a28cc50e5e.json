@@ -1,0 +1,14 @@
+{
+ "items": [
+  {
+   "db": "compat-db-1",
+   "id": "compat-new-SCHEMA-1",
+   "name": "compat-name-1"
+  },
+  {
+   "db": "compat-db-2",
+   "id": "compat-new-SCHEMA-2",
+   "name": "compat-name-2"
+  }
+ ]
+}

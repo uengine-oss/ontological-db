@@ -1,0 +1,9 @@
+{
+ "bc_id": "BoundedContext-1",
+ "name": {
+  "$ref": "prop",
+  "label": "Feature",
+  "prop": "name",
+  "nth": 0
+ }
+}

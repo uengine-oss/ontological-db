@@ -1,0 +1,12 @@
+{
+ "items": [
+  {
+   "child_id": "FUNCTION-1",
+   "parent_id": "MODULE-1"
+  },
+  {
+   "child_id": "FUNCTION-2",
+   "parent_id": "MODULE-2"
+  }
+ ]
+}

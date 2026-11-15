@@ -1,0 +1,1 @@
+SHOW INDEXES YIELD name, type

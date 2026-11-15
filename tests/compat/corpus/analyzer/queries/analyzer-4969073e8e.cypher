@@ -1,0 +1,1 @@
+DROP CONSTRAINT `uniq_rule` IF EXISTS

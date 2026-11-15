@@ -1,0 +1,14 @@
+{
+ "items": [
+  {
+   "analyzed_description": "compat-analyzed_description-1",
+   "id": "COLUMN-1",
+   "logical_name": "compat-logical_name-1"
+  },
+  {
+   "analyzed_description": "compat-analyzed_description-2",
+   "id": "COLUMN-2",
+   "logical_name": "compat-logical_name-2"
+  }
+ ]
+}

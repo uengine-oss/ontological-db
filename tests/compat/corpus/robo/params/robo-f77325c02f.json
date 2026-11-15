@@ -1,0 +1,8 @@
+{
+ "fk": {
+  "$ref": "prop",
+  "label": "FigmaComponent",
+  "prop": "bindingFileKey",
+  "nth": 0
+ }
+}

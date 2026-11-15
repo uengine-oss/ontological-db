@@ -1,0 +1,20 @@
+{
+ "items": [
+  {
+   "source_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 0
+   },
+   "target_id": "QUESTION-1"
+  },
+  {
+   "source_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 1
+   },
+   "target_id": "QUESTION-2"
+  }
+ ]
+}

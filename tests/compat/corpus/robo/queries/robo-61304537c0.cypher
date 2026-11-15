@@ -1,0 +1,1 @@
+MATCH (us:UserStory {session_id: $sid}) WHERE us.sourceUnitId IS NOT NULL AND us.sourceUnitId <> '' MATCH (t:BpmTask {id: us.sourceUnitId, session_id: $sid}) MERGE (t)-[rel:PROMOTED_TO]->(us) SET rel.method = 'auto' RETURN count(rel) AS c

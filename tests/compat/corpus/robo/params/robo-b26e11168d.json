@@ -1,0 +1,11 @@
+{
+ "did": "Command-1",
+ "id": "compat-new-UI",
+ "name": "compat-name",
+ "desc": "compat-description",
+ "tpl": "compat-template",
+ "dtype": "compat-attachedToType",
+ "dname": "compat-attachedToName",
+ "usid": "compat-userStoryId",
+ "pid": "compat-proposalSource"
+}

@@ -1,0 +1,28 @@
+{
+ "items": [
+  {
+   "next_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 0
+   },
+   "prev_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 2
+   }
+  },
+  {
+   "next_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 1
+   },
+   "prev_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 3
+   }
+  }
+ ]
+}

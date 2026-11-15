@@ -1,0 +1,28 @@
+{
+ "items": [
+  {
+   "from_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 0
+   },
+   "source_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 2
+   }
+  },
+  {
+   "from_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 1
+   },
+   "source_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 3
+   }
+  }
+ ]
+}

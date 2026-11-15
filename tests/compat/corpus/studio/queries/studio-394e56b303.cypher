@@ -1,0 +1,1 @@
+MATCH (a:_Entity {_source_id: $a}) MATCH (b:_Entity {_source_id: $b}) MERGE (a)-[r:SAME_AS]->(b) ON CREATE SET r.created_at = datetime(), r._confidence = $score, r.method = $method, r._run_id = $run_id, r.since = datetime() RETURN elementId(r) AS rid

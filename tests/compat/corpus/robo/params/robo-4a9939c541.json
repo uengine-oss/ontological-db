@@ -1,0 +1,7 @@
+{
+ "readmodel_id": "ReadModel-1",
+ "cqrs_id": "compat-new-CQRSConfig",
+ "trigger_event_id": "Event-1",
+ "op_id": "compat-new-CQRSOperation",
+ "operation_type": "compat-operationType"
+}

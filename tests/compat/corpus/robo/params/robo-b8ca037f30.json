@@ -1,0 +1,8 @@
+{
+ "sid": {
+  "$ref": "prop",
+  "label": "Rule",
+  "prop": "session_id",
+  "nth": 0
+ }
+}

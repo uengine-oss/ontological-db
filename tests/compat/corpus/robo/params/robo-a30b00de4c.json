@@ -1,0 +1,10 @@
+{
+ "bc_ids": [
+  "BoundedContext-1",
+  "BoundedContext-2"
+ ],
+ "keep_ids": [
+  "00000000-0000-5000-8000-000000000001",
+  "<journey-id>"
+ ]
+}

@@ -1,0 +1,9 @@
+{
+ "bid": "FigmaBinding-1",
+ "eid": "compat-new-BindingHistoryEvent",
+ "etype": "compat-eventType",
+ "actor": "compat-actor",
+ "now": "compat-at",
+ "fk": "compat-figmaFileKey",
+ "payload": "compat-payload"
+}

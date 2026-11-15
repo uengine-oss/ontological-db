@@ -1,0 +1,7 @@
+{
+ "aggId": "Aggregate-1",
+ "name": "compat-name",
+ "displayName": "compat-displayName",
+ "sequence": 7,
+ "actor": "compat-actor"
+}

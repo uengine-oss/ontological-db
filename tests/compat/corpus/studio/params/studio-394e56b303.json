@@ -1,0 +1,17 @@
+{
+ "a": {
+  "$ref": "prop",
+  "label": "_Entity",
+  "prop": "_source_id",
+  "nth": 0
+ },
+ "b": {
+  "$ref": "prop",
+  "label": "_Entity",
+  "prop": "_source_id",
+  "nth": 1
+ },
+ "score": 0.9,
+ "method": "compat-method",
+ "run_id": "compat-_run_id"
+}

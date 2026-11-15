@@ -1,0 +1,9 @@
+{
+ "id": "compat-new-BpmGateway",
+ "sid": "compat-session_id",
+ "name": "compat-name",
+ "gtype": "compat-gateway_type",
+ "desc": "compat-description",
+ "cond": "compat-condition_data",
+ "pid": "compat-process_id"
+}

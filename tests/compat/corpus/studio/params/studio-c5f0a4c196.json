@@ -1,0 +1,9 @@
+{
+ "key": {
+  "$ref": "prop",
+  "label": "Customer",
+  "prop": "customer_id",
+  "nth": 0
+ },
+ "value": "compat-grade"
+}

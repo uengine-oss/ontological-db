@@ -1,0 +1,9 @@
+{
+ "aggregate_id": "Aggregate-1",
+ "event_name": {
+  "$ref": "prop",
+  "label": "Event",
+  "prop": "name",
+  "nth": 0
+ }
+}

@@ -1,0 +1,1 @@
+MATCH (b:_OntologyBinding) RETURN b.class_name AS class_name, b.datasource AS datasource,        b.source_schema AS source_schema, b.table_name AS table_name,        b.extra_tables AS extra_tables, b.column_map AS column_map

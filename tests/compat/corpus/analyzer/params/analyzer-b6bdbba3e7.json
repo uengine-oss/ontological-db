@@ -1,0 +1,14 @@
+{
+ "items": [
+  {
+   "op": "compat-op-1",
+   "source_id": "EXAMPLE-1",
+   "target_id": "TABLE-1"
+  },
+  {
+   "op": "compat-op-2",
+   "source_id": "EXAMPLE-2",
+   "target_id": "TABLE-2"
+  }
+ ]
+}

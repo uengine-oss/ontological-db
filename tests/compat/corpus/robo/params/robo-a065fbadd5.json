@@ -1,0 +1,17 @@
+{
+ "tid": "BpmTask-1",
+ "sid": {
+  "$ref": "prop",
+  "label": "BpmTask",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "rid": "Rule-1",
+ "score": 0.9,
+ "method": "compat-method",
+ "reviewed": "compat-reviewed",
+ "rationale": "compat-rationale",
+ "evidence_refs": "compat-evidence_refs",
+ "evidence_path": "compat-evidence_path",
+ "agent_verdict": "compat-agent_verdict"
+}

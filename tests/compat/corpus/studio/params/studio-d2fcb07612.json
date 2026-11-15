@@ -1,0 +1,9 @@
+{
+ "text": {
+  "$ref": "prop",
+  "label": "Customer",
+  "prop": "name",
+  "nth": 0
+ },
+ "limit": 10
+}

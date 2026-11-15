@@ -1,0 +1,26 @@
+{
+ "items": [
+  {
+   "analyzed_description": "compat-analyzed_description-1",
+   "comment": "compat-comment-1",
+   "db": "compat-db-1",
+   "description": "compat-description-1",
+   "description_source": "compat-description_source-1",
+   "id": "compat-new-TABLE-1",
+   "name": "compat-name-1",
+   "schema": "compat-schema-1",
+   "table_type": "compat-table_type-1"
+  },
+  {
+   "analyzed_description": "compat-analyzed_description-2",
+   "comment": "compat-comment-2",
+   "db": "compat-db-2",
+   "description": "compat-description-2",
+   "description_source": "compat-description_source-2",
+   "id": "compat-new-TABLE-2",
+   "name": "compat-name-2",
+   "schema": "compat-schema-2",
+   "table_type": "compat-table_type-2"
+  }
+ ]
+}

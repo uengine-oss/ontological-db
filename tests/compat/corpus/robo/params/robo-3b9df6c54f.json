@@ -1,0 +1,9 @@
+{
+ "id": "CHG-001",
+ "createdAt": {
+  "$ref": "prop",
+  "label": "RequirementChange",
+  "prop": "createdAt",
+  "nth": 0
+ }
+}

@@ -1,0 +1,1 @@
+MATCH (n:UserStory) DETACH DELETE n

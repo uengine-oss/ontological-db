@@ -1,0 +1,7 @@
+{
+ "agg_id": "compat-new-Aggregate",
+ "name": "compat-name",
+ "description": "compat-description",
+ "bc_id": "BoundedContext-1",
+ "us_id": "US-001"
+}

@@ -1,0 +1,14 @@
+{
+ "schema_id": "schema-1",
+ "class_name": "Customer",
+ "datasource": "compat-datasource",
+ "source_schema": "compat-source_schema",
+ "table_name": "compat-table_name",
+ "extra_tables": "compat-extra_tables",
+ "key_columns": "compat-key_columns",
+ "column_map": "compat-column_map",
+ "base_conditions": "compat-base_conditions",
+ "label_property": "compat-label_property",
+ "default_limit": 7,
+ "virtual_node": "compat-virtual_node"
+}

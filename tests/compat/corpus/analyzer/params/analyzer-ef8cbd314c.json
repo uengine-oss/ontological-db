@@ -1,0 +1,7 @@
+{
+ "stable_labels": [
+  "compat-stable_labels-a",
+  "compat-stable_labels-b"
+ ],
+ "graph_owner": "compat-graph_owner"
+}

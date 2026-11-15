@@ -1,0 +1,33 @@
+{
+ "schema_id": "schema-1",
+ "rows": [
+  {
+   "certified": true,
+   "certified_at": "2026-01-15T09:00:00Z-1",
+   "certified_by": "compat-certified_by-1",
+   "description": "compat-description-1",
+   "from_class": "compat-from_class-1",
+   "name": "compat-name",
+   "properties": "compat-properties-1",
+   "synonyms": [
+    "compat-synonyms-a",
+    "compat-synonyms-b"
+   ],
+   "to_class": "compat-to_class-1"
+  },
+  {
+   "certified": true,
+   "certified_at": "2026-01-15T09:00:00Z-2",
+   "certified_by": "compat-certified_by-2",
+   "description": "compat-description-2",
+   "from_class": "compat-from_class-2",
+   "name": "compat-name",
+   "properties": "compat-properties-2",
+   "synonyms": [
+    "compat-synonyms-a",
+    "compat-synonyms-b"
+   ],
+   "to_class": "compat-to_class-2"
+  }
+ ]
+}

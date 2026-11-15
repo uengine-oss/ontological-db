@@ -1,0 +1,15 @@
+{
+ "v": {
+  "$ref": "prop",
+  "label": "Customer",
+  "prop": "grade",
+  "nth": 0
+ },
+ "lv": {
+  "$ref": "prop",
+  "label": "Customer",
+  "prop": "grade",
+  "nth": 1
+ },
+ "limit": 10
+}

@@ -1,0 +1,12 @@
+{
+ "items": [
+  {
+   "id": "compat-new-RULE-1",
+   "statement": "compat-statement-1"
+  },
+  {
+   "id": "compat-new-RULE-2",
+   "statement": "compat-statement-2"
+  }
+ ]
+}

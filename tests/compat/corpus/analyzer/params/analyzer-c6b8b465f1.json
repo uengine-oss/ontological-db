@@ -1,0 +1,12 @@
+{
+ "items": [
+  {
+   "props": "compat-props-1",
+   "rid": "compat-rid-1"
+  },
+  {
+   "props": "compat-props-2",
+   "rid": "compat-rid-2"
+  }
+ ]
+}

@@ -1,0 +1,27 @@
+{
+ "keywords": [
+  "compat-a",
+  "compat-b"
+ ],
+ "nodeTypes": [
+  "compat-nodeTypes-a",
+  "compat-nodeTypes-b"
+ ],
+ "excludeIds": [
+  "Command-1",
+  "Command-2"
+ ],
+ "primary_keyword": {
+  "$ref": "prop",
+  "label": "Command",
+  "prop": "name",
+  "nth": 0
+ },
+ "query": {
+  "$ref": "prop",
+  "label": "Command",
+  "prop": "name",
+  "nth": 1
+ },
+ "limit": 10
+}

@@ -1,0 +1,10 @@
+{
+ "bc_id": "BoundedContext-1",
+ "key": "compat-new-Feature",
+ "source": "compat-source",
+ "session_id": "compat-session_id",
+ "name": "compat-name",
+ "description": "compat-description",
+ "sequence": 7,
+ "edgeCases": "compat-edgeCases"
+}

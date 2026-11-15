@@ -1,0 +1,8 @@
+{
+ "name": {
+  "$ref": "prop",
+  "label": "Customer",
+  "prop": "name",
+  "nth": 0
+ }
+}

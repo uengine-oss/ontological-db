@@ -1,0 +1,14 @@
+{
+ "datasource": {
+  "$ref": "prop",
+  "label": "Table",
+  "prop": "datasource",
+  "nth": 0
+ },
+ "schema": {
+  "$ref": "prop",
+  "label": "Table",
+  "prop": "schema",
+  "nth": 0
+ }
+}

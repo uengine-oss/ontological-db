@@ -1,0 +1,1845 @@
+{
+ "client": "analyzer",
+ "graphs": [
+  "analyzer_run"
+ ],
+ "sources": [
+  {
+   "name": "robo-data-analyzer",
+   "path": "/Users/uengine/robo-architect-lite/robo-analyzer/robo-data-analyzer",
+   "commit": "98655784",
+   "dirty": false
+  },
+  {
+   "name": "robo-data-catalog",
+   "path": "/Users/uengine/worktrees/robo-data-catalog-relinfer",
+   "commit": "eaed1e8",
+   "dirty": false
+  }
+ ],
+ "vector_dimensions": 8,
+ "fixture": [
+  "20_fabric.cypher",
+  "90_derived.cypher"
+ ],
+ "counts": {
+  "queries": 123,
+  "by_kind": {
+   "fabric-read": 8,
+   "read": 53,
+   "schema": 13,
+   "write": 49
+  },
+  "scenarios": 35,
+  "assembled": 0,
+  "llm_examples": 0,
+  "excluded": 4
+ },
+ "queries": [
+  {
+   "id": "analyzer-b6bdbba3e7",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/affects_table.py:16"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/affects_table.py"
+  },
+  {
+   "id": "analyzer-4a7c5c0698",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/belongs_to.py:16"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/belongs_to.py"
+  },
+  {
+   "id": "analyzer-abea97f45b",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/calls.py:35"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/calls.py"
+  },
+  {
+   "id": "analyzer-897d7c528c",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/calls.py:51"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/calls.py"
+  },
+  {
+   "id": "analyzer-f80eb1b761",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/calls.py:71"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/calls.py"
+  },
+  {
+   "id": "analyzer-266c7d346b",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/external_links.py:18"
+   ],
+   "params": [
+    "ids"
+   ]
+  },
+  {
+   "id": "analyzer-0f0f302365",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/external_links.py:32"
+   ],
+   "params": [
+    "items"
+   ],
+   "placeholders": {
+    "rel_type": "READS",
+    "set_clause": ""
+   },
+   "scenario": "robo-data-analyzer:graph/edges/external_links.py"
+  },
+  {
+   "id": "analyzer-7160c9983e",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/fk.py:15"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/fk.py"
+  },
+  {
+   "id": "analyzer-e10822cd38",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/has_column.py:12"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/has_column.py"
+  },
+  {
+   "id": "analyzer-87446775c2",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/has_example.py:11"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/has_example.py"
+  },
+  {
+   "id": "analyzer-36224ba15a",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/has_member.py:17"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/has_member.py"
+  },
+  {
+   "id": "analyzer-c645bde46e",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/has_question.py:11"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/has_question.py"
+  },
+  {
+   "id": "analyzer-76bb38717e",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/has_rule.py:14"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/has_rule.py"
+  },
+  {
+   "id": "analyzer-1026afba5a",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/init_by.py:15"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/init_by.py"
+  },
+  {
+   "id": "analyzer-da835b3c14",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/next.py:16"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/next.py"
+  },
+  {
+   "id": "analyzer-0d107dc64d",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/parent_of.py:12"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/parent_of.py"
+  },
+  {
+   "id": "analyzer-e19e41183d",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/reads_writes.py:29"
+   ],
+   "params": [
+    "items"
+   ],
+   "placeholders": {
+    "rel_type": "READS"
+   }
+  },
+  {
+   "id": "analyzer-6ffc7ad738",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/reads_writes.py:39"
+   ],
+   "params": [
+    "items"
+   ],
+   "placeholders": {
+    "rel_type": "READS"
+   },
+   "scenario": "robo-data-analyzer:graph/edges/reads_writes.py"
+  },
+  {
+   "id": "analyzer-5eccc5d9d6",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/edges/references.py:15"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/edges/references.py"
+  },
+  {
+   "id": "analyzer-67f14a7dc6",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/node_upsert.py:64"
+   ],
+   "params": [
+    "items"
+   ],
+   "placeholders": {
+    "label": "RULE"
+   },
+   "scenario": "robo-data-analyzer:graph/node_upsert.py"
+  },
+  {
+   "id": "analyzer-7735797b58",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/nodes/code_node.py:28"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/nodes/code_node.py"
+  },
+  {
+   "id": "analyzer-35d48a45d9",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/nodes/column.py:16"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/nodes/column.py"
+  },
+  {
+   "id": "analyzer-6234e05922",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/nodes/column.py:36"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/nodes/column.py"
+  },
+  {
+   "id": "analyzer-1ae8d24c4c",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/nodes/column.py:74"
+   ],
+   "params": [
+    "graph_owner",
+    "ids"
+   ]
+  },
+  {
+   "id": "analyzer-a28cc50e5e",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/nodes/db_schema.py:16"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/nodes/db_schema.py"
+  },
+  {
+   "id": "analyzer-515858998b",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/nodes/example.py:14"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/nodes/example.py"
+  },
+  {
+   "id": "analyzer-ed4cfa65b2",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/nodes/package.py:11"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/nodes/package.py"
+  },
+  {
+   "id": "analyzer-9da393810f",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/nodes/question.py:10"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/nodes/question.py"
+  },
+  {
+   "id": "analyzer-8054c7e4b7",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/nodes/rule.py:13"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/nodes/rule.py"
+  },
+  {
+   "id": "analyzer-92c8afee79",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/nodes/table.py:19"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/nodes/table.py"
+  },
+  {
+   "id": "analyzer-a0d7ceb893",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/nodes/table.py:38"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:graph/nodes/table.py"
+  },
+  {
+   "id": "analyzer-4640fb33f1",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/nodes/table.py:85"
+   ],
+   "params": [
+    "graph_owner",
+    "ids"
+   ]
+  },
+  {
+   "id": "analyzer-dab27e80c0",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/schema/constraints.py:109"
+   ],
+   "params": [
+    "graph_owner"
+   ],
+   "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+  },
+  {
+   "id": "analyzer-bc3dee5fa4",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/schema/constraints.py:29"
+   ],
+   "params": [],
+   "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+  },
+  {
+   "id": "analyzer-0f9720f55e",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/schema/constraints.py:31"
+   ],
+   "params": [],
+   "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+  },
+  {
+   "id": "analyzer-3ec742058a",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/schema/constraints.py:33"
+   ],
+   "params": [],
+   "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+  },
+  {
+   "id": "analyzer-3e6ea09e40",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/schema/constraints.py:35"
+   ],
+   "params": [],
+   "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+  },
+  {
+   "id": "analyzer-569bb04baa",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/schema/constraints.py:37"
+   ],
+   "params": [],
+   "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+  },
+  {
+   "id": "analyzer-91073909db",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/schema/constraints.py:40"
+   ],
+   "params": [],
+   "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+  },
+  {
+   "id": "analyzer-de8ed5ae09",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/schema/constraints.py:42"
+   ],
+   "params": [],
+   "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+  },
+  {
+   "id": "analyzer-827e6103f5",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/schema/constraints.py:44"
+   ],
+   "params": [],
+   "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+  },
+  {
+   "id": "analyzer-57311ca12b",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/schema/constraints.py:47"
+   ],
+   "params": [],
+   "placeholders": {
+    "label.lower()": "rule",
+    "label": "RULE"
+   },
+   "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+  },
+  {
+   "id": "analyzer-b5418d64e1",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/schema/constraints.py:55"
+   ],
+   "params": [],
+   "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+  },
+  {
+   "id": "analyzer-ef8cbd314c",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:graph/schema/constraints.py:73"
+   ],
+   "params": [
+    "stable_labels",
+    "graph_owner"
+   ],
+   "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+  },
+  {
+   "id": "analyzer-c8bc8cef20",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:pipeline/steps/step8_post_processing/build_components_step.py:55"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:pipeline/steps/step8_post_processing/build_components_step.py"
+  },
+  {
+   "id": "analyzer-b3425d227e",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:pipeline/steps/step8_post_processing/build_glossary_step.py:51"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:pipeline/steps/step8_post_processing/build_glossary_step.py"
+  },
+  {
+   "id": "analyzer-353f6d2010",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py:139"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py"
+  },
+  {
+   "id": "analyzer-bcf75bf8a6",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py:154"
+   ],
+   "params": [
+    "fp",
+    "dim",
+    "count"
+   ],
+   "scenario": "robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py"
+  },
+  {
+   "id": "analyzer-87b4a7bf2f",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py:181"
+   ],
+   "params": [],
+   "placeholders": {
+    "int(dim)": "8"
+   },
+   "scenario": "robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py"
+  },
+  {
+   "id": "analyzer-19cfcd4c16",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py:201"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-c1de9c8d5d",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py:216"
+   ],
+   "params": [
+    "name"
+   ]
+  },
+  {
+   "id": "analyzer-075a526699",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py:239"
+   ],
+   "params": [
+    "items"
+   ],
+   "placeholders": {
+    "label": "RULE",
+    "key": "id"
+   },
+   "scenario": "robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py"
+  },
+  {
+   "id": "analyzer-3e4e52a215",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:pipeline/steps/step8_post_processing/health_metrics_step.py:51"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-analyzer:pipeline/steps/step8_post_processing/health_metrics_step.py"
+  },
+  {
+   "id": "analyzer-6645d7fd00",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:scripts/reembed_graph.py:48"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-0ff6fefcbf",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:scripts/reembed_graph.py:52"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-509e26c19b",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:scripts/reembed_graph.py:55"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-4b42161a21",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:scripts/reembed_graph.py:60"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-499006d13d",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:scripts/reembed_graph.py:63"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-32995cb830",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:scripts/reset_neo4j_schema.py:34",
+    "robo-data-analyzer:scripts/reset_neo4j_schema.py:51"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-4969073e8e",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:scripts/reset_neo4j_schema.py:36"
+   ],
+   "params": [],
+   "placeholders": {
+    "row['name']": "uniq_rule"
+   },
+   "scenario": "robo-data-analyzer:scripts/reset_neo4j_schema.py"
+  },
+  {
+   "id": "analyzer-196388371d",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:scripts/reset_neo4j_schema.py:40"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-e993747eff",
+   "kind": "schema",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:scripts/reset_neo4j_schema.py:45"
+   ],
+   "params": [],
+   "placeholders": {
+    "row['name']": "analyzer_search_vec"
+   },
+   "scenario": "robo-data-analyzer:scripts/reset_neo4j_schema.py"
+  },
+  {
+   "id": "analyzer-6cd9c510f3",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:scripts/reset_neo4j_schema.py:52"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-e0a89ebe64",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:scripts/resynthesize_glossary.py:34"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-6148f3bc6e",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:scripts/resynthesize_glossary.py:42"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-59b19766f1",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/corpus/corpus.py:145"
+   ],
+   "params": [
+    "graph_owner",
+    "ids"
+   ]
+  },
+  {
+   "id": "analyzer-2628ded746",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/corpus/corpus.py:26"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-df99eeb32c",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/corpus/corpus.py:39"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-c82f075526",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/corpus/corpus.py:84"
+   ],
+   "params": [
+    "graph_owner"
+   ]
+  },
+  {
+   "id": "analyzer-a4f49a725e",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/corpus/embed_material.py:47"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-734f7725c9",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/corpus/evidence_reader.py:108"
+   ],
+   "params": [
+    "id",
+    "graph_owner"
+   ]
+  },
+  {
+   "id": "analyzer-9c3ef044ee",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/corpus/evidence_reader.py:16"
+   ],
+   "params": [
+    "id",
+    "graph_owner"
+   ]
+  },
+  {
+   "id": "analyzer-9272d0b9cd",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/corpus/node_detail.py:129"
+   ],
+   "params": [
+    "id",
+    "graph_owner"
+   ]
+  },
+  {
+   "id": "analyzer-04f40f550f",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/corpus/node_detail.py:26"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-4843073e79",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/query/glossary.py:30"
+   ],
+   "params": [
+    "graph_owner"
+   ]
+  },
+  {
+   "id": "analyzer-93e0ed02b6",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/ranking/graph_access.py:12"
+   ],
+   "params": [
+    "id",
+    "graph_owner"
+   ]
+  },
+  {
+   "id": "analyzer-752a266136",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/ranking/graph_access.py:22"
+   ],
+   "params": [
+    "id",
+    "graph_owner"
+   ]
+  },
+  {
+   "id": "analyzer-a90e7019cf",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/ranking/graph_access.py:29"
+   ],
+   "params": [
+    "graph_owner",
+    "id"
+   ]
+  },
+  {
+   "id": "analyzer-3eed836022",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/ranking/graph_access.py:40"
+   ],
+   "params": [
+    "id",
+    "graph_owner",
+    "rels"
+   ]
+  },
+  {
+   "id": "analyzer-6ea2a0f3b5",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/ranking/recall.py:23"
+   ],
+   "params": [
+    "k",
+    "qv",
+    "graph_owner"
+   ]
+  },
+  {
+   "id": "analyzer-51fc0500c4",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/ranking/retriever.py:122"
+   ],
+   "params": [
+    "id",
+    "graph_owner",
+    "rels"
+   ]
+  },
+  {
+   "id": "analyzer-9308740bbb",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/ranking/retriever.py:204"
+   ],
+   "params": [
+    "graph_owner",
+    "ids"
+   ]
+  },
+  {
+   "id": "analyzer-e500f9a281",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-analyzer:search/ranking/retriever.py:69"
+   ],
+   "params": [
+    "graph_owner",
+    "ids"
+   ]
+  },
+  {
+   "id": "analyzer-af27c1e73e",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:enrichment/description.py:200"
+   ],
+   "params": [
+    "table_name",
+    "owner",
+    "datasource",
+    "schema_name",
+    "description"
+   ],
+   "scenario": "robo-data-catalog:enrichment/description.py"
+  },
+  {
+   "id": "analyzer-eb4503359a",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:enrichment/description.py:229"
+   ],
+   "params": [
+    "table_name",
+    "col_name",
+    "owner",
+    "datasource",
+    "schema_name",
+    "description"
+   ],
+   "scenario": "robo-data-catalog:enrichment/description.py"
+  },
+  {
+   "id": "analyzer-a1f91d4b6d",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:enrichment/fk_store.py:30"
+   ],
+   "params": [
+    "owner",
+    "datasources"
+   ]
+  },
+  {
+   "id": "analyzer-f83eace09f",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:enrichment/fk_store.py:36"
+   ],
+   "params": [
+    "owner",
+    "datasources"
+   ]
+  },
+  {
+   "id": "analyzer-3d4e6d600c",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:enrichment/fk_store.py:45"
+   ],
+   "params": [
+    "ids"
+   ],
+   "scenario": "robo-data-catalog:enrichment/fk_store.py"
+  },
+  {
+   "id": "analyzer-13ec91aee9",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:enrichment/fk_store.py:51"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-catalog:enrichment/fk_store.py"
+  },
+  {
+   "id": "analyzer-5c5855ae89",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:enrichment/fk_store.py:60"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-catalog:enrichment/fk_store.py"
+  },
+  {
+   "id": "analyzer-c6b8b465f1",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:enrichment/fk_store.py:69"
+   ],
+   "params": [
+    "items"
+   ],
+   "scenario": "robo-data-catalog:enrichment/fk_store.py"
+  },
+  {
+   "id": "analyzer-b7682eaec5",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:enrichment/relationships.py:49"
+   ],
+   "params": [
+    "owner",
+    "datasources",
+    "schema"
+   ]
+  },
+  {
+   "id": "analyzer-0d01666842",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:enrichment/relationships.py:63"
+   ],
+   "params": [
+    "owner",
+    "datasources",
+    "catalog_owner",
+    "inferred"
+   ]
+  },
+  {
+   "id": "analyzer-0cdf31fce2",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/deletes.py:33"
+   ],
+   "params": [],
+   "placeholders": {
+    "_analysis_node_predicate('__cy_n__')": "__cy_n__._owner = 'analyzer'"
+   },
+   "scenario": "robo-data-catalog:graph/deletes.py"
+  },
+  {
+   "id": "analyzer-a228bd4f6f",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/queries.py:102"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-5c389ce25e",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/queries.py:137"
+   ],
+   "params": [],
+   "placeholders": {
+    "_analysis_node_predicate('__cy_n__')": "__cy_n__._owner = 'analyzer'"
+   }
+  },
+  {
+   "id": "analyzer-f042364e5b",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/queries.py:162"
+   ],
+   "params": [],
+   "placeholders": {
+    "_analysis_node_predicate('__cy_n__')": "__cy_n__._owner = 'analyzer'",
+    "null_projection_suffix": ", embedding: null"
+   }
+  },
+  {
+   "id": "analyzer-69f2970e5f",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/queries.py:169"
+   ],
+   "params": [],
+   "placeholders": {
+    "_analysis_node_predicate('__cy_a__')": "__cy_a__._owner = 'analyzer'",
+    "_analysis_node_predicate('__cy_b__')": "__cy_b__._owner = 'analyzer'",
+    "null_projection_suffix": ", embedding: null"
+   }
+  },
+  {
+   "id": "analyzer-8ee2b93393",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/queries.py:299"
+   ],
+   "params": [
+    "owner",
+    "table_name"
+   ]
+  },
+  {
+   "id": "analyzer-417a23a3c1",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/schema_commands.py:110"
+   ],
+   "params": [
+    "table_name",
+    "owner",
+    "schema",
+    "description"
+   ],
+   "scenario": "robo-data-catalog:graph/schema_commands.py"
+  },
+  {
+   "id": "analyzer-c71db86114",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/schema_commands.py:140"
+   ],
+   "params": [
+    "table_name",
+    "owner",
+    "table_schema",
+    "column_name",
+    "description"
+   ],
+   "scenario": "robo-data-catalog:graph/schema_commands.py"
+  },
+  {
+   "id": "analyzer-7f7689e11f",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/schema_commands.py:26"
+   ],
+   "params": [
+    "from_table",
+    "to_table",
+    "owner",
+    "from_schema",
+    "to_schema",
+    "relationship_owner",
+    "from_column",
+    "to_column",
+    "description"
+   ],
+   "scenario": "robo-data-catalog:graph/schema_commands.py"
+  },
+  {
+   "id": "analyzer-5412750f5d",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/schema_commands.py:71"
+   ],
+   "params": [
+    "from_table",
+    "to_table",
+    "owner",
+    "relationship_owner",
+    "from_schema",
+    "to_schema",
+    "from_column",
+    "to_column"
+   ],
+   "scenario": "robo-data-catalog:graph/schema_commands.py"
+  },
+  {
+   "id": "analyzer-25633efcc8",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/schema_queries.py:110"
+   ],
+   "params": [
+    "owner",
+    "table_name",
+    "schema"
+   ],
+   "placeholders": {
+    "where": "(table.name = $table_name OR table._id ENDS WITH $table_name) AND table.schema = $schema"
+   }
+  },
+  {
+   "id": "analyzer-77f4d8c070",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/schema_queries.py:143"
+   ],
+   "params": [
+    "owner",
+    "table_name"
+   ]
+  },
+  {
+   "id": "analyzer-7a0ec4c538",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/schema_queries.py:188"
+   ],
+   "params": [
+    "owner",
+    "procedure_name",
+    "file_path"
+   ],
+   "placeholders": {
+    "file_condition": " AND routine.file_path = $file_path"
+   }
+  },
+  {
+   "id": "analyzer-28541ef93f",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/schema_queries.py:210"
+   ],
+   "params": [
+    "owner",
+    "relationship_owners"
+   ]
+  },
+  {
+   "id": "analyzer-4d9978c9ba",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/schema_queries.py:32"
+   ],
+   "params": [
+    "owner",
+    "datasource"
+   ]
+  },
+  {
+   "id": "analyzer-7e6868a940",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:graph/schema_queries.py:73"
+   ],
+   "params": [
+    "owner",
+    "schema",
+    "limit"
+   ],
+   "placeholders": {
+    "' AND '.join(conditions)": "table._owner = $owner AND table.schema = $schema"
+   }
+  },
+  {
+   "id": "analyzer-82773beb3e",
+   "kind": "fabric-read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:integrations/fabric_statements.py:137",
+    "robo-data-catalog:integrations/fabric_statements.py:130",
+    "robo-data-catalog:relinfer/fabric.py:185",
+    "robo-data-catalog:shared/config/capabilities.py:129"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-1be7d75919",
+   "kind": "fabric-read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:integrations/fabric_statements.py:147",
+    "robo-data-catalog:relinfer/fabric.py:189"
+   ],
+   "params": [],
+   "placeholders": {
+    "ident(self._datasource)": "erp",
+    "ident(ds)": "erp"
+   }
+  },
+  {
+   "id": "analyzer-ce5d1247e5",
+   "kind": "fabric-read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:integrations/fabric_statements.py:155"
+   ],
+   "params": [],
+   "placeholders": {
+    "ident(self._datasource)": "erp",
+    "ident(table)": "supplier"
+   }
+  },
+  {
+   "id": "analyzer-a9667cec85",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:lineage/queries.py:32"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-060316a90f",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:lineage/sql_extract.py:41"
+   ],
+   "params": [
+    "analyzer_owner",
+    "proc_name",
+    "table_name",
+    "catalog_owner",
+    "operation_type"
+   ],
+   "scenario": "robo-data-catalog:lineage/sql_extract.py"
+  },
+  {
+   "id": "analyzer-0922dffa2a",
+   "kind": "write",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:lineage/sql_extract.py:54"
+   ],
+   "params": [
+    "analyzer_owner",
+    "src_name",
+    "tgt_name",
+    "catalog_owner",
+    "etl_name",
+    "operation_type"
+   ],
+   "scenario": "robo-data-catalog:lineage/sql_extract.py"
+  },
+  {
+   "id": "analyzer-cd5b1715bc",
+   "kind": "fabric-read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:relinfer/fabric.py:197"
+   ],
+   "params": [],
+   "placeholders": {
+    "ft[0]": "erp.supplier",
+    "sample": "1000"
+   }
+  },
+  {
+   "id": "analyzer-4a4be9fa7d",
+   "kind": "fabric-read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:relinfer/fabric.py:222"
+   ],
+   "params": []
+  },
+  {
+   "id": "analyzer-5951c818a5",
+   "kind": "fabric-read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:relinfer/fabric.py:225"
+   ],
+   "params": [],
+   "placeholders": {
+    "ident(g)": "analyzer_run"
+   }
+  },
+  {
+   "id": "analyzer-44c9cff933",
+   "kind": "fabric-read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:relinfer/fabric.py:230"
+   ],
+   "params": [],
+   "placeholders": {
+    "ident(g)": "analyzer_run"
+   }
+  },
+  {
+   "id": "analyzer-9e8310341c",
+   "kind": "fabric-read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:relinfer/fabric.py:242"
+   ],
+   "params": [],
+   "placeholders": {
+    "ct": "erp.purchase_order",
+    "ident(cc)": "supplier_id",
+    "pt": "erp.supplier",
+    "ident(pc)": "supplier_id",
+    "osample": "1000"
+   }
+  },
+  {
+   "id": "analyzer-0c0b8138a8",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:samples/context.py:128"
+   ],
+   "params": [
+    "owner",
+    "ds"
+   ]
+  },
+  {
+   "id": "analyzer-fcb5f4deb1",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:samples/context.py:151"
+   ],
+   "params": [
+    "owner",
+    "name",
+    "schema",
+    "fqn"
+   ]
+  },
+  {
+   "id": "analyzer-9ecaa5921b",
+   "kind": "read",
+   "graph": "analyzer_run",
+   "origins": [
+    "robo-data-catalog:search/semantic.py:37"
+   ],
+   "params": [
+    "owner"
+   ]
+  }
+ ],
+ "scenarios": [
+  {
+   "name": "robo-data-analyzer:graph/edges/affects_table.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-b6bdbba3e7"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/belongs_to.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-4a7c5c0698"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/calls.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-abea97f45b",
+    "analyzer-897d7c528c",
+    "analyzer-f80eb1b761"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/external_links.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-0f0f302365"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/fk.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-7160c9983e"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/has_column.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-e10822cd38"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/has_example.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-87446775c2"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/has_member.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-36224ba15a"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/has_question.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-c645bde46e"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/has_rule.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-76bb38717e"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/init_by.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-1026afba5a"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/next.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-da835b3c14"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/parent_of.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-0d107dc64d"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/reads_writes.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-6ffc7ad738"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/edges/references.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-5eccc5d9d6"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/node_upsert.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-67f14a7dc6"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/nodes/code_node.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-7735797b58"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/nodes/column.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-35d48a45d9",
+    "analyzer-6234e05922"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/nodes/db_schema.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-a28cc50e5e"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/nodes/example.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-515858998b"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/nodes/package.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-ed4cfa65b2"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/nodes/question.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-9da393810f"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/nodes/rule.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-8054c7e4b7"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/nodes/table.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-92c8afee79",
+    "analyzer-a0d7ceb893"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:graph/schema/constraints.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-bc3dee5fa4",
+    "analyzer-0f9720f55e",
+    "analyzer-3ec742058a",
+    "analyzer-3e6ea09e40",
+    "analyzer-569bb04baa",
+    "analyzer-91073909db",
+    "analyzer-de8ed5ae09",
+    "analyzer-827e6103f5",
+    "analyzer-57311ca12b",
+    "analyzer-b5418d64e1",
+    "analyzer-ef8cbd314c",
+    "analyzer-dab27e80c0"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:pipeline/steps/step8_post_processing/build_components_step.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-c8bc8cef20"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:pipeline/steps/step8_post_processing/build_glossary_step.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-b3425d227e"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-87b4a7bf2f",
+    "analyzer-bcf75bf8a6",
+    "analyzer-353f6d2010",
+    "analyzer-075a526699"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:pipeline/steps/step8_post_processing/health_metrics_step.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-3e4e52a215"
+   ]
+  },
+  {
+   "name": "robo-data-analyzer:scripts/reset_neo4j_schema.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-4969073e8e",
+    "analyzer-e993747eff"
+   ]
+  },
+  {
+   "name": "robo-data-catalog:enrichment/description.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-af27c1e73e",
+    "analyzer-eb4503359a"
+   ]
+  },
+  {
+   "name": "robo-data-catalog:enrichment/fk_store.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-13ec91aee9",
+    "analyzer-5c5855ae89",
+    "analyzer-c6b8b465f1",
+    "analyzer-3d4e6d600c"
+   ]
+  },
+  {
+   "name": "robo-data-catalog:graph/deletes.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-0cdf31fce2"
+   ]
+  },
+  {
+   "name": "robo-data-catalog:graph/schema_commands.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-7f7689e11f",
+    "analyzer-417a23a3c1",
+    "analyzer-c71db86114",
+    "analyzer-5412750f5d"
+   ]
+  },
+  {
+   "name": "robo-data-catalog:lineage/sql_extract.py",
+   "graph": "analyzer_run",
+   "isolation": "rollback",
+   "steps": [
+    "analyzer-060316a90f",
+    "analyzer-0922dffa2a"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,20 @@
+{
+ "pk": {
+  "$ref": "prop",
+  "label": "Policy",
+  "prop": "key",
+  "nth": 0
+ },
+ "sid": {
+  "$ref": "prop",
+  "label": "Policy",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "ck": {
+  "$ref": "prop",
+  "label": "Command",
+  "prop": "key",
+  "nth": 0
+ }
+}

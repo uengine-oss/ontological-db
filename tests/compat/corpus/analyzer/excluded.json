@@ -1,0 +1,22 @@
+[
+ {
+  "origin": "robo-data-analyzer:pipeline/execution/analysis_profile.py:198",
+  "reason": "skipped: log line, not a query",
+  "text": "profile: ⟦inputs.profile_path or '(none)'⟧"
+ },
+ {
+  "origin": "robo-data-catalog:relinfer/dev/extract.py:175",
+  "reason": "not Cypher (SQL DROP)",
+  "text": "DROP SCHEMA IF EXISTS relinfer_dev_tmp CASCADE; CREATE SCHEMA relinfer_dev_tmp; CREATE TABLE relinfer_dev_tmp.u (v text)"
+ },
+ {
+  "origin": "robo-data-catalog:relinfer/dev/extract.py:190",
+  "reason": "not Cypher (SQL DROP)",
+  "text": "DROP SCHEMA IF EXISTS relinfer_dev_tmp CASCADE"
+ },
+ {
+  "origin": "robo-data-catalog:shared/config/capabilities.py:131",
+  "reason": "skipped: error message, not a query",
+  "text": "SHOW DATASOURCES failed: ⟦type(exc).__name__⟧"
+ }
+]

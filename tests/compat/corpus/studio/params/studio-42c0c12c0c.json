@@ -1,0 +1,17 @@
+{
+ "host": {
+  "$env": "COMPAT_PGHOST"
+ },
+ "port": {
+  "$env": "COMPAT_PGPORT",
+  "type": "int"
+ },
+ "database": {
+  "$env": "COMPAT_PGDATABASE"
+ },
+ "schema": "compat_erp",
+ "user": {
+  "$env": "COMPAT_PGUSER"
+ },
+ "password": ""
+}

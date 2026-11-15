@@ -1,0 +1,20 @@
+{
+ "schema_id": "schema-1",
+ "class_name": "Customer",
+ "behavior_name": "compat-behavior_name",
+ "behavior_type": "compat-behavior_type",
+ "description": "compat-description",
+ "parameters": "compat-parameters",
+ "cypher_template": "compat-cypher_template",
+ "output_columns": "compat-output_columns",
+ "result_kind": "compat-result_kind",
+ "max_rows": 7,
+ "golden_question": "compat-golden_question",
+ "synonyms": [
+  "compat-synonyms-a",
+  "compat-synonyms-b"
+ ],
+ "certified": true,
+ "certified_by": "compat-certified_by",
+ "certified_at": "2026-01-15T09:00:00Z"
+}

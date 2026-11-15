@@ -1,0 +1,12 @@
+{
+ "rows": [
+  {
+   "target_id": "ReadModel-1",
+   "ui_id": "UI-1"
+  },
+  {
+   "target_id": "ReadModel-2",
+   "ui_id": "UI-2"
+  }
+ ]
+}

@@ -1,0 +1,30 @@
+{
+ "items": [
+  {
+   "evidence_line": "compat-evidence_line-1",
+   "source_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 2
+   },
+   "target_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 4
+   }
+  },
+  {
+   "evidence_line": "compat-evidence_line-2",
+   "source_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 3
+   },
+   "target_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 5
+   }
+  }
+ ]
+}

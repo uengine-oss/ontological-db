@@ -1,0 +1,22 @@
+{
+ "document_id": {
+  "$ref": "prop",
+  "label": "Document",
+  "prop": "document_id",
+  "nth": 0
+ },
+ "chunk_ids": [
+  {
+   "$ref": "prop",
+   "label": "Chunk",
+   "prop": "chunk_id",
+   "nth": 0
+  },
+  {
+   "$ref": "prop",
+   "label": "Chunk",
+   "prop": "chunk_id",
+   "nth": 1
+  }
+ ]
+}

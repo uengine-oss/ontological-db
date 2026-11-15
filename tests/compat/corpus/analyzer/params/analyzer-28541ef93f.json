@@ -1,0 +1,20 @@
+{
+ "owner": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "_owner",
+  "nth": 0
+ },
+ "relationship_owners": [
+  {
+   "$ref": "anyprop",
+   "prop": "_owner",
+   "nth": 0
+  },
+  {
+   "$ref": "anyprop",
+   "prop": "_owner",
+   "nth": 1
+  }
+ ]
+}

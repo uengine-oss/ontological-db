@@ -1,0 +1,7 @@
+{
+ "sid": {
+  "$ref": "anyprop",
+  "prop": "session_id",
+  "nth": 0
+ }
+}

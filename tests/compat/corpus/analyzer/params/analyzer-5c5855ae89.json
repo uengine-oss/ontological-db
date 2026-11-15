@@ -1,0 +1,14 @@
+{
+ "items": [
+  {
+   "props": "compat-props-1",
+   "sid": "compat-sid-1",
+   "tid": "compat-tid-1"
+  },
+  {
+   "props": "compat-props-2",
+   "sid": "compat-sid-2",
+   "tid": "compat-tid-2"
+  }
+ ]
+}

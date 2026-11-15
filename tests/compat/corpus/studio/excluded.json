@@ -1,0 +1,112 @@
+[
+ {
+  "origin": "studio-app:backend/src/modules/agent_session/session_store.py:38",
+  "reason": "not Cypher (SQL CREATE)",
+  "text": "CREATE TABLE IF NOT EXISTS sessions (\n    id          TEXT PRIMARY KEY,\n    title       TEXT NOT NULL DEFAULT '',\n    mode        TEXT NOT NULL DEFAULT '',\n    schema_name TEXT NOT NULL DEFAULT '',\n    created_at  REAL NOT NULL,\n    updated_at  REAL NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS messages ("
+ },
+ {
+  "origin": "studio-app:backend/src/modules/agent_session/session_store.py:395",
+  "reason": "not Cypher (SQL CREATE)",
+  "text": "CREATE TABLE IF NOT EXISTS ontology_schemas (\n    id          TEXT PRIMARY KEY,\n    name        TEXT NOT NULL UNIQUE,\n    description TEXT NOT NULL DEFAULT '',\n    intent      TEXT NOT NULL DEFAULT '',\n    golden_questions TEXT NOT NULL DEFAULT '[]',\n    created_at  REAL NOT NULL,\n    updated_at  RE"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/board/query_gen.py:153",
+  "reason": "assembled by hand: board widget, raw rows: `MATCH (n:_Entity:<cls>)` + `_cypher_where` (filters joined with AND, values bound as $<param_key>) + `RETURN n.<p> AS <p>, …`",
+  "text": "MATCH (n:_Entity:Customer)⟦where⟧ RETURN ⟦', '.join(cols)⟧"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/board/query_gen.py:155",
+  "reason": "assembled by hand: board widget with dimensions and measures: parts `MATCH … WHERE …`, `WITH <dims>, <agg>(n.<p>) AS <label>`, `RETURN <names>`, `ORDER BY <first dim>` joined with spaces; contains filters become toLower(toString(n.p)) CONTAINS toLower($key)",
+  "text": "MATCH (n:_Entity:Customer)⟦where⟧"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/board/query_gen.py:157",
+  "reason": "assembled by hand: board widget with dimensions and measures: parts `MATCH … WHERE …`, `WITH <dims>, <agg>(n.<p>) AS <label>`, `RETURN <names>`, `ORDER BY <first dim>` joined with spaces; contains filters become toLower(toString(n.p)) CONTAINS toLower($key)",
+  "text": "WITH ⟦', '.join(dims + measures)⟧"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/board/query_gen.py:158",
+  "reason": "assembled by hand: board widget with dimensions and measures: parts `MATCH … WHERE …`, `WITH <dims>, <agg>(n.<p>) AS <label>`, `RETURN <names>`, `ORDER BY <first dim>` joined with spaces; contains filters become toLower(toString(n.p)) CONTAINS toLower($key)",
+  "text": "WITH ⟦', '.join(dims)⟧"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/board/query_gen.py:159",
+  "reason": "assembled by hand: board widget with dimensions and measures: parts `MATCH … WHERE …`, `WITH <dims>, <agg>(n.<p>) AS <label>`, `RETURN <names>`, `ORDER BY <first dim>` joined with spaces; contains filters become toLower(toString(n.p)) CONTAINS toLower($key)",
+  "text": "RETURN ⟦', '.join([d.split(' AS ')[-1] for d in dims] + [m.split(' AS ')[-1] for m in measures])⟧"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/board/query_gen.py:164",
+  "reason": "assembled by hand: board widget with measures only: `MATCH …` + `RETURN <agg> AS <label>, …`",
+  "text": "RETURN ⟦', '.join(measures)⟧"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/ontology/from_tables.py:257",
+  "reason": "assembled by hand: label probe cleanup: `MATCH (n<i>:`<label>`) WHERE elementId(n<i>) = $e<i>` per label joined with spaces, then `DELETE n0, n1, …`",
+  "text": "MATCH (n⟦i⟧:`Customer`) WHERE elementId(n⟦i⟧) = $e⟦i⟧"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/ontology/tools.py:2973",
+  "reason": "not Cypher (SQL DROP)",
+  "text": "DROP VIEW mindsdb.Customer"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/ontology/tools.py:2976",
+  "reason": "not Cypher (SQL CREATE)",
+  "text": "CREATE VIEW mindsdb.Customer AS (\n⟦body⟧\n)"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/ontology/tools.py:3031",
+  "reason": "not Cypher (SQL DROP)",
+  "text": "DROP VIEW mindsdb.Customer"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/quality/ingest_gate.py:116",
+  "reason": "assembled by hand: write_candidate(entity): `_merge_entity_clause('s','s')` = MERGE (s:_Entity:<label> {_source_id: $s_key}) + _ENTITY_SET (ON CREATE SET … / SET updated_at) + SET name = coalesce(…), then RETURN elementId(s)",
+  "text": "MERGE (⟦var⟧:_Entity:Customer {_source_id: $⟦prefix⟧_key})\nON CREATE SET ⟦var⟧.created_at = datetime(), ⟦var⟧._confidence = $⟦prefix⟧_conf,\n              ⟦var⟧._run_id = $run_id, ⟦var⟧._evidence_ref = $evidence_ref,\n              ⟦var⟧._source_system = $⟦prefix⟧_sys, ⟦var⟧._source_key = $⟦prefix⟧_skey\nSET ⟦var⟧.updated_at = datetime()\nSET ⟦var⟧.name = coalesce(⟦var⟧.name, $⟦prefix⟧_name)"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/quality/shapes.py:58",
+  "reason": "skipped: fragment: the shared RETURN tail the shape checks below append to their MATCH",
+  "text": "RETURN elementId(n) AS eid, n._source_id AS key, n.name AS name, n._source_system AS source_system"
+ },
+ {
+  "origin": "studio-app:backend/src/modules/quality/store.py:30",
+  "reason": "not Cypher (SQL CREATE)",
+  "text": "CREATE TABLE IF NOT EXISTS quality_policy (\n    schema_id   TEXT PRIMARY KEY,\n    policy_json TEXT NOT NULL DEFAULT '{}',\n    updated_at  REAL NOT NULL,\n    FOREIGN KEY (schema_id) REFERENCES ontology_schemas(id) ON DELETE CASCADE\n);\n\nCREATE TABLE IF NOT EXISTS extraction_runs (\n    run_id      TEXT"
+ },
+ {
+  "origin": "studio-desktop:src/main/fabric-bridge.js:206",
+  "reason": "assembled by hand: createDatasource: head `CREATE DATASOURCE <name> WITH ENGINE = '<engine>', PARAMETERS = ` + `{<k>: $<k>, …}` over the keys the form filled (password, or credentials when the keychain holds it)",
+  "text": "CREATE DATASOURCE ⟦name⟧ WITH ENGINE = '⟦engine⟧', PARAMETERS ="
+ },
+ {
+  "origin": "studio-desktop:src/main/fabric-bridge.js:223",
+  "reason": "assembled by hand: alterCredentials without a keychain: head `ALTER DATASOURCE <name> SET CREDENTIALS = ` + '{user: $user, password: $password}'",
+  "text": "ALTER DATASOURCE erp SET CREDENTIALS ="
+ },
+ {
+  "origin": "studio-desktop:src/main/postgres.js:158",
+  "reason": "not Cypher (SQL CREATE)",
+  "text": "CREATE DATABASE ogstudio + EXTENSION ontological"
+ },
+ {
+  "origin": "studio-desktop:src/main/postgres.js:161",
+  "reason": "not Cypher (SQL CREATE)",
+  "text": "CREATE DATABASE ⟦GRAPH_DB⟧"
+ },
+ {
+  "origin": "studio-desktop:src/main/postgres.js:162",
+  "reason": "not Cypher (SQL CREATE)",
+  "text": "CREATE EXTENSION IF NOT EXISTS ontological CASCADE"
+ },
+ {
+  "origin": "studio-desktop:src/main/postgres.js:163",
+  "reason": "not Cypher (SQL CREATE)",
+  "text": "CREATE EXTENSION IF NOT EXISTS postgres_fdw"
+ },
+ {
+  "origin": "studio-desktop:src/main/postgres.js:172",
+  "reason": "not Cypher (SQL CREATE)",
+  "text": "CREATE DATABASE ⟦SAMPLE_DB⟧"
+ }
+]

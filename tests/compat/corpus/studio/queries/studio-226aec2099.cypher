@@ -1,0 +1,1 @@
+MATCH (n:_Entity:`Customer`) OPTIONAL MATCH (n)-[r]-() WHERE NOT type(r) IN $skip WITH n, count(r) AS c WHERE c = 0 RETURN n._source_id AS key, n.name AS name, n._source_system AS source_system LIMIT 500

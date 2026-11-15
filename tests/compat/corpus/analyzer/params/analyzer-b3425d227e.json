@@ -1,0 +1,12 @@
+{
+ "items": [
+  {
+   "n_terms": "compat-n_terms-1",
+   "terms_json": "compat-terms_json-1"
+  },
+  {
+   "n_terms": "compat-n_terms-2",
+   "terms_json": "compat-terms_json-2"
+  }
+ ]
+}

@@ -1,0 +1,6 @@
+{
+ "id": "compat-new-Feature",
+ "name": "compat-name",
+ "desc": "compat-description",
+ "bc_id": "compat-boundedContextId"
+}

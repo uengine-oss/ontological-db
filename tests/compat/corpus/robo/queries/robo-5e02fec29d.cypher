@@ -1,0 +1,1 @@
+OPTIONAL MATCH (existing:BpmProcess {session_id: $sid}) WITH count(existing) AS next_idx MERGE (p:BpmProcess {id: $id, session_id: $sid}) ON CREATE SET p.process_index = next_idx SET p.name = $name, p.description = $desc,     p.domain_keywords = $keywords,     p.source_pdf_name = $pdf_name, p.bpmn_xml = $xml,     p.updated_at = datetime()

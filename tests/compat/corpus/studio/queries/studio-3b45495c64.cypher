@@ -1,0 +1,1 @@
+MATCH (n:_Entity:Customer) WHERE toLower(toString(n.name)) CONTAINS toLower($q) WITH n.grade AS grade, count(*) AS count, avg(toFloat(n.credit_limit)) AS avg_credit RETURN grade, count, avg_credit ORDER BY grade

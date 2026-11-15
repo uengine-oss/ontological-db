@@ -1,0 +1,14 @@
+{
+ "owner": {
+  "$ref": "prop",
+  "label": "COLUMN",
+  "prop": "_owner",
+  "nth": 0
+ },
+ "datasource": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "datasource",
+  "nth": 0
+ }
+}

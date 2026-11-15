@@ -1,0 +1,6 @@
+{
+ "merge_customer_id": "compat-customer_id",
+ "customer_id": "compat-customer_id",
+ "name": "compat-name",
+ "grade": "compat-grade"
+}

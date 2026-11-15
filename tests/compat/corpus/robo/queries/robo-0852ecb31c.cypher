@@ -1,0 +1,9 @@
+MATCH (u:UI {id: $uid})
+MATCH (c:Command)
+WHERE NOT EXISTS { (:Policy)-[:INVOKES]->(c) }
+  AND EXISTS {
+      MATCH (c)-[:EMITS|TRIGGERS|INVOKES|HAS_AGGREGATE|HAS_COMMAND|HAS_UI|ATTACHED_TO|REFERENCES|HAS_THEN|HAS_POLICY*1..30]-(u)
+  }
+RETURN c.id AS id
+ORDER BY coalesce(c.displayName, c.name), c.id
+LIMIT 1

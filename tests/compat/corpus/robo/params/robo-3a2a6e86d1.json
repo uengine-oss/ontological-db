@@ -1,0 +1,9 @@
+{
+ "aid": "Aggregate-1",
+ "name": {
+  "$ref": "prop",
+  "label": "Property",
+  "prop": "name",
+  "nth": 0
+ }
+}

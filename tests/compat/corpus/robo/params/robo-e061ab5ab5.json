@@ -1,0 +1,9 @@
+{
+ "id": "compat-new-UserStory",
+ "role": "compat-role",
+ "action": "compat-action",
+ "benefit": "compat-benefit",
+ "criteria": "compat-acceptanceCriteria",
+ "bc_id": "compat-boundedContextId",
+ "feature_id": "compat-featureId"
+}

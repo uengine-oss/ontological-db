@@ -1,0 +1,26 @@
+{
+ "items": [
+  {
+   "anchor_line": "compat-anchor_line-1",
+   "occurrence_id": "compat-occurrence_id-1",
+   "ordinal": "compat-ordinal-1",
+   "source_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 6
+   },
+   "target_id": "RULE-1"
+  },
+  {
+   "anchor_line": "compat-anchor_line-2",
+   "occurrence_id": "compat-occurrence_id-2",
+   "ordinal": "compat-ordinal-2",
+   "source_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 7
+   },
+   "target_id": "RULE-2"
+  }
+ ]
+}

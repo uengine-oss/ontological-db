@@ -1,0 +1,14 @@
+{
+ "tprop": {
+  "$ref": "prop",
+  "label": "Property",
+  "prop": "name",
+  "nth": 0
+ },
+ "tkey": {
+  "$ref": "prop",
+  "label": "Aggregate",
+  "prop": "name",
+  "nth": 0
+ }
+}

@@ -1,0 +1,16 @@
+{
+ "items": [
+  {
+   "given": "compat-given-1",
+   "id": "compat-new-EXAMPLE-1",
+   "then_": "compat-then_-1",
+   "when_": "compat-when_-1"
+  },
+  {
+   "given": "compat-given-2",
+   "id": "compat-new-EXAMPLE-2",
+   "then_": "compat-then_-2",
+   "when_": "compat-when_-2"
+  }
+ ]
+}

@@ -1,0 +1,28 @@
+{
+ "items": [
+  {
+   "child_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 0
+   },
+   "parent_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 2
+   }
+  },
+  {
+   "child_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 1
+   },
+   "parent_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 3
+   }
+  }
+ ]
+}

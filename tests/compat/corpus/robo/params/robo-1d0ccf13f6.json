@@ -1,0 +1,10 @@
+{
+ "rid": "Rule-1",
+ "sid": {
+  "$ref": "prop",
+  "label": "Rule",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "role": "compat-es_role"
+}

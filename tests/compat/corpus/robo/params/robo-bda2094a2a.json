@@ -1,0 +1,9 @@
+{
+ "command_id": "Command-1",
+ "event_name": {
+  "$ref": "prop",
+  "label": "Event",
+  "prop": "name",
+  "nth": 0
+ }
+}

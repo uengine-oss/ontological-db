@@ -1,0 +1,8 @@
+{
+ "change_id": "RequirementChange-1",
+ "placeholder_id": "compat-new-CreationIntent",
+ "node_label": "compat-nodeLabel",
+ "template_json": "compat-templateData",
+ "reason": "compat-reason",
+ "impact_level": "compat-impactLevel"
+}

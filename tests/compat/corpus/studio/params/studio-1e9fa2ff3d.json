@@ -1,0 +1,9 @@
+{
+ "id": {
+  "$ref": "elementId",
+  "label": "*",
+  "nth": 0
+ },
+ "name": "compat-name",
+ "grade": "compat-grade"
+}

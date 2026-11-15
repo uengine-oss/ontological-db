@@ -1,0 +1,13 @@
+{
+ "tid": "BpmTask-1",
+ "sid": {
+  "$ref": "prop",
+  "label": "BpmTask",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "pid": "DocumentPassage-1",
+ "score": 0.9,
+ "rank": 7,
+ "lowc": "compat-low_confidence"
+}

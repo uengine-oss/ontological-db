@@ -1,0 +1,7 @@
+{
+ "fid": {
+  "$ref": "anyprop",
+  "prop": "_id",
+  "nth": 0
+ }
+}

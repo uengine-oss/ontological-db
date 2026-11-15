@@ -1,0 +1,1 @@
+CALL db.index.vector.queryNodes('entity_embedding_vector', $k, $vec) YIELD node, score WITH node, score WHERE any(l IN labels(node) WHERE l IN $classes) RETURN [l IN labels(node) WHERE l <> '_Entity'][0] AS class_name,        node, score, elementId(node) AS _element_id

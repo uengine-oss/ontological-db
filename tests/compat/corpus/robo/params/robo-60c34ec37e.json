@@ -1,0 +1,8 @@
+{
+ "tprop": {
+  "$ref": "prop",
+  "label": "Property",
+  "prop": "name",
+  "nth": 0
+ }
+}

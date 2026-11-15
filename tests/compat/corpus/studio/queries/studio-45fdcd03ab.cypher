@@ -1,0 +1,1 @@
+MATCH (n:_Entity:`Customer`) WHERE n.`grade` IS NULL MATCH (n)-[r1]-(x:_Entity)-[r2]-(m:_Entity:`Customer`) WHERE type(r1) = type(r2) AND m.`grade` IS NOT NULL AND elementId(m) <> elementId(n) RETURN n._source_id AS key, n.name AS name, x.name AS via, type(r1) AS rel, toString(m.`grade`) AS v LIMIT 5000

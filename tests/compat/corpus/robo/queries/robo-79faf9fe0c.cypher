@@ -1,0 +1,1 @@
+MERGE (t:BpmTask {id: $id, session_id: $sid}) SET t.name = $name, t.description = $description,     t.sequence_index = $seq, t.source_page = $page,     t.source_section = $section, t.process_id = $pid

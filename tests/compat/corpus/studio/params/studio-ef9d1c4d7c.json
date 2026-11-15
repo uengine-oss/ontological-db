@@ -1,0 +1,13 @@
+{
+ "from_entity_id": {
+  "$ref": "elementId",
+  "label": "_Entity",
+  "nth": 0
+ },
+ "to_entity_id": {
+  "$ref": "elementId",
+  "label": "_Entity",
+  "nth": 1
+ },
+ "channel": "compat-channel"
+}

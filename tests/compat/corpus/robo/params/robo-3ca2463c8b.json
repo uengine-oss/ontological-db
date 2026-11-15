@@ -1,0 +1,9 @@
+{
+ "pid": "Command-1",
+ "ptype": {
+  "$ref": "prop",
+  "label": "GWT",
+  "prop": "parentType",
+  "nth": 0
+ }
+}

@@ -1,0 +1,22 @@
+{
+ "rows": [
+  {
+   "bc_id": "compat-bc_id-1",
+   "key": {
+    "$ref": "prop",
+    "label": "Aggregate",
+    "prop": "key",
+    "nth": 0
+   }
+  },
+  {
+   "bc_id": "compat-bc_id-2",
+   "key": {
+    "$ref": "prop",
+    "label": "Aggregate",
+    "prop": "key",
+    "nth": 1
+   }
+  }
+ ]
+}

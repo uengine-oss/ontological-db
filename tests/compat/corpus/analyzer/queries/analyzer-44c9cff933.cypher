@@ -1,0 +1,1 @@
+SHOW VIRTUAL RELATIONSHIPS IN analyzer_run

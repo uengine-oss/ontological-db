@@ -1,0 +1,1 @@
+MATCH ()-[r]->() DELETE r

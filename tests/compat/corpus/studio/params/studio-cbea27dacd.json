@@ -1,0 +1,10 @@
+{
+ "schema_id": "compat-schema_id",
+ "name": "compat-name",
+ "description": "compat-description",
+ "intent": "compat-intent",
+ "golden_questions": "compat-golden_questions",
+ "golden_commands": "compat-golden_commands",
+ "format_version": "compat-format_version",
+ "published_at": "2026-01-15T09:00:00Z"
+}

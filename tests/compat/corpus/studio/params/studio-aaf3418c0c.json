@@ -1,0 +1,31 @@
+{
+ "rows": [
+  {
+   "base_conditions": "compat-base_conditions-1",
+   "class_name": "Customer",
+   "column_map": "compat-column_map-1",
+   "datasource": "compat-datasource-1",
+   "default_limit": 7,
+   "extra_tables": "compat-extra_tables-1",
+   "key_columns": "compat-key_columns-1",
+   "label_property": "compat-label_property-1",
+   "source_schema": "compat-source_schema-1",
+   "table_name": "compat-table_name-1",
+   "virtual_node": "compat-virtual_node-1"
+  },
+  {
+   "base_conditions": "compat-base_conditions-2",
+   "class_name": "PurchaseOrder",
+   "column_map": "compat-column_map-2",
+   "datasource": "compat-datasource-2",
+   "default_limit": 7,
+   "extra_tables": "compat-extra_tables-2",
+   "key_columns": "compat-key_columns-2",
+   "label_property": "compat-label_property-2",
+   "source_schema": "compat-source_schema-2",
+   "table_name": "compat-table_name-2",
+   "virtual_node": "compat-virtual_node-2"
+  }
+ ],
+ "schema_id": "schema-1"
+}

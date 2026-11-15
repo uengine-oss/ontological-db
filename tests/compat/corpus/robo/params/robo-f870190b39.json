@@ -1,0 +1,6 @@
+{
+ "target_id": "compat-new-Policy",
+ "name": "compat-name",
+ "description": "compat-description",
+ "bc_id": "BoundedContext-1"
+}

@@ -1,0 +1,46 @@
+{
+ "items": [
+  {
+   "srcId": "Property-1",
+   "tgtKey": {
+    "$ref": "prop",
+    "label": "Aggregate",
+    "prop": "key",
+    "nth": 0
+   },
+   "tgtProp": {
+    "$ref": "prop",
+    "label": "Property",
+    "prop": "name",
+    "nth": 0
+   },
+   "tgtType": {
+    "$ref": "prop",
+    "label": "Property",
+    "prop": "parentType",
+    "nth": 0
+   }
+  },
+  {
+   "srcId": "Property-2",
+   "tgtKey": {
+    "$ref": "prop",
+    "label": "Aggregate",
+    "prop": "key",
+    "nth": 1
+   },
+   "tgtProp": {
+    "$ref": "prop",
+    "label": "Property",
+    "prop": "name",
+    "nth": 1
+   },
+   "tgtType": {
+    "$ref": "prop",
+    "label": "Property",
+    "prop": "parentType",
+    "nth": 1
+   }
+  }
+ ]
+}

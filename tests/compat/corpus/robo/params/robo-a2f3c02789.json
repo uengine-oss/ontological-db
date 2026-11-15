@@ -1,0 +1,7 @@
+{
+ "uid": "UI-1",
+ "fid": "compat-figmaNodeId",
+ "fk": "compat-figmaFileKey",
+ "write_sg": "compat-write_sg",
+ "sg": "compat-sg"
+}

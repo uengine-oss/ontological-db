@@ -1,0 +1,14 @@
+{
+ "rows": [
+  {
+   "cmd_id": "Command-1",
+   "evt_id": "Event-1",
+   "is_guaranteed": true
+  },
+  {
+   "cmd_id": "Command-2",
+   "evt_id": "Event-2",
+   "is_guaranteed": true
+  }
+ ]
+}

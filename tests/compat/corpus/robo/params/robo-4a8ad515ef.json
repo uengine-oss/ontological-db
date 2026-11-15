@@ -1,0 +1,8 @@
+{
+ "b": {
+  "$ref": "prop",
+  "label": "DeletionRecord",
+  "prop": "batchId",
+  "nth": 0
+ }
+}

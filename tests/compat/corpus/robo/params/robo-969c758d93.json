@@ -1,0 +1,24 @@
+{
+ "rows": [
+  {
+   "actor": "compat-actor-1",
+   "aggregate_id": "Aggregate-1",
+   "category": "compat-category-1",
+   "description": "compat-description-1",
+   "display_name": "compat-display_name-1",
+   "input_schema": "compat-input_schema-1",
+   "key": "compat-new-Command-1",
+   "name": "compat-name-1"
+  },
+  {
+   "actor": "compat-actor-2",
+   "aggregate_id": "Aggregate-2",
+   "category": "compat-category-2",
+   "description": "compat-description-2",
+   "display_name": "compat-display_name-2",
+   "input_schema": "compat-input_schema-2",
+   "key": "compat-new-Command-2",
+   "name": "compat-name-2"
+  }
+ ]
+}

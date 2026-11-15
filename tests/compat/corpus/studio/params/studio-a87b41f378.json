@@ -1,0 +1,7 @@
+{
+ "id": {
+  "$ref": "elementId",
+  "label": "*",
+  "nth": 0
+ }
+}

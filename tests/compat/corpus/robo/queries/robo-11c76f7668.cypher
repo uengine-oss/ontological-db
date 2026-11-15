@@ -1,0 +1,1 @@
+MERGE (r:Rule {id: $id, session_id: $sid}) SET r.given = $given, r.`when` = $when, r.`then` = $then,     r.source_function = $sf, r.source_container = $sc, r.confidence = $conf,     r.source_function_id = $sfid, r.source_rule_id = $srid,     r.title = $title, r.write_effects_json = $writes, r.context_cluster = $ctx,     r.es_role = $es_role, r.es_role_confidence = $es_role_conf

@@ -1,0 +1,17 @@
+{
+ "owner": {
+  "$ref": "anyprop",
+  "prop": "_owner",
+  "nth": 0
+ },
+ "procedure_name": {
+  "$ref": "anyprop",
+  "prop": "name",
+  "nth": 0
+ },
+ "file_path": {
+  "$ref": "anyprop",
+  "prop": "file_path",
+  "nth": 0
+ }
+}

@@ -1,0 +1,28 @@
+{
+ "rows": [
+  {
+   "description": "compat-description-1",
+   "displayName": "compat-displayName-1",
+   "fkTargetHint": "compat-fkTargetHint-1",
+   "isForeignKey": true,
+   "isKey": true,
+   "isRequired": true,
+   "name": "compat-name",
+   "parentId": "compat-parentId",
+   "parentType": "compat-parentType",
+   "type": "compat-type-1"
+  },
+  {
+   "description": "compat-description-2",
+   "displayName": "compat-displayName-2",
+   "fkTargetHint": "compat-fkTargetHint-2",
+   "isForeignKey": true,
+   "isKey": true,
+   "isRequired": true,
+   "name": "compat-name",
+   "parentId": "compat-parentId",
+   "parentType": "compat-parentType",
+   "type": "compat-type-2"
+  }
+ ]
+}

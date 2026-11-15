@@ -1,0 +1,1 @@
+MATCH (x {id: $id})-[:HAS_RULE]->(r:RULE) RETURN r.id AS id, coalesce(x.summary, '') AS parent_summary,   coalesce(r.condition_description, r.condition, '') AS condition,   coalesce(r.effect_descriptions, r.effects, []) AS effects,   coalesce(r.statement, '') AS statement_text

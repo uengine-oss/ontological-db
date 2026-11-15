@@ -1,0 +1,14 @@
+{
+ "schema_id": "schema-1",
+ "class_name": "compat-class_name",
+ "description": "compat-description",
+ "binding_kind": "compat-binding_kind",
+ "properties": "compat-properties",
+ "synonyms": [
+  "compat-synonyms-a",
+  "compat-synonyms-b"
+ ],
+ "certified": true,
+ "certified_by": "compat-certified_by",
+ "certified_at": "2026-01-15T09:00:00Z"
+}

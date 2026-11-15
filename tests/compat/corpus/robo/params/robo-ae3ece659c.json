@@ -1,0 +1,17 @@
+{
+ "pids": [
+  {
+   "$ref": "prop",
+   "label": "Process",
+   "prop": "proc_id",
+   "nth": 0
+  },
+  {
+   "$ref": "prop",
+   "label": "Process",
+   "prop": "proc_id",
+   "nth": 1
+  }
+ ],
+ "sid": "compat-session_id"
+}

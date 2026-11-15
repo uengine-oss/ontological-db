@@ -1,0 +1,7 @@
+{
+ "graph_owner": {
+  "$ref": "anyprop",
+  "prop": "graph_owner",
+  "nth": 0
+ }
+}

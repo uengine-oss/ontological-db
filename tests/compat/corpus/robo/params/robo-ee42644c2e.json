@@ -1,0 +1,8 @@
+{
+ "sid": {
+  "$ref": "prop",
+  "label": "BoundedContext",
+  "prop": "session_id",
+  "nth": 0
+ }
+}

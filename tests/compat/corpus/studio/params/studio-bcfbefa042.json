@@ -1,0 +1,38 @@
+{
+ "links": [
+  {
+   "from_chunk_id": {
+    "$ref": "prop",
+    "label": "Chunk",
+    "prop": "chunk_id",
+    "nth": 0
+   },
+   "to_chunk_id": {
+    "$ref": "prop",
+    "label": "Chunk",
+    "prop": "chunk_id",
+    "nth": 0
+   }
+  },
+  {
+   "from_chunk_id": {
+    "$ref": "prop",
+    "label": "Chunk",
+    "prop": "chunk_id",
+    "nth": 1
+   },
+   "to_chunk_id": {
+    "$ref": "prop",
+    "label": "Chunk",
+    "prop": "chunk_id",
+    "nth": 1
+   }
+  }
+ ],
+ "document_id": {
+  "$ref": "prop",
+  "label": "Document",
+  "prop": "document_id",
+  "nth": 0
+ }
+}

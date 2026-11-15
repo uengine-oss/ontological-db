@@ -1,0 +1,9 @@
+{
+ "id": "FigmaBinding-1",
+ "rid": {
+  "$ref": "prop",
+  "label": "FigmaBinding",
+  "prop": "currentRunId",
+  "nth": 0
+ }
+}

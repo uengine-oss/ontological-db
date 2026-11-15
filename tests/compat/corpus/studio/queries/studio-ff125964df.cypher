@@ -1,0 +1,1 @@
+MATCH (n:_Entity:Customer) OPTIONAL MATCH (n)-[r:PLACED]->() WITH n, count(r) AS c WHERE c < $limit RETURN elementId(n) AS eid, n._source_id AS key, n.name AS name, n._source_system AS source_system, c AS observed LIMIT 500

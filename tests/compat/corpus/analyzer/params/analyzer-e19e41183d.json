@@ -1,0 +1,22 @@
+{
+ "items": [
+  {
+   "source_id": {
+    "$ref": "prop",
+    "label": "FILE",
+    "prop": "id",
+    "nth": 0
+   },
+   "target_id": "TABLE-1"
+  },
+  {
+   "source_id": {
+    "$ref": "prop",
+    "label": "FILE",
+    "prop": "id",
+    "nth": 1
+   },
+   "target_id": "TABLE-2"
+  }
+ ]
+}

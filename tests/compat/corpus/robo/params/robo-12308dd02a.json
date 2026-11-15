@@ -1,0 +1,10 @@
+{
+ "id": "compat-new-ChangeSet",
+ "title": "compat-title",
+ "author": "compat-author",
+ "createdAt": "2026-01-15T09:00:00Z",
+ "changeIds": [
+  "CHG-001",
+  "RequirementChange-1"
+ ]
+}

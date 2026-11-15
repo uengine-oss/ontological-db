@@ -1,0 +1,1 @@
+MATCH {pattern} RETURN type(r) AS type, '{direction}' AS direction, coalesce(other.id,'') AS other_id, coalesce(other.name,'') AS other_name, labels(other) AS other_labels, properties(r) AS properties

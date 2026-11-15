@@ -1,0 +1,1 @@
+MATCH (n:_Entity) WHERE elementId(n) = $node_id CALL apoc.neighbors.tohop(n, '>', $depth) YIELD node AS m WITH n, m OPTIONAL MATCH (m)-[r]->(o:_Entity) OPTIONAL MATCH (p:_Entity)-[r2]->(m) RETURN m, r, o, r2, p

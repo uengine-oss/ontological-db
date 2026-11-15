@@ -1,0 +1,9 @@
+{
+ "s_key": "compat-new-Customer",
+ "s_conf": 0.9,
+ "run_id": "compat-_run_id",
+ "evidence_ref": "compat-_evidence_ref",
+ "s_sys": "compat-_source_system",
+ "s_skey": "compat-_source_key",
+ "s_name": "compat-s_name"
+}

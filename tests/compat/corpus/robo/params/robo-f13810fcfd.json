@@ -1,0 +1,22 @@
+{
+ "fk": {
+  "$ref": "prop",
+  "label": "FigmaComponent",
+  "prop": "bindingFileKey",
+  "nth": 0
+ },
+ "kept": [
+  {
+   "$ref": "prop",
+   "label": "FigmaComponent",
+   "prop": "figmaNodeId",
+   "nth": 0
+  },
+  {
+   "$ref": "prop",
+   "label": "FigmaComponent",
+   "prop": "figmaNodeId",
+   "nth": 1
+  }
+ ]
+}

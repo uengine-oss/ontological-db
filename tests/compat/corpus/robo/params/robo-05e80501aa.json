@@ -1,0 +1,26 @@
+{
+ "parent_id": "Command-1",
+ "given_ref_json": "compat-givenRef",
+ "when_ref_json": "compat-whenRef",
+ "then_ref_json": "compat-thenRef",
+ "test_cases_json": "compat-testCases",
+ "refs": [
+  {
+   "id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 0
+   },
+   "type": "compat-type-1"
+  },
+  {
+   "id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 1
+   },
+   "type": "compat-type-2"
+  }
+ ],
+ "parent_type": "Command"
+}

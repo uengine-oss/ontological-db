@@ -1,0 +1,1 @@
+MATCH (us:UserStory {session_id: $sid}) WHERE NOT (us)-[:IMPLEMENTS]->(:BoundedContext) WITH us MATCH (b:BoundedContext {session_id: $sid, id: $bid}) MERGE (us)-[rel:IMPLEMENTS]->(b) RETURN count(rel) AS c

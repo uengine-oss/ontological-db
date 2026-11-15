@@ -1,0 +1,13 @@
+{
+ "src": "BpmTask-1",
+ "sid": {
+  "$ref": "prop",
+  "label": "BpmTask",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "dst": "BpmTask-1",
+ "fid": "compat-fid",
+ "name": "compat-name",
+ "cond": "compat-condition"
+}

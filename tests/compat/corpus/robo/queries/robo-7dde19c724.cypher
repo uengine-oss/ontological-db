@@ -1,0 +1,1 @@
+MATCH (t:BpmTask {session_id: $sid}) MATCH (us:UserStory {session_id: $sid}) WHERE us.sourceUnitId = t.id MATCH (us)-[:IMPLEMENTS]->(bc:BoundedContext {session_id: $sid}) RETURN t.id AS tid, bc.key AS bck, bc.name AS bcn

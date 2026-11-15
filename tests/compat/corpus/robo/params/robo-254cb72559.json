@@ -1,0 +1,12 @@
+{
+ "key": "compat-new-BoundedContext",
+ "name": "compat-name",
+ "display_name": "compat-displayName",
+ "description": "compat-description",
+ "owner": "compat-owner",
+ "domain_type": "compat-domainType",
+ "user_story_ids": [
+  "compat-userStoryIds-a",
+  "compat-userStoryIds-b"
+ ]
+}

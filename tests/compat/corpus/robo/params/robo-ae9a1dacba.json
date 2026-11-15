@@ -1,0 +1,9 @@
+{
+ "evtId": "Event-1",
+ "cqrsId": {
+  "$ref": "prop",
+  "label": "CQRSOperation",
+  "prop": "cqrsConfigId",
+  "nth": 0
+ }
+}

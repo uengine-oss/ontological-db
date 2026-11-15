@@ -1,0 +1,1 @@
+MATCH (m:_OntologyModel {schema_id: $schema_id}) CREATE (r:_OntologyRelationship {name: $name}) SET r.from_class = $from_class, r.to_class = $to_class,     r.description = $description, r.properties = $properties, r.synonyms = $synonyms, r.certified = $certified, r.certified_by = $certified_by, r.certified_at = $certified_at CREATE (m)-[:HAS_RELATIONSHIP]->(r)

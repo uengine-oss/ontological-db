@@ -1,0 +1,9 @@
+{
+ "id": "TABLE-1",
+ "graph_owner": {
+  "$ref": "prop",
+  "label": "TABLE",
+  "prop": "graph_owner",
+  "nth": 0
+ }
+}

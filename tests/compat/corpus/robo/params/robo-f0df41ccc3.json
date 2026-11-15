@@ -1,0 +1,8 @@
+{
+ "hint": {
+  "$ref": "prop",
+  "label": "Aggregate",
+  "prop": "name",
+  "nth": 0
+ }
+}

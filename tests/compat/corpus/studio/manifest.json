@@ -1,0 +1,2466 @@
+{
+ "client": "studio",
+ "graphs": [
+  "ontology"
+ ],
+ "sources": [
+  {
+   "name": "studio-app",
+   "path": "/Users/uengine/uengine-platform/ontology-studio-desktop/runtime/studio/app",
+   "commit": "68edc34",
+   "dirty": true
+  },
+  {
+   "name": "studio-desktop",
+   "path": "/Users/uengine/uengine-platform/ontology-studio-desktop",
+   "commit": "68edc34",
+   "dirty": true
+  },
+  {
+   "name": "kinetic-action",
+   "path": "/Users/uengine/uengine-platform/ontology-studio-desktop/sources/kinetic-action",
+   "commit": "68edc34",
+   "dirty": true
+  }
+ ],
+ "vector_dimensions": 8,
+ "fixture": [
+  "20_ontology.cypher",
+  "90_derived.cypher"
+ ],
+ "counts": {
+  "queries": 170,
+  "by_kind": {
+   "fabric-read": 9,
+   "fabric-write": 13,
+   "read": 100,
+   "schema": 7,
+   "write": 41
+  },
+  "scenarios": 10,
+  "assembled": 13,
+  "llm_examples": 2,
+  "excluded": 22
+ },
+ "queries": [
+  {
+   "id": "studio-850d1f78e1",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "kinetic-action:app/graph.py:10"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-c5f0a4c196",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "kinetic-action:app/graph.py:72"
+   ],
+   "params": [
+    "key",
+    "value"
+   ],
+   "placeholders": {
+    "quote(label, '클래스')": "`Customer`",
+    "match": "toString(n.`customer_id`) = $key",
+    "quote(prop)": "`grade`"
+   },
+   "scenario": "kinetic-action:app/graph.py"
+  },
+  {
+   "id": "studio-9f4e3aaf0d",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "kinetic-action:app/targeting.py:84"
+   ],
+   "params": [
+    "p0",
+    "limit"
+   ],
+   "placeholders": {
+    "lbl": "`Customer`",
+    "where": " WHERE n.`grade` = $p0",
+    "order": "n.`customer_id`"
+   }
+  },
+  {
+   "id": "studio-39ad5139ac",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/board/profile.py:346",
+    "studio-app:backend/src/modules/board/service.py:168"
+   ],
+   "params": [],
+   "placeholders": {
+    "class_name": "Customer",
+    "cls": "Customer"
+   }
+  },
+  {
+   "id": "studio-68fc2d7d93",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/board/profile.py:361"
+   ],
+   "params": [],
+   "placeholders": {
+    "class_name": "Customer"
+   }
+  },
+  {
+   "id": "studio-b357164005",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/board/profile.py:472"
+   ],
+   "params": [],
+   "placeholders": {
+    "profile.class_name": "Customer",
+    "int(limit)": "50"
+   }
+  },
+  {
+   "id": "studio-a14b2e9ad1",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/board/query_gen.py:153"
+   ],
+   "params": [
+    "grade"
+   ],
+   "assembly_rule": "board widget, raw rows: `MATCH (n:_Entity:<cls>)` + `_cypher_where` (filters joined with AND, values bound as $<param_key>) + `RETURN n.<p> AS <p>, …`"
+  },
+  {
+   "id": "studio-3b45495c64",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/board/query_gen.py:155"
+   ],
+   "params": [
+    "q"
+   ],
+   "assembly_rule": "board widget with dimensions and measures: parts `MATCH … WHERE …`, `WITH <dims>, <agg>(n.<p>) AS <label>`, `RETURN <names>`, `ORDER BY <first dim>` joined with spaces; contains filters become toLower(toString(n.p)) CONTAINS toLower($key)"
+  },
+  {
+   "id": "studio-6fca4bd946",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/board/query_gen.py:164"
+   ],
+   "params": [],
+   "assembly_rule": "board widget with measures only: `MATCH …` + `RETURN <agg> AS <label>, …`"
+  },
+  {
+   "id": "studio-1369919a95",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/board/service.py:357"
+   ],
+   "params": [],
+   "placeholders": {
+    "widget.class_name": "Customer",
+    "property_name": "grade"
+   }
+  },
+  {
+   "id": "studio-abf6790b98",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/board/service.py:78"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-7378399c68",
+   "kind": "schema",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:510"
+   ],
+   "params": [],
+   "scenario": "studio-app:backend/src/modules/document_indexing/service.py"
+  },
+  {
+   "id": "studio-6c1447dc91",
+   "kind": "schema",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:516"
+   ],
+   "params": [],
+   "scenario": "studio-app:backend/src/modules/document_indexing/service.py"
+  },
+  {
+   "id": "studio-0e814d3f8e",
+   "kind": "schema",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:522"
+   ],
+   "params": [],
+   "scenario": "studio-app:backend/src/modules/document_indexing/service.py"
+  },
+  {
+   "id": "studio-656e87cf94",
+   "kind": "schema",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:528"
+   ],
+   "params": [],
+   "placeholders": {
+    "embedding_dimensions": "8"
+   },
+   "scenario": "studio-app:backend/src/modules/document_indexing/service.py"
+  },
+  {
+   "id": "studio-9195022330",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:540"
+   ],
+   "params": [
+    "document_id",
+    "document_name",
+    "source_path",
+    "document_sha256",
+    "page_count",
+    "ocr_engine"
+   ],
+   "scenario": "studio-app:backend/src/modules/document_indexing/service.py"
+  },
+  {
+   "id": "studio-50e989ed35",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:561"
+   ],
+   "params": [
+    "document_id",
+    "chunks"
+   ],
+   "scenario": "studio-app:backend/src/modules/document_indexing/service.py"
+  },
+  {
+   "id": "studio-6555f2d5d9",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:588"
+   ],
+   "params": [
+    "document_id",
+    "chunk_ids"
+   ],
+   "scenario": "studio-app:backend/src/modules/document_indexing/service.py"
+  },
+  {
+   "id": "studio-46773b0767",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:600"
+   ],
+   "params": [
+    "document_id"
+   ],
+   "scenario": "studio-app:backend/src/modules/document_indexing/service.py"
+  },
+  {
+   "id": "studio-bcfbefa042",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:609"
+   ],
+   "params": [
+    "links",
+    "document_id"
+   ],
+   "scenario": "studio-app:backend/src/modules/document_indexing/service.py"
+  },
+  {
+   "id": "studio-f6a3a3c6fd",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:656"
+   ],
+   "params": [],
+   "scenario": "studio-app:backend/src/modules/document_indexing/service.py"
+  },
+  {
+   "id": "studio-21aa2fa08a",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:657"
+   ],
+   "params": [],
+   "scenario": "studio-app:backend/src/modules/document_indexing/service.py"
+  },
+  {
+   "id": "studio-916997a131",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:658"
+   ],
+   "params": [],
+   "scenario": "studio-app:backend/src/modules/document_indexing/service.py"
+  },
+  {
+   "id": "studio-02a757505d",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:719"
+   ],
+   "params": [
+    "target_node_ids"
+   ]
+  },
+  {
+   "id": "studio-128ddefabf",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:758"
+   ],
+   "params": [
+    "candidate_limit",
+    "embedding",
+    "document_ids",
+    "chunk_refs",
+    "source_pages"
+   ]
+  },
+  {
+   "id": "studio-5f6b13ce1d",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/document_indexing/service.py:789"
+   ],
+   "params": [
+    "query",
+    "document_ids",
+    "chunk_refs",
+    "source_pages",
+    "candidate_limit"
+   ]
+  },
+  {
+   "id": "studio-5a5ba188a3",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:116"
+   ],
+   "params": [],
+   "placeholders": {
+    "body.original_name": "Customer",
+    "body.name": "Client"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/api.py"
+  },
+  {
+   "id": "studio-1e9fa2ff3d",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:193"
+   ],
+   "params": [
+    "id",
+    "name",
+    "grade"
+   ],
+   "placeholders": {
+    "set_clause": "n.name = $name, n.grade = $grade"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/api.py"
+  },
+  {
+   "id": "studio-a87b41f378",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:212"
+   ],
+   "params": [
+    "id"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/api.py"
+  },
+  {
+   "id": "studio-546d002909",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:233"
+   ],
+   "params": [],
+   "scenario": "studio-app:backend/src/modules/ontology/api.py"
+  },
+  {
+   "id": "studio-92d9497673",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:234"
+   ],
+   "params": [],
+   "scenario": "studio-app:backend/src/modules/ontology/api.py"
+  },
+  {
+   "id": "studio-0cf6c1ffbb",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:256",
+    "studio-app:backend/src/modules/ontology/tools.py:370",
+    "studio-app:backend/src/modules/ontology/tools.py:1049"
+   ],
+   "params": [],
+   "placeholders": {
+    "cls['class_name']": "Customer",
+    "name": "Customer"
+   }
+  },
+  {
+   "id": "studio-34b840ddda",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:469"
+   ],
+   "params": [],
+   "placeholders": {
+    "cls_name": "Customer"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/api.py"
+  },
+  {
+   "id": "studio-dbc8ff41fe",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:516"
+   ],
+   "params": [
+    "class",
+    "limit"
+   ]
+  },
+  {
+   "id": "studio-6180bec79e",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:524"
+   ],
+   "params": [
+    "classes",
+    "limit"
+   ]
+  },
+  {
+   "id": "studio-450c5377fa",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:531"
+   ],
+   "params": [
+    "limit"
+   ]
+  },
+  {
+   "id": "studio-5584d7bbfe",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:585"
+   ],
+   "params": [
+    "q",
+    "limit"
+   ],
+   "placeholders": {
+    "class_filter": ":Customer"
+   }
+  },
+  {
+   "id": "studio-2c85fcf711",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:727"
+   ],
+   "params": [
+    "node_id",
+    "depth"
+   ]
+  },
+  {
+   "id": "studio-f61cbc9cea",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:741"
+   ],
+   "params": [
+    "node_id"
+   ]
+  },
+  {
+   "id": "studio-2ab38d0f2c",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/api.py:787"
+   ],
+   "params": [
+    "node_id"
+   ]
+  },
+  {
+   "id": "studio-ce5d1247e5",
+   "kind": "fabric-read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/from_tables.py:175"
+   ],
+   "params": [],
+   "placeholders": {
+    "datasource": "erp",
+    "table": "supplier"
+   }
+  },
+  {
+   "id": "studio-27c8406bd2",
+   "kind": "fabric-read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/from_tables.py:187",
+    "studio-desktop:src/main/fabric-bridge.js:100",
+    "studio-desktop:src/main/nl2cypher.js:112",
+    "studio-desktop:src/main/services.js:261"
+   ],
+   "params": [],
+   "placeholders": {
+    "self._in": " IN ontology",
+    "ident(g)": "ontology",
+    "graph": "ontology"
+   }
+  },
+  {
+   "id": "studio-99da019c54",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/from_tables.py:199",
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:130",
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:731",
+    "studio-desktop:src/main/codeapps.js:114"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-ada7f0d811",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/from_tables.py:205"
+   ],
+   "params": [],
+   "placeholders": {
+    "label": "Customer"
+   }
+  },
+  {
+   "id": "studio-cb3b47fc59",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/from_tables.py:217",
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:237"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-ea587804dc",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/from_tables.py:245"
+   ],
+   "params": [],
+   "assembly_rule": "label probe: one CREATE of up to 40 `(n<i>:_Entity:`<label>`)` patterns, RETURN elementId(n<i>) AS e<i> (two labels shown)",
+   "scenario": "studio-app:backend/src/modules/ontology/from_tables.py"
+  },
+  {
+   "id": "studio-4cbca4cd74",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/from_tables.py:257"
+   ],
+   "params": [
+    "e0",
+    "e1"
+   ],
+   "assembly_rule": "label probe cleanup: `MATCH (n<i>:`<label>`) WHERE elementId(n<i>) = $e<i>` per label joined with spaces, then `DELETE n0, n1, …`",
+   "scenario": "studio-app:backend/src/modules/ontology/from_tables.py"
+  },
+  {
+   "id": "studio-fae3d57fb9",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/from_tables.py:269",
+    "studio-app:backend/src/modules/ontology/publish.py:691"
+   ],
+   "params": [
+    "eid"
+   ],
+   "placeholders": {
+    "label": "Customer"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/from_tables.py"
+  },
+  {
+   "id": "studio-ed05ce5331",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/from_tables.py:286",
+    "studio-desktop:src/main/fabric-bridge.js:256"
+   ],
+   "params": [],
+   "placeholders": {
+    "label": "ErpItem",
+    "self._in": " IN ontology",
+    "datasource": "erp",
+    "table": "item",
+    "key": "item_id",
+    "f' PROPERTIES ({cols})' if picks else ''": " PROPERTIES (item_id, name AS item_name)"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/from_tables.py"
+  },
+  {
+   "id": "studio-3f1875650d",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/from_tables.py:353",
+    "studio-desktop:src/main/fabric-bridge.js:260",
+    "studio-desktop:src/main/services.js:266"
+   ],
+   "params": [],
+   "placeholders": {
+    "label": "ErpPurchaseOrder",
+    "self._in": " IN ontology",
+    "ident(b.label, '노드 타입 이름')": "ErpPurchaseOrder",
+    "graphOf(b)": "ontology",
+    "n": "ErpPurchaseOrder",
+    "graph": "ontology"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/from_tables.py"
+  },
+  {
+   "id": "studio-330f6da983",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/from_tables.py:360",
+    "studio-app:backend/src/modules/ontology/from_tables.py:1012",
+    "studio-desktop:src/main/fabric-bridge.js:263"
+   ],
+   "params": [],
+   "placeholders": {
+    "name": "ITEM_OF",
+    "self._in": " IN ontology",
+    "src": "ErpPurchaseOrder",
+    "src_prop": "supplier_id",
+    "dst": "ErpSupplier",
+    "dst_prop": "supplier_id",
+    "fabric._in": " IN ontology",
+    "ident(b.name, '관계 이름')": "ITEM_OF",
+    "graphOf(b)": "ontology",
+    "ident(f.node, '출발 노드')": "ErpPurchaseOrder",
+    "ident(f.property, '출발 속성')": "supplier_id",
+    "ident(t.node, '도착 노드')": "ErpSupplier",
+    "ident(t.property, '도착 속성')": "supplier_id"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/from_tables.py"
+  },
+  {
+   "id": "studio-4df72d6fbe",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/from_tables.py:844"
+   ],
+   "params": [],
+   "placeholders": {
+    "name": "ErpItem",
+    "fabric._in": " IN ontology",
+    "plan['source']": "erp.item",
+    "plan['key']": "item_id",
+    "', '.join((p['column'] if p['column'] == p['property'] else p['column'] + ' AS ' + p['property'] for p in plan['picks']))": "item_id, name AS item_name, unit"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/from_tables.py"
+  },
+  {
+   "id": "studio-c66a9c0d7d",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:143"
+   ],
+   "params": [
+    "schema_id",
+    "class_name",
+    "behavior_name",
+    "behavior_type",
+    "description",
+    "parameters",
+    "cypher_template",
+    "output_columns",
+    "result_kind",
+    "max_rows",
+    "golden_question",
+    "synonyms",
+    "certified",
+    "certified_by",
+    "certified_at"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-da0cd22999",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:332"
+   ],
+   "params": [
+    "prefix"
+   ]
+  },
+  {
+   "id": "studio-ffa6e1e34b",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:354"
+   ],
+   "params": [
+    "schema_id",
+    "class_name",
+    "behavior_name",
+    "behavior_type",
+    "description",
+    "parameters",
+    "key_property",
+    "system",
+    "operation_id",
+    "arg_mapping",
+    "effect",
+    "confirm_threshold",
+    "max_targets",
+    "policy",
+    "compensate",
+    "writeback_property",
+    "version",
+    "steps"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-7606dade27",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:410",
+    "studio-app:backend/src/modules/ontology/publish.py:970"
+   ],
+   "params": [
+    "schema_id"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-cbea27dacd",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:418"
+   ],
+   "params": [
+    "schema_id",
+    "name",
+    "description",
+    "intent",
+    "golden_questions",
+    "golden_commands",
+    "format_version",
+    "published_at"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-025e600910",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:452"
+   ],
+   "params": [
+    "schema_id",
+    "rows"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-dc00045ef0",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:458"
+   ],
+   "params": [
+    "schema_id",
+    "class_name",
+    "description",
+    "binding_kind",
+    "properties",
+    "synonyms",
+    "certified",
+    "certified_by",
+    "certified_at"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-aaf3418c0c",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:507"
+   ],
+   "params": [
+    "rows",
+    "schema_id"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-e586d25058",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:512"
+   ],
+   "params": [
+    "schema_id",
+    "class_name",
+    "datasource",
+    "source_schema",
+    "table_name",
+    "extra_tables",
+    "key_columns",
+    "column_map",
+    "base_conditions",
+    "label_property",
+    "default_limit",
+    "virtual_node"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-1f3d1c2746",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:528"
+   ],
+   "params": [
+    "class_name",
+    "schema_id",
+    "behavior_name",
+    "behavior_type",
+    "description",
+    "parameters",
+    "sql_template",
+    "output_columns",
+    "result_kind",
+    "max_rows",
+    "golden_question",
+    "synonyms",
+    "certified",
+    "certified_by",
+    "certified_at"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-2f0cc56f92",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:568"
+   ],
+   "params": [
+    "schema_id",
+    "rows"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-93513a28fa",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:574"
+   ],
+   "params": [
+    "schema_id",
+    "name",
+    "from_class",
+    "to_class",
+    "description",
+    "properties",
+    "synonyms",
+    "certified",
+    "certified_by",
+    "certified_at"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-ef5a2d77ac",
+   "kind": "fabric-read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:633",
+    "studio-app:backend/src/shared/kernel/capabilities.py:109",
+    "studio-desktop:src/main/fabric-bridge.js:95",
+    "studio-desktop:src/main/nl2cypher.js:113",
+    "studio-desktop:src/main/services.js:256"
+   ],
+   "params": [],
+   "placeholders": {
+    "graph": "ontology",
+    "ident(g)": "ontology"
+   }
+  },
+  {
+   "id": "studio-286e6dfc69",
+   "kind": "fabric-read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:633",
+    "studio-app:backend/src/shared/kernel/capabilities.py:109",
+    "studio-app:backend/src/shared/kernel/capabilities.py:160"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-0b43ac9ea4",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:680"
+   ],
+   "params": [
+    "sample"
+   ],
+   "placeholders": {
+    "label": "Customer",
+    "props": " {`customer_id`: $sample}"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-ffbc3dbe40",
+   "kind": "schema",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:754"
+   ],
+   "params": [],
+   "placeholders": {
+    "name": "customer_customer_id_key",
+    "label": "Customer",
+    "key": "customer_id"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-97bf2d483b",
+   "kind": "schema",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:793",
+    "studio-app:backend/src/modules/ontology/publish.py:979"
+   ],
+   "params": [],
+   "placeholders": {
+    "name": "customer_customer_id_key"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/publish.py"
+  },
+  {
+   "id": "studio-1c20b3ed1e",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:804"
+   ],
+   "params": [
+    "schema_id"
+   ],
+   "placeholders": {
+    "where": "m.schema_id = $schema_id"
+   }
+  },
+  {
+   "id": "studio-71f54ce52a",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/publish.py:964"
+   ],
+   "params": [
+    "schema_id"
+   ]
+  },
+  {
+   "id": "studio-ba9fe7c0a6",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/schema_ontology.py:111"
+   ],
+   "params": [
+    "datasource",
+    "schema",
+    "tables"
+   ]
+  },
+  {
+   "id": "studio-be181128df",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/schema_ontology.py:131"
+   ],
+   "params": [
+    "datasource",
+    "schema"
+   ]
+  },
+  {
+   "id": "studio-936c009603",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/schema_ontology.py:140"
+   ],
+   "params": [
+    "datasource",
+    "schema"
+   ]
+  },
+  {
+   "id": "studio-515f5dfe0e",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:1002"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-558efe8ac7",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:1007"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-230bcdbc38",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:1008"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-d844aeb80b",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:1073"
+   ],
+   "params": [
+    "top_k",
+    "embedding"
+   ]
+  },
+  {
+   "id": "studio-7f92e14b0d",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:375"
+   ],
+   "params": [],
+   "placeholders": {
+    "name": "Customer"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/tools.py"
+  },
+  {
+   "id": "studio-e402a019ff",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:604"
+   ],
+   "params": [
+    "name"
+   ],
+   "placeholders": {
+    "class_name": "Customer",
+    "' AND '.join(conditions)": "n.name CONTAINS $name"
+   }
+  },
+  {
+   "id": "studio-6849d64c03",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:644"
+   ],
+   "params": [
+    "merge_customer_id",
+    "customer_id",
+    "name",
+    "grade"
+   ],
+   "placeholders": {
+    "class_name": "Customer",
+    "merge_clause": "customer_id: $merge_customer_id",
+    "set_clause": "n.customer_id = $customer_id, n.name = $name, n.grade = $grade"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/tools.py"
+  },
+  {
+   "id": "studio-ef9d1c4d7c",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:683"
+   ],
+   "params": [
+    "from_entity_id",
+    "to_entity_id",
+    "channel"
+   ],
+   "placeholders": {
+    "relationship_type": "PLACED",
+    "set_props": ", r.channel = $channel"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/tools.py"
+  },
+  {
+   "id": "studio-0f037208e5",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:780"
+   ],
+   "params": [
+    "merge_customer_id",
+    "name",
+    "grade",
+    "_source_id",
+    "_parent_source_id"
+   ],
+   "placeholders": {
+    "class_name": "Customer",
+    "merge_clause": "customer_id: $merge_customer_id",
+    "set_parts": "n.name = $name, n.grade = $grade, n._source_id = $_source_id, n._parent_source_id = $_parent_source_id"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/tools.py"
+  },
+  {
+   "id": "studio-7c14c092fa",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:799"
+   ],
+   "params": [
+    "parent_id",
+    "child_id"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/tools.py"
+  },
+  {
+   "id": "studio-c38bff51ff",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:826"
+   ],
+   "params": [
+    "from_id",
+    "to_id",
+    "channel"
+   ],
+   "placeholders": {
+    "rel_type": "PLACED",
+    "set_clause": ", r.channel = $channel"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/tools.py"
+  },
+  {
+   "id": "studio-6a5f1e7f77",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:885"
+   ],
+   "params": [
+    "ids"
+   ]
+  },
+  {
+   "id": "studio-cfd0bb0971",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:911"
+   ],
+   "params": [
+    "virtual"
+   ],
+   "placeholders": {
+    "'AND NOT any(l IN labels(n) WHERE l IN $virtual) ' if virtual_labels else ''": "AND NOT any(l IN labels(n) WHERE l IN $virtual) "
+   }
+  },
+  {
+   "id": "studio-1474091414",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:947"
+   ],
+   "params": [
+    "eid",
+    "vec"
+   ],
+   "scenario": "studio-app:backend/src/modules/ontology/tools.py"
+  },
+  {
+   "id": "studio-090250434c",
+   "kind": "schema",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:955"
+   ],
+   "params": [],
+   "placeholders": {
+    "len(vectors[0])": "8"
+   },
+   "scenario": "studio-app:backend/src/modules/ontology/tools.py"
+  },
+  {
+   "id": "studio-fec5ca17d7",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology/tools.py:995"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-c9f67d062d",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_mcp/adapters.py:291"
+   ],
+   "params": [
+    "classes",
+    "limit"
+   ]
+  },
+  {
+   "id": "studio-2336437cf9",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_mcp/sources.py:45"
+   ],
+   "params": [
+    "ids"
+   ]
+  },
+  {
+   "id": "studio-51162892c7",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/entity_resolution.py:165"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-6be42dfa7d",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/entity_resolution.py:223"
+   ],
+   "params": [
+    "terms",
+    "limit"
+   ],
+   "placeholders": {
+    "target": "Customer",
+    "clause": "toLower(toString(n.`name`)) CONTAINS toLower(t) OR toLower(toString(n.`email`)) CONTAINS toLower(t)"
+   }
+  },
+  {
+   "id": "studio-110ffd4bb5",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/entity_resolution.py:248"
+   ],
+   "params": [
+    "k",
+    "vec",
+    "classes"
+   ]
+  },
+  {
+   "id": "studio-69d7853293",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/entity_resolution.py:430"
+   ],
+   "params": [],
+   "placeholders": {
+    "gs.CLASS_LABEL": "_OntologyClass",
+    "gs.BINDING_LABEL": "_OntologyBinding"
+   }
+  },
+  {
+   "id": "studio-f05a9fefdc",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/entity_resolution.py:458"
+   ],
+   "params": [
+    "t0"
+   ],
+   "placeholders": {
+    "label": "ErpSupplier",
+    "clause": "toLower(toString(n.`name`)) CONTAINS $t0"
+   }
+  },
+  {
+   "id": "studio-e16555a9ac",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/entity_resolution.py:540"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-31464a3cd6",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:1010"
+   ],
+   "params": [
+    "limit"
+   ],
+   "placeholders": {
+    "label": "Customer",
+    "prop": "grade"
+   }
+  },
+  {
+   "id": "studio-8ade7fc192",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:148"
+   ],
+   "params": [
+    "prefix"
+   ]
+  },
+  {
+   "id": "studio-130d676492",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:194"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-69bc5b83d8",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:217"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-33e44c1ccc",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:268",
+    "studio-desktop:src/main/nl2cypher.js:123"
+   ],
+   "params": [],
+   "placeholders": {
+    "rel": "PLACED",
+    "r.type.replace(/`/g, '')": "PLACED"
+   }
+  },
+  {
+   "id": "studio-ac655ff0e2",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:288"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-9c595bde08",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:320"
+   ],
+   "params": [
+    "schema_name"
+   ]
+  },
+  {
+   "id": "studio-87cca3eab5",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:427"
+   ],
+   "params": [
+    "schema_name"
+   ]
+  },
+  {
+   "id": "studio-e418898556",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:474"
+   ],
+   "params": [
+    "class_name"
+   ]
+  },
+  {
+   "id": "studio-4c611b6dbd",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:484"
+   ],
+   "params": [
+    "class_name",
+    "schema_name"
+   ]
+  },
+  {
+   "id": "studio-d2fcb07612",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:623"
+   ],
+   "params": [
+    "text",
+    "limit"
+   ],
+   "placeholders": {
+    "target": "Customer",
+    "clause": "toLower(toString(n.`name`)) CONTAINS toLower($text) OR toLower(toString(n.`email`)) CONTAINS toLower($text)"
+   }
+  },
+  {
+   "id": "studio-4cd451b759",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:651"
+   ],
+   "params": [
+    "k",
+    "vec",
+    "classes"
+   ]
+  },
+  {
+   "id": "studio-f219e22cb2",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:699"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-0b5248a1aa",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:753"
+   ],
+   "params": [
+    "schema_name"
+   ]
+  },
+  {
+   "id": "studio-7a5af8dcb9",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:772"
+   ],
+   "params": [
+    "schema_name"
+   ]
+  },
+  {
+   "id": "studio-3cf48dc805",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:778"
+   ],
+   "params": [
+    "schema_name"
+   ]
+  },
+  {
+   "id": "studio-d2c84bb221",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:785"
+   ],
+   "params": [
+    "schema_name"
+   ]
+  },
+  {
+   "id": "studio-9d15052460",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:86"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-8ec57520ea",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:872"
+   ],
+   "params": [
+    "class_name",
+    "behavior_name",
+    "schema_name"
+   ]
+  },
+  {
+   "id": "studio-f868f035eb",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:877"
+   ],
+   "params": [
+    "class_name",
+    "behavior_name",
+    "schema_name"
+   ]
+  },
+  {
+   "id": "studio-198a99919d",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:916"
+   ],
+   "params": [
+    "class_name",
+    "schema_name"
+   ]
+  },
+  {
+   "id": "studio-9b0f7a3e1d",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:921"
+   ],
+   "params": [
+    "class_name",
+    "schema_name"
+   ]
+  },
+  {
+   "id": "studio-653a0d6c04",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:966"
+   ],
+   "params": [
+    "v",
+    "lv",
+    "limit"
+   ],
+   "placeholders": {
+    "label": "ErpSupplier",
+    "clause": "toString(n.`name`) = $v OR toLower(trim(toString(n.`name`))) = $lv"
+   }
+  },
+  {
+   "id": "studio-e9594b5e81",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/ontology_runtime/graph_schema.py:993"
+   ],
+   "params": [
+    "v",
+    "lv",
+    "limit"
+   ],
+   "placeholders": {
+    "label": "Customer",
+    "prop": "grade"
+   }
+  },
+  {
+   "id": "studio-3f3309d6da",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/identity.py:54"
+   ],
+   "params": [],
+   "placeholders": {
+    "name": "Customer",
+    "extra": ", n.`email` AS `p_email`"
+   }
+  },
+  {
+   "id": "studio-3bed3ec38e",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/identity.py:81"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-c17eed91cf",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/imputation.py:123"
+   ],
+   "params": [
+    "classes"
+   ]
+  },
+  {
+   "id": "studio-4aead6fbe2",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/imputation.py:39"
+   ],
+   "params": [],
+   "placeholders": {
+    "name": "Customer",
+    "pname": "grade"
+   }
+  },
+  {
+   "id": "studio-366b4bd9a4",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/imputation.py:66"
+   ],
+   "params": [],
+   "placeholders": {
+    "name": "Customer",
+    "prop['name']": "grade"
+   }
+  },
+  {
+   "id": "studio-45fdcd03ab",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/imputation.py:88"
+   ],
+   "params": [],
+   "placeholders": {
+    "name": "Customer",
+    "pname": "grade"
+   }
+  },
+  {
+   "id": "studio-828de93d83",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/ingest_gate.py:101"
+   ],
+   "params": [
+    "name"
+   ],
+   "placeholders": {
+    "label": "Customer"
+   }
+  },
+  {
+   "id": "studio-68cd2da15b",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/ingest_gate.py:132"
+   ],
+   "params": [
+    "s_key",
+    "s_conf",
+    "run_id",
+    "evidence_ref",
+    "s_sys",
+    "s_skey",
+    "s_name"
+   ],
+   "assembly_rule": "write_candidate(entity): `_merge_entity_clause('s','s')` = MERGE (s:_Entity:<label> {_source_id: $s_key}) + _ENTITY_SET (ON CREATE SET … / SET updated_at) + SET name = coalesce(…), then RETURN elementId(s)",
+   "scenario": "studio-app:backend/src/modules/quality/ingest_gate.py"
+  },
+  {
+   "id": "studio-5cc42271b4",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/ingest_gate.py:139"
+   ],
+   "params": [
+    "s_key",
+    "s_conf",
+    "run_id",
+    "evidence_ref",
+    "s_sys",
+    "s_skey",
+    "s_name",
+    "o_key",
+    "o_conf",
+    "o_sys",
+    "o_skey",
+    "o_name",
+    "confidence"
+   ],
+   "assembly_rule": "write_candidate(relation): subject clause + WITH s + object clause + WITH s, o + MERGE (s)-[r:<predicate>]->(o) with ON CREATE SET / SET, RETURN the three element ids",
+   "scenario": "studio-app:backend/src/modules/quality/ingest_gate.py"
+  },
+  {
+   "id": "studio-51ddd052b8",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/ingest_gate.py:156"
+   ],
+   "params": [
+    "s_key",
+    "s_conf",
+    "run_id",
+    "evidence_ref",
+    "s_sys",
+    "s_skey",
+    "s_name",
+    "value"
+   ],
+   "assembly_rule": "write_candidate(property): subject clause + SET s.`<prop>` = $value + RETURN elementId(s)",
+   "scenario": "studio-app:backend/src/modules/quality/ingest_gate.py"
+  },
+  {
+   "id": "studio-394e56b303",
+   "kind": "write",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/ingest_gate.py:185"
+   ],
+   "params": [
+    "a",
+    "b",
+    "score",
+    "method",
+    "run_id"
+   ],
+   "scenario": "studio-app:backend/src/modules/quality/ingest_gate.py"
+  },
+  {
+   "id": "studio-b8b503b186",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/ingest_gate.py:200"
+   ],
+   "params": [
+    "key"
+   ],
+   "placeholders": {
+    "_label(predicate)": "PLACED"
+   }
+  },
+  {
+   "id": "studio-231ff4a705",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/ingest_gate.py:215"
+   ],
+   "params": [
+    "a",
+    "b"
+   ]
+  },
+  {
+   "id": "studio-49c561ae4a",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/ingest_gate.py:222"
+   ],
+   "params": [
+    "a",
+    "b"
+   ],
+   "placeholders": {
+    "predicate": "PLACED"
+   }
+  },
+  {
+   "id": "studio-fa354e2e2f",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/ingest_gate.py:226"
+   ],
+   "params": [
+    "a",
+    "b"
+   ],
+   "placeholders": {
+    "int(limit)": "50"
+   }
+  },
+  {
+   "id": "studio-688cc61f09",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/ingest_gate.py:248"
+   ],
+   "params": [
+    "keys"
+   ],
+   "placeholders": {
+    "int(limit)": "50"
+   }
+  },
+  {
+   "id": "studio-4afc2b366a",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/kge.py:173"
+   ],
+   "params": [
+    "classes"
+   ]
+  },
+  {
+   "id": "studio-226aec2099",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/lint.py:26"
+   ],
+   "params": [
+    "skip"
+   ],
+   "placeholders": {
+    "name": "Customer"
+   }
+  },
+  {
+   "id": "studio-23010cc7e0",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/shapes.py:68"
+   ],
+   "params": [],
+   "placeholders": {
+    "cls": "Customer",
+    "_q(shape['property'])": "email"
+   }
+  },
+  {
+   "id": "studio-5a5449115c",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/shapes.py:74"
+   ],
+   "params": [],
+   "placeholders": {
+    "cls": "Customer",
+    "prop": "grade"
+   }
+  },
+  {
+   "id": "studio-e18febb53e",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/shapes.py:78"
+   ],
+   "params": [
+    "limit"
+   ],
+   "placeholders": {
+    "cls": "Customer",
+    "_q(shape['predicate'])": "PLACED"
+   }
+  },
+  {
+   "id": "studio-ff125964df",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/shapes.py:83"
+   ],
+   "params": [
+    "limit"
+   ],
+   "placeholders": {
+    "cls": "Customer",
+    "_q(shape['predicate'])": "PLACED"
+   }
+  },
+  {
+   "id": "studio-1bc70c73b7",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/shapes.py:89"
+   ],
+   "params": [],
+   "placeholders": {
+    "_q(a)": "Customer",
+    "_q(b)": "Supplier"
+   }
+  },
+  {
+   "id": "studio-fa4c069fc0",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/modules/quality/tabular.py:77"
+   ],
+   "params": [],
+   "placeholders": {
+    "ref['class']": "Customer",
+    "prop": "grade"
+   }
+  },
+  {
+   "id": "studio-82773beb3e",
+   "kind": "fabric-read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/shared/kernel/capabilities.py:108",
+    "studio-app:backend/src/shared/kernel/capabilities.py:159",
+    "studio-desktop:src/main/fabric-bridge.js:105"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-5e1e4d203e",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:backend/src/shared/kernel/capabilities.py:117"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-0a2ed7b465",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:skills/ontologic-agentic-rag/references/two-step-retrieval.md:61"
+   ],
+   "params": [
+    "pid"
+   ],
+   "llm_example": true
+  },
+  {
+   "id": "studio-68c5f7522c",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-app:skills/ontology-answer/references/search-strategy.md:62"
+   ],
+   "params": [],
+   "llm_example": true
+  },
+  {
+   "id": "studio-791c1593f3",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/codeapps.js:119"
+   ],
+   "params": [],
+   "placeholders": {
+    "q": "Customer"
+   }
+  },
+  {
+   "id": "studio-618ad3f3a9",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/codeapps.js:120"
+   ],
+   "params": [],
+   "placeholders": {
+    "q": "Customer"
+   }
+  },
+  {
+   "id": "studio-ece8830400",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/codeapps.js:126"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-f768b744bc",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/codeapps.js:130"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-b88bc044d2",
+   "kind": "fabric-read",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/fabric-bridge.js:112",
+    "studio-desktop:src/main/index.js:234"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-1be7d75919",
+   "kind": "fabric-read",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/fabric-bridge.js:124"
+   ],
+   "params": [],
+   "placeholders": {
+    "ident(ds, '데이터소스 이름')": "erp"
+   }
+  },
+  {
+   "id": "studio-51df319e34",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/fabric-bridge.js:136"
+   ],
+   "params": [],
+   "placeholders": {
+    "ident(label)": "ErpSupplier",
+    "Math.max(1, Math.min(200, limit | 0 || 10))": "10"
+   }
+  },
+  {
+   "id": "studio-adefc8a16e",
+   "kind": "fabric-read",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/fabric-bridge.js:146"
+   ],
+   "params": [],
+   "placeholders": {
+    "ident(ds, '데이터소스 이름')": "erp",
+    "ident(table, '테이블 이름')": "item"
+   }
+  },
+  {
+   "id": "studio-42c0c12c0c",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/fabric-bridge.js:206"
+   ],
+   "params": [
+    "host",
+    "port",
+    "database",
+    "schema",
+    "user",
+    "password"
+   ],
+   "assembly_rule": "createDatasource: head `CREATE DATASOURCE <name> WITH ENGINE = '<engine>', PARAMETERS = ` + `{<k>: $<k>, …}` over the keys the form filled (password, or credentials when the keychain holds it)",
+   "scenario": "studio-desktop:src/main/fabric-bridge.js"
+  },
+  {
+   "id": "studio-28e224969c",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/fabric-bridge.js:223"
+   ],
+   "params": [
+    "user",
+    "password"
+   ],
+   "assembly_rule": "alterCredentials without a keychain: head `ALTER DATASOURCE <name> SET CREDENTIALS = ` + '{user: $user, password: $password}'",
+   "scenario": "studio-desktop:src/main/fabric-bridge.js"
+  },
+  {
+   "id": "studio-db32913b5d",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/fabric-bridge.js:228"
+   ],
+   "params": [
+    "user",
+    "credentials"
+   ],
+   "assembly_rule": "alterCredentials with a keychain reference: head + '{user: $user, credentials: $credentials}'",
+   "scenario": "studio-desktop:src/main/fabric-bridge.js"
+  },
+  {
+   "id": "studio-8a5a579837",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/fabric-bridge.js:238",
+    "studio-desktop:src/main/services.js:338"
+   ],
+   "params": [],
+   "placeholders": {
+    "name": "erp_old",
+    "ds": "erp_old"
+   },
+   "scenario": "studio-desktop:src/main/fabric-bridge.js"
+  },
+  {
+   "id": "studio-e27f71030f",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/fabric-bridge.js:242"
+   ],
+   "params": [],
+   "placeholders": {
+    "ident(b.name, '데이터소스 이름')": "erp"
+   },
+   "scenario": "studio-desktop:src/main/fabric-bridge.js"
+  },
+  {
+   "id": "studio-fb0c08159c",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/fabric-bridge.js:247"
+   ],
+   "params": [],
+   "placeholders": {
+    "label": "ErpItem",
+    "graphOf(b)": "ontology",
+    "ident(ds, '데이터소스 이름')": "erp",
+    "ident(table, '테이블 이름')": "item",
+    "key": "item_id"
+   },
+   "scenario": "studio-desktop:src/main/fabric-bridge.js"
+  },
+  {
+   "id": "studio-cfa5dcc9df",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/fabric-bridge.js:265"
+   ],
+   "params": [],
+   "placeholders": {
+    "ident(b.name, '관계 이름')": "ITEM_OF",
+    "graphOf(b)": "ontology"
+   },
+   "scenario": "studio-desktop:src/main/fabric-bridge.js"
+  },
+  {
+   "id": "studio-4a4be9fa7d",
+   "kind": "fabric-read",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/fabric-bridge.js:91"
+   ],
+   "params": []
+  },
+  {
+   "id": "studio-d07cbd376b",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/index.js:246"
+   ],
+   "params": [
+    "ref"
+   ],
+   "placeholders": {
+    "row.name": "erp"
+   },
+   "scenario": "studio-desktop:src/main/index.js"
+  },
+  {
+   "id": "studio-c1586724d6",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/nl2cypher.js:26"
+   ],
+   "params": [],
+   "assembly_rule": "nl2cypher is LLM-written; only the examples its prompt records: `(po:PurchaseOrder)-[:ORDERED_FROM]->(s:Supplier)` with every node labelled, `RETURN s.name AS supplier, …` named columns, `LIMIT 100`"
+  },
+  {
+   "id": "studio-3a72355fcb",
+   "kind": "read",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/nl2cypher.js:30"
+   ],
+   "params": [],
+   "assembly_rule": "nl2cypher prompt example: a label predicate in WHERE (`WHERE n:Label`, `NOT n:Label`)"
+  },
+  {
+   "id": "studio-11695ae09a",
+   "kind": "fabric-write",
+   "graph": "ontology",
+   "origins": [
+    "studio-desktop:src/main/services.js:264"
+   ],
+   "params": [],
+   "placeholders": {
+    "r.relationship": "SUPPLIED_BY",
+    "graph": "ontology"
+   },
+   "scenario": "studio-desktop:src/main/services.js"
+  }
+ ],
+ "scenarios": [
+  {
+   "name": "kinetic-action:app/graph.py",
+   "graph": "ontology",
+   "isolation": "rollback",
+   "steps": [
+    "studio-c5f0a4c196"
+   ]
+  },
+  {
+   "name": "studio-app:backend/src/modules/document_indexing/service.py",
+   "graph": "ontology",
+   "isolation": "rollback",
+   "steps": [
+    "studio-7378399c68",
+    "studio-6c1447dc91",
+    "studio-0e814d3f8e",
+    "studio-656e87cf94",
+    "studio-9195022330",
+    "studio-50e989ed35",
+    "studio-bcfbefa042",
+    "studio-6555f2d5d9",
+    "studio-46773b0767",
+    "studio-f6a3a3c6fd",
+    "studio-21aa2fa08a",
+    "studio-916997a131"
+   ]
+  },
+  {
+   "name": "studio-app:backend/src/modules/ontology/api.py",
+   "graph": "ontology",
+   "isolation": "rollback",
+   "steps": [
+    "studio-5a5ba188a3",
+    "studio-1e9fa2ff3d",
+    "studio-a87b41f378",
+    "studio-546d002909",
+    "studio-92d9497673",
+    "studio-34b840ddda"
+   ]
+  },
+  {
+   "name": "studio-app:backend/src/modules/ontology/from_tables.py",
+   "graph": "ontology",
+   "isolation": "rollback",
+   "steps": [
+    "studio-ed05ce5331",
+    "studio-330f6da983",
+    "studio-4df72d6fbe",
+    "studio-ea587804dc",
+    "studio-4cbca4cd74",
+    "studio-fae3d57fb9",
+    "studio-3f1875650d"
+   ]
+  },
+  {
+   "name": "studio-app:backend/src/modules/ontology/publish.py",
+   "graph": "ontology",
+   "isolation": "rollback",
+   "steps": [
+    "studio-ffbc3dbe40",
+    "studio-97bf2d483b",
+    "studio-c66a9c0d7d",
+    "studio-ffa6e1e34b",
+    "studio-cbea27dacd",
+    "studio-025e600910",
+    "studio-dc00045ef0",
+    "studio-aaf3418c0c",
+    "studio-e586d25058",
+    "studio-1f3d1c2746",
+    "studio-2f0cc56f92",
+    "studio-93513a28fa",
+    "studio-0b43ac9ea4",
+    "studio-7606dade27"
+   ]
+  },
+  {
+   "name": "studio-app:backend/src/modules/ontology/tools.py",
+   "graph": "ontology",
+   "isolation": "rollback",
+   "steps": [
+    "studio-090250434c",
+    "studio-6849d64c03",
+    "studio-ef9d1c4d7c",
+    "studio-0f037208e5",
+    "studio-7c14c092fa",
+    "studio-c38bff51ff",
+    "studio-1474091414",
+    "studio-7f92e14b0d"
+   ]
+  },
+  {
+   "name": "studio-app:backend/src/modules/quality/ingest_gate.py",
+   "graph": "ontology",
+   "isolation": "rollback",
+   "steps": [
+    "studio-68cd2da15b",
+    "studio-5cc42271b4",
+    "studio-51ddd052b8",
+    "studio-394e56b303"
+   ]
+  },
+  {
+   "name": "studio-desktop:src/main/fabric-bridge.js",
+   "graph": "ontology",
+   "isolation": "rollback",
+   "steps": [
+    "studio-42c0c12c0c",
+    "studio-fb0c08159c",
+    "studio-28e224969c",
+    "studio-db32913b5d",
+    "studio-e27f71030f",
+    "studio-8a5a579837",
+    "studio-cfa5dcc9df"
+   ]
+  },
+  {
+   "name": "studio-desktop:src/main/index.js",
+   "graph": "ontology",
+   "isolation": "rollback",
+   "steps": [
+    "studio-d07cbd376b"
+   ]
+  },
+  {
+   "name": "studio-desktop:src/main/services.js",
+   "graph": "ontology",
+   "isolation": "rollback",
+   "steps": [
+    "studio-11695ae09a"
+   ]
+  }
+ ]
+}

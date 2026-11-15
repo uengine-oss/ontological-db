@@ -1,0 +1,14 @@
+{
+ "bid": "FigmaBinding-1",
+ "fk": "compat-bindingFileKey",
+ "nid": "compat-figmaNodeId",
+ "newid": "compat-id",
+ "name": "compat-name",
+ "page_name": "compat-pageName",
+ "w": "compat-widthPx",
+ "h": "compat-heightPx",
+ "desc": "compat-vlmDescription",
+ "fkey": "compat-figmaKey",
+ "last_mod": "compat-figmaNodeLastModified",
+ "now": "2026-01-15T09:00:00Z"
+}

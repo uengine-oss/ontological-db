@@ -1,0 +1,13 @@
+{
+ "bc_id": "BoundedContext-1",
+ "project_id": {
+  "$ref": "prop",
+  "label": "ImplementationFile",
+  "prop": "projectId",
+  "nth": 0
+ },
+ "element_labels": [
+  "compat-element_labels-a",
+  "compat-element_labels-b"
+ ]
+}

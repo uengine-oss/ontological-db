@@ -1,0 +1,7 @@
+{
+ "target_id": {
+  "$ref": "anyprop",
+  "prop": "id",
+  "nth": 0
+ }
+}

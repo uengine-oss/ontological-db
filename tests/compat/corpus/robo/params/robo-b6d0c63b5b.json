@@ -1,0 +1,24 @@
+{
+ "rows": [
+  {
+   "bc_id": "BoundedContext-1",
+   "display_name": "compat-display_name-1",
+   "enumerations_json": "compat-enumerations_json-1",
+   "invariants": "compat-invariants-1",
+   "key": "compat-new-Aggregate-1",
+   "name": "compat-name-1",
+   "root_entity": "compat-root_entity-1",
+   "value_objects_json": "compat-value_objects_json-1"
+  },
+  {
+   "bc_id": "BoundedContext-2",
+   "display_name": "compat-display_name-2",
+   "enumerations_json": "compat-enumerations_json-2",
+   "invariants": "compat-invariants-2",
+   "key": "compat-new-Aggregate-2",
+   "name": "compat-name-2",
+   "root_entity": "compat-root_entity-2",
+   "value_objects_json": "compat-value_objects_json-2"
+  }
+ ]
+}

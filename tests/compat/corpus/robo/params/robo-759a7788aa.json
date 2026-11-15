@@ -1,0 +1,9 @@
+{
+ "sid": {
+  "$ref": "prop",
+  "label": "UserStory",
+  "prop": "session_id",
+  "nth": 0
+ },
+ "bid": "BoundedContext-1"
+}

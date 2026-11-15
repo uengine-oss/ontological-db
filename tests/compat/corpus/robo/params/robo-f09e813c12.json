@@ -1,0 +1,5 @@
+{
+ "aggregate_id": "Aggregate-1",
+ "enumerations_json": "compat-enumerations",
+ "value_objects_json": "compat-valueObjects"
+}

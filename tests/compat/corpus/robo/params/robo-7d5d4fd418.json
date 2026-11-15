@@ -1,0 +1,8 @@
+{
+ "sid": {
+  "$ref": "prop",
+  "label": "BpmSequence",
+  "prop": "session_id",
+  "nth": 0
+ }
+}

@@ -1,0 +1,17 @@
+[
+ {
+  "origin": "robo-architect-lite:api/features/figma_binding/repository.py:114",
+  "reason": "assembled by hand: list_storyboard_mappings: base MATCH + (status given) `WHERE m.status = $status` + `RETURN m ORDER BY m.figmaPageName`",
+  "text": "MATCH (b:FigmaBinding {id: $id})-[:MAPS_STORYBOARD]->(m:StoryboardPageMapping)"
+ },
+ {
+  "origin": "robo-architect-lite:api/features/prd_generation/prd_artifact_generation.py:2134",
+  "reason": "not Cypher (not a USE clause)",
+  "text": "Use these endpoints when implementing API integration in the frontend."
+ },
+ {
+  "origin": "robo-architect-lite:api/features/requirements/routes/design_reflect.py:68",
+  "reason": "assembled by hand: pending-design scoped to a bounded context: `_PENDING_QUERY.replace('OPTIONAL MATCH (us)-[:IMPLEMENTS]->(bc:BoundedContext)', '  AND <_SCOPE_BC>\\nOPTIONAL MATCH …', 1)`",
+  "text": "OPTIONAL MATCH (us)-[:IMPLEMENTS]->(bc:BoundedContext)"
+ }
+]

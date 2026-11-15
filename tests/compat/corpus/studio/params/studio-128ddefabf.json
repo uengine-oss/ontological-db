@@ -1,0 +1,49 @@
+{
+ "candidate_limit": 10,
+ "embedding": [
+  0.0,
+  0.5,
+  1.0,
+  0.4,
+  0.9,
+  0.3,
+  0.8,
+  0.2
+ ],
+ "document_ids": [
+  {
+   "$ref": "anyprop",
+   "prop": "document_id",
+   "nth": 0
+  },
+  {
+   "$ref": "anyprop",
+   "prop": "document_id",
+   "nth": 1
+  }
+ ],
+ "chunk_refs": [
+  {
+   "$ref": "anyprop",
+   "prop": "chunk_ref",
+   "nth": 0
+  },
+  {
+   "$ref": "anyprop",
+   "prop": "chunk_ref",
+   "nth": 1
+  }
+ ],
+ "source_pages": [
+  {
+   "$ref": "anyprop",
+   "prop": "source_page",
+   "nth": 0
+  },
+  {
+   "$ref": "anyprop",
+   "prop": "source_page",
+   "nth": 1
+  }
+ ]
+}

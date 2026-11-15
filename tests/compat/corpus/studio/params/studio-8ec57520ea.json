@@ -1,0 +1,15 @@
+{
+ "class_name": "Customer",
+ "behavior_name": {
+  "$ref": "prop",
+  "label": "_OntologyBehavior",
+  "prop": "behavior_name",
+  "nth": 0
+ },
+ "schema_name": {
+  "$ref": "prop",
+  "label": "_OntologyModel",
+  "prop": "name",
+  "nth": 0
+ }
+}

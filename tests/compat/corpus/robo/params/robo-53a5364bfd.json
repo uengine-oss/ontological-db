@@ -1,0 +1,8 @@
+{
+ "name": "compat-name",
+ "key": "compat-key",
+ "display_name": "compat-displayName",
+ "description": "compat-description",
+ "user_story_id": "compat-userStoryId",
+ "sequence": 7
+}

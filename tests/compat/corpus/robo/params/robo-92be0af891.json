@@ -1,0 +1,7 @@
+{
+ "operation_id": "CQRSOperation-1",
+ "source_property_id": "Property-1",
+ "target_property_id": "Property-1",
+ "mapping_id": "compat-new-CQRSMapping",
+ "source_type": "compat-sourceType"
+}

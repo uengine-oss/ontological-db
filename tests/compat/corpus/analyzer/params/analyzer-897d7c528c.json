@@ -1,0 +1,28 @@
+{
+ "items": [
+  {
+   "callee_id": "compat-new-FUNCTION-1",
+   "callee_module": "compat-new-MODULE-1",
+   "callee_name": "compat-callee_name-1",
+   "caller_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 6
+   },
+   "recursive": true,
+   "scope": "compat-scope-1"
+  },
+  {
+   "callee_id": "compat-new-FUNCTION-2",
+   "callee_module": "compat-new-MODULE-2",
+   "callee_name": "compat-callee_name-2",
+   "caller_id": {
+    "$ref": "anyprop",
+    "prop": "id",
+    "nth": 7
+   },
+   "recursive": true,
+   "scope": "compat-scope-2"
+  }
+ ]
+}

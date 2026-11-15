@@ -1,0 +1,14 @@
+{
+ "parent": "Aggregate-1",
+ "id": "compat-new-Property",
+ "name": "compat-name",
+ "type": "compat-type",
+ "desc": "compat-description",
+ "dn": "compat-displayName",
+ "isKey": true,
+ "isFk": true,
+ "isReq": true,
+ "fkHint": "compat-fkTargetHint",
+ "ptype": "compat-parentType",
+ "pid": "compat-proposalSource"
+}

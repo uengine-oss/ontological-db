@@ -1,0 +1,30 @@
+{
+ "items": [
+  {
+   "analyzed_description": "compat-analyzed_description-1",
+   "comment": "compat-comment-1",
+   "default_value": "compat-default_value-1",
+   "description": "compat-description-1",
+   "description_source": "compat-description_source-1",
+   "dtype": "compat-dtype-1",
+   "id": "compat-new-COLUMN-1",
+   "is_primary_key": true,
+   "is_unique": true,
+   "name": "compat-name-1",
+   "nullable": "compat-nullable-1"
+  },
+  {
+   "analyzed_description": "compat-analyzed_description-2",
+   "comment": "compat-comment-2",
+   "default_value": "compat-default_value-2",
+   "description": "compat-description-2",
+   "description_source": "compat-description_source-2",
+   "dtype": "compat-dtype-2",
+   "id": "compat-new-COLUMN-2",
+   "is_primary_key": true,
+   "is_unique": true,
+   "name": "compat-name-2",
+   "nullable": "compat-nullable-2"
+  }
+ ]
+}

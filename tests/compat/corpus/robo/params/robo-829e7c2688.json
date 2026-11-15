@@ -1,0 +1,15 @@
+{
+ "id": "compat-new-UserStory",
+ "name": "compat-name",
+ "role": "compat-role",
+ "action": "compat-action",
+ "benefit": "compat-benefit",
+ "priority": "compat-priority",
+ "status": "compat-status",
+ "ui_description": "compat-uiDescription",
+ "display_name": "compat-displayName",
+ "source_screen_name": "compat-sourceScreenName",
+ "source_unit_id": "compat-sourceUnitId",
+ "sequence": 7,
+ "acceptance_criteria": "compat-acceptance_criteria"
+}

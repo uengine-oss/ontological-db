@@ -1,0 +1,7 @@
+{
+ "id": "compat-new-ActivityMapping",
+ "sid": "compat-session_id",
+ "tid": "compat-task_id",
+ "rid": "compat-rule_id",
+ "conf": 0.9
+}

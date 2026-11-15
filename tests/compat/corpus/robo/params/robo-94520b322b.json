@@ -1,0 +1,9 @@
+{
+ "cmd": "Command-1",
+ "id": "compat-new-Given",
+ "name": "compat-name",
+ "desc": "compat-description",
+ "fv": "compat-fieldValues",
+ "scenario": "compat-scenario",
+ "pid": "compat-proposalSource"
+}

@@ -1,0 +1,16 @@
+{
+ "ids": [
+  {
+   "$ref": "prop",
+   "label": "_Entity",
+   "prop": "_source_id",
+   "nth": 0
+  },
+  {
+   "$ref": "prop",
+   "label": "_Entity",
+   "prop": "_source_id",
+   "nth": 1
+  }
+ ]
+}

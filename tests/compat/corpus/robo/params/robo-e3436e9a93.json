@@ -1,0 +1,6 @@
+{
+ "name": "compat-name",
+ "sid": "compat-session_id",
+ "rid": "Rule-1",
+ "direction": "compat-direction"
+}

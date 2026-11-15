@@ -1,0 +1,12 @@
+{
+ "id": {
+  "$ref": "anyprop",
+  "prop": "id",
+  "nth": 0
+ },
+ "graph_owner": {
+  "$ref": "anyprop",
+  "prop": "graph_owner",
+  "nth": 0
+ }
+}

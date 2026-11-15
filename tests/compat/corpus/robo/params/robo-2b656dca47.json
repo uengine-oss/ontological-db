@@ -1,0 +1,7 @@
+{
+ "cmd_id": "compat-new-Command",
+ "name": "compat-name",
+ "actor": "compat-actor",
+ "description": "compat-description",
+ "agg_id": "Aggregate-1"
+}

@@ -1,0 +1,7 @@
+{
+ "id": "compat-new-BpmActor",
+ "sid": "compat-session_id",
+ "name": "compat-name",
+ "description": "compat-description",
+ "pid": "compat-process_id"
+}
