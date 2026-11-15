@@ -97,6 +97,12 @@ pub enum Expr {
     ListPred { kind: ListPredKind, var: String, source: Box<Expr>, filter: Box<Expr> },
     /// Map projection — `n { .name, .age, total: count(x), .* }`.
     MapProjection { var: String, items: Vec<MapProjItem> },
+    /// `list[from..to]` — a sub-list; either bound may be left out
+    /// (`list[..3]`, `list[2..]`), and a negative one counts from the end.
+    Slice { list: Box<Expr>, from: Option<Box<Expr>>, to: Option<Box<Expr>> },
+    /// `n:A` used as a predicate — `WHERE n:A`, `NOT n:A`, `n:A:B`, `n:A|B`.
+    /// Any one of `alts` holds when the element carries every label in it.
+    HasLabels { var: String, alts: Vec<Vec<String>> },
     /// `labels(n)` style pseudo-property used by RETURN projection
     Star,
 }
@@ -244,6 +250,12 @@ impl Expr {
                 .iter()
                 .any(|i| matches!(i, MapProjItem::Entry(_, e) if e.is_aggregate())),
             Expr::Prop(b, _) => b.is_aggregate(),
+            // `collect(x)[..3]`: the projection still groups.
+            Expr::Slice { list, from, to } => {
+                list.is_aggregate()
+                    || from.as_ref().is_some_and(|f| f.is_aggregate())
+                    || to.as_ref().is_some_and(|t| t.is_aggregate())
+            }
             _ => false,
         }
     }
@@ -269,6 +281,14 @@ impl Expr {
             Expr::Lit(Lit::Null) => "NULL".into(),
             Expr::Param(p) => format!("${p}"),
             Expr::Star => "*".into(),
+            Expr::Slice { list, from, to } => {
+                let bound = |b: &Option<Box<Expr>>| b.as_ref().map(|e| e.default_alias()).unwrap_or_default();
+                format!("{}[{}..{}]", list.default_alias(), bound(from), bound(to))
+            }
+            Expr::HasLabels { var, alts } => format!(
+                "{var}:{}",
+                alts.iter().map(|a| a.join(":")).collect::<Vec<_>>().join("|")
+            ),
             _ => "expr".into(),
         }
     }

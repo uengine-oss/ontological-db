@@ -494,22 +494,31 @@ SQL이 되는 질의에 그 등가물을 지어내는 것은 허구가 될 것�
 
 ### 5.7 오류 코드 매핑
 
-Bolt는 PostgreSQL 오류를 Neo4j 코드로 바꾼다. **SQLSTATE가 아니라 메시지
-부분 문자열로** 판정한다([session.rs:578](../../bolt/src/session.rs#L578)):
+Bolt는 PostgreSQL 오류를 Neo4j 코드로 바꾼다. **SQLSTATE가 있으면 그것으로, 엔진 자신의
+오류(XX000)는 메시지 부분 문자열로** 판정한다(`bolt/src/session.rs` 의 `error_code`):
 
-| 메시지에 포함된 문자열 | Neo4j 코드 |
+| SQLSTATE | Neo4j 코드 |
 |---|---|
-| `not supported` / `expected` / `unknown label` / `is not defined` | `Neo.ClientError.Statement.SyntaxError` |
-| `does not exist` | `Neo.ClientError.Database.DatabaseNotFound` |
+| `3D000` (데이터베이스 없음) | `Neo.ClientError.Database.DatabaseNotFound` |
+| `42883` `42804` `42846` `42725` `22P02` `2202E` (형식이 맞지 않음) | `Neo.ClientError.Statement.TypeError` |
+| `22012` `22003` (0으로 나눔, 범위 넘음) | `Neo.ClientError.Statement.ArithmeticError` |
+| `42501` | `Neo.ClientError.Security.Forbidden` |
+| `42P01` `42703` (컴파일된 SQL 이 없는 관계·열을 가리킴) | `Neo.DatabaseError.Statement.ExecutionFailed` |
+
+| 엔진 메시지에 포함된 문자열 | Neo4j 코드 |
+|---|---|
+| `graph '…' does not exist` | `Neo.ClientError.Database.DatabaseNotFound` |
+| `not supported` / `expected` / `unknown label` / `unknown function` / `is not defined` | `Neo.ClientError.Statement.SyntaxError` |
 | `permission denied` | `Neo.ClientError.Security.Forbidden` |
+| 그 밖의 `does not exist` (`type '…' does not exist` 등) | `Neo.ClientError.Statement.SemanticError` |
 | 그 외 | `Neo.ClientError.Statement.ArgumentError` |
+
+예전에는 메시지만 보았고 `does not exist` 는 모두 `DatabaseNotFound` 였다 —
+`function sum(jsonb) does not exist`, `operator does not exist: boolean = integer` 같은
+형식 오류도. 이제 데이터베이스·그래프가 없을 때만 그 코드다.
 
 메시지는 **그대로 전달**된다 — 컴파일러 메시지가 구조를 지명하고 대안을 제시하는
 가치 있는 부분이고 에이전트가 그것으로 재시도하기 때문(원칙 VIII).
-
-> ⚠️ `graph 'x' does not exist`(그래프 없음)와 `type 'x' does not exist`(타입 없음)가
-> 둘 다 `DatabaseNotFound`가 된다. 후자는 데이터베이스 문제가 아니다
-> → [11_errors.md](11_errors.md), API-28.
 
 파싱 실패는 `og_cypher_check`가 먼저 잡아 `Neo.ClientError.Statement.SyntaxError`로
 보고한다([session.rs:455](../../bolt/src/session.rs#L455)).

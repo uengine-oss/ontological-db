@@ -144,6 +144,31 @@ pub fn eval(e: &Expr, env: &Env, params: &Value) -> Result<Value, String> {
             }
             Value::Object(out)
         }
+        // `list[from..to]` over a list already in hand.
+        Expr::Slice { list, from, to } => {
+            let Value::Array(items) = eval(list, env, params)? else { return Ok(Value::Null) };
+            let n = items.len() as i64;
+            let bound = |b: &Option<Box<Expr>>, default: i64| -> Result<Option<i64>, String> {
+                Ok(match b {
+                    None => Some(default),
+                    Some(e) => num(&eval(e, env, params)?).map(|f| {
+                        let i = f as i64;
+                        (if i < 0 { n + i } else { i }).clamp(0, n)
+                    }),
+                })
+            };
+            match (bound(from, 0)?, bound(to, n)?) {
+                (Some(a), Some(b)) if a < b => Value::Array(items[a as usize..b as usize].to_vec()),
+                (Some(_), Some(_)) => Value::Array(vec![]),
+                _ => Value::Null,
+            }
+        }
+        // The write path's rows carry only the concrete type name, so a label
+        // predicate here is that name (as `labels()` is, below).
+        Expr::HasLabels { var, alts } => match env.get(var).and_then(|v| v.get("_type")) {
+            Some(Value::String(t)) => json!(alts.iter().any(|alt| alt.iter().all(|l| l == t))),
+            _ => Value::Null,
+        },
         Expr::Star => Value::Null,
     })
 }
@@ -269,6 +294,18 @@ fn func(name: &str, a: &[Value]) -> Result<Value, String> {
             _ => Value::Null,
         },
         "abs" => num(&a[0]).map(|f| json!(f.abs())).unwrap_or(Value::Null),
+        "head" => match &a[0] {
+            Value::Array(xs) => xs.first().cloned().unwrap_or(Value::Null),
+            _ => Value::Null,
+        },
+        "last" => match &a[0] {
+            Value::Array(xs) => xs.last().cloned().unwrap_or(Value::Null),
+            _ => Value::Null,
+        },
+        "tail" => match &a[0] {
+            Value::Array(xs) => Value::Array(xs.iter().skip(1).cloned().collect()),
+            _ => Value::Null,
+        },
         "id" => a[0].get("_id").cloned().unwrap_or(Value::Null),
         "elementid" => a[0]
             .get("_id")

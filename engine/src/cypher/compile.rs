@@ -130,6 +130,12 @@ pub struct Compiler {
     alias_tid: HashMap<String, Option<i32>>,
     /// Node aliases whose label set can match nothing.
     unmatchable: std::collections::HashSet<String>,
+    /// Values carried through `WITH` are jsonb. What they were before — the
+    /// type of a node, the SQL type of a number or a date — is kept here by
+    /// name, so `WITH o … RETURN sum(o.qty * o.price)` still multiplies
+    /// numbers and `WITH c MATCH (c)<-[:R]-(o)` still knows what `c` is.
+    carried_tid: HashMap<String, i32>,
+    scalar_types: HashMap<String, String>,
 }
 
 /// The joins and predicates of one OPTIONAL MATCH.
@@ -169,6 +175,24 @@ impl Compiler {
             reachability_only: false,
             alias_tid: HashMap::new(),
             unmatchable: std::collections::HashSet::new(),
+            carried_tid: HashMap::new(),
+            scalar_types: HashMap::new(),
+        }
+    }
+
+    /// A name about to be bound to a fresh scalar (UNWIND, CALL … YIELD, a
+    /// comprehension binder) no longer carries what an earlier `WITH` said
+    /// about it. Returns what was there, for a binder to restore.
+    fn forget_carried(&mut self, name: &str) -> (Option<i32>, Option<String>) {
+        (self.carried_tid.remove(name), self.scalar_types.remove(name))
+    }
+
+    fn restore_carried(&mut self, name: &str, saved: (Option<i32>, Option<String>)) {
+        if let Some(t) = saved.0 {
+            self.carried_tid.insert(name.to_string(), t);
+        }
+        if let Some(t) = saved.1 {
+            self.scalar_types.insert(name.to_string(), t);
         }
     }
 
@@ -213,6 +237,7 @@ impl Compiler {
         let joiner = if self.from.is_empty() { "" } else { "CROSS JOIN " };
         self.from
             .push(format!("{joiner}LATERAL jsonb_array_elements(({src})::jsonb) AS {a}(v)"));
+        self.forget_carried(alias);
         self.binds.insert(alias.to_string(), Bind::Scalar { sql: format!("{a}.v") });
         Ok(())
     }
@@ -427,6 +452,41 @@ impl Compiler {
     /// Aggregation works for free — `WITH a, count(*) AS n` is a grouped SELECT,
     /// and the `WHERE` after it filters the grouped rows, which is `HAVING`.
     fn compile_with(&mut self, proj: &Projection, where_: Option<&Expr>) -> CResult<()> {
+        // What each projected name is, decided while the names it is computed
+        // from are still bound.
+        let mut carried_tid: HashMap<String, i32> = HashMap::new();
+        let mut scalar_types: HashMap<String, String> = HashMap::new();
+        for item in &proj.items {
+            if matches!(item.expr, Expr::Star) {
+                for (v, b) in &self.binds {
+                    if let Bind::Node { tid: Some(t), .. } = b {
+                        carried_tid.insert(v.clone(), *t);
+                    }
+                }
+                carried_tid.extend(self.carried_tid.iter().map(|(k, v)| (k.clone(), *v)));
+                scalar_types.extend(self.scalar_types.iter().map(|(k, v)| (k.clone(), v.clone())));
+                continue;
+            }
+            let name = item.alias.clone().unwrap_or_else(|| item.expr.default_alias());
+            if let Expr::Var(v) = &item.expr {
+                match self.binds.get(v) {
+                    Some(Bind::Node { tid: Some(t), .. }) => {
+                        carried_tid.insert(name.clone(), *t);
+                    }
+                    Some(Bind::Scalar { .. }) => {
+                        if let Some(t) = self.carried_tid.get(v) {
+                            carried_tid.insert(name.clone(), *t);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            if let Some(ty) = self.type_of(&item.expr) {
+                if is_scalar_type(&ty) {
+                    scalar_types.insert(name, ty);
+                }
+            }
+        }
         let inner = self.build_tabular(proj)?;
         let alias = self.fresh("w");
 
@@ -444,6 +504,8 @@ impl Compiler {
                 (name.clone(), Bind::Scalar { sql: format!("{alias}.{q}") })
             })
             .collect();
+        self.carried_tid = carried_tid;
+        self.scalar_types = scalar_types;
 
         // `WITH … WHERE` filters what the horizon produced, so it is compiled
         // against the new bindings, not the old ones.
@@ -511,6 +573,7 @@ impl Compiler {
                         plan.columns.iter().map(|c| c.name).collect::<Vec<_>>().join(", ")
                     )
                 })?;
+            self.forget_carried(&as_name);
             self.binds.insert(as_name, Bind::Scalar { sql: found.sql.clone() });
         }
         Ok(())
@@ -729,7 +792,7 @@ impl Compiler {
             match elem {
                 PatElem::Node(np) => {
                     let mark = self.from.len();
-                    let inferred = self.infer_virtual_label(p, idx, np);
+                    let inferred = self.infer_virtual_label(p, idx, np, prev_node.as_deref());
                     let np = inferred.as_ref().unwrap_or(np);
                     let alias = self.bind_node(np, optional)?;
                     let node_join_added = self.from.len() > mark;
@@ -817,16 +880,7 @@ impl Compiler {
             if t == *v || crate::catalog::labeling::og_is_subtype(*v, t) {
                 continue;
             }
-            let umbrella = crate::spiu::one::<bool>(
-                "SELECT t.is_abstract OR EXISTS (
-                     SELECT 1 FROM og_catalog.type_parent p WHERE p.parent_id = t.type_id)
-                   FROM og_catalog.type t WHERE t.type_id = $1",
-                &[t.into()],
-            )
-            .ok()
-            .flatten()
-            .unwrap_or(false);
-            if !umbrella {
+            if !is_umbrella(t) {
                 return None;
             }
             set_aside.push(name.as_str());
@@ -856,6 +910,9 @@ impl Compiler {
         // its identifier and it becomes an ordinary node binding from here on.
         if let Some(v) = &np.var {
             if let Some(Bind::Scalar { sql }) = self.binds.get(v).cloned() {
+                if let Some(alias) = self.bind_carried_node(v, &sql, np)? {
+                    return Ok(alias);
+                }
                 let alias = self.fresh("n");
                 let joiner = if self.from.is_empty() {
                     ""
@@ -941,6 +998,49 @@ impl Compiler {
         Ok(alias)
     }
 
+    /// A node carried through `WITH` (or UNWIND, or a procedure) as jsonb,
+    /// anchoring a pattern again, when what type it is can be known — from
+    /// the pattern's labels, or from what the `WITH` carried.
+    ///
+    /// It joins that type's view rather than the node registry. The registry
+    /// holds only stored nodes, so a virtual node — whose rows live in the
+    /// source — found nothing there, and with no type the hop over a virtual
+    /// relationship had no columns to join on ("needs both ends labelled").
+    /// `None` leaves the registry path to the caller.
+    fn bind_carried_node(&mut self, v: &str, sql: &str, np: &NodePat) -> CResult<Option<String>> {
+        let (tid, matchable) = if np.labels.is_empty() {
+            (self.carried_tid.get(v).copied(), true)
+        } else {
+            self.resolve_label_match(&np.labels)?
+        };
+        let (Some(t), true) = (tid, matchable) else { return Ok(None) };
+        let alias = self.fresh("n");
+        let rel = views::ensure_view(t, false);
+        let (joiner, on) = if self.from.is_empty() {
+            ("", "")
+        } else if self.optional.is_some() {
+            ("LEFT JOIN ", " ON true")
+        } else {
+            ("CROSS JOIN ", "")
+        };
+        self.from.push(format!("{joiner}{rel} {alias}{on}"));
+        self.note_optional_join(&alias);
+        self.constrain(format!("{alias}.id = (({sql}) ->> '_id')::int8"));
+        // A virtual node is also matched on its key, which a source can be
+        // sent; the derived id is computed here and cannot.
+        if let Some(key) = virtual_key_property(t).filter(|k| k != "_id") {
+            let (col, ty) = self.prop_sql(&alias, Some(t), &key);
+            if let Some(ty) = ty.filter(|ty| is_scalar_type(ty)) {
+                self.constrain(format!("{col} = (({sql}) ->> {})::{ty}", sql_str(&key)));
+            }
+        }
+        self.alias_tid.insert(alias.clone(), Some(t));
+        self.forget_carried(v);
+        self.binds.insert(v.to_string(), Bind::Node { alias: alias.clone(), tid: Some(t) });
+        self.push_prop_filters(&alias, Some(t), &np.props)?;
+        Ok(Some(alias))
+    }
+
     /// The single relationship type of a hop, when it is a virtual one.
     fn virtual_rel_of(&self, rel: &RelPat) -> Option<(i32, crate::fabric::VirtualRel)> {
         if rel.types.len() != 1 {
@@ -953,13 +1053,23 @@ impl Compiler {
     /// `MATCH (s:Supplier)<-[:ORDERED_FROM]-(po)` — the unlabelled end of a
     /// virtual hop has only one type it can be, and without that type there are
     /// no columns to join on. Stored adjacency does not need this; a join does.
-    fn infer_virtual_label(&self, p: &Pattern, idx: usize, np: &NodePat) -> Option<NodePat> {
+    fn infer_virtual_label(
+        &mut self,
+        p: &Pattern,
+        idx: usize,
+        np: &NodePat,
+        prev_alias: Option<&str>,
+    ) -> Option<NodePat> {
         if !np.labels.is_empty() {
             return None;
         }
         if let Some(v) = &np.var {
-            if self.binds.contains_key(v) {
-                return None;
+            match self.binds.get(v) {
+                None => {}
+                // A value carried through WITH whose type was not carried: the
+                // hop decides, as for a fresh variable.
+                Some(Bind::Scalar { .. }) if !self.carried_tid.contains_key(v) => {}
+                Some(_) => return None,
             }
         }
         // As the far end of the previous hop, then as the near end of the next.
@@ -973,7 +1083,27 @@ impl Compiler {
             let tid = match (&rel.dir, is_far_end) {
                 (Dir::Out, true) | (Dir::In, false) => v.dst_type,
                 (Dir::In, true) | (Dir::Out, false) => v.src_type,
-                (Dir::Both, _) => continue,
+                // Undirected: the other end's type says which end this is.
+                (Dir::Both, _) => {
+                    let other = if is_far_end {
+                        prev_alias.and_then(|a| self.alias_tid.get(a).copied().flatten())
+                    } else {
+                        match p.elems.get(idx + 2) {
+                            Some(PatElem::Node(o)) => self.node_pat_type(o),
+                            _ => None,
+                        }
+                    };
+                    let Some(o) = other else { continue };
+                    let is = |t: i32, want: i32| {
+                        t == want || crate::catalog::labeling::og_is_subtype(t, want)
+                    };
+                    match (is(o, v.src_type), is(o, v.dst_type)) {
+                        (true, false) => v.dst_type,
+                        (false, true) => v.src_type,
+                        (true, true) if v.src_type == v.dst_type => v.src_type,
+                        _ => continue,
+                    }
+                }
             };
             let name = types::try_type_name(tid)?;
             let mut out = np.clone();
@@ -981,6 +1111,26 @@ impl Compiler {
             return Some(out);
         }
         None
+    }
+
+    /// The type a node pattern not yet bound stands for, without binding it:
+    /// its labels, or the type its variable is already bound to.
+    fn node_pat_type(&mut self, np: &NodePat) -> Option<i32> {
+        if np.labels.is_empty() {
+            return match np.var.as_ref().and_then(|v| self.binds.get(v)) {
+                Some(Bind::Node { tid, .. }) => *tid,
+                Some(Bind::Scalar { .. }) => np.var.as_ref().and_then(|v| self.carried_tid.get(v).copied()),
+                _ => None,
+            };
+        }
+        // Unknown labels are reported once, when the node itself is bound.
+        if np.labels.iter().any(|l| types::try_type_id(self.gid, l).is_none()) {
+            return None;
+        }
+        let notes = self.notes.len();
+        let got = self.resolve_label_match(&np.labels).ok().and_then(|(t, ok)| t.filter(|_| ok));
+        self.notes.truncate(notes);
+        got
     }
 
     /// A hop over a virtual relationship is a join on the declared keys: no
@@ -1028,7 +1178,9 @@ impl Compiler {
                 return Ok("NULL::jsonb".into());
             }
             return Err(format!(
-                "virtual relationship '{rname}' needs both ends labelled — it is a join on their keys"
+                "virtual relationship '{rname}' needs both ends labelled — it is a join on their keys. \
+                 Label one end, or give the hop a direction, and the other end is known from it: \
+                 (a:Label)-[:{rname}]-(b) or (a)-[:{rname}]->(b)"
             ));
         }
         if !is(s_tid, v.src_type) || !is(d_tid, v.dst_type) {
@@ -1310,7 +1462,7 @@ impl Compiler {
 
     /// SQL for a property access, plus the column's SQL type when known.
     pub fn prop_sql(&self, alias: &str, tid: Option<i32>, prop: &str) -> (String, Option<String>) {
-        if prop == "id" || prop == "_id" {
+        if prop == "_id" || (prop == "id" && !declares_source_id(tid)) {
             return (format!("{alias}.id"), Some("int8".into()));
         }
         if let Some(t) = tid {
@@ -1336,7 +1488,7 @@ impl Compiler {
     /// written. Declared properties are real columns and already carry their
     /// type, so they only need wrapping.
     pub fn prop_sql_json(&self, alias: &str, tid: Option<i32>, prop: &str) -> String {
-        if prop == "id" || prop == "_id" {
+        if prop == "_id" || (prop == "id" && !declares_source_id(tid)) {
             return format!("to_jsonb({alias}.id)");
         }
         if let Some(t) = tid {
@@ -1521,6 +1673,17 @@ impl Compiler {
                 if let Some(sql) = self.temporal_field(base, p, false)? {
                     return Ok(sql);
                 }
+                // A property of a node carried through WITH, read at the type
+                // the node's view gives it rather than as text.
+                if let Expr::Var(v) = &**base {
+                    if let (Some(Bind::Scalar { sql }), Some(ty)) =
+                        (self.binds.get(v).cloned(), self.carried_prop_type(v, p))
+                    {
+                        if is_scalar_type(&ty) && ty != "text" {
+                            return Ok(format!("(({sql} ->> {})::{ty})", sql_str(p)));
+                        }
+                    }
+                }
                 let Expr::Var(v) = &**base else {
                     return Err("property access is only supported on pattern variables \
                                 and on dates and times (.year, .month, .day …)"
@@ -1540,7 +1703,13 @@ impl Compiler {
                 }
             }
             Expr::Not(a) => format!("(NOT {})", self.expr(a, Some("bool"))?),
-            Expr::Neg(a) => format!("(- {})", self.expr(a, None)?),
+            Expr::Neg(a) => match self.type_of(a) {
+                Some(t) if is_numeric_type(&t) => format!("(- {})", self.expr(a, Some(&t))?),
+                // jsonb or text: read as a number, as arithmetic does.
+                None => format!("(- {})", self.numeric_read(a)?),
+                Some(t) if t == "text" => format!("(- {})", self.numeric_read(a)?),
+                _ => format!("(- {})", self.expr(a, None)?),
+            },
             Expr::IsNull(a, want_null) => {
                 let s = self.expr(a, None)?;
                 if *want_null {
@@ -1579,6 +1748,7 @@ impl Compiler {
             Expr::ListComp { var, source, filter, project } => {
                 let src = self.expr(source, None)?;
                 let a = self.fresh("lc");
+                let carried = self.forget_carried(var);
                 let shadowed = self
                     .binds
                     .insert(var.clone(), Bind::Scalar { sql: format!("{a}.v") });
@@ -1594,6 +1764,7 @@ impl Compiler {
                     Ok((proj, cond))
                 })(self);
                 self.restore_bind(var, shadowed);
+                self.restore_carried(var, carried);
                 let (proj, cond) = body?;
                 format!(
                     "(SELECT coalesce(jsonb_agg({proj}), '[]'::jsonb) \
@@ -1603,11 +1774,13 @@ impl Compiler {
             Expr::ListPred { kind, var, source, filter } => {
                 let src = self.expr(source, None)?;
                 let a = self.fresh("lp");
+                let carried = self.forget_carried(var);
                 let shadowed = self
                     .binds
                     .insert(var.clone(), Bind::Scalar { sql: format!("{a}.v") });
                 let cond = self.expr(filter, Some("bool"));
                 self.restore_bind(var, shadowed);
+                self.restore_carried(var, carried);
                 let cond = cond?;
                 let from =
                     format!("FROM jsonb_array_elements(({src})::jsonb) AS {a}(v) WHERE {cond}");
@@ -1660,26 +1833,161 @@ impl Compiler {
             }
             Expr::Case { operand, whens, else_ } => {
                 let head = match operand {
-                    Some(o) => format!("CASE {} ", self.expr(o, None)?),
+                    Some(o) => format!("CASE {} ", self.expr_own(o)?),
                     None => "CASE ".into(),
                 };
                 let mut body = String::new();
                 for (c, v) in whens {
                     body.push_str(&format!(
                         "WHEN {} THEN {} ",
-                        self.expr(c, None)?,
-                        self.expr(v, None)?
+                        self.expr_own(c)?,
+                        self.expr_own(v)?
                     ));
                 }
                 let tail = match else_ {
-                    Some(e) => format!("ELSE {} ", self.expr(e, None)?),
+                    Some(e) => format!("ELSE {} ", self.expr_own(e)?),
                     None => String::new(),
                 };
                 format!("({head}{body}{tail}END)")
             }
-            Expr::Func { name, args, distinct } => self.func(name, args, *distinct)?,
+            Expr::Func { name, args, distinct } => {
+                let sql = self.func(name, args, *distinct)?;
+                // A list element is jsonb; compared with a typed value it is
+                // read out at that type, as a carried scalar is.
+                let element = matches!(
+                    name.to_ascii_lowercase().as_str(),
+                    "head" | "last" | "element_at"
+                );
+                match hint {
+                    Some(t) if element && is_scalar_type(t) => format!("(({sql}) #>> '{{}}')::{t}"),
+                    _ => sql,
+                }
+            }
+            Expr::Slice { list, from, to } => self.slice(list, from.as_deref(), to.as_deref())?,
+            Expr::HasLabels { var, alts } => self.has_labels(var, alts)?,
             Expr::Star => "*".into(),
         })
+    }
+
+    /// An expression at its own type: a value carried through WITH reads out
+    /// of jsonb as what it was (`expr` with no hint leaves it jsonb).
+    fn expr_own(&mut self, e: &Expr) -> CResult<String> {
+        let t = self.type_of(e);
+        self.expr(e, t.as_deref())
+    }
+
+    /// The jsonb form of a value, whatever SQL type it compiles to. Property
+    /// reads keep their JSON type (`->`), so a number stays a number.
+    fn jsonb_of(&mut self, e: &Expr) -> CResult<String> {
+        Ok(match e {
+            Expr::Param(p) => format!("({PARAM} -> {})", sql_str(p)),
+            Expr::Lit(Lit::Null) => "'null'::jsonb".into(),
+            Expr::Lit(Lit::Str(s)) => format!("to_jsonb({}::text)", sql_str(s)),
+            Expr::Prop(..) => format!("to_jsonb({})", self.expr_for_output(e)?),
+            _ => format!("to_jsonb({})", self.expr(e, None)?),
+        })
+    }
+
+    /// A value whose type is not known to be a number — jsonb carried through
+    /// WITH or UNWIND, an undeclared property, a text column — read as one.
+    /// A number or a numeric string is read; anything else is the type error
+    /// PostgreSQL reports for it.
+    fn numeric_read(&mut self, e: &Expr) -> CResult<String> {
+        Ok(format!("(({}) #>> '{{}}')::numeric", self.jsonb_of(e)?))
+    }
+
+    /// `list[from..to]`: from inclusive, to exclusive, either left out, a
+    /// negative bound counted from the end, out-of-range bounds clamped. A
+    /// null list or bound gives null.
+    fn slice(&mut self, list: &Expr, from: Option<&Expr>, to: Option<&Expr>) -> CResult<String> {
+        let l = self.jsonb_of(list)?;
+        let mut bound = |b: Option<&Expr>| -> CResult<String> {
+            Ok(match b {
+                None => "NULL::int8".into(),
+                Some(e) => format!("({})::int8", self.expr(e, Some("int8"))?),
+            })
+        };
+        let (f, t) = (bound(from)?, bound(to)?);
+        let s = self.fresh("sl");
+        let e = self.fresh("se");
+        // Ordinals are 1-based; bounds are 0-based positions.
+        let pos = |b: &str| {
+            format!("(CASE WHEN {s}.{b} < 0 THEN jsonb_array_length({s}.l) + {s}.{b} ELSE {s}.{b} END)")
+        };
+        let mut keep = Vec::new();
+        let mut nulls = vec![format!("{s}.l IS NULL")];
+        if from.is_some() {
+            keep.push(format!("{e}.i > {}", pos("f")));
+            nulls.push(format!("{s}.f IS NULL"));
+        }
+        if to.is_some() {
+            keep.push(format!("{e}.i <= {}", pos("t")));
+            nulls.push(format!("{s}.t IS NULL"));
+        }
+        let filter = if keep.is_empty() { String::new() } else { format!(" WHERE {}", keep.join(" AND ")) };
+        Ok(format!(
+            "(SELECT CASE WHEN {} THEN NULL ELSE coalesce((SELECT jsonb_agg({e}.v ORDER BY {e}.i) \
+             FROM jsonb_array_elements({s}.l) WITH ORDINALITY AS {e}(v, i){filter}), '[]'::jsonb) END \
+             FROM (SELECT ({l})::jsonb AS l, {f} AS f, {t} AS t) {s})",
+            nulls.join(" OR ")
+        ))
+    }
+
+    /// `n:A`, `n:A:B`, `n:A|B` as a predicate. A label is carried by a node
+    /// whose type is that type or under it — the same reading `labels(n)` and
+    /// `MATCH (n:A)` give. The set of types is decided here, so what runs is
+    /// a comparison against constants (folded away for a virtual node, whose
+    /// type is one). A null element gives null, as in Cypher.
+    fn has_labels(&mut self, var: &str, alts: &[Vec<String>]) -> CResult<String> {
+        if !self.binds.contains_key(var) {
+            return Err(format!("variable '{var}' is not defined in this query"));
+        }
+        if matches!(self.binds.get(var), Some(Bind::Path { .. })) {
+            return Err(format!("'{var}' is a path; a label predicate needs a node or a relationship"));
+        }
+        let tid_sql = self.type_id_sql(var, "labels")?;
+        let bound = match self.binds.get(var) {
+            Some(Bind::Node { tid, .. }) => *tid,
+            Some(Bind::Scalar { .. }) => self.carried_tid.get(var).copied(),
+            _ => None,
+        };
+        let mut any = Vec::new();
+        for alt in alts {
+            let mut all = Vec::new();
+            for label in alt {
+                let term = match types::try_type_id(self.gid, label) {
+                    None => "false".to_string(),
+                    Some(lt) => {
+                        let mut ids = crate::catalog::labeling::og_subtypes(lt);
+                        // An umbrella label beside a virtual type is read the
+                        // way MATCH (n:_Entity:Customer) reads it.
+                        if let Some(b) = bound {
+                            if !ids.contains(&b)
+                                && crate::fabric::virtual_source(b).is_some()
+                                && is_umbrella(lt)
+                            {
+                                ids.push(b);
+                            }
+                        }
+                        if ids.is_empty() {
+                            "false".to_string()
+                        } else {
+                            let list = ids.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(",");
+                            format!("{tid_sql} = ANY('{{{list}}}'::int4[])")
+                        }
+                    }
+                };
+                all.push(term);
+            }
+            any.push(format!("({})", all.join(" AND ")));
+        }
+        Ok(format!("(CASE WHEN {tid_sql} IS NULL THEN NULL ELSE ({}) END)", any.join(" OR ")))
+    }
+
+    /// The declared type of `p` on the node a carried name stands for.
+    fn carried_prop_type(&self, v: &str, p: &str) -> Option<String> {
+        let t = *self.carried_tid.get(v)?;
+        views::view_properties(t).get(p).map(|(_, dt)| dt.clone())
     }
 
     fn binary(&mut self, op: BinOp, l: &Expr, r: &Expr) -> CResult<String> {
@@ -1697,6 +2005,25 @@ impl Compiler {
             // jsonb containment is evaluated here, after every row has arrived.
             if let (Some(t), Expr::List(items)) = (self.type_of(l), r) {
                 let literal = |e: &Expr| matches!(e, Expr::Lit(x) if !matches!(x, Lit::Null));
+                // A boolean against 0/1: the booleans they stand for (see
+                // `bool_against_number`); any other number is never equal.
+                if t == "bool" && !items.is_empty() && items.iter().all(|e| matches!(e, Expr::Lit(Lit::Int(_) | Lit::Bool(_)))) {
+                    let ls = self.expr(l, Some("bool"))?;
+                    let mut vs: Vec<&str> = items
+                        .iter()
+                        .filter_map(|e| match e {
+                            Expr::Lit(Lit::Int(1)) | Expr::Lit(Lit::Bool(true)) => Some("true"),
+                            Expr::Lit(Lit::Int(0)) | Expr::Lit(Lit::Bool(false)) => Some("false"),
+                            _ => None,
+                        })
+                        .collect();
+                    vs.dedup();
+                    return Ok(if vs.is_empty() {
+                        format!("(CASE WHEN {ls} IS NULL THEN NULL ELSE false END)")
+                    } else {
+                        format!("({ls} IN ({}))", vs.join(", "))
+                    });
+                }
                 if !items.is_empty() && items.iter().all(literal) {
                     let ls = self.expr(l, Some(&t))?;
                     let mut vs = Vec::with_capacity(items.len());
@@ -1733,10 +2060,25 @@ impl Compiler {
             });
         }
 
-        let lhint = self.type_of(r);
-        let rhint = self.type_of(l);
-        let mut ls = self.expr(l, lhint.as_deref())?;
-        let mut rs = self.expr(r, rhint.as_deref())?;
+        // Each side's own type, and the type it is compiled at: the other
+        // side's, so a parameter compared with a typed column is cast to the
+        // column's type (and its index stays usable) — or its own when the
+        // other side's is unknown, so a value carried through WITH reads out.
+        let lt = self.type_of(l);
+        let rt = self.type_of(r);
+        if matches!(op, BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div | BinOp::Mod) {
+            if let Some(sql) = self.arithmetic(op, l, r, lt.as_deref(), rt.as_deref())? {
+                return Ok(sql);
+            }
+        }
+        if matches!(op, BinOp::Eq | BinOp::Ne | BinOp::Lt | BinOp::Le | BinOp::Gt | BinOp::Ge) {
+            if let Some(sql) = self.bool_against_number(op, l, r, lt.as_deref(), rt.as_deref())? {
+                return Ok(sql);
+            }
+        }
+        let mut ls = self.expr(l, rt.as_deref().or(lt.as_deref()))?;
+        let mut rs = self.expr(r, lt.as_deref().or(rt.as_deref()))?;
+        let (lhint, rhint) = (rt.clone(), lt.clone());
 
         // An undeclared property reads out of jsonb as text. Compared against a
         // number that is `text = integer`, which PostgreSQL rejects outright —
@@ -1813,35 +2155,234 @@ impl Compiler {
         })
     }
 
+    /// `+ - * / %` over numbers whose SQL type is not known to be one.
+    ///
+    /// A value carried through WITH or UNWIND is jsonb and an undeclared
+    /// property is text, and SQL has no `jsonb * jsonb` — so `WITH o RETURN
+    /// sum(o.qty * o.price)` failed with "operator does not exist", and
+    /// `WITH o.qty * o.price AS v RETURN sum(v)` with "function sum(jsonb)
+    /// does not exist". An operand of unknown type is read as a number here
+    /// (see `numeric_read`); typed operands are left as they are, so integer
+    /// arithmetic on integer columns stays integer arithmetic.
+    ///
+    /// `+` with a string concatenates and `+` with a list appends, as in
+    /// Cypher. Dates and durations keep the plain SQL operators (`None`).
+    fn arithmetic(
+        &mut self,
+        op: BinOp,
+        l: &Expr,
+        r: &Expr,
+        lt: Option<&str>,
+        rt: Option<&str>,
+    ) -> CResult<Option<String>> {
+        const TEMPORAL: &[&str] = &["date", "timestamptz", "timestamp", "interval"];
+        if [lt, rt].iter().any(|t| t.is_some_and(|t| TEMPORAL.contains(&t))) {
+            return Ok(None);
+        }
+        if op == BinOp::Add {
+            if is_list_expr(l) || is_list_expr(r) {
+                let (a, b) = (self.jsonb_of(l)?, self.jsonb_of(r)?);
+                return Ok(Some(format!("({a} || {b})")));
+            }
+            if lt == Some("text") || rt == Some("text") {
+                let (a, b) = (self.expr(l, Some("text"))?, self.expr(r, Some("text"))?);
+                return Ok(Some(format!("(({a})::text || ({b})::text)")));
+            }
+        }
+        // Each operand, and whether it is an integer: known from its type, or
+        // — for one read as numeric — from the value (`scale() = 0`), so that
+        // `/` divides integers as Cypher does (7 / 2 is 3) and anything else
+        // exactly.
+        let int_type = |t: &str| matches!(t, "int2" | "int4" | "int8");
+        let side = |slf: &mut Self, e: &Expr, own: Option<&str>, other: Option<&str>| -> CResult<(String, Option<bool>)> {
+            Ok(match own {
+                Some(t) if is_numeric_type(t) => (slf.expr(e, Some(t))?, Some(int_type(t))),
+                None | Some("text") => match e {
+                    Expr::Lit(Lit::Null) => ("NULL::numeric".into(), Some(false)),
+                    // A parameter beside a typed number is cast to its type,
+                    // as before — integer stays integer.
+                    Expr::Param(_) if other.is_some_and(is_numeric_type) => {
+                        (slf.expr(e, other)?, other.map(int_type))
+                    }
+                    _ => (slf.numeric_read(e)?, None),
+                },
+                // Booleans, vectors and the rest: as written.
+                Some(_) => (slf.expr(e, None)?, Some(false)),
+            })
+        };
+        let (a, a_int) = side(self, l, lt, rt)?;
+        let (b, b_int) = side(self, r, rt, lt)?;
+        Ok(Some(match op {
+            BinOp::Add => format!("({a} + {b})"),
+            BinOp::Sub => format!("({a} - {b})"),
+            BinOp::Mul => format!("({a} * {b})"),
+            BinOp::Div => match (a_int, b_int) {
+                (Some(false), _) | (_, Some(false)) | (Some(true), Some(true)) => {
+                    format!("({a} / NULLIF({b}, 0))")
+                }
+                _ => {
+                    let runtime: Vec<String> = [(&a, a_int), (&b, b_int)]
+                        .iter()
+                        .filter(|(_, k)| k.is_none())
+                        .map(|(x, _)| format!("scale({x}) = 0"))
+                        .collect();
+                    format!(
+                        "(CASE WHEN {} THEN trunc({a} / NULLIF({b}, 0)) ELSE {a} / NULLIF({b}, 0) END)",
+                        runtime.join(" AND ")
+                    )
+                }
+            },
+            _ => format!("(({a})::numeric % NULLIF(({b})::numeric, 0))"),
+        }))
+    }
+
+    /// A boolean compared with a number: `n.active = 1`.
+    ///
+    /// SQL refuses `boolean = integer`, and the error used to reach a Bolt
+    /// client as `DatabaseNotFound`. Sources that have no boolean type keep
+    /// flags as 0/1 (MySQL `tinyint(1)`, SQL Server `bit`), and a query writer
+    /// thinking of them writes `= 1`; so a boolean reads as 1 or 0 here. A
+    /// literal 0 or 1 becomes `false`/`true` and the comparison stays on the
+    /// column, where an index or a source can serve it; any other number
+    /// compares against 1 or 0 (`n.active = 2` is never true). The other way
+    /// round — a 0/1 number column against `true` — compares it with 1.
+    fn bool_against_number(
+        &mut self,
+        op: BinOp,
+        l: &Expr,
+        r: &Expr,
+        lt: Option<&str>,
+        rt: Option<&str>,
+    ) -> CResult<Option<String>> {
+        let num = |t: Option<&str>| t.is_some_and(is_numeric_type);
+        let (b, n, bool_left) = if lt == Some("bool") && num(rt) {
+            (l, r, true)
+        } else if rt == Some("bool") && num(lt) {
+            (r, l, false)
+        } else {
+            return Ok(None);
+        };
+        let constant = [l, r].iter().any(|e| matches!(e, Expr::Param(_) | Expr::Lit(_)));
+        let sym = match op {
+            BinOp::Eq if constant => "=",
+            BinOp::Ne if constant => "<>",
+            BinOp::Eq => "IS NOT DISTINCT FROM",
+            BinOp::Ne => "IS DISTINCT FROM",
+            BinOp::Lt => "<",
+            BinOp::Le => "<=",
+            BinOp::Gt => ">",
+            _ => ">=",
+        };
+        // `n.flag = true` on a 0/1 column: the column against 1, as written.
+        if let Expr::Lit(Lit::Bool(v)) = b {
+            let ns = self.expr(n, if bool_left { rt } else { lt })?;
+            let k = if *v { "1" } else { "0" };
+            let (a, c) = if bool_left { (k.to_string(), ns) } else { (ns, k.to_string()) };
+            return Ok(Some(format!("({a} {sym} {c})")));
+        }
+        let bs = self.expr(b, Some("bool"))?;
+        if let (Expr::Lit(Lit::Int(k @ (0 | 1))), BinOp::Eq | BinOp::Ne) = (n, op) {
+            let lit = if *k == 1 { "true" } else { "false" };
+            let (a, c) = if bool_left { (bs, lit.to_string()) } else { (lit.to_string(), bs) };
+            return Ok(Some(format!("({a} {sym} {c})")));
+        }
+        let ns = self.expr(n, if bool_left { rt } else { lt })?;
+        let bi = format!("(({bs})::int)");
+        let (a, c) = if bool_left { (bi, ns) } else { (ns, bi) };
+        Ok(Some(format!("({a} {sym} {c})")))
+    }
+
     /// The SQL type of an expression when we can determine it — used to drive
     /// parameter coercion.
     fn type_of(&self, e: &Expr) -> Option<String> {
         match e {
             Expr::Prop(base, p) => {
+                // `d.year` on a date that is not a pattern variable.
+                if temporal_unit(p).is_some() {
+                    let element = matches!(&**base, Expr::Var(v)
+                        if matches!(self.binds.get(v), Some(Bind::Node { .. } | Bind::Rel { .. })));
+                    if !element
+                        && matches!(self.type_of(base).as_deref(), Some("date" | "timestamptz" | "timestamp"))
+                    {
+                        return Some("int8".into());
+                    }
+                }
                 let Expr::Var(v) = &**base else { return None };
                 match self.binds.get(v) {
                     Some(Bind::Node { alias, tid }) => self.prop_sql(alias, *tid, p).1,
                     Some(Bind::Rel { alias: Some(a), tid, .. }) => self.prop_sql(a, *tid, p).1,
+                    Some(Bind::Scalar { .. }) => {
+                        self.carried_prop_type(v, p).filter(|t| is_scalar_type(t))
+                    }
                     _ => None,
                 }
             }
+            // What a value was before WITH turned it into jsonb.
+            Expr::Var(v) => match self.binds.get(v) {
+                Some(Bind::Scalar { .. }) => self.scalar_types.get(v).cloned(),
+                _ => None,
+            },
             Expr::Lit(Lit::Int(_)) => Some("int8".into()),
             Expr::Lit(Lit::Float(_)) => Some("float8".into()),
             Expr::Lit(Lit::Bool(_)) => Some("bool".into()),
             Expr::Lit(Lit::Str(_)) => Some("text".into()),
+            Expr::Neg(a) => match self.type_of(a) {
+                Some(t) if is_numeric_type(&t) || t == "interval" => Some(t),
+                Some(t) if t != "text" => None,
+                _ => Some("numeric".into()),
+            },
+            Expr::Not(_) | Expr::IsNull(..) | Expr::HasLabels { .. } | Expr::ListPred { .. } => {
+                Some("bool".into())
+            }
+            Expr::Binary(op, l, r) => match op {
+                BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div | BinOp::Mod => {
+                    if *op == BinOp::Add && (is_list_expr(l) || is_list_expr(r)) {
+                        return None;
+                    }
+                    arithmetic_type(*op, self.type_of(l).as_deref(), self.type_of(r).as_deref())
+                }
+                BinOp::Pow => Some("float8".into()),
+                BinOp::Concat => Some("text".into()),
+                _ => Some("bool".into()),
+            },
             // Constructors and conversions say what they make, so the other side
             // of a comparison is read at that type: `o.placed >= date('2016-01-01')`
             // is `date >= date`, which a source can be sent.
-            Expr::Func { name, .. } => match name.to_ascii_lowercase().as_str() {
-                "date" => Some("date".into()),
-                "datetime" => Some("timestamptz".into()),
-                "localdatetime" => Some("timestamp".into()),
-                "duration" => Some("interval".into()),
-                "tointeger" => Some("int8".into()),
-                "tofloat" => Some("float8".into()),
-                "tostring" => Some("text".into()),
-                _ => None,
-            },
+            Expr::Func { name, args, .. } => {
+                let arg = || args.first().and_then(|a| self.type_of(a));
+                match name.to_ascii_lowercase().as_str() {
+                    "date" => Some("date".into()),
+                    "datetime" => Some("timestamptz".into()),
+                    "localdatetime" => Some("timestamp".into()),
+                    "duration" => Some("interval".into()),
+                    "tointeger" => Some("int8".into()),
+                    "tofloat" => Some("float8".into()),
+                    "tostring" => Some("text".into()),
+                    "count" => Some("int8".into()),
+                    "size" | "length" => Some("int4".into()),
+                    "stdev" | "ceil" | "floor" | "sqrt" => Some("float8".into()),
+                    "round" => Some("numeric".into()),
+                    "sum" => match arg().as_deref() {
+                        Some("float4" | "float8") => Some("float8".into()),
+                        Some("int2" | "int4") => Some("int8".into()),
+                        Some("interval") => Some("interval".into()),
+                        Some(t) if t != "text" && t != "jsonb" && !is_numeric_type(t) => None,
+                        _ => Some("numeric".into()),
+                    },
+                    "avg" => match arg().as_deref() {
+                        Some("float4" | "float8") => Some("float8".into()),
+                        Some("interval") => Some("interval".into()),
+                        Some(t) if t != "text" && t != "jsonb" && !is_numeric_type(t) => None,
+                        _ => Some("numeric".into()),
+                    },
+                    "min" | "max" => arg().filter(|t| t != "jsonb"),
+                    "abs" => match arg() {
+                        Some(t) if is_numeric_type(&t) => Some(t),
+                        _ => Some("numeric".into()),
+                    },
+                    _ => None,
+                }
+            }
             _ => None,
         }
     }
@@ -1861,7 +2402,8 @@ impl Compiler {
         // sent when the column is a date.
         if let Some(ty) = self.type_of(base) {
             if matches!(ty.as_str(), "date" | "timestamptz" | "timestamp") {
-                let sql = self.expr(base, None)?;
+                // The type as a hint: a value carried through WITH reads out at it.
+                let sql = self.expr(base, Some(&ty))?;
                 if ty == "date" && matches!(field, "hour" | "minute" | "second" | "millisecond") {
                     return Err(format!("a date has no .{p} — use datetime() for a point in time"));
                 }
@@ -1927,7 +2469,7 @@ impl Compiler {
             [x] => {
                 let have = self.type_of(x);
                 if have.as_deref() == Some(ty) {
-                    return self.expr(x, None);
+                    return self.expr(x, Some(ty));
                 }
                 // A parameter or an unwound value arrives as text or jsonb; ask
                 // for text, which reads a jsonb string without its quotes.
@@ -1999,7 +2541,7 @@ impl Compiler {
             format!("(CASE WHEN {t} ~ '{NUMERIC_TEXT}' THEN {read} END)")
         };
         let ty = self.type_of(x);
-        let sql = self.expr(x, None)?;
+        let sql = self.expr(x, ty.as_deref())?;
         Ok(match ty.as_deref() {
             Some("int2" | "int4" | "int8") => format!("({sql})::{target}"),
             Some("numeric" | "float4" | "float8") if int => format!("trunc({sql})::int8"),
@@ -2029,7 +2571,7 @@ impl Compiler {
             return Ok("NULL::text".into());
         }
         let ty = self.type_of(x);
-        let sql = self.expr(x, None)?;
+        let sql = self.expr(x, ty.as_deref())?;
         Ok(match ty {
             Some(_) => format!("({sql})::text"),
             None => {
@@ -2052,9 +2594,33 @@ impl Compiler {
                     format!("count({d}{})", self.expr(&args[0], None)?)
                 })
             }
-            "sum" | "avg" | "min" | "max" => {
-                let a = self.expr(&args[0], None)?;
+            // sum/avg over a value whose type is not known to be a number —
+            // jsonb carried through WITH, an undeclared property, text — read
+            // it as one: `function sum(jsonb) does not exist` otherwise.
+            "sum" | "avg" => {
+                let [x] = args else { return Err(format!("{lname}() takes one argument")) };
+                let a = match self.type_of(x) {
+                    None => self.numeric_read(x)?,
+                    Some(t) if t == "text" || t == "jsonb" => self.numeric_read(x)?,
+                    Some(t) => self.expr(x, Some(&t))?,
+                };
                 return Ok(format!("{lname}({d}{a})"));
+            }
+            // min/max keep the value's own type: strings and dates have them
+            // too. jsonb has no min()/max() in SQL, so a value of unknown type
+            // is ordered as jsonb is — numbers by value, strings as text.
+            "min" | "max" => {
+                let [x] = args else { return Err(format!("{lname}() takes one argument")) };
+                return Ok(match self.type_of(x) {
+                    Some(t) if t != "jsonb" => format!("{lname}({d}{})", self.expr(x, Some(&t))?),
+                    _ => {
+                        let j = self.jsonb_of(x)?;
+                        let dir = if lname == "min" { "" } else { " DESC" };
+                        format!(
+                            "(array_agg({j} ORDER BY {j}{dir}) FILTER (WHERE jsonb_typeof({j}) <> 'null'))[1]"
+                        )
+                    }
+                });
             }
             "collect" => {
                 // Cypher's collect() skips nulls (an OPTIONAL MATCH that found
@@ -2065,8 +2631,28 @@ impl Compiler {
                 ));
             }
             "stdev" => {
-                let a = self.expr(&args[0], None)?;
+                let a = match self.type_of(&args[0]) {
+                    Some(t) if is_numeric_type(&t) => self.expr(&args[0], Some(&t))?,
+                    _ => self.numeric_read(&args[0])?,
+                };
                 return Ok(format!("stddev_samp(({a})::float8)"));
+            }
+            // Lists are jsonb arrays; `->` takes a negative index from the end.
+            "head" | "last" | "tail" => {
+                let [x] = args else { return Err(format!("{name}() takes one argument: a list")) };
+                let l = self.jsonb_of(x)?;
+                return Ok(match lname.as_str() {
+                    "head" => format!("({l} -> 0)"),
+                    "last" => format!("({l} -> -1)"),
+                    _ => format!("({l} - 0)"),
+                });
+            }
+            "abs" => {
+                let [x] = args else { return Err("abs() takes one argument".into()) };
+                return Ok(match self.type_of(x) {
+                    Some(t) if is_numeric_type(&t) => format!("abs({})", self.expr(x, Some(&t))?),
+                    _ => format!("abs({})", self.numeric_read(x)?),
+                });
             }
             "date" | "datetime" | "localdatetime" => return self.temporal_ctor(&lname, args),
             "duration" => return self.duration(args),
@@ -2078,7 +2664,7 @@ impl Compiler {
 
         let mut a = Vec::new();
         for x in args {
-            a.push(self.expr(x, None)?);
+            a.push(self.expr_own(x)?);
         }
 
         Ok(match lname.as_str() {
@@ -2154,7 +2740,6 @@ impl Compiler {
                 };
                 format!("coalesce({})", branches.join(", "))
             }
-            "abs" => format!("abs({})", a[0]),
             "ceil" => format!("ceil(({})::float8)", a[0]),
             "floor" => format!("floor(({})::float8)", a[0]),
             "round" => format!("round(({})::numeric)", a[0]),
@@ -2221,6 +2806,7 @@ impl Compiler {
             other => {
                 return Err(format!(
                     "unknown function '{other}'. supported: count, sum, avg, min, max, collect, \
+                     head, last, tail, \
                      id, elementId, labels, type, length, size, toUpper, toLower, trim, substring, \
                      replace, split, coalesce, abs, ceil, floor, round, sqrt, rand, toString, \
                      toInteger, toFloat, timestamp, date, datetime, localdatetime, duration, exists, \
@@ -2229,6 +2815,112 @@ impl Compiler {
             }
         })
     }
+}
+
+/// Integer, exact or floating-point SQL number types.
+fn is_numeric_type(t: &str) -> bool {
+    matches!(t, "int2" | "int4" | "int8" | "numeric" | "float4" | "float8")
+}
+
+/// SQL types a jsonb scalar reads back as with `#>> '{}'` and a cast.
+fn is_scalar_type(t: &str) -> bool {
+    is_numeric_type(t)
+        || matches!(t, "text" | "bool" | "date" | "timestamptz" | "timestamp" | "interval" | "uuid")
+}
+
+/// Is this, as written, a list? `+` concatenates lists.
+fn is_list_expr(e: &Expr) -> bool {
+    match e {
+        Expr::List(_) | Expr::ListComp { .. } | Expr::Slice { .. } => true,
+        Expr::Func { name, .. } => matches!(
+            name.to_ascii_lowercase().as_str(),
+            "collect" | "split" | "labels" | "keys" | "tail" | "nodes" | "relationships" | "range"
+        ),
+        _ => false,
+    }
+}
+
+/// The type `a op b` has in SQL once an operand of unknown type is read as a
+/// number (see `Compiler::arithmetic`).
+fn arithmetic_type(op: BinOp, l: Option<&str>, r: Option<&str>) -> Option<String> {
+    const TEMPORAL: &[&str] = &["date", "timestamptz", "timestamp", "interval"];
+    let temporal = |t: Option<&str>| t.is_some_and(|t| TEMPORAL.contains(&t));
+    if temporal(l) || temporal(r) {
+        return match (op, l, r) {
+            (BinOp::Add | BinOp::Sub, Some(t @ ("date" | "timestamptz" | "timestamp")), Some("interval")) => {
+                Some(t.into())
+            }
+            (BinOp::Add, Some("interval"), Some(t @ ("date" | "timestamptz" | "timestamp"))) => Some(t.into()),
+            (BinOp::Sub, Some("date"), Some("date")) => Some("int4".into()),
+            (BinOp::Sub, Some(a), Some(b)) if a == b && a != "interval" => Some("interval".into()),
+            (BinOp::Add | BinOp::Sub, Some("interval"), Some("interval")) => Some("interval".into()),
+            _ => None,
+        };
+    }
+    if op == BinOp::Add && (l == Some("text") || r == Some("text")) {
+        return Some("text".into());
+    }
+    if op == BinOp::Mod {
+        return Some("numeric".into());
+    }
+    let (kl, kr) = (l.filter(|t| is_numeric_type(t)), r.filter(|t| is_numeric_type(t)));
+    match (kl, kr) {
+        (Some(a), Some(b)) => {
+            let float = |t: &str| t.starts_with("float");
+            Some(if float(a) || float(b) {
+                "float8"
+            } else if a == "numeric" || b == "numeric" {
+                "numeric"
+            } else {
+                "int8"
+            }
+            .into())
+        }
+        _ if l == Some("bool") || r == Some("bool") => None,
+        _ if [l, r].iter().any(|t| t.is_some_and(|t| t != "text" && !is_numeric_type(t))) => None,
+        // An operand of unknown type is read as numeric.
+        (Some(a), None) | (None, Some(a)) if a.starts_with("float") => Some("float8".into()),
+        _ => Some("numeric".into()),
+    }
+}
+
+/// Does `n.id` name a column of the source rather than the node identifier?
+///
+/// It does on a virtual type that maps a source column to a property called
+/// `id` — the most common key name there is. Read as the identifier, which a
+/// virtual node derives from its key, `n.id` returned 68719476737 for the row
+/// whose `id` is 1, `{id: 1}` matched nothing, and every virtual relationship
+/// joining on that key was silently empty. Stored types keep `n.id` as the
+/// identifier, as before; `_id` is the identifier everywhere.
+fn declares_source_id(tid: Option<i32>) -> bool {
+    let Some(t) = tid else { return false };
+    views::view_properties(t).contains_key("id") && crate::fabric::virtual_source(t).is_some()
+}
+
+/// The key property of a virtual type: the property mapped from its key column.
+fn virtual_key_property(tid: i32) -> Option<String> {
+    crate::fabric::virtual_source(tid)?;
+    crate::spiu::one::<String>(
+        "SELECT p.key FROM og_catalog.mapping m, jsonb_each_text(m.property_map) p
+          WHERE m.type_id = $1 AND p.value = m.id_column LIMIT 1",
+        &[tid.into()],
+    )
+    .ok()
+    .flatten()
+}
+
+/// A type others sit under: abstract, or with subtypes. `_Entity` in
+/// Ontology Studio. See `Compiler::virtual_under_umbrella`.
+fn is_umbrella(t: i32) -> bool {
+    crate::spiu::one::<bool>(
+        "SELECT t.is_abstract OR EXISTS (
+             SELECT 1 FROM og_catalog.type_parent p WHERE p.parent_id = t.type_id)
+           FROM og_catalog.type t WHERE t.type_id = $1",
+        &[t.into()],
+    )
+    .ok()
+    .flatten()
+    .unwrap_or(false)
 }
 
 /// A predicate that is always false but names both ends of a hop, so the

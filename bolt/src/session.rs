@@ -914,19 +914,7 @@ impl Failure {
     /// (principle VIII). It is passed through verbatim; only the code is ours.
     fn from_pg(e: &postgres::Error) -> Self {
         let message = pg_message(e);
-        let code = if message.contains("not supported")
-            || message.contains("expected")
-            || message.contains("unknown label")
-            || message.contains("is not defined")
-        {
-            "Neo.ClientError.Statement.SyntaxError"
-        } else if message.contains("does not exist") {
-            "Neo.ClientError.Database.DatabaseNotFound"
-        } else if message.contains("permission denied") {
-            "Neo.ClientError.Security.Forbidden"
-        } else {
-            "Neo.ClientError.Statement.ArgumentError"
-        };
+        let code = error_code(e.code(), &message);
         Failure::client(code, message)
     }
 
@@ -938,8 +926,107 @@ impl Failure {
     }
 }
 
+/// The Neo4j status code for a failed statement.
+///
+/// The SQLSTATE decides where PostgreSQL gives one that means something to a
+/// Cypher client. The message used to decide alone, and "does not exist" read
+/// as a missing database — so `function sum(jsonb) does not exist` and
+/// `operator does not exist: boolean = integer` reached drivers as
+/// `DatabaseNotFound`, which says to look for a different database rather than
+/// to fix the query. Only a missing database or graph is that now.
+fn error_code(state: Option<&SqlState>, message: &str) -> &'static str {
+    if let Some(state) = state {
+        let by_state = match state.code() {
+            // invalid_catalog_name: the database itself
+            "3D000" => Some("Neo.ClientError.Database.DatabaseNotFound"),
+            "42501" => Some("Neo.ClientError.Security.Forbidden"),
+            // no function/operator for these types, mismatched types, a value
+            // that does not read as its type, an ambiguous call
+            "42883" | "42804" | "42846" | "42725" | "22P02" | "2202E" => {
+                Some("Neo.ClientError.Statement.TypeError")
+            }
+            "22012" | "22003" => Some("Neo.ClientError.Statement.ArithmeticError"),
+            // the compiled SQL names a relation or column that is not there:
+            // the engine's state, not the query's spelling
+            "42P01" | "42703" => Some("Neo.DatabaseError.Statement.ExecutionFailed"),
+            _ => None,
+        };
+        if let Some(code) = by_state {
+            return code;
+        }
+    }
+    // The engine's own errors (XX000) carry no telling SQLSTATE; read them.
+    if message.contains("does not exist")
+        && (message.contains("graph '") || message.contains("database \""))
+    {
+        "Neo.ClientError.Database.DatabaseNotFound"
+    } else if message.contains("not supported")
+        || message.contains("expected")
+        || message.contains("unknown label")
+        || message.contains("unknown function")
+        || message.contains("is not defined")
+    {
+        "Neo.ClientError.Statement.SyntaxError"
+    } else if message.contains("permission denied") {
+        "Neo.ClientError.Security.Forbidden"
+    } else if message.contains("does not exist") {
+        "Neo.ClientError.Statement.SemanticError"
+    } else {
+        "Neo.ClientError.Statement.ArgumentError"
+    }
+}
+
+
 fn pg_message(e: &postgres::Error) -> String {
     e.as_db_error().map(|d| d.message().to_string()).unwrap_or_else(|| e.to_string())
+}
+
+#[cfg(test)]
+mod error_code_tests {
+    use super::*;
+
+    #[test]
+    fn type_errors_are_not_a_missing_database() {
+        let undefined = SqlState::from_code("42883");
+        assert_eq!(
+            error_code(Some(&undefined), "function sum(jsonb) does not exist"),
+            "Neo.ClientError.Statement.TypeError"
+        );
+        assert_eq!(
+            error_code(Some(&undefined), "operator does not exist: boolean = integer"),
+            "Neo.ClientError.Statement.TypeError"
+        );
+        assert_eq!(
+            error_code(Some(&SqlState::from_code("22P02")), "invalid input syntax for type numeric: \"x\""),
+            "Neo.ClientError.Statement.TypeError"
+        );
+        assert_eq!(
+            error_code(Some(&SqlState::from_code("22012")), "division by zero"),
+            "Neo.ClientError.Statement.ArithmeticError"
+        );
+    }
+
+    #[test]
+    fn a_missing_graph_or_database_still_is() {
+        let internal = SqlState::from_code("XX000");
+        assert_eq!(
+            error_code(Some(&internal), "graph 'nope' does not exist"),
+            "Neo.ClientError.Database.DatabaseNotFound"
+        );
+        assert_eq!(
+            error_code(Some(&SqlState::from_code("3D000")), "database \"x\" does not exist"),
+            "Neo.ClientError.Database.DatabaseNotFound"
+        );
+        // Anything else that "does not exist" is about the query.
+        assert_eq!(
+            error_code(Some(&internal), "type 'Nope' does not exist in this graph"),
+            "Neo.ClientError.Statement.SemanticError"
+        );
+        assert_eq!(
+            error_code(Some(&internal), "cypher error: unknown function 'nope'. supported: …"),
+            "Neo.ClientError.Statement.SyntaxError"
+        );
+    }
 }
 
 #[cfg(test)]

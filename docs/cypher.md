@@ -42,6 +42,15 @@ SELECT og_cypher_check(query);                 -- parse only
 p = (a)-[:KNOWS]->(b)        -- path variable
 ```
 
+Over a **virtual relationship** (a join on declared keys), an end without a
+label takes its type from the relationship: `(o:Order)-[:PLACED_BY]->(c)`,
+`(c)-[:PLACED_BY]-(o:Order)` (undirected: the labelled end decides) and a node
+carried through `WITH` (`MATCH (c:Customer) WITH c MATCH (c)<-[:PLACED_BY]-(o)`)
+all work. Only an undirected hop with no label on either end is refused.
+On a virtual type whose source has a column `id`, `n.id` is that column (so
+`{id: 1}` and a relationship joining on it work); `id(n)` and `n._id` are the
+node's identifier. On stored types `n.id` is the identifier, as before.
+
 A label matches the type **and all of its subtypes**. That is resolved once at
 compile time through the interval index, so it costs nothing per row.
 
@@ -77,15 +86,39 @@ properties    a.name    r.since
 comparison    =  <>  !=  <  <=  >  >=   IS NULL   IS NOT NULL   IN
 string        STARTS WITH   ENDS WITH   CONTAINS   =~
 boolean       AND  OR  XOR  NOT
+labels        n:A   n:A:B   n:A|B   NOT n:A        (a predicate, in WHERE or RETURN)
 arithmetic    +  -  *  /  %  ^  ||
+lists         xs[0]   xs[-1]   xs[1..3]   xs[..2]   xs[2..]   [1,2] + [3]
 conditional   CASE … WHEN … THEN … ELSE … END
 ```
+
+**Arithmetic on values of unknown type.** A value carried through `WITH` or
+`UNWIND`, or an undeclared property, is read as a number where arithmetic or
+`sum`/`avg` needs one, so `WITH o RETURN sum(o.qty * o.price)` and
+`WITH o.qty * o.price AS v RETURN sum(v)` both work. Integers divide as integers
+(`7 / 2` is `3`), anything else exactly. A node carried through `WITH` keeps its
+type, so its properties keep theirs. `+` with a string concatenates, with a
+list appends. `min`/`max` of a value of unknown type order numbers by value and
+strings as text.
+
+**A boolean against 0 or 1.** Sources without a boolean type keep flags as 0/1,
+so `n.active = 1` means `n.active = true` (and `= 0`, `IN [0, 1]` likewise); a
+boolean compared with any other number reads as 1 or 0 (`n.active = 2` is never
+true), and a 0/1 number column compared with `true` is compared with 1. A
+literal 0 or 1 becomes the boolean itself, so the comparison still reaches the
+source as `active = true`.
+
+**A label predicate** is decided against the type hierarchy at compile time —
+`n:A` holds for `A` and its subtypes, as `MATCH (n:A)` does — so over a virtual
+node it folds to a constant. An umbrella label beside a virtual type
+(`n:_Entity` on a virtual `Customer`) holds, as it does in `MATCH`.
 
 ### Functions
 
 | Group | Functions |
 |---|---|
 | aggregate | `count` (incl. `DISTINCT` and `count(*)`), `sum`, `avg`, `min`, `max`, `collect`, `stdev` |
+| list | `head`, `last`, `tail`, slices `xs[a..b]` (from inclusive, to exclusive, negative from the end) |
 | graph | `id`, `labels`, `type`, `nodes`, `relationships`, `length`, `size` |
 | string | `toUpper`, `toLower`, `trim`, `substring`, `replace`, `split` |
 | numeric | `abs`, `ceil`, `floor`, `round`, `sqrt`, `rand` |

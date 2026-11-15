@@ -243,7 +243,8 @@ impl<'a> Lexer<'a> {
             }
         }
         let c = rest[0];
-        if b"()[]{}<>=+-*/%^.,:;|".contains(&c) {
+        // `&` only appears in label expressions (`n:A&B`).
+        if b"()[]{}<>=+-*/%^.,:;|&".contains(&c) {
             self.pos += 1;
             return Ok(Tok::Punct((c as char).to_string()));
         }

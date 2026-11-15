@@ -15,13 +15,17 @@ pub struct Parser {
     toks: Vec<Token>,
     i: usize,
     src: String,
+    /// Inside the `WHERE` of a list comprehension, `|` starts the projection
+    /// (`[x IN xs WHERE x:A | x.name]`), so it cannot also separate label
+    /// alternatives there.
+    in_comprehension_filter: usize,
 }
 
 type PResult<T> = Result<T, String>;
 
 pub fn parse(src: &str) -> PResult<Query> {
     let toks = Lexer::new(src).tokenize()?;
-    let mut p = Parser { toks, i: 0, src: src.to_string() };
+    let mut p = Parser { toks, i: 0, src: src.to_string(), in_comprehension_filter: 0 };
     let q = p.parse_query()?;
     p.expect_eof()?;
     Ok(q)
@@ -966,14 +970,57 @@ impl Parser {
                 e = Expr::Prop(Box::new(e), p);
             } else if self.at_punct("[") {
                 self.bump();
-                let idx = self.parse_expr()?;
-                self.expect_punct("]")?;
-                e = Expr::Func { name: "element_at".into(), args: vec![e, idx], distinct: false };
+                // `xs[i]` is one element; `xs[a..b]`, `xs[..b]`, `xs[a..]` a sub-list.
+                let from = if self.at_punct("..") { None } else { Some(self.parse_expr()?) };
+                if self.eat_punct("..") {
+                    let to = if self.at_punct("]") { None } else { Some(Box::new(self.parse_expr()?)) };
+                    self.expect_punct("]")?;
+                    e = Expr::Slice { list: Box::new(e), from: from.map(Box::new), to };
+                } else {
+                    self.expect_punct("]")?;
+                    let idx = from.expect("an index was parsed");
+                    e = Expr::Func { name: "element_at".into(), args: vec![e, idx], distinct: false };
+                }
+            } else if self.at_punct(":") && matches!(e, Expr::Var(_)) && self.name_at(1) {
+                // `n:A` in an expression is a label predicate: `WHERE n:A OR n:B`.
+                // Nothing else can follow a variable with `:` here — map keys and
+                // pattern labels are read by their own rules, never as expressions.
+                let Expr::Var(var) = e else { unreachable!() };
+                e = Expr::HasLabels { var, alts: self.parse_label_alternatives()? };
             } else {
                 break;
             }
         }
         Ok(e)
+    }
+
+    /// Is the token `n` ahead something `name()` accepts?
+    fn name_at(&self, n: usize) -> bool {
+        matches!(self.peek_at(n), Tok::Ident(_) | Tok::QuotedIdent(_) | Tok::Keyword(_))
+    }
+
+    /// `:A`, `:A:B` / `:A&B` (all of them), `:A|B` / `:A|:B` (any of them).
+    /// `&` binds tighter than `|`, as in Cypher's label expressions.
+    fn parse_label_alternatives(&mut self) -> PResult<Vec<Vec<String>>> {
+        self.expect_punct(":")?;
+        let mut alts = vec![vec![self.name()?]];
+        loop {
+            if (self.at_punct(":") || self.at_punct("&")) && self.name_at(1) {
+                self.bump();
+                let n = self.name()?;
+                alts.last_mut().expect("one alternative at least").push(n);
+            } else if self.in_comprehension_filter == 0
+                && self.at_punct("|")
+                && (self.name_at(1) || (self.peek_at(1) == &Tok::Punct(":".into()) && self.name_at(2)))
+            {
+                self.bump();
+                self.eat_punct(":");
+                alts.push(vec![self.name()?]);
+            } else {
+                break;
+            }
+        }
+        Ok(alts)
     }
 
     fn parse_primary(&mut self) -> PResult<Expr> {
@@ -1037,7 +1084,10 @@ impl Parser {
                     self.expect_kw("in")?;
                     let source = Box::new(self.parse_expr()?);
                     let filter = if self.eat_kw("where") {
-                        Some(Box::new(self.parse_expr()?))
+                        self.in_comprehension_filter += 1;
+                        let f = self.parse_expr();
+                        self.in_comprehension_filter -= 1;
+                        Some(Box::new(f?))
                     } else {
                         None
                     };
@@ -1277,5 +1327,43 @@ mod tests {
     #[test]
     fn string_predicates() {
         parse("MATCH (a) WHERE a.name STARTS WITH 'x' AND a.b CONTAINS 'y' RETURN a").unwrap();
+    }
+
+    fn return_expr(q: &str) -> Expr {
+        let q = parse(q).unwrap();
+        let Some(Clause::Return(p)) = q.clauses.last() else { panic!() };
+        p.items[0].expr.clone()
+    }
+
+    #[test]
+    fn slices_and_indexes() {
+        let Expr::Slice { from, to, .. } = return_expr("RETURN [1,2,3][1..2] AS x") else { panic!() };
+        assert!(from.is_some() && to.is_some());
+        let Expr::Slice { from, to, .. } = return_expr("RETURN [1,2,3][..2] AS x") else { panic!() };
+        assert!(from.is_none() && to.is_some());
+        let Expr::Slice { from, to, .. } = return_expr("RETURN [1,2,3][1..] AS x") else { panic!() };
+        assert!(from.is_some() && to.is_none());
+        assert!(matches!(return_expr("RETURN [1,2,3][1] AS x"), Expr::Func { ref name, .. } if name == "element_at"));
+        // A slice of an aggregate still groups.
+        assert!(return_expr("MATCH (a) RETURN collect(a.x)[0..3]").is_aggregate());
+    }
+
+    #[test]
+    fn label_predicates() {
+        let q = parse("MATCH (n) WHERE n:A OR NOT n:B:C AND n:D|E RETURN n:A AS isA").unwrap();
+        let Clause::Match { where_: Some(w), .. } = &q.clauses[0] else { panic!() };
+        let Expr::Binary(BinOp::Or, l, r) = w else { panic!("{w:?}") };
+        assert!(matches!(&**l, Expr::HasLabels { alts, .. } if alts == &vec![vec!["A".to_string()]]));
+        let Expr::Binary(BinOp::And, nb, de) = &**r else { panic!() };
+        assert!(matches!(&**nb, Expr::Not(x) if matches!(&**x, Expr::HasLabels { alts, .. }
+            if alts == &vec![vec!["B".to_string(), "C".to_string()]])));
+        assert!(matches!(&**de, Expr::HasLabels { alts, .. } if alts.len() == 2));
+        assert!(matches!(return_expr("MATCH (n) RETURN n:A AS isA"), Expr::HasLabels { .. }));
+        // In a comprehension's WHERE, `|` is the projection.
+        let Expr::ListComp { filter: Some(f), project: Some(_), .. } =
+            return_expr("WITH [1] AS xs RETURN [x IN xs WHERE x:A | x.name] AS n") else { panic!() };
+        assert!(matches!(&*f, Expr::HasLabels { alts, .. } if alts.len() == 1));
+        // A map value is not a label predicate.
+        parse("RETURN {a: 1, b: 'x'} AS m").unwrap();
     }
 }
