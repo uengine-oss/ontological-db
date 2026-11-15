@@ -53,6 +53,12 @@ node's identifier. On stored types `n.id` is the identifier, as before.
 
 A label matches the type **and all of its subtypes**. That is resolved once at
 compile time through the interval index, so it costs nothing per row.
+A label over very many types — an umbrella supertype over every class of an
+application — reads them through one generated view. Past 200 distinct property
+columns that view keeps as columns only the properties two or more of its types
+share; a property only one type has is read from the row's JSON instead, still
+typed as declared (`n.qty + 1`, `sum(n.qty)` work) but without an index. Any
+number of types and properties works; `MATCH (n:Type)` on one type is unchanged.
 
 Variable-length paths never repeat a relationship within one path, which is what
 keeps a cycle from expanding forever. `*..` without an upper bound is capped at 8

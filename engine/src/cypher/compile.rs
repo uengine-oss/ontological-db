@@ -718,8 +718,8 @@ impl Compiler {
             .collect();
         Ok(Compiled {
             sql: format!(
-                "{with}SELECT jsonb_build_object({}) AS row FROM (\n{inner}\n) t{tail}",
-                json_pairs.join(", ")
+                "{with}SELECT {} AS row FROM (\n{inner}\n) t{tail}",
+                views::json_object(&json_pairs)
             ),
             columns: names,
         })
@@ -1187,14 +1187,18 @@ impl Compiler {
             // Wrong endpoint types: the relationship cannot exist between them.
             // Said about the hop's ends, so that under OPTIONAL MATCH it lands
             // on the optional join (NULLs) rather than emptying the whole query.
+            // No join on the keys: those types need not have the columns, and
+            // comparing what they do have failed (`text = integer`) where
+            // Neo4j simply matches nothing.
             self.constrain(never(s_alias, d_alias));
+        } else {
+            let (lhs, _) = self.prop_sql(s_alias, s_tid, &v.src_prop);
+            let (rhs, _) = self.prop_sql(d_alias, d_tid, &v.dst_prop);
+            self.constrain(format!("{lhs} = {rhs}"));
+            self.notes.push(format!(
+                "'{rname}' is virtual: compiled as the join {lhs} = {rhs}, no adjacency read"
+            ));
         }
-        let (lhs, _) = self.prop_sql(s_alias, s_tid, &v.src_prop);
-        let (rhs, _) = self.prop_sql(d_alias, d_tid, &v.dst_prop);
-        self.constrain(format!("{lhs} = {rhs}"));
-        self.notes.push(format!(
-            "'{rname}' is virtual: compiled as the join {lhs} = {rhs}, no adjacency read"
-        ));
 
         let rel_json = format!(
             "jsonb_build_object('_id', og_make_id(0, {rtid}, \
@@ -1466,9 +1470,10 @@ impl Compiler {
             return (format!("{alias}.id"), Some("int8".into()));
         }
         if let Some(t) = tid {
-            let props = views::view_properties(t);
-            if let Some((col, dt)) = props.get(prop) {
-                return (format!("{alias}.{col}"), Some(dt.clone()));
+            // A column of the view, or — over a wide view — a typed read of
+            // the packed value (views::Layout).
+            if let Some((sql, dt)) = views::view_layout(t).read(alias, prop) {
+                return (sql, Some(dt));
             }
         }
         match tid {
@@ -1492,9 +1497,8 @@ impl Compiler {
             return format!("to_jsonb({alias}.id)");
         }
         if let Some(t) = tid {
-            let props = views::view_properties(t);
-            if let Some((col, _)) = props.get(prop) {
-                return format!("to_jsonb({alias}.{col})");
+            if let Some(sql) = views::view_layout(t).read_json(alias, prop) {
+                return sql;
             }
             return format!("({alias}.__ext -> {})", sql_str(prop));
         }
@@ -1586,7 +1590,8 @@ impl Compiler {
     fn node_json(&self, alias: &str, tid: Option<i32>) -> String {
         match tid {
             Some(t) => {
-                let props = views::view_properties(t);
+                // Packed properties of a wide view are already in `__ext`.
+                let props = views::view_layout(t).columns;
                 let mut pairs = vec![
                     format!("'_id', {alias}.id"),
                     format!("'_type', og_type_name({alias}.type_id)"),
@@ -1599,8 +1604,8 @@ impl Compiler {
                 // `count(n)` would count and a client would take for a node.
                 format!(
                     "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE \
-                     jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb) END)",
-                    pairs.join(", ")
+                     jsonb_strip_nulls({}) || COALESCE({alias}.__ext,'{{}}'::jsonb) END)",
+                    views::json_object(&pairs)
                 )
             }
             None => format!("og_node_json({alias}.id)"),
@@ -1608,7 +1613,7 @@ impl Compiler {
     }
 
     fn rel_json(&self, alias: &str, tid: i32) -> String {
-        let props = views::view_properties(tid);
+        let props = views::view_layout(tid).columns;
         let mut pairs = vec![
             format!("'_id', {alias}.id"),
             format!("'_type', og_type_name({alias}.type_id)"),
@@ -1620,8 +1625,8 @@ impl Compiler {
         }
         format!(
             "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE \
-             jsonb_strip_nulls(jsonb_build_object({})) || COALESCE({alias}.__ext,'{{}}'::jsonb) END)",
-            pairs.join(", ")
+             jsonb_strip_nulls({}) || COALESCE({alias}.__ext,'{{}}'::jsonb) END)",
+            views::json_object(&pairs)
         )
     }
 
@@ -1732,14 +1737,14 @@ impl Compiler {
             Expr::List(xs) => {
                 let items: Vec<String> =
                     xs.iter().map(|x| self.jsonb_arg(x)).collect::<CResult<_>>()?;
-                format!("jsonb_build_array({})", items.join(", "))
+                views::json_array(&items)
             }
             Expr::Map(kv) => {
                 let mut pairs = Vec::new();
                 for (k, v) in kv {
                     pairs.push(format!("{}, {}", sql_str(k), self.jsonb_arg(v)?));
                 }
-                format!("jsonb_build_object({})", pairs.join(", "))
+                views::json_object(&pairs)
             }
             // `[x IN xs WHERE p | e]` — a scalar subquery over the unnested
             // list. The binder is an ordinary scalar binding while the body
@@ -1823,7 +1828,7 @@ impl Compiler {
                 let built = if pairs.is_empty() {
                     "'{}'::jsonb".to_string()
                 } else {
-                    format!("jsonb_build_object({})", pairs.join(", "))
+                    views::json_object(&pairs)
                 };
                 match base {
                     // Explicit entries win over `.*`, as in Cypher.
@@ -2588,6 +2593,14 @@ impl Compiler {
         // Aggregates
         match lname.as_str() {
             "count" => {
+                // `count(n)` of a node counts its identifier: the same rows
+                // (the node is null exactly when its id is), without building
+                // each node's JSON only to count it.
+                if let Some(Expr::Var(v)) = args.first() {
+                    if let Some(Bind::Node { alias, .. }) = self.binds.get(v) {
+                        return Ok(format!("count({d}{alias}.id)"));
+                    }
+                }
                 return Ok(if matches!(args.first(), Some(Expr::Star)) || args.is_empty() {
                     "count(*)".into()
                 } else {

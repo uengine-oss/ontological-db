@@ -775,7 +775,10 @@ struct Watch {
 
 /// How long past the engine's limit the gateway waits before cancelling itself.
 const DEADLINE_GRACE: Duration = Duration::from_secs(5);
-/// How often the watcher looks at the socket, the clock and the stop flag.
+/// How often the watcher looks at the socket and the clock. It waits by
+/// parking, and `finish` unparks it: a statement's end never waits out a tick.
+/// (It used to sleep, and `finish` joined the sleeping thread — every
+/// statement over Bolt cost up to one tick, ~100 ms, even `RETURN 1`.)
 const WATCH_TICK: Duration = Duration::from_millis(100);
 
 impl Watch {
@@ -805,7 +808,10 @@ impl Watch {
                             interrupt = Some(Interrupt::Reset);
                         }
                     }
-                    Err(e) if e.kind() == io::ErrorKind::WouldBlock => thread::sleep(WATCH_TICK),
+                    // Parked, not asleep: `finish` sets the flag and unparks,
+                    // and the loop ends at once (an unpark that comes first
+                    // makes this return immediately).
+                    Err(e) if e.kind() == io::ErrorKind::WouldBlock => thread::park_timeout(WATCH_TICK),
                     Err(e) if e.kind() == io::ErrorKind::Interrupted => {}
                     Err(_) => interrupt = Some(Interrupt::ClientGone),
                 }
@@ -830,6 +836,9 @@ impl Watch {
     fn finish(mut self, stream: &TcpStream) -> Seen {
         let watched = self.handle.is_some();
         self.stop.store(true, Ordering::SeqCst);
+        if let Some(h) = &self.handle {
+            h.thread().unpark();
+        }
         let seen = self
             .handle
             .take()

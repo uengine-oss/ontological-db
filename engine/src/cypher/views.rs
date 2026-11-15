@@ -34,19 +34,42 @@ pub fn take_created_view() -> bool {
     CREATED_VIEW.with(|c| c.replace(false))
 }
 
+/// The view of a type's nodes: `v_<id>`, or `vp_<id>` when its properties are
+/// packed (a wide view, see [`Layout`]). The names differ so that a view built
+/// before packing existed — every property a column — is never read as a
+/// packed one: a database upgraded in place still holds such views until the
+/// next schema change drops them.
 pub fn node_view(tid: i32) -> String {
-    format!("og_data.v_{tid}")
+    if is_packed(tid) {
+        format!("og_data.vp_{tid}")
+    } else {
+        format!("og_data.v_{tid}")
+    }
 }
 
 pub fn edge_view(tid: i32) -> String {
-    format!("og_data.ve_{tid}")
+    if is_packed(tid) {
+        format!("og_data.vep_{tid}")
+    } else {
+        format!("og_data.ve_{tid}")
+    }
+}
+
+/// Whether `tid`'s view packs properties into `__ext`.
+fn is_packed(tid: i32) -> bool {
+    !view_layout(tid).packed.is_empty()
 }
 
 /// (property name, column name, sql type) for every property visible on a type
 /// or any of its descendants.
 pub fn view_properties(tid: i32) -> BTreeMap<String, (String, String)> {
+    property_census(tid).into_iter().map(|(name, (col, dt, _))| (name, (col, dt))).collect()
+}
+
+/// [`view_properties`], with how many of the types under `tid` declare each one.
+fn property_census(tid: i32) -> BTreeMap<String, (String, String, usize)> {
     let subs = labeling::og_subtypes(tid);
-    let mut map: BTreeMap<String, (String, String)> = BTreeMap::new();
+    let mut map: BTreeMap<String, (String, String, usize)> = BTreeMap::new();
     Spi::connect(|client| {
         let rows = client
             .select(
@@ -65,14 +88,132 @@ pub fn view_properties(tid: i32) -> BTreeMap<String, (String, String)> {
             // per column, or its UNION ALL fails to build.
             match map.get_mut(&name) {
                 None => {
-                    map.insert(name, (col, dt));
+                    map.insert(name, (col, dt, 1));
                 }
-                Some((_, have)) if *have != dt => *have = common_type(have, &dt),
-                Some(_) => {}
+                Some((_, have, n)) => {
+                    *n += 1;
+                    if *have != dt {
+                        *have = common_type(have, &dt);
+                    }
+                }
             }
         }
     });
     map
+}
+
+/// Above this many property columns a type's view stops giving every property
+/// a column of its own.
+///
+/// A label over many types — an application's umbrella supertype over every
+/// class it publishes — unions all their properties. Each one a column, that
+/// view hit PostgreSQL's 1664-column limit at a few hundred types (and the
+/// node's JSON, built from those columns, its 100-argument limit at about 50),
+/// and every query over it planned hundreds of columns per member table.
+/// Past this width the properties only one type declares travel in `__ext`
+/// instead (see [`Layout`]); those several types share keep their columns.
+pub const WIDE_VIEW_COLUMNS: usize = 200;
+
+/// Where a type's view keeps each property.
+pub struct Layout {
+    /// Properties that are columns of the view: name → (column, SQL type).
+    pub columns: BTreeMap<String, (String, String)>,
+    /// Properties folded into the view's `__ext` (by name, typed as JSON):
+    /// name → (column of the member table, SQL type to read it back as).
+    pub packed: BTreeMap<String, (String, String)>,
+}
+
+impl Layout {
+    /// SQL for reading property `prop` of the row `alias`, with its SQL type.
+    pub fn read(&self, alias: &str, prop: &str) -> Option<(String, String)> {
+        if let Some((col, dt)) = self.columns.get(prop) {
+            return Some((format!("{alias}.{col}"), dt.clone()));
+        }
+        let (_, dt) = self.packed.get(prop)?;
+        Some((packed_read(alias, prop, dt), dt.clone()))
+    }
+
+    /// SQL for reading property `prop` of `alias` as jsonb, keeping its JSON type.
+    pub fn read_json(&self, alias: &str, prop: &str) -> Option<String> {
+        if let Some((col, _)) = self.columns.get(prop) {
+            return Some(format!("to_jsonb({alias}.{col})"));
+        }
+        self.packed.get(prop)?;
+        Some(format!("({alias}.__ext -> {})", quote(prop)))
+    }
+}
+
+/// A packed property read back as its declared SQL type.
+fn packed_read(alias: &str, prop: &str, dt: &str) -> String {
+    let field = format!("{alias}.__ext -> {}", quote(prop));
+    if dt == "jsonb" {
+        format!("({field})")
+    } else if let Some(elem) = dt.strip_suffix("[]") {
+        format!(
+            "(CASE WHEN jsonb_typeof({field}) = 'array' THEN \
+             ARRAY(SELECT x::{elem} FROM jsonb_array_elements_text({field}) x) END)"
+        )
+    } else {
+        format!("(({alias}.__ext ->> {})::{dt})", quote(prop))
+    }
+}
+
+fn quote(s: &str) -> String {
+    format!("'{}'", s.replace('\'', "''"))
+}
+
+/// The layout of `tid`'s view: every property a column, unless that would make
+/// the view wider than [`WIDE_VIEW_COLUMNS`] — then only properties declared
+/// by two or more of its types are columns (the most widely shared first, up
+/// to that width) and the rest are packed.
+pub fn view_layout(tid: i32) -> Layout {
+    let census = property_census(tid);
+    // One decision per physical column: a property being renamed has two names
+    // for one column (see view_columns).
+    let mut per_col: BTreeMap<String, usize> = BTreeMap::new();
+    for (col, _, n) in census.values() {
+        let e = per_col.entry(col.clone()).or_insert(0);
+        *e = (*e).max(*n);
+    }
+    let keep: std::collections::BTreeSet<String> = if per_col.len() <= WIDE_VIEW_COLUMNS {
+        per_col.keys().cloned().collect()
+    } else {
+        let mut ranked: Vec<(&String, &usize)> = per_col.iter().filter(|(_, n)| **n >= 2).collect();
+        ranked.sort_by(|a, b| b.1.cmp(a.1).then_with(|| a.0.cmp(b.0)));
+        ranked.into_iter().take(WIDE_VIEW_COLUMNS).map(|(c, _)| c.clone()).collect()
+    };
+    let mut layout = Layout { columns: BTreeMap::new(), packed: BTreeMap::new() };
+    for (name, (col, dt, _)) in census {
+        if keep.contains(&col) {
+            layout.columns.insert(name, (col, dt));
+        } else {
+            layout.packed.insert(name, (col, dt));
+        }
+    }
+    layout
+}
+
+/// `jsonb_build_object` over `pairs` ("'key', value" each), in pieces joined
+/// with `||` — PostgreSQL passes a function at most 100 arguments, so one call
+/// holds at most 50 pairs. Keys are distinct per piece; a later piece wins a
+/// repeated key, as a later argument does.
+pub fn json_object(pairs: &[String]) -> String {
+    if pairs.len() <= 50 {
+        return format!("jsonb_build_object({})", pairs.join(", "));
+    }
+    let parts: Vec<String> =
+        pairs.chunks(50).map(|c| format!("jsonb_build_object({})", c.join(", "))).collect();
+    format!("({})", parts.join(" || "))
+}
+
+/// `jsonb_build_array` over `items`, in pieces of at most 100 joined with `||`.
+pub fn json_array(items: &[String]) -> String {
+    if items.len() <= 100 {
+        return format!("jsonb_build_array({})", items.join(", "));
+    }
+    let parts: Vec<String> =
+        items.chunks(100).map(|c| format!("jsonb_build_array({})", c.join(", "))).collect();
+    format!("({})", parts.join(" || "))
 }
 
 /// One SQL type both columns convert to: the wider integer, numeric for mixed
@@ -173,7 +314,18 @@ fn og__ensure_view(tid: i32, is_edge: bool) -> String {
 
 fn build_view(tid: i32, is_edge: bool) -> String {
     let view = if is_edge { edge_view(tid) } else { node_view(tid) };
-    let props = view_properties(tid);
+    // Two sessions that both find the view missing would both create it, and
+    // the second fails on a duplicate catalog row. One builds it; the other
+    // waits for that to commit and then finds it.
+    crate::catalog::labeling::lock(
+        if is_edge { crate::catalog::labeling::LOCK_EDGE_VIEW } else { crate::catalog::labeling::LOCK_NODE_VIEW },
+        tid,
+    );
+    if view_exists(&view) {
+        return view;
+    }
+    let layout = view_layout(tid);
+    let props = &layout.columns;
     let tables = concrete_tables(tid, is_edge);
 
     let mut selects: Vec<String> = Vec::new();
@@ -199,7 +351,7 @@ fn build_view(tid: i32, is_edge: bool) -> String {
                 cols.push("src".into());
                 cols.push("dst".into());
             }
-            for (col, dt) in view_columns(&props) {
+            for (col, dt) in view_columns(props) {
                 if own.contains(&col) {
                     // A no-op when the column already has the view's type;
                     // converts it when subtypes disagree (see view_properties).
@@ -208,7 +360,22 @@ fn build_view(tid: i32, is_edge: bool) -> String {
                     cols.push(format!("NULL::{dt} AS {col}"));
                 }
             }
-            cols.push("__ext".into());
+            // Packed properties (a wide view, see Layout) ride in `__ext`
+            // under their names, as a node's JSON shows them anyway.
+            let packed: Vec<String> = layout
+                .packed
+                .iter()
+                .filter(|(_, (col, _))| own.contains(col))
+                .map(|(name, (col, _))| format!("{}, to_jsonb({col})", quote(name)))
+                .collect();
+            if packed.is_empty() {
+                cols.push("__ext".into());
+            } else {
+                cols.push(format!(
+                    "(jsonb_strip_nulls({}) || COALESCE(__ext, '{{}}'::jsonb)) AS __ext",
+                    json_object(&packed)
+                ));
+            }
             selects.push(format!("SELECT {} FROM {}{}", cols.join(", "), rel, filter));
         }
     }
@@ -220,7 +387,7 @@ fn build_view(tid: i32, is_edge: bool) -> String {
             cols.push("NULL::int8 AS src".into());
             cols.push("NULL::int8 AS dst".into());
         }
-        for (col, dt) in view_columns(&props) {
+        for (col, dt) in view_columns(props) {
             cols.push(format!("NULL::{dt} AS {col}"));
         }
         cols.push("NULL::jsonb AS __ext".into());
@@ -274,7 +441,9 @@ pub fn drop_all_views() {
                 "SELECT 'og_data.' || c.relname FROM pg_class c
                    JOIN pg_namespace n ON n.oid = c.relnamespace
                   WHERE n.nspname = 'og_data' AND c.relkind = 'v'
-                    AND (c.relname LIKE 'v\\_%' OR c.relname LIKE 've\\_%')",
+                    AND (c.relname LIKE 'v\\_%' OR c.relname LIKE 've\\_%'
+                         OR c.relname LIKE 'vp\\_%' OR c.relname LIKE 'vep\\_%')
+                  ORDER BY c.oid",
                 None,
                 &[],
             )

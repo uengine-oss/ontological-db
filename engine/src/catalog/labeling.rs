@@ -109,12 +109,36 @@ fn assign(
     stack.pop();
 }
 
+/// Advisory-lock namespaces (the first key of `pg_advisory_xact_lock(int, int)`).
+/// `LOCK_SCHEMA` (second key 0) serialises schema changes; the view locks take
+/// a type id.
+pub const LOCK_SCHEMA: i32 = 0x6f67_6c01;
+pub const LOCK_NODE_VIEW: i32 = 0x6f67_7601;
+pub const LOCK_EDGE_VIEW: i32 = 0x6f67_7602;
+
+/// Take a transaction-scoped advisory lock; it is released at commit or rollback.
+pub fn lock(namespace: i32, key: i32) {
+    Spi::run_with_args(
+        "SELECT pg_advisory_xact_lock($1, $2)",
+        &[namespace.into(), key.into()],
+    )
+    .expect("advisory lock failed");
+}
+
 /// Recompute every interval label for `graph_id`.
 ///
 /// Called on any structural change to the hierarchy. For large ontologies this
 /// is the fallback path — [`insert_between`] handles the common case without
 /// touching existing labels.
+///
+/// Serialised with every other schema change ([`lock_schema`]): two sessions
+/// adding types at once (an application declaring its classes in parallel)
+/// each deleted the labels they could see and wrote the whole set back, and
+/// the second write collided with the first on `type_label_pkey`. Waiting for
+/// the other to commit before reading the hierarchy means the second relabel
+/// sees — and labels — both new types.
 pub fn relabel_graph(graph_id: i32) {
+    lock_schema();
     let dag = load_dag(graph_id);
     if dag.is_empty() {
         return;
@@ -169,7 +193,18 @@ pub fn relabel_graph(graph_id: i32) {
     bump_schema_version(graph_id, "relabel");
 }
 
+/// One schema change at a time in this database, held to the end of the
+/// transaction. A change relabels the hierarchy and drops every generated
+/// view; two at once deadlocked on those views — each transaction held views
+/// it had already dropped (a mapping adds its properties one change at a time)
+/// while waiting for ones the other held. One lock, taken by both relabelling
+/// and the version bump, also keeps them from ever being taken in two orders.
+pub fn lock_schema() {
+    lock(LOCK_SCHEMA, 0);
+}
+
 pub fn bump_schema_version(graph_id: i32, description: &str) {
+    lock_schema();
     // Generated per-type union views encode the descendant set, so any schema
     // change invalidates them (spec 003 / cypher::views).
     crate::cypher::views::drop_all_views();
