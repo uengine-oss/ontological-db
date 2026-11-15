@@ -46,12 +46,12 @@ pub fn edge_view(tid: i32) -> String {
 /// or any of its descendants.
 pub fn view_properties(tid: i32) -> BTreeMap<String, (String, String)> {
     let subs = labeling::og_subtypes(tid);
-    let mut map = BTreeMap::new();
+    let mut map: BTreeMap<String, (String, String)> = BTreeMap::new();
     Spi::connect(|client| {
         let rows = client
             .select(
                 "SELECT name, column_name, data_type FROM og_catalog.property
-                  WHERE type_id = ANY($1)",
+                  WHERE type_id = ANY($1) ORDER BY type_id, name",
                 None,
                 &[subs.into()],
             )
@@ -60,10 +60,33 @@ pub fn view_properties(tid: i32) -> BTreeMap<String, (String, String)> {
             let name: String = r.get(1).unwrap().unwrap();
             let col: String = r.get(2).unwrap().unwrap();
             let dt: String = r.get(3).unwrap().unwrap();
-            map.insert(name, (col, dt));
+            // Subtypes may declare the same property with different types
+            // (`tier` text on one, int8 on another): the view needs one type
+            // per column, or its UNION ALL fails to build.
+            match map.get_mut(&name) {
+                None => {
+                    map.insert(name, (col, dt));
+                }
+                Some((_, have)) if *have != dt => *have = common_type(have, &dt),
+                Some(_) => {}
+            }
         }
     });
     map
+}
+
+/// One SQL type both columns convert to: the wider integer, numeric for mixed
+/// numbers, text otherwise.
+fn common_type(a: &str, b: &str) -> String {
+    const INT: &[&str] = &["int2", "int4", "int8"];
+    const NUM: &[&str] = &["int2", "int4", "int8", "numeric", "float4", "float8"];
+    if INT.contains(&a) && INT.contains(&b) {
+        "int8".into()
+    } else if NUM.contains(&a) && NUM.contains(&b) {
+        "numeric".into()
+    } else {
+        "text".into()
+    }
 }
 
 fn concrete_tables(tid: i32, want_edge: bool) -> Vec<(i32, String)> {
@@ -178,7 +201,9 @@ fn build_view(tid: i32, is_edge: bool) -> String {
             }
             for (col, dt) in view_columns(&props) {
                 if own.contains(&col) {
-                    cols.push(col.clone());
+                    // A no-op when the column already has the view's type;
+                    // converts it when subtypes disagree (see view_properties).
+                    cols.push(format!("{col}::{dt} AS {col}"));
                 } else {
                     cols.push(format!("NULL::{dt} AS {col}"));
                 }

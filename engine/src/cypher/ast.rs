@@ -232,6 +232,18 @@ impl Expr {
                     || whens.iter().any(|(a, b)| a.is_aggregate() || b.is_aggregate())
                     || else_.as_ref().is_some_and(|e| e.is_aggregate())
             }
+            // `[x IN collect(y) WHERE …]`: the aggregate sits inside the list
+            // expression, and the projection still has to group.
+            Expr::ListComp { source, filter, project, .. } => {
+                source.is_aggregate()
+                    || filter.as_ref().is_some_and(|f| f.is_aggregate())
+                    || project.as_ref().is_some_and(|p| p.is_aggregate())
+            }
+            Expr::ListPred { source, filter, .. } => source.is_aggregate() || filter.is_aggregate(),
+            Expr::MapProjection { items, .. } => items
+                .iter()
+                .any(|i| matches!(i, MapProjItem::Entry(_, e) if e.is_aggregate())),
+            Expr::Prop(b, _) => b.is_aggregate(),
             _ => false,
         }
     }

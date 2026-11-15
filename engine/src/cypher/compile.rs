@@ -689,6 +689,25 @@ impl Compiler {
     // ----------------------------------------------------------------------
 
     pub fn compile_pattern(&mut self, p: &Pattern, optional: bool) -> CResult<()> {
+        // An OPTIONAL pattern has to start at a node that is already bound:
+        // each new node must join *after* the hop that reaches it, or its join
+        // stays `ON true` and the optional side multiplies against everything
+        // (`OPTIONAL MATCH (s:Shipment)-[:SHIPS]->(po)` with `po` bound gave
+        // every shipment). Starting from the bound node, the left part is
+        // walked backwards and the rest as written.
+        if optional && p.path_var.is_none() {
+            if let Some(k) = self.first_bound_node(p) {
+                if k > 0 {
+                    let left = Pattern { path_var: None, elems: reverse_elems(&p.elems[..=k]) };
+                    self.compile_pattern(&left, optional)?;
+                    if k + 1 < p.elems.len() {
+                        let right = Pattern { path_var: None, elems: p.elems[k..].to_vec() };
+                        self.compile_pattern(&right, optional)?;
+                    }
+                    return Ok(());
+                }
+            }
+        }
         if optional {
             self.notes.push("OPTIONAL MATCH compiled as LEFT JOIN LATERAL".into());
         }
@@ -739,6 +758,14 @@ impl Compiler {
         }
         self.reachability_only = outer_reachability;
         Ok(())
+    }
+
+    /// Index of the first node in the pattern whose variable is already bound.
+    fn first_bound_node(&self, p: &Pattern) -> Option<usize> {
+        p.elems.iter().position(|e| {
+            matches!(e, PatElem::Node(NodePat { var: Some(v), .. })
+                if matches!(self.binds.get(v), Some(Bind::Node { .. })))
+        })
     }
 
     /// Resolve a label set, reporting separately whether it can match at all.
@@ -1725,8 +1752,12 @@ impl Compiler {
                 return Ok(format!("{lname}({d}{a})"));
             }
             "collect" => {
+                // Cypher's collect() skips nulls (an OPTIONAL MATCH that found
+                // nothing contributes no element) and is [] over no rows.
                 let a = self.expr(&args[0], None)?;
-                return Ok(format!("jsonb_agg({d}{a})"));
+                return Ok(format!(
+                    "coalesce(jsonb_agg({d}{a}) FILTER (WHERE ({a}) IS NOT NULL), '[]'::jsonb)"
+                ));
             }
             "stdev" => {
                 let a = self.expr(&args[0], None)?;
@@ -1916,3 +1947,23 @@ pub fn sql_str(s: &str) -> String {
     format!("'{}'", s.replace('\'', "''"))
 }
 
+/// The same pattern read from the other end: elements reversed, every
+/// relationship's direction flipped.
+fn reverse_elems(elems: &[PatElem]) -> Vec<PatElem> {
+    elems
+        .iter()
+        .rev()
+        .map(|e| match e {
+            PatElem::Rel(r) => {
+                let mut r = r.clone();
+                r.dir = match r.dir {
+                    Dir::Out => Dir::In,
+                    Dir::In => Dir::Out,
+                    Dir::Both => Dir::Both,
+                };
+                PatElem::Rel(r)
+            }
+            n => n.clone(),
+        })
+        .collect()
+}
