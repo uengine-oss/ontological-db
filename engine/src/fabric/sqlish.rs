@@ -28,6 +28,7 @@
 //! MATERIALIZE VIRTUAL NODE Customer
 //! CREATE VIRTUAL NODE Score KEY supplier_id AS SELECT … FROM erp.a JOIN wms.b …
 //! EXPLAIN FABRIC MATCH …
+//! QUERY FABRIC [WITH {datasource: 'erp', max_rows: 1000, max_bytes: 67108864}] SELECT … FROM erp.item …
 //! MATCH (s:Supplier) RETURN s.name          -- any Cypher query
 //! ```
 //!
@@ -363,13 +364,15 @@ pub fn is_statement(stmt: &str) -> bool {
         "REFRESH" => w1 == "DATASOURCE",
         "MATERIALIZE" => true,
         "EXPLAIN" => w1 == "FABRIC",
+        // one read-only SQL statement over the datasources' tables (`query`)
+        "QUERY" => w1 == "FABRIC",
         _ => false,
     }
 }
 
 /// Whether a fabric statement changes anything.
 pub fn is_write(stmt: &str) -> bool {
-    !matches!(first_words(trim_statement(stmt), 1).first().map(String::as_str), Some("SHOW" | "EXPLAIN"))
+    !matches!(first_words(trim_statement(stmt), 1).first().map(String::as_str), Some("SHOW" | "EXPLAIN" | "QUERY"))
 }
 
 /// The result columns of a fabric statement, in order. Known from its opening
@@ -392,6 +395,9 @@ pub fn columns(stmt: &str) -> Vec<String> {
         ["SHOW", "VIRTUAL", "NODES"] => &["node", "source", "key", "properties", "storage"],
         ["SHOW", "VIRTUAL", ..] => &["relationship", "from", "to"],
         ["EXPLAIN", "FABRIC", ..] => &["step", "place", "operation", "rows", "detail"],
+        // one row: the result's own columns travel as a list, so their order and
+        // repeated names survive (a jsonb object would sort and merge them)
+        ["QUERY", "FABRIC", ..] => &["columns", "types", "rows", "row_count", "truncated", "bytes", "elapsed_ms"],
         _ => &["result"],
     };
     cols.iter().map(|c| c.to_string()).collect()
@@ -471,6 +477,50 @@ fn split_as_query(s: &str) -> Option<(&str, &str)> {
     None
 }
 
+/// The byte length of the `{ … }` block `s` starts with — balanced braces,
+/// minding strings inside it, as `tokenize` reads a block.
+fn block_end(s: &str) -> R<usize> {
+    let (mut depth, mut quote): (i32, Option<char>) = (0, None);
+    let mut escaped = false;
+    for (i, c) in s.char_indices() {
+        match quote {
+            Some(_) if escaped => escaped = false,
+            Some(_) if c == '\\' => escaped = true,
+            Some(q) if c == q => quote = None,
+            Some(_) => {}
+            None if c == '"' || c == '\'' => quote = Some(c),
+            None if c == '{' => depth += 1,
+            None if c == '}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Ok(i + 1);
+                }
+            }
+            None => {}
+        }
+    }
+    Err("unterminated { … } block".into())
+}
+
+/// `QUERY FABRIC [WITH {datasource: …, max_rows: …, max_bytes: …}] <SELECT … | WITH …>`
+/// split into its SQL and its settings (as JSON text). Everything after the prefix
+/// and the settings block is the SQL, verbatim — it is never tokenised here.
+fn query_fabric_parts(s: &str, params: &Map<String, Value>) -> R<(String, String)> {
+    let at = s.to_ascii_uppercase().find("FABRIC").ok_or("expected QUERY FABRIC")? + 6;
+    let mut rest = s[at..].trim_start();
+    let mut options = "{}".to_string();
+    let after_with = rest.get(..4).filter(|w| w.eq_ignore_ascii_case("WITH")).map(|_| rest[4..].trim_start());
+    if let Some(block) = after_with.filter(|r| r.starts_with('{')) {
+        let end = block_end(block)?;
+        options = resolve_block(&block[..end], params)?;
+        rest = block[end..].trim_start();
+    }
+    if rest.is_empty() {
+        return Err("expected a SELECT or WITH statement after QUERY FABRIC".into());
+    }
+    Ok((rest.to_string(), options))
+}
+
 fn translate(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) -> R<String> {
     translate_args(stmt, graph, params).map(|(sql, _)| sql)
 }
@@ -500,6 +550,19 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
         ));
     }
     let head = first_words(s, 2);
+    if head == ["QUERY", "FABRIC"] {
+        // What it stands for in SQL (for og_fabric_translate and EXPLAIN); `run` calls
+        // the query itself without it.
+        let (sql, options) = query_fabric_parts(s, params)?;
+        return Ok((
+            "SELECT x->'columns' AS columns, x->'types' AS types, x->'rows' AS rows, \
+                    (x->>'row_count')::bigint AS row_count, (x->>'truncated')::boolean AS truncated, \
+                    (x->>'bytes')::bigint AS bytes, (x->>'elapsed_ms')::float8 AS elapsed_ms \
+               FROM (SELECT og_fabric_query($1, $2::jsonb) AS x) s"
+                .to_string(),
+            vec![sql, options],
+        ));
+    }
     if head == ["EXPLAIN", "FABRIC"] {
         let at = s.to_ascii_uppercase().find("FABRIC").unwrap() + 6;
         let q = s[at..].trim();
@@ -869,13 +932,13 @@ pub fn run(statement: &str, graph: Option<&str>, params: &Map<String, Value>) ->
     // Profiling and previews read source tables; they get the same deadline as
     // a Cypher statement (a no-op when `og_cypher` already armed it).
     crate::cypher::timeout::arm();
-    let shown = format!("[{}] {}", graph.unwrap_or("-"), redacted(statement));
-    let audit = |rows: i64, err: Option<&str>| {
+    let mut shown = format!("[{}] {}", graph.unwrap_or("-"), redacted(statement));
+    let audit = |shown: &str, rows: i64, err: Option<&str>| {
         Spi::run_with_args(
             "INSERT INTO og_data.og_audit (query, lang, rows_out, duration_ms, error_code)
              VALUES ($1, 'fabric', $2, $3, $4)",
             &[
-                shown.as_str().into(),
+                shown.into(),
                 rows.into(),
                 (started.elapsed().as_secs_f64() * 1000.0).into(),
                 err.map(|e| e.chars().take(200).collect::<String>()).into(),
@@ -883,10 +946,27 @@ pub fn run(statement: &str, graph: Option<&str>, params: &Map<String, Value>) ->
         )
         .ok();
     };
+    // QUERY FABRIC runs here, not through SQL: an installation whose extension
+    // script predates the statement has no og_fabric_query() function, and needs none.
+    // It is recorded with the SQL it ran (that names tables and holds no secret).
+    if first_words(trim_statement(statement), 2) == ["QUERY", "FABRIC"] {
+        let (sql, options) = match query_fabric_parts(trim_statement(statement), params) {
+            Ok(x) => x,
+            Err(e) => {
+                audit(&shown, 0, Some(&e));
+                error!("fabric statement: {e}")
+            }
+        };
+        shown = format!("[{}] QUERY FABRIC {}", graph.unwrap_or("-"), sql.chars().take(4000).collect::<String>());
+        let opts = serde_json::from_str::<Map<String, Value>>(&options).unwrap_or_default();
+        let row = super::query::query(&sql, &opts);
+        audit(&shown, 1, None);
+        return vec![row];
+    }
     let (sql, args) = match translate_args(statement, graph, params) {
         Ok(x) => x,
         Err(e) => {
-            audit(0, Some(&e));
+            audit(&shown, 0, Some(&e));
             error!("fabric statement: {e}")
         }
     };
@@ -898,7 +978,7 @@ pub fn run(statement: &str, graph: Option<&str>, params: &Map<String, Value>) ->
             .filter_map(|r| r.get::<JsonB>(1).ok().flatten().map(|j| j.0))
             .collect()
     });
-    audit(rows.len() as i64, None);
+    audit(&shown, rows.len() as i64, None);
     rows
 }
 

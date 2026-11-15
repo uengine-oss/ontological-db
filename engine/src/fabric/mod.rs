@@ -28,6 +28,7 @@ use crate::spiu::{ident, lit, one};
 use pgrx::prelude::*;
 
 pub mod profile;
+pub mod query;
 pub mod sqlish;
 use pgrx::JsonB;
 use serde_json::{json, Map, Value};
@@ -312,6 +313,7 @@ fn og_create_datasource(name: &str, engine: &str, params: JsonB) -> String {
             ))
             .unwrap_or_else(|e| error!("failed to import '{remote}' from '{name}': {e}"));
             protect_server(&srv);
+            query::after_import();
             one::<i64>(
                 "SELECT count(*) FROM pg_foreign_table ft JOIN pg_foreign_server s ON s.oid = ft.ftserver
                   WHERE s.srvname = $1",
@@ -526,6 +528,7 @@ fn og_refresh_datasource(name: &str) -> String {
     ))
     .unwrap_or_else(|e| error!("failed to refresh '{name}': {e}"));
     protect_server(&srv);
+    query::after_import();
     let now = one::<i64>(
         "SELECT count(*) FROM pg_foreign_table ft JOIN pg_foreign_server s ON s.oid = ft.ftserver WHERE s.srvname = $1",
         &[srv.as_str().into()],
@@ -628,6 +631,7 @@ fn import_foreign(datasource: &str, remote: &str) -> (String, String) {
     ))
     .unwrap_or_else(|e| error!("failed to import {remote} from '{datasource}': {e}"));
     protect_server(&srv);
+    query::after_import();
     (lschema, rtable.to_string())
 }
 

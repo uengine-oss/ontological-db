@@ -163,6 +163,34 @@ Over Bolt a driver's transaction timeout (`Query(…, timeout=…)`,
 `begin_transaction(timeout=…)`) sets it for that transaction, and the error is
 `Neo.ClientError.Transaction.TransactionTimedOut`; see `bolt/README.md`.
 
+### SQL over the sources: `QUERY FABRIC`
+
+A fabric statement, sent wherever Cypher is (`og_fabric`, `og_cypher`, Bolt), for
+a question that is a table question:
+
+```sql
+QUERY FABRIC SELECT s.name, count(*) FROM erp.supplier s JOIN erp.purchase_order po USING (supplier_id) GROUP BY 1
+QUERY FABRIC WITH {datasource: $ds, max_rows: 1000, max_bytes: 67108864} SELECT * FROM supplier WHERE rating > 4
+```
+
+One `SELECT`/`WITH` over the datasources' tables, read only, nothing more. It
+runs as `og_source_reader` (no login; `SELECT` on the datasources' foreign
+tables, granted as `CREATE`/`REFRESH DATASOURCE` bring them in) in a read-only
+subtransaction that is always rolled back; any other relation — a local table,
+`og_catalog`, `og_data`, `pg_catalog`, `information_schema` — and any `pg_*` or
+`og_*` function is refused (42501), also inside a nested query. Unqualified names
+find the named datasource's tables, or any datasource's. The time limit is the
+statement's own (`og.statement_timeout`; over Bolt, the driver's timeout). The
+answer is one row: `columns` and `types` (lists, in order), `rows` (lists of typed
+values — numbers, booleans, JSON; an `int8`/`numeric` beyond 15 digits and
+everything else as PostgreSQL prints it), `row_count`, `truncated` (more rows than
+`max_rows`, default 1000), `bytes`, `elapsed_ms`; over `max_bytes` (default 64 MB) it
+is refused (54000). Every error message ends in its SQLSTATE —
+`column "nope" does not exist [SQLSTATE 42703, position 8]`, the position counted
+in the SQL. Only a superuser or a member of `og_source_reader` may run it. Writing,
+and mixing SQL into a graph pattern, stay with virtual nodes
+(`CREATE VIRTUAL NODE … AS SELECT …`).
+
 ### Parameters
 
 ```sql
