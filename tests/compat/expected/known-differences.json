@@ -1,0 +1,6 @@
+[
+ {
+  "id": "_doc",
+  "reason": "Answers where v2 is allowed to differ from v1, each with the reason (filled from P3 on, when v2 first runs the corpus). An entry's id is a query id or a scenario name; compare skips it."
+ }
+]

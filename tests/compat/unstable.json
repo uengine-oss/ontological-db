@@ -1,0 +1,3 @@
+[
+ {"id": "_doc", "reason": "Queries whose v1 result is not the same from one run to the next even after normalisation. They still run (an error or a hang would show), but only this reason is kept as their answer. Add one only after finding why it varies, and say it here."}
+]
