@@ -1,0 +1,118 @@
+# Every suite, on {v1, age} × {PostgreSQL 16, 17}.
+#
+# Each cell is one call of scripts/test-all.sh — the script a developer runs locally — so a
+# cell's result can be reproduced on a laptop with the same arguments:
+#
+#   scripts/test-all.sh --edition v1 --pg 16 --pg-config <PostgreSQL 16>/bin/pg_config
+#
+# tests/common/ runs in every cell, tests/<edition>/ in its own (tests/README.md). The age cells
+# end as "skipped" until the age edition (ontological_age) exists; they install nothing.
+name: tests
+
+on:
+  push:
+    branches: [main, "v2/**", "seam/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suites:
+    name: ${{ matrix.edition }} × PG${{ matrix.pg }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        edition: [v1, age]
+        pg: [16, 17]
+    services:
+      # The source of tests/common/fabric-mysql-catalog. The suite creates its tables as root
+      # through `docker exec` (OG_TEST_MYSQL_CONTAINER), reading MYSQL_ROOT_PASSWORD in there.
+      mysql:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: og-ci-root
+          MYSQL_ROOT_PASSWORD: og-ci-root
+          MARIADB_DATABASE: shopsrc
+          MARIADB_USER: og_src
+          MARIADB_PASSWORD: og-ci-src
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      CARGO_TERM_COLOR: never
+      RUST_VERSION: "1.99.1"
+      PGRX_VERSION: "0.19.2"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PostgreSQL ${{ matrix.pg }} from PGDG, with pgvector and mysql_fdw
+        if: matrix.edition == 'v1'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common
+          # test-all.sh makes its own cluster; the packages need not start one.
+          sudo sed -i 's/^#\? *create_main_cluster.*/create_main_cluster = false/' /etc/postgresql-common/createcluster.conf
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq "postgresql-${{ matrix.pg }}" "postgresql-server-dev-${{ matrix.pg }}" \
+              "postgresql-${{ matrix.pg }}-pgvector" "postgresql-${{ matrix.pg }}-mysql-fdw" libclang-dev
+          echo "/usr/lib/postgresql/${{ matrix.pg }}/bin" >> "$GITHUB_PATH"
+
+      - name: Rust ${{ env.RUST_VERSION }}
+        if: matrix.edition == 'v1'
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal
+          rustup default "$RUST_VERSION"
+
+      - uses: Swatinem/rust-cache@v2
+        if: matrix.edition == 'v1'
+        with:
+          key: pg${{ matrix.pg }}
+          workspaces: |
+            engine -> target
+            bolt -> target
+
+      - name: cargo-pgrx ${{ env.PGRX_VERSION }}
+        if: matrix.edition == 'v1'
+        run: |
+          if ! cargo pgrx --version 2>/dev/null | grep -qx "cargo-pgrx $PGRX_VERSION"; then
+            cargo install cargo-pgrx --version "$PGRX_VERSION" --locked
+          fi
+
+      - uses: actions/setup-python@v5
+        if: matrix.edition == 'v1'
+        with:
+          python-version: "3.12"
+
+      - name: Python packages the suites import
+        if: matrix.edition == 'v1'
+        run: python -m pip install --quiet "neo4j>=5,<6" psycopg2-binary
+
+      - name: scripts/test-all.sh --edition ${{ matrix.edition }} --pg ${{ matrix.pg }}
+        env:
+          OG_TEST_WORK: ${{ runner.temp }}/og-test
+          OG_TEST_MYSQL_HOST: 127.0.0.1
+          OG_TEST_MYSQL_PORT: "3306"
+          OG_TEST_MYSQL_USER: og_src
+          OG_TEST_MYSQL_PASSWORD: og-ci-src
+          OG_TEST_MYSQL_DATABASE: shopsrc
+          OG_TEST_MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+          MARIADB_TLS_DISABLE_PEER_VERIFICATION: "1"
+        run: |
+          scripts/test-all.sh --edition "${{ matrix.edition }}" --pg "${{ matrix.pg }}" \
+              --pg-config "/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config" --sudo --python python
+
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.edition == 'v1'
+        with:
+          name: logs-${{ matrix.edition }}-pg${{ matrix.pg }}
+          path: ${{ runner.temp }}/og-test/logs
+          if-no-files-found: ignore
