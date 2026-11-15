@@ -133,7 +133,23 @@ v1 판에서만 돌린다.
 시험 내용을 바꾸지 않는다는 조건에서 `common/` 에 두면 age 판에서 그 물리 확인 때문에 반드시 실패하기 때문이다.
 걸리는 곳이 적어(대부분 감사·카탈로그 몇 곳), 그 확인만 판별 시험으로 떼어 내면 `common/` 으로 돌아갈 수 있다.
 
+## 알려진 실패
+
+`scripts/test-all.sh` 의 `known_failure` 에 사유와 함께 적힌 실패는, 적힌 통과 수와 꼭 같게 실패할 때만 「known」으로 보고하고
+실행을 실패로 만들지 않는다. 통과 수가 달라지면(나아지든 나빠지든) 다시 FAIL 이다. 통과하게 되면 요약이 그 항목을 지우라고 알려 준다.
+
+| 스위트 | 판 | 적힌 통과 수 | 사유 |
+|---|---|---|---|
+| `neo4j-movies` | v1 | 30/33 | Studio 패치 0012(92b4467) 뒤로, 목록 속성을 `text[]` 로 선언한 관계를 `MERGE` 하면 일치 조건이 `($1 ->> '__og_merge_0')::text[]` 로 컴파일돼 `malformed array literal` 로 실패한다(`engine/src/cypher/mod.rs:754`). 데이터셋 39문장 가운데 1문장만 들어가고, 그 데이터에 기대는 Bolt 검사 3개(`nodes hydrate`·`relationships hydrate`·`parameters bind`)가 따라 실패한다. 같은 관계를 `CREATE` 하면 된다. 공개 사이트는 이 스위트가 39/39 를 적재한다고 적고 있다 |
+
 ## 알아 둘 것
+
+- 튜토리얼은 슈퍼유저 `dev` 로 돌린다(`scripts/test-all.sh` 가 역할을 만든다). 튜토리얼이 dev 컨테이너에서 쓰였고, `security` 의 한 질의가
+  `db_user <> 'dev'` 로 그 사용자의 쓰기를 뺀다. 클러스터는 `-E UTF8 --locale=C`, `TimeZone=UTC` 로 만든다(Studio 의 initdb 와 같은 로캘).
+  이렇게 돌리면 여섯 편 가운데 다섯 편이 공개된 페이지와 한 글자도 다르지 않다.
+- `agent-native` 는 실행 블록 안에서 `\! psql -p 28816` 을 부른다(`tutorial.src.md:166`). 다른 포트로 돌리면 그 블록이 연결에 실패한 출력을
+  내지만 `--check` 는 통과한다(`--strict` 에서만 실패). 그 밖에 오류 메시지의 함수 목록이 공개 페이지보다 늘어 있어, 28816 에서 돌려도
+  공개 페이지와 다르다.
 
 - `common/` 가운데 v1 의 타입 id·인접 구조를 드러내는 SQL 함수를 부르는 파일은 없다(`og_type_id`·`og_nodes`·`og_expand`·`og_make_id`·
   `og_node_json` 은 모두 `v1/` 파일에만 나온다). `common/` 이 쓰는 SQL 함수는 `og_cypher`·`og_cypher_sql`·`og_cypher_columns`·
