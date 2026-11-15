@@ -1,0 +1,23 @@
+{
+ "id": "robo-71417e2065",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "type"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "<uuid1>",
+   "orderId",
+   "UUID"
+  ]
+ ],
+ "params": {
+  "pid": "<uuid2>",
+  "pt": "Command"
+ }
+}

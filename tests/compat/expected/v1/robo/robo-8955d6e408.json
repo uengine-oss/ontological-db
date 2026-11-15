@@ -1,0 +1,16 @@
+{
+ "id": "robo-8955d6e408",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "pol",
+  "triggerEventId",
+  "invokeCommandId"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "node_id": "BoundedContext-1"
+ }
+}

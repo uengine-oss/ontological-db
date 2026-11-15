@@ -1,0 +1,15 @@
+{
+ "id": "robo-3b9df6c54f",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "n"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "createdAt": "2026-01-11T09:00:00Z",
+  "id": "CHG-001"
+ }
+}

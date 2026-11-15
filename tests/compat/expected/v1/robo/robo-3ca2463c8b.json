@@ -1,0 +1,25 @@
+{
+ "id": "robo-3ca2463c8b",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "givenRef",
+  "whenRef",
+  "thenRef",
+  "testCases"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "GWT givenRef 1",
+   "GWT whenRef 1",
+   "GWT thenRef 1",
+   "[]"
+  ]
+ ],
+ "params": {
+  "pid": "Command-1",
+  "ptype": "GWT parentType 1"
+ }
+}

@@ -1,0 +1,118 @@
+{
+ "scenario": "robo-architect-lite:api/features/requirement_changes/routes/changes_changeset.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-12308dd02a",
+   "columns": [
+    "cs"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     {
+      "author": "compat-author",
+      "createdAt": "2026-01-15T18:00:00+09:00",
+      "id": "compat-new-ChangeSet",
+      "status": "DRAFT",
+      "title": "compat-title"
+     }
+    ],
+    [
+     {
+      "author": "compat-author",
+      "createdAt": "2026-01-15T18:00:00+09:00",
+      "id": "compat-new-ChangeSet",
+      "status": "DRAFT",
+      "title": "compat-title"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 7,
+    "relationships_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "ChangeSet"
+      ],
+      "props": {
+       "author": "compat-author",
+       "createdAt": "2026-01-15T18:00:00+09:00",
+       "id": "compat-new-ChangeSet",
+       "status": "DRAFT",
+       "title": "compat-title"
+      }
+     }
+    ],
+    "nodes_changed": [
+     "{\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"RequirementChange author 1\",\"changeSetId\":\"compat-new-ChangeSet\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"id\":\"RequirementChange-1\",\"name\":\"RequirementChange 1\",\"originalPrompt\":\"RequirementChange originalPrompt 1\",\"sourceType\":\"RequirementChange sourceType 1\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"RequirementChange 1\"}} <- {\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"RequirementChange author 1\",\"changeSetId\":\"CS-001\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"id\":\"RequirementChange-1\",\"name\":\"RequirementChange 1\",\"originalPrompt\":\"RequirementChange originalPrompt 1\",\"sourceType\":\"RequirementChange sourceType 1\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"RequirementChange 1\"}}",
+     "{\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"changeSetId\":\"compat-new-ChangeSet\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"반품 기간 연장\"}} <- {\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"반품 기간 연장\"}}"
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"RequirementChange author 1\",\"changeSetId\":\"compat-new-ChangeSet\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"id\":\"RequirementChange-1\",\"name\":\"RequirementChange 1\",\"originalPrompt\":\"RequirementChange originalPrompt 1\",\"sourceType\":\"RequirementChange sourceType 1\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"RequirementChange 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"ChangeSet\"],\"props\":{\"author\":\"compat-author\",\"createdAt\":\"2026-01-15T18:00:00+09:00\",\"id\":\"compat-new-ChangeSet\",\"status\":\"DRAFT\",\"title\":\"compat-title\"}}",
+      "type": "CONTAINS"
+     },
+     {
+      "end": "{\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"changeSetId\":\"compat-new-ChangeSet\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"반품 기간 연장\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"ChangeSet\"],\"props\":{\"author\":\"compat-author\",\"createdAt\":\"2026-01-15T18:00:00+09:00\",\"id\":\"compat-new-ChangeSet\",\"status\":\"DRAFT\",\"title\":\"compat-title\"}}",
+      "type": "CONTAINS"
+     }
+    ]
+   },
+   "params": {
+    "author": "compat-author",
+    "changeIds": [
+     "CHG-001",
+     "RequirementChange-1"
+    ],
+    "createdAt": "2026-01-15T09:00:00Z",
+    "id": "compat-new-ChangeSet",
+    "title": "compat-title"
+   }
+  },
+  {
+   "id": "robo-bbcf0e8e6c",
+   "error": {
+    "code": "Neo.ClientError.Statement.SyntaxError",
+    "message": "cypher error: unknown function 'apoc.convert.fromjsonlist'. supported: count, sum, avg, min, max, collect, head, last, tail, id, elementId, labels, type, length, size, toUpper, toLower, trim, substring, replace, split, coalesce, abs, ceil, floor, round, sqrt, rand, toString, toInteger, toFloat, timestamp, date, datetime, localdatetime, duration, exists, keys, properties, nodes, relationships, star"
+   },
+   "params": {
+    "actor": "compat-actor",
+    "cs_id": "CS-001",
+    "from_status": "DRAFT",
+    "to_status": "compat-status"
+   }
+  },
+  {
+   "id": "robo-6dcabc216a",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"changeSetId\":\"compat-new-ChangeSet\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"compat-status\",\"statusHistory\":\"compat-statusHistory\",\"title\":\"반품 기간 연장\"}} <- {\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"changeSetId\":\"compat-new-ChangeSet\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"반품 기간 연장\"}}"
+    ]
+   },
+   "params": {
+    "hist": "compat-statusHistory",
+    "id": "CHG-001",
+    "s": "compat-status"
+   }
+  }
+ ]
+}

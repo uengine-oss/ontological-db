@@ -1,0 +1,18 @@
+{
+ "id": "robo-317312a7fc",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "description"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Event description 1"
+  ]
+ ],
+ "params": {
+  "evt_id": "Event-1"
+ }
+}

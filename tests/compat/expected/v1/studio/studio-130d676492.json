@@ -1,0 +1,29 @@
+{
+ "id": "studio-130d676492",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "class_name",
+  "key_columns"
+ ],
+ "row_order": "sorted",
+ "row_count": 4,
+ "rows": [
+  [
+   "Customer",
+   "[\"customer_id\"]"
+  ],
+  [
+   "Item",
+   null
+  ],
+  [
+   "PurchaseOrder",
+   null
+  ],
+  [
+   "Supplier",
+   "[\"supplier_id\"]"
+  ]
+ ]
+}

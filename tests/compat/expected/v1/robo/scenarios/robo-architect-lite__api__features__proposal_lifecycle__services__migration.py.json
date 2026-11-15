@@ -1,0 +1,35 @@
+{
+ "scenario": "robo-architect-lite:api/features/proposal_lifecycle/services/migration.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-96fa30a37d",
+   "columns": [
+    "cnt"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     3
+    ]
+   ],
+   "effect": {}
+  },
+  {
+   "id": "robo-0526de79e7",
+   "columns": [
+    "cnt"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     3
+    ]
+   ],
+   "effect": {}
+  }
+ ]
+}

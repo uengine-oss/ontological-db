@@ -1,0 +1,28 @@
+{
+ "scenario": "robo-data-analyzer:pipeline/steps/step8_post_processing/health_metrics_step.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-3e4e52a215",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "items": [
+     {
+      "id": "COLUMN-1"
+     },
+     {
+      "id": "COLUMN-2"
+     }
+    ]
+   }
+  }
+ ]
+}

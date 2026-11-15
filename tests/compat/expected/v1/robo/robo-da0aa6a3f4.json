@@ -1,0 +1,34 @@
+{
+ "id": "robo-da0aa6a3f4",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "aggregate"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "id": "Aggregate-1",
+    "invariants": "Aggregate invariants 1",
+    "name": "Aggregate 1",
+    "properties": [
+     {
+      "description": "Property description 1",
+      "id": "Property-1",
+      "isForeignKey": "true",
+      "isKey": "true",
+      "isRequired": "true",
+      "name": "Property 1",
+      "type": "Property type 1"
+     }
+    ],
+    "rootEntity": "Aggregate rootEntity 1"
+   }
+  ]
+ ],
+ "params": {
+  "aggregate_id": "Aggregate-1"
+ }
+}

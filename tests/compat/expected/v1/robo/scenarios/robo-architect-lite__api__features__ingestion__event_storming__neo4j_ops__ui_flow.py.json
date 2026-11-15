@@ -1,0 +1,267 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/ui_flow.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-fd3905a8b9",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "compat-id"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 9,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Journey"
+      ],
+      "props": {
+       "boundedContextId": "BoundedContext-1",
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "id": "compat-id",
+       "journeyId": "compat-journeyId",
+       "key": "compat-new-Journey",
+       "name": "compat-name",
+       "source": "compat-source",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"BoundedContext-1\",\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"id\":\"compat-id\",\"journeyId\":\"compat-journeyId\",\"key\":\"compat-new-Journey\",\"name\":\"compat-name\",\"source\":\"compat-source\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_JOURNEY"
+     }
+    ]
+   },
+   "params": {
+    "bc_id": "BoundedContext-1",
+    "description": "compat-description",
+    "journey_id": "compat-id",
+    "journey_key": "compat-new-Journey",
+    "journey_slug": "compat-journeyId",
+    "name": "compat-name",
+    "source": "compat-source"
+   }
+  },
+  {
+   "id": "robo-5981d676b7",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 18,
+    "relationships_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "JourneyStep"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "id": "compat-id-1",
+       "journeyId": "compat-journeyId",
+       "key": "compat-new-JourneyStep-1",
+       "kind": "compat-kind-1",
+       "label": "compat-label-1",
+       "sequence": 7,
+       "source": "compat-source",
+       "updatedAt": "<now>"
+      }
+     },
+     {
+      "labels": [
+       "JourneyStep"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "id": "compat-id-2",
+       "journeyId": "compat-journeyId",
+       "key": "compat-new-JourneyStep-2",
+       "kind": "compat-kind-2",
+       "label": "compat-label-2",
+       "sequence": 7,
+       "source": "compat-source",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"JourneyStep\"],\"props\":{\"createdAt\":\"<now>\",\"id\":\"compat-id-1\",\"journeyId\":\"compat-journeyId\",\"key\":\"compat-new-JourneyStep-1\",\"kind\":\"compat-kind-1\",\"label\":\"compat-label-1\",\"sequence\":7,\"source\":\"compat-source\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"정상 회원가입\",\"source\":\"llm\",\"updatedAt\":\"<now>\"}}",
+      "type": "HAS_STEP"
+     },
+     {
+      "end": "{\"labels\":[\"JourneyStep\"],\"props\":{\"createdAt\":\"<now>\",\"id\":\"compat-id-2\",\"journeyId\":\"compat-journeyId\",\"key\":\"compat-new-JourneyStep-2\",\"kind\":\"compat-kind-2\",\"label\":\"compat-label-2\",\"sequence\":7,\"source\":\"compat-source\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"정상 회원가입\",\"source\":\"llm\",\"updatedAt\":\"<now>\"}}",
+      "type": "HAS_STEP"
+     }
+    ]
+   },
+   "params": {
+    "journey_id": "<uuid1>",
+    "journey_slug": "compat-journeyId",
+    "source": "compat-source",
+    "steps": [
+     {
+      "id": "compat-id-1",
+      "key": "compat-new-JourneyStep-1",
+      "kind": "compat-kind-1",
+      "label": "compat-label-1",
+      "sequence": 7
+     },
+     {
+      "id": "compat-id-2",
+      "key": "compat-new-JourneyStep-2",
+      "kind": "compat-kind-2",
+      "label": "compat-label-2",
+      "sequence": 7
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-657472931e",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"JourneyStep\"],\"props\":{\"createdAt\":\"<now>\",\"id\":\"<uuid>\",\"key\":\"membership.journey.normal-signup-abc123.step.gateway.approve-xyz\",\"kind\":\"gateway\",\"label\":\"가입 가능 여부?\",\"sequence\":3,\"source\":\"llm\",\"updatedAt\":\"<now>\"}}",
+      "type": "SHOWS"
+     }
+    ]
+   },
+   "params": {
+    "links": [
+     {
+      "step_id": "<uuid2>",
+      "ui_id": "UI-1"
+     },
+     {
+      "step_id": "<step-id>",
+      "ui_id": "UI-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-bfaa2c0735",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 2,
+    "relationships_deleted": 2
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "JourneyStep"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "id": "compat-id-1",
+       "journeyId": "compat-journeyId",
+       "key": "compat-new-JourneyStep-1",
+       "kind": "compat-kind-1",
+       "label": "compat-label-1",
+       "sequence": 7,
+       "source": "compat-source",
+       "updatedAt": "<now>"
+      }
+     },
+     {
+      "labels": [
+       "JourneyStep"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "id": "compat-id-2",
+       "journeyId": "compat-journeyId",
+       "key": "compat-new-JourneyStep-2",
+       "kind": "compat-kind-2",
+       "label": "compat-label-2",
+       "sequence": 7,
+       "source": "compat-source",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"JourneyStep\"],\"props\":{\"createdAt\":\"<now>\",\"id\":\"compat-id-1\",\"journeyId\":\"compat-journeyId\",\"key\":\"compat-new-JourneyStep-1\",\"kind\":\"compat-kind-1\",\"label\":\"compat-label-1\",\"sequence\":7,\"source\":\"compat-source\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"정상 회원가입\",\"source\":\"llm\",\"updatedAt\":\"<now>\"}}",
+      "type": "HAS_STEP"
+     },
+     {
+      "end": "{\"labels\":[\"JourneyStep\"],\"props\":{\"createdAt\":\"<now>\",\"id\":\"compat-id-2\",\"journeyId\":\"compat-journeyId\",\"key\":\"compat-new-JourneyStep-2\",\"kind\":\"compat-kind-2\",\"label\":\"compat-label-2\",\"sequence\":7,\"source\":\"compat-source\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"정상 회원가입\",\"source\":\"llm\",\"updatedAt\":\"<now>\"}}",
+      "type": "HAS_STEP"
+     }
+    ]
+   },
+   "params": {
+    "journey_id": "<uuid1>"
+   }
+  },
+  {
+   "id": "robo-a30b00de4c",
+   "columns": [
+    "deleted"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "bc_ids": [
+     "BoundedContext-1",
+     "BoundedContext-2"
+    ],
+    "keep_ids": [
+     "<uuid1>",
+     "<journey-id>"
+    ]
+   }
+  }
+ ]
+}

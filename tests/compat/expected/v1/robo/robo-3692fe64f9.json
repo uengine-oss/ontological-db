@@ -1,0 +1,45 @@
+{
+ "id": "robo-3692fe64f9",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "a"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "BpmActor"
+    ],
+    "props": {
+     "description": "BpmActor description 1",
+     "id": "BpmActor-1",
+     "name": "BpmActor 1",
+     "process_id": "BpmProcess-1",
+     "session_id": "sess-1"
+    }
+   }
+  ],
+  [
+   {
+    "~node": "@n2",
+    "labels": [
+     "BpmActor"
+    ],
+    "props": {
+     "description": "BpmActor description 2",
+     "id": "BpmActor-2",
+     "name": "BpmActor 2",
+     "process_id": "BpmProcess-2",
+     "session_id": "sess-1"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

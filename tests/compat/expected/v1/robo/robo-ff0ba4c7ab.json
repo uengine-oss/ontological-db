@@ -1,0 +1,18 @@
+{
+ "id": "robo-ff0ba4c7ab",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "elementId",
+  "files"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "parent_ids": [
+   "<uuid1>",
+   "<uuid2>"
+  ]
+ }
+}

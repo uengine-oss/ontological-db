@@ -1,0 +1,45 @@
+{
+ "scenario": "robo-data-analyzer:graph/edges/belongs_to.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-4a7c5c0698",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 2
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"EMBED_META\"],\"props\":{\"dim\":\"EMBED_META dim 1\",\"embedded_count\":10,\"fingerprint\":\"EMBED_META fingerprint 1\",\"graph_owner\":\"analyzer\",\"id\":\"EMBED_META-1\",\"name\":\"EMBED_META 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 1\",\"comment\":\"COLUMN comment 1\",\"data_type\":\"COLUMN data_type 1\",\"default_value\":\"COLUMN default_value 1\",\"description\":\"\",\"description_source\":\"COLUMN description_source 1\",\"dtype\":\"COLUMN dtype 1\",\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-1\",\"is_primary_key\":true,\"is_unique\":true,\"logical_name\":\"COLUMN logical_name 1\",\"name\":\"COLUMN 1\",\"nullable\":true,\"primary_key\":\"COLUMN primary_key 1\",\"summary\":\"COLUMN summary 1\",\"unique\":\"COLUMN unique 1\"}}",
+      "type": "BELONGS_TO"
+     },
+     {
+      "end": "{\"labels\":[\"EMBED_META\"],\"props\":{\"dim\":\"EMBED_META dim 2\",\"embedded_count\":20,\"fingerprint\":\"EMBED_META fingerprint 2\",\"graph_owner\":\"analyzer\",\"id\":\"EMBED_META-2\",\"name\":\"EMBED_META 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 2\",\"comment\":\"COLUMN comment 2\",\"data_type\":\"COLUMN data_type 2\",\"default_value\":\"COLUMN default_value 2\",\"description\":\"N/A\",\"description_source\":\"COLUMN description_source 2\",\"dtype\":\"COLUMN dtype 2\",\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-2\",\"is_primary_key\":false,\"is_unique\":false,\"logical_name\":\"COLUMN logical_name 2\",\"name\":\"COLUMN 2\",\"nullable\":false,\"primary_key\":\"COLUMN primary_key 2\",\"summary\":\"COLUMN summary 2\",\"unique\":\"COLUMN unique 2\"}}",
+      "type": "BELONGS_TO"
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "child_id": "COLUMN-1",
+      "parent_id": "EMBED_META-1"
+     },
+     {
+      "child_id": "COLUMN-2",
+      "parent_id": "EMBED_META-2"
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,12 @@
+{
+ "id": "robo-d5262408f1",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "sourceEventId",
+  "targetCommandId"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": []
+}

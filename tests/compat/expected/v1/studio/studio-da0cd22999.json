@@ -1,0 +1,15 @@
+{
+ "id": "studio-da0cd22999",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "name",
+  "labelsOrTypes"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "prefix": "customer"
+ }
+}

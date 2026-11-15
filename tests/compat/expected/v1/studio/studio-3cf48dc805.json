@@ -1,0 +1,34 @@
+{
+ "id": "studio-3cf48dc805",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "schema_name",
+  "class_name",
+  "name",
+  "description",
+  "golden_question",
+  "behavior_type",
+  "synonyms",
+  "certified",
+  "certified_by"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "compat",
+   "Customer",
+   "top_customers",
+   "customers by credit",
+   "who buys most?",
+   "cypher",
+   null,
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "schema_name": "compat"
+ }
+}

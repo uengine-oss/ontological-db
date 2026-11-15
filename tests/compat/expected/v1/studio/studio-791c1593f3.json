@@ -1,0 +1,29 @@
+{
+ "id": "studio-791c1593f3",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "n"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "Customer"
+    ],
+    "props": {
+     "content": "Acme branch",
+     "credit_limit": 300,
+     "customer_id": "C003",
+     "email": "kr@acme.example",
+     "name": "Acme Korea",
+     "number": 3,
+     "title": "Acme Korea"
+    }
+   }
+  ]
+ ]
+}

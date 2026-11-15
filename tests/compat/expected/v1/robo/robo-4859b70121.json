@@ -1,0 +1,17 @@
+{
+ "id": "robo-4859b70121",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "relationship"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "node_ids": [
+   "Event-1",
+   "Event-2"
+  ]
+ }
+}

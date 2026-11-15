@@ -1,0 +1,24 @@
+{
+ "id": "robo-e62ee821ba",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "description",
+  "type",
+  "isKey",
+  "isForeignKey",
+  "isRequired",
+  "parentType",
+  "parentId"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "name": "Property 1",
+  "pid": "<uuid1>",
+  "pt": "Command"
+ }
+}

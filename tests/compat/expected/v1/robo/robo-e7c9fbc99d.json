@@ -1,0 +1,26 @@
+{
+ "id": "robo-e7c9fbc99d",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "displayName",
+  "labels"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "<uuid1>",
+   "정상 회원가입",
+   null,
+   [
+    "Journey"
+   ]
+  ]
+ ],
+ "params": {
+  "id": "<uuid1>"
+ }
+}

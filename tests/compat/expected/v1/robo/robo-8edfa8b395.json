@@ -1,0 +1,117 @@
+{
+ "id": "robo-8edfa8b395",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "boundedContext"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   {
+    "aggregates": [
+     {
+      "id": "<uuid1>",
+      "name": "Order",
+      "rootEntity": "Order"
+     }
+    ],
+    "commands": [
+     {
+      "actor": "customer",
+      "id": "<uuid2>",
+      "name": "CancelOrder"
+     }
+    ],
+    "description": "주문 생성, 수정, 취소 및 주문 상태 관리",
+    "events": [
+     {
+      "id": "<uuid3>",
+      "name": "OrderCancelled",
+      "version": "1.0.0"
+     }
+    ],
+    "id": "<uuid4>",
+    "name": "Order",
+    "policies": [
+     {
+      "id": null,
+      "name": null,
+      "triggerCondition": null
+     }
+    ]
+   }
+  ],
+  [
+   {
+    "aggregates": [
+     {
+      "id": null,
+      "name": null,
+      "rootEntity": null
+     }
+    ],
+    "commands": [
+     {
+      "actor": null,
+      "id": null,
+      "name": null
+     }
+    ],
+    "description": "BoundedContext description 1",
+    "events": [
+     {
+      "id": null,
+      "name": null,
+      "version": null
+     }
+    ],
+    "id": "BoundedContext-1",
+    "name": "BoundedContext 1",
+    "policies": [
+     {
+      "id": null,
+      "name": null,
+      "triggerCondition": null
+     }
+    ]
+   }
+  ],
+  [
+   {
+    "aggregates": [
+     {
+      "id": null,
+      "name": null,
+      "rootEntity": null
+     }
+    ],
+    "commands": [
+     {
+      "actor": null,
+      "id": null,
+      "name": null
+     }
+    ],
+    "description": "BoundedContext description 2",
+    "events": [
+     {
+      "id": null,
+      "name": null,
+      "version": null
+     }
+    ],
+    "id": "BoundedContext-2",
+    "name": "BoundedContext 2",
+    "policies": [
+     {
+      "id": null,
+      "name": null,
+      "triggerCondition": null
+     }
+    ]
+   }
+  ]
+ ]
+}

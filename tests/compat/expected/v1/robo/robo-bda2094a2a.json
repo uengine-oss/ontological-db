@@ -1,0 +1,21 @@
+{
+ "id": "robo-bda2094a2a",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "evt_name",
+  "cmd_bc_id",
+  "cmd_bc_name",
+  "evt_bc_id",
+  "evt_bc_name"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "command_id": "Command-1",
+  "event_name": "Event 1"
+ }
+}

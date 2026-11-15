@@ -1,0 +1,27 @@
+{
+ "scenario": "robo-data-analyzer:graph/edges/has_column.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-e10822cd38",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "items": [
+     {
+      "child_id": "COLUMN-1",
+      "parent_id": "TABLE-1"
+     },
+     {
+      "child_id": "COLUMN-2",
+      "parent_id": "TABLE-2"
+     }
+    ]
+   }
+  }
+ ]
+}

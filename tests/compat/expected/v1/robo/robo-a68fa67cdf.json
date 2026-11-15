@@ -1,0 +1,34 @@
+{
+ "id": "robo-a68fa67cdf",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "nodeId",
+  "nodeLabel",
+  "nodeTitle",
+  "currentContent",
+  "reason",
+  "impactLevel",
+  "changeType",
+  "templateData",
+  "appliedNodeId"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "CreationIntent-1",
+   "CreationIntent nodeLabel 1",
+   "CreationIntent 1",
+   "",
+   null,
+   null,
+   "MODIFY",
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "id": "RequirementChange-1"
+ }
+}

@@ -1,0 +1,27 @@
+{
+ "id": "robo-4c1682b728",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "lookup",
+  "id"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "Event 1",
+   "Event-1"
+  ],
+  [
+   "Event 2",
+   "Event-2"
+  ]
+ ],
+ "params": {
+  "names": [
+   "Event 1",
+   "Event 2"
+  ]
+ }
+}

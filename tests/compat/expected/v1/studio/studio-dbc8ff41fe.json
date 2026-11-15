@@ -1,0 +1,18 @@
+{
+ "id": "studio-dbc8ff41fe",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "n",
+  "r",
+  "m"
+ ],
+ "row_order": "sorted",
+ "row_count": 10,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "class": "_Entity",
+  "limit": 10
+ }
+}

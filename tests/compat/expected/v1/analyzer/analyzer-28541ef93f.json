@@ -1,0 +1,24 @@
+{
+ "id": "analyzer-28541ef93f",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "from_table",
+  "from_schema",
+  "from_column",
+  "to_table",
+  "to_schema",
+  "to_column",
+  "relationship_type",
+  "description"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "owner": "analyzer",
+  "relationship_owners": [
+   "analyzer"
+  ]
+ }
+}

@@ -1,0 +1,12 @@
+{
+ "id": "robo-98f67374de",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "cmdName",
+  "bcName"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": []
+}

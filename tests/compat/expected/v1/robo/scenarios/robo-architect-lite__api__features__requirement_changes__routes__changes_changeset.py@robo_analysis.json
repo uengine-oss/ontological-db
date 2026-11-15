@@ -1,0 +1,35 @@
+{
+ "scenario": "robo-architect-lite:api/features/requirement_changes/routes/changes_changeset.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-66ee4c98fa",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1,
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"RequirementChange\"],\"props\":{\"id\":\"RequirementChange-1\",\"name\":\"RequirementChange 1\",\"originalPrompt\":\"RequirementChange originalPrompt 1\",\"title\":\"RequirementChange 1\"}} <- {\"labels\":[\"RequirementChange\"],\"props\":{\"changeSetId\":\"ChangeSet-1\",\"id\":\"RequirementChange-1\",\"name\":\"RequirementChange 1\",\"originalPrompt\":\"RequirementChange originalPrompt 1\",\"title\":\"RequirementChange 1\"}}"
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"RequirementChange\"],\"props\":{\"id\":\"RequirementChange-1\",\"name\":\"RequirementChange 1\",\"originalPrompt\":\"RequirementChange originalPrompt 1\",\"title\":\"RequirementChange 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"ChangeSet\"],\"props\":{\"id\":\"ChangeSet-1\",\"name\":\"ChangeSet 1\"}}",
+      "type": "CONTAINS"
+     }
+    ]
+   },
+   "params": {
+    "chg_id": "RequirementChange-1",
+    "cs_id": "ChangeSet-1"
+   }
+  }
+ ]
+}

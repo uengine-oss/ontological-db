@@ -1,0 +1,29 @@
+{
+ "id": "analyzer-fcb5f4deb1",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "name",
+  "data_type",
+  "description",
+  "primary_key",
+  "nullable"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "COLUMN 1",
+   "COLUMN data_type 1",
+   "",
+   "COLUMN primary_key 1",
+   true
+  ]
+ ],
+ "params": {
+  "fqn": "@n1",
+  "name": "TABLE 1",
+  "owner": "analyzer",
+  "schema": "TABLE schema 1"
+ }
+}

@@ -1,0 +1,15 @@
+{
+ "id": "robo-e6009ef712",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "rule_id",
+  "claims"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "sid": "sess-1"
+ }
+}

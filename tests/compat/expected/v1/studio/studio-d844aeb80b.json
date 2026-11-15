@@ -1,0 +1,64 @@
+{
+ "id": "studio-d844aeb80b",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "node_id",
+  "classes",
+  "title",
+  "name",
+  "number",
+  "content_preview",
+  "score"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "@n1",
+   [
+    "Customer"
+   ],
+   "Acme",
+   "Acme",
+   2,
+   "Acme corp, spare parts",
+   0.489815
+  ],
+  [
+   "@n2",
+   [
+    "Customer"
+   ],
+   "Daesung Cable",
+   "Daesung Cable",
+   1,
+   "cable maker, buys steel wire",
+   0.281851
+  ],
+  [
+   "@n3",
+   [
+    "Supplier"
+   ],
+   "Hanil Steel",
+   "Hanil Steel",
+   11,
+   null,
+   0.469878
+  ]
+ ],
+ "params": {
+  "embedding": [
+   0.0,
+   0.5,
+   1.0,
+   0.4,
+   0.9,
+   0.3,
+   0.8,
+   0.2
+  ],
+  "top_k": 3
+ }
+}

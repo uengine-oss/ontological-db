@@ -1,0 +1,62 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/gwt.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-73ab18dedd",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid1>"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 10,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "GWT"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "givenRef": "compat-givenRef",
+       "id": "<uuid>",
+       "parentId": "Command-1",
+       "parentType": "Command",
+       "testCases": "compat-test_cases",
+       "thenRef": "compat-thenRef",
+       "updatedAt": "<now>",
+       "whenRef": "compat-whenRef"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"GWT\"],\"props\":{\"createdAt\":\"<now>\",\"givenRef\":\"compat-givenRef\",\"id\":\"<uuid>\",\"parentId\":\"Command-1\",\"parentType\":\"Command\",\"testCases\":\"compat-test_cases\",\"thenRef\":\"compat-thenRef\",\"updatedAt\":\"<now>\",\"whenRef\":\"compat-whenRef\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"category\":\"Command category 1\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"name\":\"Command 1\"}}",
+      "type": "HAS_GWT"
+     }
+    ]
+   },
+   "params": {
+    "given_ref": "compat-givenRef",
+    "parent_id": "Command-1",
+    "parent_type": "Command",
+    "test_cases": "compat-test_cases",
+    "then_ref": "compat-thenRef",
+    "when_ref": "compat-whenRef"
+   }
+  }
+ ]
+}

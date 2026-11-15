@@ -1,0 +1,21 @@
+{
+ "id": "robo-645117b70b",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "s"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "UserStory role 1: UserStory action 1"
+  ],
+  [
+   "UserStory role 2: UserStory action 2"
+  ]
+ ],
+ "params": {
+  "id": "US-001"
+ }
+}

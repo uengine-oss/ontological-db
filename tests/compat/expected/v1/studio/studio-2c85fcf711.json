@@ -1,0 +1,19 @@
+{
+ "id": "studio-2c85fcf711",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "m",
+  "r",
+  "o",
+  "r2",
+  "p"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "depth": 2,
+  "node_id": "@n1"
+ }
+}

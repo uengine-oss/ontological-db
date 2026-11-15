@@ -1,0 +1,18 @@
+{
+ "id": "studio-e418898556",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "schema_name"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "compat"
+  ]
+ ],
+ "params": {
+  "class_name": "Customer"
+ }
+}

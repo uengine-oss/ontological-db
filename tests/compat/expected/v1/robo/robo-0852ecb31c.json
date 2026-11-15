@@ -1,0 +1,12 @@
+{
+ "id": "robo-0852ecb31c",
+ "graph": "robo",
+ "kind": "read",
+ "error": {
+  "code": "Neo.ClientError.Transaction.TransactionTimedOut",
+  "message": "the query ran past its time limit (30 s, og.statement_timeout) and was cancelled, here and at the source. Narrow it — label every node, connect the patterns through relationships (comma-separated patterns are a cartesian product), filter early, add LIMIT — or give this transaction a longer timeout. (canceling statement due to statement timeout)"
+ },
+ "params": {
+  "uid": "UI-1"
+ }
+}

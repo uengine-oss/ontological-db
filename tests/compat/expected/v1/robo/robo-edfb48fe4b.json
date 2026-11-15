@@ -1,0 +1,19 @@
+{
+ "id": "robo-edfb48fe4b",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "role",
+  "action",
+  "benefit",
+  "bcId",
+  "featureId"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "scopeId": "Feature-1"
+ }
+}

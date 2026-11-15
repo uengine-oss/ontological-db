@@ -1,0 +1,44 @@
+{
+ "id": "robo-a2ae81e683",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "classification",
+  "version",
+  "aggregates",
+  "commands",
+  "events",
+  "readmodels"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "BoundedContext-1",
+   "BoundedContext 1",
+   "BoundedContext classification 1",
+   10,
+   [
+    {
+     "id": null,
+     "name": null,
+     "rootEntity": null,
+     "version": 0
+    }
+   ],
+   [],
+   [],
+   [
+    {
+     "id": "ReadModel-1",
+     "name": "ReadModel 1"
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "bc_id": "BoundedContext-1"
+ }
+}

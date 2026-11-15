@@ -1,0 +1,12 @@
+{
+ "id": "studio-68fc2d7d93",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "n"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": []
+}

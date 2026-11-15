@@ -1,0 +1,1447 @@
+{
+ "scenario": "studio-app:backend/src/modules/ontology/publish.py",
+ "graph": "ontology",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "studio-ffbc3dbe40",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "constraints_added": 1
+   },
+   "effect": {}
+  },
+  {
+   "id": "studio-97bf2d483b",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "constraints_removed": 1
+   },
+   "effect": {}
+  },
+  {
+   "id": "studio-c66a9c0d7d",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 14,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "compat-behavior_name",
+       "behavior_type": "compat-behavior_type",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z",
+       "certified_by": "compat-certified_by",
+       "class_name": "Customer",
+       "cypher_template": "compat-cypher_template",
+       "description": "compat-description",
+       "golden_question": "compat-golden_question",
+       "max_rows": 7,
+       "output_columns": "compat-output_columns",
+       "parameters": "compat-parameters",
+       "result_kind": "compat-result_kind",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"compat-behavior_name\",\"behavior_type\":\"compat-behavior_type\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z\",\"certified_by\":\"compat-certified_by\",\"class_name\":\"Customer\",\"cypher_template\":\"compat-cypher_template\",\"description\":\"compat-description\",\"golden_question\":\"compat-golden_question\",\"max_rows\":7,\"output_columns\":\"compat-output_columns\",\"parameters\":\"compat-parameters\",\"result_kind\":\"compat-result_kind\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_BEHAVIOR"
+     }
+    ]
+   },
+   "params": {
+    "behavior_name": "compat-behavior_name",
+    "behavior_type": "compat-behavior_type",
+    "certified": true,
+    "certified_at": "2026-01-15T09:00:00Z",
+    "certified_by": "compat-certified_by",
+    "class_name": "Customer",
+    "cypher_template": "compat-cypher_template",
+    "description": "compat-description",
+    "golden_question": "compat-golden_question",
+    "max_rows": 7,
+    "output_columns": "compat-output_columns",
+    "parameters": "compat-parameters",
+    "result_kind": "compat-result_kind",
+    "schema_id": "schema-1",
+    "synonyms": [
+     "compat-synonyms-a",
+     "compat-synonyms-b"
+    ]
+   }
+  },
+  {
+   "id": "studio-ffa6e1e34b",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 18,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "arg_mapping": "compat-arg_mapping",
+       "behavior_name": "compat-behavior_name",
+       "behavior_type": "compat-behavior_type",
+       "class_name": "Customer",
+       "compensate": "compat-compensate",
+       "confirm_threshold": "compat-confirm_threshold",
+       "description": "compat-description",
+       "effect": "compat-effect",
+       "key_property": "compat-key_property",
+       "max_targets": "compat-max_targets",
+       "operation_id": "compat-operation_id",
+       "parameters": "compat-parameters",
+       "policy": "compat-policy",
+       "schema_id": "schema-1",
+       "steps": "compat-steps",
+       "system": "compat-system",
+       "version": 7,
+       "writeback_property": "compat-writeback_property"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"arg_mapping\":\"compat-arg_mapping\",\"behavior_name\":\"compat-behavior_name\",\"behavior_type\":\"compat-behavior_type\",\"class_name\":\"Customer\",\"compensate\":\"compat-compensate\",\"confirm_threshold\":\"compat-confirm_threshold\",\"description\":\"compat-description\",\"effect\":\"compat-effect\",\"key_property\":\"compat-key_property\",\"max_targets\":\"compat-max_targets\",\"operation_id\":\"compat-operation_id\",\"parameters\":\"compat-parameters\",\"policy\":\"compat-policy\",\"schema_id\":\"schema-1\",\"steps\":\"compat-steps\",\"system\":\"compat-system\",\"version\":7,\"writeback_property\":\"compat-writeback_property\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_ACTION"
+     }
+    ]
+   },
+   "params": {
+    "arg_mapping": "compat-arg_mapping",
+    "behavior_name": "compat-behavior_name",
+    "behavior_type": "compat-behavior_type",
+    "class_name": "Customer",
+    "compensate": "compat-compensate",
+    "confirm_threshold": "compat-confirm_threshold",
+    "description": "compat-description",
+    "effect": "compat-effect",
+    "key_property": "compat-key_property",
+    "max_targets": "compat-max_targets",
+    "operation_id": "compat-operation_id",
+    "parameters": "compat-parameters",
+    "policy": "compat-policy",
+    "schema_id": "schema-1",
+    "steps": "compat-steps",
+    "system": "compat-system",
+    "version": 7,
+    "writeback_property": "compat-writeback_property"
+   }
+  },
+  {
+   "id": "studio-cbea27dacd",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 8
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "_OntologyModel"
+      ],
+      "props": {
+       "description": "compat-description",
+       "format_version": "compat-format_version",
+       "golden_commands": "compat-golden_commands",
+       "golden_questions": "compat-golden_questions",
+       "intent": "compat-intent",
+       "name": "compat-name",
+       "published_at": "2026-01-15T09:00:00Z",
+       "schema_id": "compat-schema_id"
+      }
+     }
+    ]
+   },
+   "params": {
+    "description": "compat-description",
+    "format_version": "compat-format_version",
+    "golden_commands": "compat-golden_commands",
+    "golden_questions": "compat-golden_questions",
+    "intent": "compat-intent",
+    "name": "compat-name",
+    "published_at": "2026-01-15T09:00:00Z",
+    "schema_id": "compat-schema_id"
+   }
+  },
+  {
+   "id": "studio-025e600910",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 16,
+    "relationships_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "compat-binding_kind-1",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z-1",
+       "certified_by": "compat-certified_by-1",
+       "class_name": "compat-class_name",
+       "description": "compat-description-1",
+       "properties": "compat-properties-1",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     },
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "compat-binding_kind-2",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z-2",
+       "certified_by": "compat-certified_by-2",
+       "class_name": "compat-class_name",
+       "description": "compat-description-2",
+       "properties": "compat-properties-2",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"compat-binding_kind-1\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z-1\",\"certified_by\":\"compat-certified_by-1\",\"class_name\":\"compat-class_name\",\"description\":\"compat-description-1\",\"properties\":\"compat-properties-1\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_CLASS"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"compat-binding_kind-2\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z-2\",\"certified_by\":\"compat-certified_by-2\",\"class_name\":\"compat-class_name\",\"description\":\"compat-description-2\",\"properties\":\"compat-properties-2\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_CLASS"
+     }
+    ]
+   },
+   "params": {
+    "rows": [
+     {
+      "binding_kind": "compat-binding_kind-1",
+      "certified": true,
+      "certified_at": "2026-01-15T09:00:00Z-1",
+      "certified_by": "compat-certified_by-1",
+      "class_name": "compat-class_name",
+      "description": "compat-description-1",
+      "properties": "compat-properties-1",
+      "synonyms": [
+       "compat-synonyms-a",
+       "compat-synonyms-b"
+      ]
+     },
+     {
+      "binding_kind": "compat-binding_kind-2",
+      "certified": true,
+      "certified_at": "2026-01-15T09:00:00Z-2",
+      "certified_by": "compat-certified_by-2",
+      "class_name": "compat-class_name",
+      "description": "compat-description-2",
+      "properties": "compat-properties-2",
+      "synonyms": [
+       "compat-synonyms-a",
+       "compat-synonyms-b"
+      ]
+     }
+    ],
+    "schema_id": "schema-1"
+   }
+  },
+  {
+   "id": "studio-dc00045ef0",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 8,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "compat-binding_kind",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z",
+       "certified_by": "compat-certified_by",
+       "class_name": "compat-class_name",
+       "description": "compat-description",
+       "properties": "compat-properties",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"compat-binding_kind\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z\",\"certified_by\":\"compat-certified_by\",\"class_name\":\"compat-class_name\",\"description\":\"compat-description\",\"properties\":\"compat-properties\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_CLASS"
+     }
+    ]
+   },
+   "params": {
+    "binding_kind": "compat-binding_kind",
+    "certified": true,
+    "certified_at": "2026-01-15T09:00:00Z",
+    "certified_by": "compat-certified_by",
+    "class_name": "compat-class_name",
+    "description": "compat-description",
+    "properties": "compat-properties",
+    "schema_id": "schema-1",
+    "synonyms": [
+     "compat-synonyms-a",
+     "compat-synonyms-b"
+    ]
+   }
+  },
+  {
+   "id": "studio-aaf3418c0c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 22,
+    "relationships_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "_OntologyBinding"
+      ],
+      "props": {
+       "base_conditions": "compat-base_conditions-1",
+       "class_name": "Customer",
+       "column_map": "compat-column_map-1",
+       "datasource": "compat-datasource-1",
+       "default_limit": 7,
+       "extra_tables": "compat-extra_tables-1",
+       "key_columns": "compat-key_columns-1",
+       "label_property": "compat-label_property-1",
+       "source_schema": "compat-source_schema-1",
+       "table_name": "compat-table_name-1",
+       "virtual_node": "compat-virtual_node-1"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBinding"
+      ],
+      "props": {
+       "base_conditions": "compat-base_conditions-2",
+       "class_name": "PurchaseOrder",
+       "column_map": "compat-column_map-2",
+       "datasource": "compat-datasource-2",
+       "default_limit": 7,
+       "extra_tables": "compat-extra_tables-2",
+       "key_columns": "compat-key_columns-2",
+       "label_property": "compat-label_property-2",
+       "source_schema": "compat-source_schema-2",
+       "table_name": "compat-table_name-2",
+       "virtual_node": "compat-virtual_node-2"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"compat-base_conditions-1\",\"class_name\":\"Customer\",\"column_map\":\"compat-column_map-1\",\"datasource\":\"compat-datasource-1\",\"default_limit\":7,\"extra_tables\":\"compat-extra_tables-1\",\"key_columns\":\"compat-key_columns-1\",\"label_property\":\"compat-label_property-1\",\"source_schema\":\"compat-source_schema-1\",\"table_name\":\"compat-table_name-1\",\"virtual_node\":\"compat-virtual_node-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_BINDING"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"compat-base_conditions-2\",\"class_name\":\"PurchaseOrder\",\"column_map\":\"compat-column_map-2\",\"datasource\":\"compat-datasource-2\",\"default_limit\":7,\"extra_tables\":\"compat-extra_tables-2\",\"key_columns\":\"compat-key_columns-2\",\"label_property\":\"compat-label_property-2\",\"source_schema\":\"compat-source_schema-2\",\"table_name\":\"compat-table_name-2\",\"virtual_node\":\"compat-virtual_node-2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"class_name\":\"PurchaseOrder\",\"description\":\"an order\",\"properties\":\"[{\\\"name\\\": \\\"amount\\\", \\\"type\\\": \\\"int\\\"}]\"}}",
+      "type": "HAS_BINDING"
+     }
+    ]
+   },
+   "params": {
+    "rows": [
+     {
+      "base_conditions": "compat-base_conditions-1",
+      "class_name": "Customer",
+      "column_map": "compat-column_map-1",
+      "datasource": "compat-datasource-1",
+      "default_limit": 7,
+      "extra_tables": "compat-extra_tables-1",
+      "key_columns": "compat-key_columns-1",
+      "label_property": "compat-label_property-1",
+      "source_schema": "compat-source_schema-1",
+      "table_name": "compat-table_name-1",
+      "virtual_node": "compat-virtual_node-1"
+     },
+     {
+      "base_conditions": "compat-base_conditions-2",
+      "class_name": "PurchaseOrder",
+      "column_map": "compat-column_map-2",
+      "datasource": "compat-datasource-2",
+      "default_limit": 7,
+      "extra_tables": "compat-extra_tables-2",
+      "key_columns": "compat-key_columns-2",
+      "label_property": "compat-label_property-2",
+      "source_schema": "compat-source_schema-2",
+      "table_name": "compat-table_name-2",
+      "virtual_node": "compat-virtual_node-2"
+     }
+    ],
+    "schema_id": "schema-1"
+   }
+  },
+  {
+   "id": "studio-e586d25058",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 11,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "_OntologyBinding"
+      ],
+      "props": {
+       "base_conditions": "compat-base_conditions",
+       "class_name": "Customer",
+       "column_map": "compat-column_map",
+       "datasource": "compat-datasource",
+       "default_limit": 7,
+       "extra_tables": "compat-extra_tables",
+       "key_columns": "compat-key_columns",
+       "label_property": "compat-label_property",
+       "source_schema": "compat-source_schema",
+       "table_name": "compat-table_name",
+       "virtual_node": "compat-virtual_node"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"compat-base_conditions\",\"class_name\":\"Customer\",\"column_map\":\"compat-column_map\",\"datasource\":\"compat-datasource\",\"default_limit\":7,\"extra_tables\":\"compat-extra_tables\",\"key_columns\":\"compat-key_columns\",\"label_property\":\"compat-label_property\",\"source_schema\":\"compat-source_schema\",\"table_name\":\"compat-table_name\",\"virtual_node\":\"compat-virtual_node\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_BINDING"
+     }
+    ]
+   },
+   "params": {
+    "base_conditions": "compat-base_conditions",
+    "class_name": "Customer",
+    "column_map": "compat-column_map",
+    "datasource": "compat-datasource",
+    "default_limit": 7,
+    "extra_tables": "compat-extra_tables",
+    "key_columns": "compat-key_columns",
+    "label_property": "compat-label_property",
+    "schema_id": "schema-1",
+    "source_schema": "compat-source_schema",
+    "table_name": "compat-table_name",
+    "virtual_node": "compat-virtual_node"
+   }
+  },
+  {
+   "id": "studio-1f3d1c2746",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 3,
+    "nodes_created": 3,
+    "properties_set": 42,
+    "relationships_created": 3
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "compat-behavior_name",
+       "behavior_type": "compat-behavior_type",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z",
+       "certified_by": "compat-certified_by",
+       "class_name": "Customer",
+       "description": "compat-description",
+       "golden_question": "compat-golden_question",
+       "max_rows": 7,
+       "output_columns": "compat-output_columns",
+       "parameters": "compat-parameters",
+       "result_kind": "compat-result_kind",
+       "sql_template": "compat-sql_template",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "compat-behavior_name",
+       "behavior_type": "compat-behavior_type",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z",
+       "certified_by": "compat-certified_by",
+       "class_name": "Customer",
+       "description": "compat-description",
+       "golden_question": "compat-golden_question",
+       "max_rows": 7,
+       "output_columns": "compat-output_columns",
+       "parameters": "compat-parameters",
+       "result_kind": "compat-result_kind",
+       "sql_template": "compat-sql_template",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "compat-behavior_name",
+       "behavior_type": "compat-behavior_type",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z",
+       "certified_by": "compat-certified_by",
+       "class_name": "Customer",
+       "description": "compat-description",
+       "golden_question": "compat-golden_question",
+       "max_rows": 7,
+       "output_columns": "compat-output_columns",
+       "parameters": "compat-parameters",
+       "result_kind": "compat-result_kind",
+       "sql_template": "compat-sql_template",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"compat-behavior_name\",\"behavior_type\":\"compat-behavior_type\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z\",\"certified_by\":\"compat-certified_by\",\"class_name\":\"Customer\",\"description\":\"compat-description\",\"golden_question\":\"compat-golden_question\",\"max_rows\":7,\"output_columns\":\"compat-output_columns\",\"parameters\":\"compat-parameters\",\"result_kind\":\"compat-result_kind\",\"sql_template\":\"compat-sql_template\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"[]\",\"class_name\":\"Customer\",\"column_map\":\"[{\\\"column\\\": \\\"customer_id\\\", \\\"property\\\": \\\"customer_id\\\"}]\",\"datasource\":\"erp\",\"default_limit\":100,\"extra_tables\":\"[]\",\"key_columns\":\"[\\\"customer_id\\\"]\",\"label_property\":\"name\",\"source_schema\":\"compat_erp\",\"table_name\":\"customer\",\"virtual_node\":\"\"}}",
+      "type": "HAS_BEHAVIOR"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"compat-behavior_name\",\"behavior_type\":\"compat-behavior_type\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z\",\"certified_by\":\"compat-certified_by\",\"class_name\":\"Customer\",\"description\":\"compat-description\",\"golden_question\":\"compat-golden_question\",\"max_rows\":7,\"output_columns\":\"compat-output_columns\",\"parameters\":\"compat-parameters\",\"result_kind\":\"compat-result_kind\",\"sql_template\":\"compat-sql_template\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"compat-base_conditions-1\",\"class_name\":\"Customer\",\"column_map\":\"compat-column_map-1\",\"datasource\":\"compat-datasource-1\",\"default_limit\":7,\"extra_tables\":\"compat-extra_tables-1\",\"key_columns\":\"compat-key_columns-1\",\"label_property\":\"compat-label_property-1\",\"source_schema\":\"compat-source_schema-1\",\"table_name\":\"compat-table_name-1\",\"virtual_node\":\"compat-virtual_node-1\"}}",
+      "type": "HAS_BEHAVIOR"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"compat-behavior_name\",\"behavior_type\":\"compat-behavior_type\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z\",\"certified_by\":\"compat-certified_by\",\"class_name\":\"Customer\",\"description\":\"compat-description\",\"golden_question\":\"compat-golden_question\",\"max_rows\":7,\"output_columns\":\"compat-output_columns\",\"parameters\":\"compat-parameters\",\"result_kind\":\"compat-result_kind\",\"sql_template\":\"compat-sql_template\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"compat-base_conditions\",\"class_name\":\"Customer\",\"column_map\":\"compat-column_map\",\"datasource\":\"compat-datasource\",\"default_limit\":7,\"extra_tables\":\"compat-extra_tables\",\"key_columns\":\"compat-key_columns\",\"label_property\":\"compat-label_property\",\"source_schema\":\"compat-source_schema\",\"table_name\":\"compat-table_name\",\"virtual_node\":\"compat-virtual_node\"}}",
+      "type": "HAS_BEHAVIOR"
+     }
+    ]
+   },
+   "params": {
+    "behavior_name": "compat-behavior_name",
+    "behavior_type": "compat-behavior_type",
+    "certified": true,
+    "certified_at": "2026-01-15T09:00:00Z",
+    "certified_by": "compat-certified_by",
+    "class_name": "Customer",
+    "description": "compat-description",
+    "golden_question": "compat-golden_question",
+    "max_rows": 7,
+    "output_columns": "compat-output_columns",
+    "parameters": "compat-parameters",
+    "result_kind": "compat-result_kind",
+    "schema_id": "schema-1",
+    "sql_template": "compat-sql_template",
+    "synonyms": [
+     "compat-synonyms-a",
+     "compat-synonyms-b"
+    ]
+   }
+  },
+  {
+   "id": "studio-2f0cc56f92",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 18,
+    "relationships_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "_OntologyRelationship"
+      ],
+      "props": {
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z-1",
+       "certified_by": "compat-certified_by-1",
+       "description": "compat-description-1",
+       "from_class": "compat-from_class-1",
+       "name": "compat-name",
+       "properties": "compat-properties-1",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ],
+       "to_class": "compat-to_class-1"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyRelationship"
+      ],
+      "props": {
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z-2",
+       "certified_by": "compat-certified_by-2",
+       "description": "compat-description-2",
+       "from_class": "compat-from_class-2",
+       "name": "compat-name",
+       "properties": "compat-properties-2",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ],
+       "to_class": "compat-to_class-2"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"_OntologyRelationship\"],\"props\":{\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z-1\",\"certified_by\":\"compat-certified_by-1\",\"description\":\"compat-description-1\",\"from_class\":\"compat-from_class-1\",\"name\":\"compat-name\",\"properties\":\"compat-properties-1\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"],\"to_class\":\"compat-to_class-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_RELATIONSHIP"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyRelationship\"],\"props\":{\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z-2\",\"certified_by\":\"compat-certified_by-2\",\"description\":\"compat-description-2\",\"from_class\":\"compat-from_class-2\",\"name\":\"compat-name\",\"properties\":\"compat-properties-2\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"],\"to_class\":\"compat-to_class-2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_RELATIONSHIP"
+     }
+    ]
+   },
+   "params": {
+    "rows": [
+     {
+      "certified": true,
+      "certified_at": "2026-01-15T09:00:00Z-1",
+      "certified_by": "compat-certified_by-1",
+      "description": "compat-description-1",
+      "from_class": "compat-from_class-1",
+      "name": "compat-name",
+      "properties": "compat-properties-1",
+      "synonyms": [
+       "compat-synonyms-a",
+       "compat-synonyms-b"
+      ],
+      "to_class": "compat-to_class-1"
+     },
+     {
+      "certified": true,
+      "certified_at": "2026-01-15T09:00:00Z-2",
+      "certified_by": "compat-certified_by-2",
+      "description": "compat-description-2",
+      "from_class": "compat-from_class-2",
+      "name": "compat-name",
+      "properties": "compat-properties-2",
+      "synonyms": [
+       "compat-synonyms-a",
+       "compat-synonyms-b"
+      ],
+      "to_class": "compat-to_class-2"
+     }
+    ],
+    "schema_id": "schema-1"
+   }
+  },
+  {
+   "id": "studio-93513a28fa",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 9,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "_OntologyRelationship"
+      ],
+      "props": {
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z",
+       "certified_by": "compat-certified_by",
+       "description": "compat-description",
+       "from_class": "compat-from_class",
+       "name": "compat-name",
+       "properties": "compat-properties",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ],
+       "to_class": "compat-to_class"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"_OntologyRelationship\"],\"props\":{\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z\",\"certified_by\":\"compat-certified_by\",\"description\":\"compat-description\",\"from_class\":\"compat-from_class\",\"name\":\"compat-name\",\"properties\":\"compat-properties\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"],\"to_class\":\"compat-to_class\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_RELATIONSHIP"
+     }
+    ]
+   },
+   "params": {
+    "certified": true,
+    "certified_at": "2026-01-15T09:00:00Z",
+    "certified_by": "compat-certified_by",
+    "description": "compat-description",
+    "from_class": "compat-from_class",
+    "name": "compat-name",
+    "properties": "compat-properties",
+    "schema_id": "schema-1",
+    "synonyms": [
+     "compat-synonyms-a",
+     "compat-synonyms-b"
+    ],
+    "to_class": "compat-to_class"
+   }
+  },
+  {
+   "id": "studio-0b43ac9ea4",
+   "columns": [
+    "eid"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "@n1"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Customer"
+      ],
+      "props": {
+       "customer_id": "compat-customer_id"
+      }
+     }
+    ]
+   },
+   "params": {
+    "sample": "compat-customer_id"
+   }
+  },
+  {
+   "id": "studio-7606dade27",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 48,
+    "relationships_deleted": 24
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "arg_mapping": "compat-arg_mapping",
+       "behavior_name": "compat-behavior_name",
+       "behavior_type": "compat-behavior_type",
+       "class_name": "Customer",
+       "compensate": "compat-compensate",
+       "confirm_threshold": "compat-confirm_threshold",
+       "description": "compat-description",
+       "effect": "compat-effect",
+       "key_property": "compat-key_property",
+       "max_targets": "compat-max_targets",
+       "operation_id": "compat-operation_id",
+       "parameters": "compat-parameters",
+       "policy": "compat-policy",
+       "schema_id": "schema-1",
+       "steps": "compat-steps",
+       "system": "compat-system",
+       "version": 7,
+       "writeback_property": "compat-writeback_property"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "compat-behavior_name",
+       "behavior_type": "compat-behavior_type",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z",
+       "certified_by": "compat-certified_by",
+       "class_name": "Customer",
+       "cypher_template": "compat-cypher_template",
+       "description": "compat-description",
+       "golden_question": "compat-golden_question",
+       "max_rows": 7,
+       "output_columns": "compat-output_columns",
+       "parameters": "compat-parameters",
+       "result_kind": "compat-result_kind",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "compat-behavior_name",
+       "behavior_type": "compat-behavior_type",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z",
+       "certified_by": "compat-certified_by",
+       "class_name": "Customer",
+       "description": "compat-description",
+       "golden_question": "compat-golden_question",
+       "max_rows": 7,
+       "output_columns": "compat-output_columns",
+       "parameters": "compat-parameters",
+       "result_kind": "compat-result_kind",
+       "sql_template": "compat-sql_template",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "compat-behavior_name",
+       "behavior_type": "compat-behavior_type",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z",
+       "certified_by": "compat-certified_by",
+       "class_name": "Customer",
+       "description": "compat-description",
+       "golden_question": "compat-golden_question",
+       "max_rows": 7,
+       "output_columns": "compat-output_columns",
+       "parameters": "compat-parameters",
+       "result_kind": "compat-result_kind",
+       "sql_template": "compat-sql_template",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "compat-behavior_name",
+       "behavior_type": "compat-behavior_type",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z",
+       "certified_by": "compat-certified_by",
+       "class_name": "Customer",
+       "description": "compat-description",
+       "golden_question": "compat-golden_question",
+       "max_rows": 7,
+       "output_columns": "compat-output_columns",
+       "parameters": "compat-parameters",
+       "result_kind": "compat-result_kind",
+       "sql_template": "compat-sql_template",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "set_grade",
+       "behavior_type": "action",
+       "class_name": "Customer",
+       "description": "change a grade",
+       "parameters": "[{\"name\": \"grade\"}]"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "supplier_rating",
+       "behavior_type": "sql",
+       "class_name": "Supplier",
+       "description": "rating",
+       "max_rows": 20,
+       "output_columns": "[\"name\", \"rating\"]",
+       "parameters": "[]",
+       "result_kind": "table",
+       "sql_template": "SELECT name, rating FROM erp.supplier"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "top_customers",
+       "behavior_type": "cypher",
+       "class_name": "Customer",
+       "cypher_template": "MATCH (n:_Entity:Customer) RETURN n.name ORDER BY n.credit_limit DESC LIMIT $limit",
+       "description": "customers by credit",
+       "golden_question": "who buys most?",
+       "max_rows": 50,
+       "output_columns": "[\"name\"]",
+       "parameters": "[]",
+       "result_kind": "table"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBinding"
+      ],
+      "props": {
+       "base_conditions": "[]",
+       "class_name": "Customer",
+       "column_map": "[{\"column\": \"customer_id\", \"property\": \"customer_id\"}]",
+       "datasource": "erp",
+       "default_limit": 100,
+       "extra_tables": "[]",
+       "key_columns": "[\"customer_id\"]",
+       "label_property": "name",
+       "source_schema": "compat_erp",
+       "table_name": "customer",
+       "virtual_node": ""
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBinding"
+      ],
+      "props": {
+       "base_conditions": "[]",
+       "class_name": "Supplier",
+       "column_map": "[{\"column\": \"supplier_id\", \"property\": \"supplier_id\"}, {\"column\": \"name\", \"property\": \"name\"}]",
+       "datasource": "erp",
+       "default_limit": 100,
+       "extra_tables": "[]",
+       "key_columns": "[\"supplier_id\"]",
+       "label_property": "name",
+       "source_schema": "compat_erp",
+       "table_name": "supplier",
+       "virtual_node": "ErpSupplier"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBinding"
+      ],
+      "props": {
+       "base_conditions": "compat-base_conditions",
+       "class_name": "Customer",
+       "column_map": "compat-column_map",
+       "datasource": "compat-datasource",
+       "default_limit": 7,
+       "extra_tables": "compat-extra_tables",
+       "key_columns": "compat-key_columns",
+       "label_property": "compat-label_property",
+       "source_schema": "compat-source_schema",
+       "table_name": "compat-table_name",
+       "virtual_node": "compat-virtual_node"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBinding"
+      ],
+      "props": {
+       "base_conditions": "compat-base_conditions-1",
+       "class_name": "Customer",
+       "column_map": "compat-column_map-1",
+       "datasource": "compat-datasource-1",
+       "default_limit": 7,
+       "extra_tables": "compat-extra_tables-1",
+       "key_columns": "compat-key_columns-1",
+       "label_property": "compat-label_property-1",
+       "source_schema": "compat-source_schema-1",
+       "table_name": "compat-table_name-1",
+       "virtual_node": "compat-virtual_node-1"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBinding"
+      ],
+      "props": {
+       "base_conditions": "compat-base_conditions-2",
+       "class_name": "PurchaseOrder",
+       "column_map": "compat-column_map-2",
+       "datasource": "compat-datasource-2",
+       "default_limit": 7,
+       "extra_tables": "compat-extra_tables-2",
+       "key_columns": "compat-key_columns-2",
+       "label_property": "compat-label_property-2",
+       "source_schema": "compat-source_schema-2",
+       "table_name": "compat-table_name-2",
+       "virtual_node": "compat-virtual_node-2"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "compat-binding_kind",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z",
+       "certified_by": "compat-certified_by",
+       "class_name": "compat-class_name",
+       "description": "compat-description",
+       "properties": "compat-properties",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     },
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "compat-binding_kind-1",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z-1",
+       "certified_by": "compat-certified_by-1",
+       "class_name": "compat-class_name",
+       "description": "compat-description-1",
+       "properties": "compat-properties-1",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     },
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "compat-binding_kind-2",
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z-2",
+       "certified_by": "compat-certified_by-2",
+       "class_name": "compat-class_name",
+       "description": "compat-description-2",
+       "properties": "compat-properties-2",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ]
+      }
+     },
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "materialized",
+       "certified": true,
+       "class_name": "Customer",
+       "description": "a buyer",
+       "properties": "[{\"name\": \"name\", \"type\": \"string\"}, {\"name\": \"grade\", \"type\": \"string\"}, {\"name\": \"email\", \"type\": \"string\", \"identifier\": true}]",
+       "synonyms": [
+        "client"
+       ]
+      }
+     },
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "materialized",
+       "class_name": "PurchaseOrder",
+       "description": "an order",
+       "properties": "[{\"name\": \"amount\", \"type\": \"int\"}]"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "virtual",
+       "class_name": "Supplier",
+       "description": "a vendor",
+       "properties": "[{\"name\": \"name\", \"type\": \"string\"}]"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyModel"
+      ],
+      "props": {
+       "description": "compat corpus model",
+       "golden_cypher": "[]",
+       "golden_questions": "[]",
+       "intent": "orders",
+       "name": "compat",
+       "schema_id": "schema-1"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyRelationship"
+      ],
+      "props": {
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z",
+       "certified_by": "compat-certified_by",
+       "description": "compat-description",
+       "from_class": "compat-from_class",
+       "name": "compat-name",
+       "properties": "compat-properties",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ],
+       "to_class": "compat-to_class"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyRelationship"
+      ],
+      "props": {
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z-1",
+       "certified_by": "compat-certified_by-1",
+       "description": "compat-description-1",
+       "from_class": "compat-from_class-1",
+       "name": "compat-name",
+       "properties": "compat-properties-1",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ],
+       "to_class": "compat-to_class-1"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyRelationship"
+      ],
+      "props": {
+       "certified": true,
+       "certified_at": "2026-01-15T09:00:00Z-2",
+       "certified_by": "compat-certified_by-2",
+       "description": "compat-description-2",
+       "from_class": "compat-from_class-2",
+       "name": "compat-name",
+       "properties": "compat-properties-2",
+       "synonyms": [
+        "compat-synonyms-a",
+        "compat-synonyms-b"
+       ],
+       "to_class": "compat-to_class-2"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyRelationship"
+      ],
+      "props": {
+       "description": "vendor",
+       "from_class": "PurchaseOrder",
+       "name": "ORDERED_FROM",
+       "properties": "[]",
+       "to_class": "Supplier"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyRelationship"
+      ],
+      "props": {
+       "description": "who ordered",
+       "from_class": "Customer",
+       "name": "PLACED",
+       "properties": "[]",
+       "to_class": "PurchaseOrder"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"arg_mapping\":\"compat-arg_mapping\",\"behavior_name\":\"compat-behavior_name\",\"behavior_type\":\"compat-behavior_type\",\"class_name\":\"Customer\",\"compensate\":\"compat-compensate\",\"confirm_threshold\":\"compat-confirm_threshold\",\"description\":\"compat-description\",\"effect\":\"compat-effect\",\"key_property\":\"compat-key_property\",\"max_targets\":\"compat-max_targets\",\"operation_id\":\"compat-operation_id\",\"parameters\":\"compat-parameters\",\"policy\":\"compat-policy\",\"schema_id\":\"schema-1\",\"steps\":\"compat-steps\",\"system\":\"compat-system\",\"version\":7,\"writeback_property\":\"compat-writeback_property\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_ACTION"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"compat-behavior_name\",\"behavior_type\":\"compat-behavior_type\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z\",\"certified_by\":\"compat-certified_by\",\"class_name\":\"Customer\",\"cypher_template\":\"compat-cypher_template\",\"description\":\"compat-description\",\"golden_question\":\"compat-golden_question\",\"max_rows\":7,\"output_columns\":\"compat-output_columns\",\"parameters\":\"compat-parameters\",\"result_kind\":\"compat-result_kind\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_BEHAVIOR"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"compat-behavior_name\",\"behavior_type\":\"compat-behavior_type\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z\",\"certified_by\":\"compat-certified_by\",\"class_name\":\"Customer\",\"description\":\"compat-description\",\"golden_question\":\"compat-golden_question\",\"max_rows\":7,\"output_columns\":\"compat-output_columns\",\"parameters\":\"compat-parameters\",\"result_kind\":\"compat-result_kind\",\"sql_template\":\"compat-sql_template\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"[]\",\"class_name\":\"Customer\",\"column_map\":\"[{\\\"column\\\": \\\"customer_id\\\", \\\"property\\\": \\\"customer_id\\\"}]\",\"datasource\":\"erp\",\"default_limit\":100,\"extra_tables\":\"[]\",\"key_columns\":\"[\\\"customer_id\\\"]\",\"label_property\":\"name\",\"source_schema\":\"compat_erp\",\"table_name\":\"customer\",\"virtual_node\":\"\"}}",
+      "type": "HAS_BEHAVIOR"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"compat-behavior_name\",\"behavior_type\":\"compat-behavior_type\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z\",\"certified_by\":\"compat-certified_by\",\"class_name\":\"Customer\",\"description\":\"compat-description\",\"golden_question\":\"compat-golden_question\",\"max_rows\":7,\"output_columns\":\"compat-output_columns\",\"parameters\":\"compat-parameters\",\"result_kind\":\"compat-result_kind\",\"sql_template\":\"compat-sql_template\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"compat-base_conditions-1\",\"class_name\":\"Customer\",\"column_map\":\"compat-column_map-1\",\"datasource\":\"compat-datasource-1\",\"default_limit\":7,\"extra_tables\":\"compat-extra_tables-1\",\"key_columns\":\"compat-key_columns-1\",\"label_property\":\"compat-label_property-1\",\"source_schema\":\"compat-source_schema-1\",\"table_name\":\"compat-table_name-1\",\"virtual_node\":\"compat-virtual_node-1\"}}",
+      "type": "HAS_BEHAVIOR"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"compat-behavior_name\",\"behavior_type\":\"compat-behavior_type\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z\",\"certified_by\":\"compat-certified_by\",\"class_name\":\"Customer\",\"description\":\"compat-description\",\"golden_question\":\"compat-golden_question\",\"max_rows\":7,\"output_columns\":\"compat-output_columns\",\"parameters\":\"compat-parameters\",\"result_kind\":\"compat-result_kind\",\"sql_template\":\"compat-sql_template\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"compat-base_conditions\",\"class_name\":\"Customer\",\"column_map\":\"compat-column_map\",\"datasource\":\"compat-datasource\",\"default_limit\":7,\"extra_tables\":\"compat-extra_tables\",\"key_columns\":\"compat-key_columns\",\"label_property\":\"compat-label_property\",\"source_schema\":\"compat-source_schema\",\"table_name\":\"compat-table_name\",\"virtual_node\":\"compat-virtual_node\"}}",
+      "type": "HAS_BEHAVIOR"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"set_grade\",\"behavior_type\":\"action\",\"class_name\":\"Customer\",\"description\":\"change a grade\",\"parameters\":\"[{\\\"name\\\": \\\"grade\\\"}]\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_ACTION"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"supplier_rating\",\"behavior_type\":\"sql\",\"class_name\":\"Supplier\",\"description\":\"rating\",\"max_rows\":20,\"output_columns\":\"[\\\"name\\\", \\\"rating\\\"]\",\"parameters\":\"[]\",\"result_kind\":\"table\",\"sql_template\":\"SELECT name, rating FROM erp.supplier\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"[]\",\"class_name\":\"Supplier\",\"column_map\":\"[{\\\"column\\\": \\\"supplier_id\\\", \\\"property\\\": \\\"supplier_id\\\"}, {\\\"column\\\": \\\"name\\\", \\\"property\\\": \\\"name\\\"}]\",\"datasource\":\"erp\",\"default_limit\":100,\"extra_tables\":\"[]\",\"key_columns\":\"[\\\"supplier_id\\\"]\",\"label_property\":\"name\",\"source_schema\":\"compat_erp\",\"table_name\":\"supplier\",\"virtual_node\":\"ErpSupplier\"}}",
+      "type": "HAS_BEHAVIOR"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"top_customers\",\"behavior_type\":\"cypher\",\"class_name\":\"Customer\",\"cypher_template\":\"MATCH (n:_Entity:Customer) RETURN n.name ORDER BY n.credit_limit DESC LIMIT $limit\",\"description\":\"customers by credit\",\"golden_question\":\"who buys most?\",\"max_rows\":50,\"output_columns\":\"[\\\"name\\\"]\",\"parameters\":\"[]\",\"result_kind\":\"table\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_BEHAVIOR"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"[]\",\"class_name\":\"Customer\",\"column_map\":\"[{\\\"column\\\": \\\"customer_id\\\", \\\"property\\\": \\\"customer_id\\\"}]\",\"datasource\":\"erp\",\"default_limit\":100,\"extra_tables\":\"[]\",\"key_columns\":\"[\\\"customer_id\\\"]\",\"label_property\":\"name\",\"source_schema\":\"compat_erp\",\"table_name\":\"customer\",\"virtual_node\":\"\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_BINDING"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"[]\",\"class_name\":\"Supplier\",\"column_map\":\"[{\\\"column\\\": \\\"supplier_id\\\", \\\"property\\\": \\\"supplier_id\\\"}, {\\\"column\\\": \\\"name\\\", \\\"property\\\": \\\"name\\\"}]\",\"datasource\":\"erp\",\"default_limit\":100,\"extra_tables\":\"[]\",\"key_columns\":\"[\\\"supplier_id\\\"]\",\"label_property\":\"name\",\"source_schema\":\"compat_erp\",\"table_name\":\"supplier\",\"virtual_node\":\"ErpSupplier\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"virtual\",\"class_name\":\"Supplier\",\"description\":\"a vendor\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}]\"}}",
+      "type": "HAS_BINDING"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"compat-base_conditions-1\",\"class_name\":\"Customer\",\"column_map\":\"compat-column_map-1\",\"datasource\":\"compat-datasource-1\",\"default_limit\":7,\"extra_tables\":\"compat-extra_tables-1\",\"key_columns\":\"compat-key_columns-1\",\"label_property\":\"compat-label_property-1\",\"source_schema\":\"compat-source_schema-1\",\"table_name\":\"compat-table_name-1\",\"virtual_node\":\"compat-virtual_node-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_BINDING"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"compat-base_conditions-2\",\"class_name\":\"PurchaseOrder\",\"column_map\":\"compat-column_map-2\",\"datasource\":\"compat-datasource-2\",\"default_limit\":7,\"extra_tables\":\"compat-extra_tables-2\",\"key_columns\":\"compat-key_columns-2\",\"label_property\":\"compat-label_property-2\",\"source_schema\":\"compat-source_schema-2\",\"table_name\":\"compat-table_name-2\",\"virtual_node\":\"compat-virtual_node-2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"class_name\":\"PurchaseOrder\",\"description\":\"an order\",\"properties\":\"[{\\\"name\\\": \\\"amount\\\", \\\"type\\\": \\\"int\\\"}]\"}}",
+      "type": "HAS_BINDING"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"compat-base_conditions\",\"class_name\":\"Customer\",\"column_map\":\"compat-column_map\",\"datasource\":\"compat-datasource\",\"default_limit\":7,\"extra_tables\":\"compat-extra_tables\",\"key_columns\":\"compat-key_columns\",\"label_property\":\"compat-label_property\",\"source_schema\":\"compat-source_schema\",\"table_name\":\"compat-table_name\",\"virtual_node\":\"compat-virtual_node\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_BINDING"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"compat-binding_kind-1\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z-1\",\"certified_by\":\"compat-certified_by-1\",\"class_name\":\"compat-class_name\",\"description\":\"compat-description-1\",\"properties\":\"compat-properties-1\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_CLASS"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"compat-binding_kind-2\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z-2\",\"certified_by\":\"compat-certified_by-2\",\"class_name\":\"compat-class_name\",\"description\":\"compat-description-2\",\"properties\":\"compat-properties-2\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_CLASS"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"compat-binding_kind\",\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z\",\"certified_by\":\"compat-certified_by\",\"class_name\":\"compat-class_name\",\"description\":\"compat-description\",\"properties\":\"compat-properties\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_CLASS"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_CLASS"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"class_name\":\"PurchaseOrder\",\"description\":\"an order\",\"properties\":\"[{\\\"name\\\": \\\"amount\\\", \\\"type\\\": \\\"int\\\"}]\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_CLASS"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"virtual\",\"class_name\":\"Supplier\",\"description\":\"a vendor\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}]\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_CLASS"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyRelationship\"],\"props\":{\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z-1\",\"certified_by\":\"compat-certified_by-1\",\"description\":\"compat-description-1\",\"from_class\":\"compat-from_class-1\",\"name\":\"compat-name\",\"properties\":\"compat-properties-1\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"],\"to_class\":\"compat-to_class-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_RELATIONSHIP"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyRelationship\"],\"props\":{\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z-2\",\"certified_by\":\"compat-certified_by-2\",\"description\":\"compat-description-2\",\"from_class\":\"compat-from_class-2\",\"name\":\"compat-name\",\"properties\":\"compat-properties-2\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"],\"to_class\":\"compat-to_class-2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_RELATIONSHIP"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyRelationship\"],\"props\":{\"certified\":true,\"certified_at\":\"2026-01-15T09:00:00Z\",\"certified_by\":\"compat-certified_by\",\"description\":\"compat-description\",\"from_class\":\"compat-from_class\",\"name\":\"compat-name\",\"properties\":\"compat-properties\",\"synonyms\":[\"compat-synonyms-a\",\"compat-synonyms-b\"],\"to_class\":\"compat-to_class\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_RELATIONSHIP"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyRelationship\"],\"props\":{\"description\":\"vendor\",\"from_class\":\"PurchaseOrder\",\"name\":\"ORDERED_FROM\",\"properties\":\"[]\",\"to_class\":\"Supplier\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_RELATIONSHIP"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyRelationship\"],\"props\":{\"description\":\"who ordered\",\"from_class\":\"Customer\",\"name\":\"PLACED\",\"properties\":\"[]\",\"to_class\":\"PurchaseOrder\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_RELATIONSHIP"
+     }
+    ]
+   },
+   "params": {
+    "schema_id": "schema-1"
+   }
+  }
+ ]
+}

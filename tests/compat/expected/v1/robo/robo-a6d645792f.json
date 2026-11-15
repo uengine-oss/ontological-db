@@ -1,0 +1,15 @@
+{
+ "id": "robo-a6d645792f",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "from_id",
+  "from_name",
+  "to_id",
+  "to_name",
+  "message"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": []
+}

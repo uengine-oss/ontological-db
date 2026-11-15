@@ -1,0 +1,44 @@
+{
+ "id": "studio-ce5d1247e5",
+ "graph": "ontology",
+ "kind": "fabric-read",
+ "columns": [
+  "column",
+  "type",
+  "nullable",
+  "key",
+  "primary_key"
+ ],
+ "row_order": "sorted",
+ "row_count": 4,
+ "rows": [
+  [
+   "city",
+   "text",
+   true,
+   false,
+   false
+  ],
+  [
+   "name",
+   "text",
+   false,
+   false,
+   false
+  ],
+  [
+   "rating",
+   "numeric(3,1)",
+   true,
+   false,
+   false
+  ],
+  [
+   "supplier_id",
+   "text",
+   false,
+   true,
+   true
+  ]
+ ]
+}

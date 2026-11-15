@@ -1,0 +1,15 @@
+{
+ "id": "studio-688cc61f09",
+ "graph": "ontology",
+ "kind": "read",
+ "error": {
+  "code": "Neo.ClientError.Statement.ArgumentError",
+  "message": "cypher error: elementId() expects a pattern variable"
+ },
+ "params": {
+  "keys": [
+   "cust-1",
+   "cust-2"
+  ]
+ }
+}

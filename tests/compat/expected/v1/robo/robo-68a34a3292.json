@@ -1,0 +1,58 @@
+{
+ "id": "robo-68a34a3292",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "us_id",
+  "rule_id",
+  "title",
+  "source_function",
+  "source_function_id",
+  "source_rule_id",
+  "given",
+  "when_",
+  "then_",
+  "write_effects_json"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "compat-us_id-1",
+   "Rule-1",
+   "Rule 1",
+   "Rule source_function 1",
+   "source_function_id-1",
+   "source_rule_id-1",
+   "Rule given 1",
+   "",
+   "",
+   "Rule write_effects_json 1"
+  ],
+  [
+   "compat-us_id-2",
+   "Rule-2",
+   "Rule 2",
+   "Rule source_function 2",
+   "source_function_id-2",
+   "source_rule_id-2",
+   "Rule given 2",
+   "",
+   "",
+   "Rule write_effects_json 2"
+  ]
+ ],
+ "params": {
+  "pairs": [
+   {
+    "task_id": "BpmTask-1",
+    "us_id": "compat-us_id-1"
+   },
+   {
+    "task_id": "BpmTask-2",
+    "us_id": "compat-us_id-2"
+   }
+  ],
+  "sid": "sess-1"
+ }
+}

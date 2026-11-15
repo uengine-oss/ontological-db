@@ -1,0 +1,17 @@
+{
+ "id": "robo-144a8fb584",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "aggRollup",
+  "cmdRollup",
+  "evtRollup"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "bc_id": "BoundedContext-1",
+  "session_id": "compat-session_id"
+ }
+}

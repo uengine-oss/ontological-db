@@ -1,0 +1,34 @@
+{
+ "id": "robo-3875c27968",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "task_id",
+  "name",
+  "description",
+  "instruction",
+  "order_",
+  "task_type",
+  "role_id",
+  "role_name",
+  "role_hint"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   "BpmTask-1",
+   "Task 1",
+   "Task description 1",
+   "Task instruction 1",
+   10,
+   "Task task_type 1",
+   "Role-1",
+   "Role 1",
+   "Role persona_hint 1"
+  ]
+ ],
+ "params": {
+  "pid": "proc_id-1"
+ }
+}

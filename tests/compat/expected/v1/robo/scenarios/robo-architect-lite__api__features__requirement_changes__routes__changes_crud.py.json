@@ -1,0 +1,130 @@
+{
+ "scenario": "robo-architect-lite:api/features/requirement_changes/routes/changes_crud.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-2a0e9b5fd0",
+   "columns": [
+    "change"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "author": "compat-author",
+      "createdAt": "2026-01-15T18:00:00+09:00",
+      "id": "compat-new-RequirementChange",
+      "originalPrompt": "compat-originalPrompt",
+      "sourceType": "compat-sourceType",
+      "status": "DRAFT",
+      "statusHistory": "[]",
+      "title": "compat-title"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 9
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "RequirementChange"
+      ],
+      "props": {
+       "author": "compat-author",
+       "createdAt": "2026-01-15T18:00:00+09:00",
+       "id": "compat-new-RequirementChange",
+       "originalPrompt": "compat-originalPrompt",
+       "sourceType": "compat-sourceType",
+       "status": "DRAFT",
+       "statusHistory": "[]",
+       "title": "compat-title"
+      }
+     }
+    ]
+   },
+   "params": {
+    "author": "compat-author",
+    "createdAt": "2026-01-15T09:00:00Z",
+    "id": "compat-new-RequirementChange",
+    "originalPrompt": "compat-originalPrompt",
+    "sourceType": "compat-sourceType",
+    "title": "compat-title"
+   }
+  },
+  {
+   "id": "robo-722fc472ba",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"compat-title\"}} <- {\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"반품 기간 연장\"}}"
+    ]
+   },
+   "params": {
+    "id": "CHG-001",
+    "title": "compat-title"
+   }
+  },
+  {
+   "id": "robo-8ba4f984d3",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 1,
+    "relationships_deleted": 2
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "RequirementChange"
+      ],
+      "props": {
+       "author": "user@example.com",
+       "createdAt": "<now>",
+       "id": "CHG-001",
+       "originalPrompt": "반품 기간을 7일에서 14일로 변경",
+       "sourceType": "PROMPT",
+       "status": "DRAFT",
+       "statusHistory": "[]",
+       "title": "compat-title"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"compat-title\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"ChangeSet\"],\"props\":{\"author\":\"user@example.com\",\"createdAt\":\"<now>\",\"id\":\"CS-001\",\"status\":\"DRAFT\",\"title\":\"Q3 정책 변경 묶음\"}}",
+      "type": "CONTAINS"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"status\":\"approved\"}}",
+      "props": {
+       "impactLevel": "HIGH",
+       "reason": "반품 기간 변경으로 인수조건 수정 필요"
+      },
+      "start": "{\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"compat-title\"}}",
+      "type": "EFFECT"
+     }
+    ]
+   },
+   "params": {
+    "id": "CHG-001"
+   }
+  }
+ ]
+}

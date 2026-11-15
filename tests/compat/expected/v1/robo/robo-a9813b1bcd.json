@@ -1,0 +1,18 @@
+{
+ "id": "robo-a9813b1bcd",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "id",
+  "parent_summary",
+  "condition",
+  "effects",
+  "statement_text"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "id": null
+ }
+}

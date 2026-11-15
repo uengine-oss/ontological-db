@@ -1,0 +1,334 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/ingestion_workflow_runner.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-ba42166269",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}} <- {\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+     "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}} <- {\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+     "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"session_id\":\"compat-session_id\",\"status\":\"approved\"}} <- {\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"status\":\"approved\"}}"
+    ]
+   },
+   "params": {
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-da6bddaec8",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 3,
+    "relationships_deleted": 33
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "UserStory"
+      ],
+      "props": {
+       "acceptanceCriteria": [
+        "acceptanceCriteria-1-a",
+        "acceptanceCriteria-1-b"
+       ],
+       "action": "UserStory action 1",
+       "benefit": "UserStory benefit 1",
+       "boundedContextId": "BoundedContext-1",
+       "clarifications": "UserStory clarifications 1",
+       "createdAt": "2026-01-11T09:00:00Z",
+       "criteriaEditedAt": "2026-01-11T09:00:00Z",
+       "criteriaUserEdited": true,
+       "displayName": "UserStory 1",
+       "featureId": "Feature-1",
+       "id": "UserStory-1",
+       "key": "userstory-1",
+       "name": "UserStory 1",
+       "priority": "medium",
+       "proposalSource": "UserStory proposalSource 1",
+       "role": "UserStory role 1",
+       "sequence": 10,
+       "session_id": "compat-session_id",
+       "sourceScreenName": "UserStory sourceScreenName 1",
+       "sourceUnitId": "sourceUnitId-1",
+       "status": "draft",
+       "title": "UserStory 1",
+       "uiDescription": "UserStory uiDescription 1",
+       "updatedAt": "2026-01-11T09:00:00Z"
+      }
+     },
+     {
+      "labels": [
+       "UserStory"
+      ],
+      "props": {
+       "acceptanceCriteria": [
+        "acceptanceCriteria-2-a",
+        "acceptanceCriteria-2-b"
+       ],
+       "action": "UserStory action 2",
+       "benefit": "UserStory benefit 2",
+       "boundedContextId": "BoundedContext-2",
+       "clarifications": "UserStory clarifications 2",
+       "createdAt": "2026-01-12T09:00:00Z",
+       "criteriaEditedAt": "2026-01-12T09:00:00Z",
+       "criteriaUserEdited": false,
+       "displayName": "UserStory 2",
+       "featureId": "Feature-2",
+       "id": "UserStory-2",
+       "key": "userstory-2",
+       "name": "UserStory 2",
+       "priority": "medium",
+       "proposalSource": "UserStory proposalSource 2",
+       "role": "UserStory role 2",
+       "sequence": 20,
+       "session_id": "compat-session_id",
+       "sourceScreenName": "UserStory sourceScreenName 2",
+       "sourceUnitId": "sourceUnitId-2",
+       "status": "new",
+       "title": "UserStory 2",
+       "uiDescription": "UserStory uiDescription 2",
+       "updatedAt": "2026-01-12T09:00:00Z"
+      }
+     },
+     {
+      "labels": [
+       "UserStory"
+      ],
+      "props": {
+       "action": "cancel my order",
+       "benefit": "I can get a refund if I change my mind",
+       "id": "US-001",
+       "priority": "high",
+       "role": "customer",
+       "session_id": "compat-session_id",
+       "status": "approved"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Aggregate description 2\",\"displayName\":\"Aggregate 2\",\"enumerations\":\"Aggregate enumerations 2\",\"exceptions\":\"Aggregate exceptions 2\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 2\",\"id\":\"Aggregate-2\",\"invariants\":\"Aggregate invariants 2\",\"invariantsMigratedAt\":\"2026-01-12T09:00:00Z\",\"key\":\"aggregate-2\",\"name\":\"Aggregate 2\",\"proposalSource\":\"Aggregate proposalSource 2\",\"rootEntity\":\"Aggregate rootEntity 2\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 2\",\"throughput\":\"Aggregate throughput 2\",\"title\":\"Aggregate 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 2\",\"version\":20}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"BoundedContext\"],\"props\":{\"classification\":\"core\",\"description\":\"주문 생성, 수정, 취소 및 주문 상태 관리\",\"id\":\"<uuid>\",\"key\":\"order\",\"name\":\"Order\",\"owner\":\"Order Team\"}}",
+      "props": {
+       "confidence": 0.95,
+       "createdAt": "<now>"
+      },
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"session_id\":\"compat-session_id\",\"status\":\"approved\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 2\",\"aggregate_id\":\"Aggregate-2\",\"category\":\"Command category 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Command description 2\",\"displayName\":\"Command 2\",\"id\":\"Command-2\",\"inputSchema\":\"Command inputSchema 2\",\"key\":\"command-2\",\"name\":\"Command 2\",\"postconditions\":\"Command postconditions 2\",\"preconditions\":\"Command preconditions 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"EditHistory\"],\"props\":{\"changes\":\"EditHistory changes 1\",\"feedback\":\"EditHistory feedback 1\",\"id\":\"EditHistory-1\",\"name\":\"EditHistory 1\",\"rationale\":\"EditHistory rationale 1\",\"source\":\"EditHistory source 1\",\"timestamp\":\"2026-01-11T09:00:00Z\",\"userEmail\":\"EditHistory userEmail 1\",\"userName\":\"EditHistory userName 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_HISTORY"
+     },
+     {
+      "end": "{\"labels\":[\"EditHistory\"],\"props\":{\"changes\":\"EditHistory changes 2\",\"feedback\":\"EditHistory feedback 2\",\"id\":\"EditHistory-2\",\"name\":\"EditHistory 2\",\"rationale\":\"EditHistory rationale 2\",\"source\":\"EditHistory source 2\",\"timestamp\":\"2026-01-12T09:00:00Z\",\"userEmail\":\"EditHistory userEmail 2\",\"userName\":\"EditHistory userName 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "HAS_HISTORY"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_EVENT"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Event description 2\",\"displayName\":\"Event 2\",\"hotspot\":false,\"id\":\"Event-2\",\"isBreaking\":false,\"key\":\"event-2\",\"name\":\"Event 2\",\"payload\":\"Event payload 2\",\"pivotal\":false,\"schema\":\"Event schema 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryId\":\"UserStory-1\",\"version\":\"1.0.0\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "HAS_EVENT"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Event description 2\",\"displayName\":\"Event 2\",\"hotspot\":false,\"id\":\"Event-2\",\"isBreaking\":false,\"key\":\"event-2\",\"name\":\"Event 2\",\"payload\":\"Event payload 2\",\"pivotal\":false,\"schema\":\"Event schema 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryId\":\"UserStory-1\",\"version\":\"1.0.0\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"bc_id\":\"BoundedContext-1\",\"condition\":\"Policy condition 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Policy description 1\",\"displayName\":\"Policy 1\",\"id\":\"Policy-1\",\"key\":\"policy-1\",\"kind\":\"cross_bc\",\"name\":\"Policy 1\",\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"bc_id\":\"BoundedContext-2\",\"condition\":\"Policy condition 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Policy description 2\",\"displayName\":\"Policy 2\",\"id\":\"Policy-2\",\"key\":\"policy-2\",\"kind\":\"cross_bc\",\"name\":\"Policy 2\",\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"ReadModel description 1\",\"displayName\":\"ReadModel 1\",\"id\":\"ReadModel-1\",\"isMultipleResult\":true,\"key\":\"readmodel-1\",\"name\":\"ReadModel 1\",\"provisioningType\":\"ReadModel provisioningType 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"ReadModel description 2\",\"displayName\":\"ReadModel 2\",\"id\":\"ReadModel-2\",\"isMultipleResult\":false,\"key\":\"readmodel-2\",\"name\":\"ReadModel 2\",\"provisioningType\":\"ReadModel provisioningType 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"Rule\"],\"props\":{\"confidence\":0.6,\"context_cluster\":\"Rule context_cluster 1\",\"es_role\":\"Rule es_role 1\",\"es_role_confidence\":1,\"given\":\"Rule given 1\",\"id\":\"Rule-1\",\"name\":\"Rule 1\",\"session_id\":\"sess-1\",\"source_container\":\"Rule source_container 1\",\"source_function\":\"Rule source_function 1\",\"source_function_id\":\"source_function_id-1\",\"source_rule_id\":\"source_rule_id-1\",\"title\":\"Rule 1\",\"write_effects_json\":\"Rule write_effects_json 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "SOURCED_FROM"
+     },
+     {
+      "end": "{\"labels\":[\"Rule\"],\"props\":{\"confidence\":0.7,\"context_cluster\":\"Rule context_cluster 2\",\"es_role\":\"Rule es_role 2\",\"es_role_confidence\":1,\"given\":\"Rule given 2\",\"id\":\"Rule-2\",\"name\":\"Rule 2\",\"session_id\":\"sess-1\",\"source_container\":\"Rule source_container 2\",\"source_function\":\"Rule source_function 2\",\"source_function_id\":\"source_function_id-2\",\"source_rule_id\":\"source_rule_id-2\",\"title\":\"Rule 2\",\"write_effects_json\":\"Rule write_effects_json 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "SOURCED_FROM"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "CONTAINS_STORY"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_USERSTORY"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "type": "PROMOTED_TO"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Feature\"],\"props\":{\"assumptions\":\"Feature assumptions 1\",\"boundedContextId\":\"BoundedContext-1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Feature description 1\",\"edgeCases\":\"Feature edgeCases 1\",\"id\":\"Feature-1\",\"name\":\"Feature 1\",\"sequence\":10,\"source\":\"Feature source 1\"}}",
+      "type": "CONTAINS"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Aggregate description 2\",\"displayName\":\"Aggregate 2\",\"enumerations\":\"Aggregate enumerations 2\",\"exceptions\":\"Aggregate exceptions 2\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 2\",\"id\":\"Aggregate-2\",\"invariants\":\"Aggregate invariants 2\",\"invariantsMigratedAt\":\"2026-01-12T09:00:00Z\",\"key\":\"aggregate-2\",\"name\":\"Aggregate 2\",\"proposalSource\":\"Aggregate proposalSource 2\",\"rootEntity\":\"Aggregate rootEntity 2\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 2\",\"throughput\":\"Aggregate throughput 2\",\"title\":\"Aggregate 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 2\",\"version\":20}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 2\",\"businessDecisions\":\"BoundedContext businessDecisions 2\",\"businessModel\":\"BoundedContext businessModel 2\",\"classification\":\"BoundedContext classification 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"BoundedContext description 2\",\"displayName\":\"BoundedContext 2\",\"domainRoles\":\"BoundedContext domainRoles 2\",\"domainType\":\"BoundedContext domainType 2\",\"evolution\":\"BoundedContext evolution 2\",\"id\":\"BoundedContext-2\",\"key\":\"boundedcontext-2\",\"name\":\"BoundedContext 2\",\"owner\":\"BoundedContext owner 2\",\"proposalSource\":\"BoundedContext proposalSource 2\",\"purpose\":\"BoundedContext purpose 2\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":20}}",
+      "type": "CONTAINS_STORY"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 2\",\"businessDecisions\":\"BoundedContext businessDecisions 2\",\"businessModel\":\"BoundedContext businessModel 2\",\"classification\":\"BoundedContext classification 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"BoundedContext description 2\",\"displayName\":\"BoundedContext 2\",\"domainRoles\":\"BoundedContext domainRoles 2\",\"domainType\":\"BoundedContext domainType 2\",\"evolution\":\"BoundedContext evolution 2\",\"id\":\"BoundedContext-2\",\"key\":\"boundedcontext-2\",\"name\":\"BoundedContext 2\",\"owner\":\"BoundedContext owner 2\",\"proposalSource\":\"BoundedContext proposalSource 2\",\"purpose\":\"BoundedContext purpose 2\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":20}}",
+      "type": "HAS_USERSTORY"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "type": "PROMOTED_TO"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 2\",\"aggregate_id\":\"Aggregate-2\",\"category\":\"Command category 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Command description 2\",\"displayName\":\"Command 2\",\"id\":\"Command-2\",\"inputSchema\":\"Command inputSchema 2\",\"key\":\"command-2\",\"name\":\"Command 2\",\"postconditions\":\"Command postconditions 2\",\"preconditions\":\"Command preconditions 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Event description 2\",\"displayName\":\"Event 2\",\"hotspot\":false,\"id\":\"Event-2\",\"isBreaking\":false,\"key\":\"event-2\",\"name\":\"Event 2\",\"payload\":\"Event payload 2\",\"pivotal\":false,\"schema\":\"Event schema 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryId\":\"UserStory-1\",\"version\":\"1.0.0\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"compat-session_id\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Feature\"],\"props\":{\"assumptions\":\"Feature assumptions 2\",\"boundedContextId\":\"BoundedContext-2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Feature description 2\",\"edgeCases\":\"Feature edgeCases 2\",\"id\":\"Feature-2\",\"name\":\"Feature 2\",\"sequence\":20,\"source\":\"Feature source 2\"}}",
+      "type": "CONTAINS"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"session_id\":\"compat-session_id\",\"status\":\"approved\"}}",
+      "props": {
+       "confidence": 0.9,
+       "createdAt": "<now>",
+       "source": "llm"
+      },
+      "start": "{\"labels\":[\"Feature\"],\"props\":{\"boundedContextId\":\"<uuid>\",\"createdAt\":\"<now>\",\"description\":\"고객이 주문을 취소하고 환불을 받는 기능 묶음\",\"id\":\"<uuid>\",\"key\":\"order.feature.order-cancellation\",\"name\":\"주문 취소\",\"sequence\":1,\"source\":\"llm\",\"updatedAt\":\"<now>\"}}",
+      "type": "HAS_USER_STORY"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"session_id\":\"compat-session_id\",\"status\":\"approved\"}}",
+      "props": {
+       "impactLevel": "HIGH",
+       "reason": "반품 기간 변경으로 인수조건 수정 필요"
+      },
+      "start": "{\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"반품 기간 연장\"}}",
+      "type": "EFFECT"
+     }
+    ]
+   }
+  }
+ ]
+}

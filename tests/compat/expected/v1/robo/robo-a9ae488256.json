@@ -1,0 +1,93 @@
+{
+ "id": "robo-a9ae488256",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "item"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   {
+    "aggregateDisplayName": null,
+    "aggregateId": "<uuid1>",
+    "aggregateName": "Order",
+    "bcDescription": "주문 생성, 수정, 취소 및 주문 상태 관리",
+    "bcDisplayName": null,
+    "bcId": "<uuid2>",
+    "bcName": "Order",
+    "enumerations": null,
+    "invariants": "[\"주문 총액은 0보다 커야 함\", \"배송 시작 후에는 취소 불가\"]",
+    "properties": [
+     {
+      "description": null,
+      "displayName": null,
+      "id": null,
+      "isForeignKey": null,
+      "isKey": null,
+      "isRequired": null,
+      "name": null,
+      "type": null
+     }
+    ],
+    "rootEntity": "Order",
+    "valueObjects": null
+   }
+  ],
+  [
+   {
+    "aggregateDisplayName": null,
+    "aggregateId": null,
+    "aggregateName": null,
+    "bcDescription": "BoundedContext description 1",
+    "bcDisplayName": "BoundedContext 1",
+    "bcId": "BoundedContext-1",
+    "bcName": "BoundedContext 1",
+    "enumerations": null,
+    "invariants": null,
+    "properties": [
+     {
+      "description": null,
+      "displayName": null,
+      "id": null,
+      "isForeignKey": null,
+      "isKey": null,
+      "isRequired": null,
+      "name": null,
+      "type": null
+     }
+    ],
+    "rootEntity": null,
+    "valueObjects": null
+   }
+  ],
+  [
+   {
+    "aggregateDisplayName": null,
+    "aggregateId": null,
+    "aggregateName": null,
+    "bcDescription": "BoundedContext description 2",
+    "bcDisplayName": "BoundedContext 2",
+    "bcId": "BoundedContext-2",
+    "bcName": "BoundedContext 2",
+    "enumerations": null,
+    "invariants": null,
+    "properties": [
+     {
+      "description": null,
+      "displayName": null,
+      "id": null,
+      "isForeignKey": null,
+      "isKey": null,
+      "isRequired": null,
+      "name": null,
+      "type": null
+     }
+    ],
+    "rootEntity": null,
+    "valueObjects": null
+   }
+  ]
+ ]
+}

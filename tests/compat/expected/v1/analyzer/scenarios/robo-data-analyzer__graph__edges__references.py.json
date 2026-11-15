@@ -1,0 +1,52 @@
+{
+ "scenario": "robo-data-analyzer:graph/edges/references.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-5eccc5d9d6",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2,
+    "relationships_created": 2
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"EXAMPLE\"],\"props\":{\"given\":\"EXAMPLE given 1\",\"graph_owner\":\"analyzer\",\"id\":\"EXAMPLE-1\",\"name\":\"EXAMPLE 1\",\"then_\":\"EXAMPLE then_ 1\",\"when_\":\"EXAMPLE when_ 1\"}}",
+      "props": {
+       "evidence_line": "compat-evidence_line-1"
+      },
+      "start": "{\"labels\":[\"EMBED_META\"],\"props\":{\"dim\":\"EMBED_META dim 1\",\"embedded_count\":10,\"fingerprint\":\"EMBED_META fingerprint 1\",\"graph_owner\":\"analyzer\",\"id\":\"EMBED_META-1\",\"name\":\"EMBED_META 1\"}}",
+      "type": "REFERENCES"
+     },
+     {
+      "end": "{\"labels\":[\"EXAMPLE\"],\"props\":{\"given\":\"EXAMPLE given 2\",\"graph_owner\":\"analyzer\",\"id\":\"EXAMPLE-2\",\"name\":\"EXAMPLE 2\",\"then_\":\"EXAMPLE then_ 2\",\"when_\":\"EXAMPLE when_ 2\"}}",
+      "props": {
+       "evidence_line": "compat-evidence_line-2"
+      },
+      "start": "{\"labels\":[\"EMBED_META\"],\"props\":{\"dim\":\"EMBED_META dim 2\",\"embedded_count\":20,\"fingerprint\":\"EMBED_META fingerprint 2\",\"graph_owner\":\"analyzer\",\"id\":\"EMBED_META-2\",\"name\":\"EMBED_META 2\"}}",
+      "type": "REFERENCES"
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "evidence_line": "compat-evidence_line-1",
+      "source_id": "EMBED_META-1",
+      "target_id": "EXAMPLE-1"
+     },
+     {
+      "evidence_line": "compat-evidence_line-2",
+      "source_id": "EMBED_META-2",
+      "target_id": "EXAMPLE-2"
+     }
+    ]
+   }
+  }
+ ]
+}

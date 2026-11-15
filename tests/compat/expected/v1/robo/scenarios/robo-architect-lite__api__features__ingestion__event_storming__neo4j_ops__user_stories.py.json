@@ -1,0 +1,337 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/user_stories.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-ee0dcbc3f5",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     {
+      "acceptanceCriteria": "compat-acceptance_criteria-1",
+      "action": "compat-action-1",
+      "benefit": "compat-benefit-1",
+      "criteriaEditedAt": null,
+      "criteriaUserEdited": false,
+      "displayName": "compat-display_name-1",
+      "id": "compat-new-UserStory-1",
+      "name": "compat-name-1",
+      "priority": "compat-priority-1",
+      "role": "compat-role-1",
+      "sequence": 7,
+      "sourceScreenName": "compat-source_screen_name-1",
+      "sourceUnitId": "compat-source_unit_id-1",
+      "status": "compat-status-1",
+      "uiDescription": "compat-ui_description-1"
+     }
+    ],
+    [
+     {
+      "acceptanceCriteria": "compat-acceptance_criteria-2",
+      "action": "compat-action-2",
+      "benefit": "compat-benefit-2",
+      "criteriaEditedAt": null,
+      "criteriaUserEdited": false,
+      "displayName": "compat-display_name-2",
+      "id": "compat-new-UserStory-2",
+      "name": "compat-name-2",
+      "priority": "compat-priority-2",
+      "role": "compat-role-2",
+      "sequence": 7,
+      "sourceScreenName": "compat-source_screen_name-2",
+      "sourceUnitId": "compat-source_unit_id-2",
+      "status": "compat-status-2",
+      "uiDescription": "compat-ui_description-2"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 28
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "UserStory"
+      ],
+      "props": {
+       "acceptanceCriteria": "compat-acceptance_criteria-1",
+       "action": "compat-action-1",
+       "benefit": "compat-benefit-1",
+       "createdAt": "<now>",
+       "displayName": "compat-display_name-1",
+       "id": "compat-new-UserStory-1",
+       "name": "compat-name-1",
+       "priority": "compat-priority-1",
+       "role": "compat-role-1",
+       "sequence": 7,
+       "sourceScreenName": "compat-source_screen_name-1",
+       "sourceUnitId": "compat-source_unit_id-1",
+       "status": "compat-status-1",
+       "uiDescription": "compat-ui_description-1"
+      }
+     },
+     {
+      "labels": [
+       "UserStory"
+      ],
+      "props": {
+       "acceptanceCriteria": "compat-acceptance_criteria-2",
+       "action": "compat-action-2",
+       "benefit": "compat-benefit-2",
+       "createdAt": "<now>",
+       "displayName": "compat-display_name-2",
+       "id": "compat-new-UserStory-2",
+       "name": "compat-name-2",
+       "priority": "compat-priority-2",
+       "role": "compat-role-2",
+       "sequence": 7,
+       "sourceScreenName": "compat-source_screen_name-2",
+       "sourceUnitId": "compat-source_unit_id-2",
+       "status": "compat-status-2",
+       "uiDescription": "compat-ui_description-2"
+      }
+     }
+    ],
+    "nodes_changed": [
+     "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":\"[\\\"acceptanceCriteria-1-a\\\", \\\"acceptanceCriteria-1-b\\\"]\",\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}} <- {\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+     "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":\"[\\\"acceptanceCriteria-2-a\\\", \\\"acceptanceCriteria-2-b\\\"]\",\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}} <- {\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}"
+    ]
+   },
+   "params": {
+    "rows": [
+     {
+      "acceptance_criteria": "compat-acceptance_criteria-1",
+      "action": "compat-action-1",
+      "benefit": "compat-benefit-1",
+      "display_name": "compat-display_name-1",
+      "id": "compat-new-UserStory-1",
+      "name": "compat-name-1",
+      "priority": "compat-priority-1",
+      "role": "compat-role-1",
+      "sequence": 7,
+      "source_screen_name": "compat-source_screen_name-1",
+      "source_unit_id": "compat-source_unit_id-1",
+      "status": "compat-status-1",
+      "ui_description": "compat-ui_description-1"
+     },
+     {
+      "acceptance_criteria": "compat-acceptance_criteria-2",
+      "action": "compat-action-2",
+      "benefit": "compat-benefit-2",
+      "display_name": "compat-display_name-2",
+      "id": "compat-new-UserStory-2",
+      "name": "compat-name-2",
+      "priority": "compat-priority-2",
+      "role": "compat-role-2",
+      "sequence": 7,
+      "source_screen_name": "compat-source_screen_name-2",
+      "source_unit_id": "compat-source_unit_id-2",
+      "status": "compat-status-2",
+      "ui_description": "compat-ui_description-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-829e7c2688",
+   "columns": [
+    "user_story"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "acceptanceCriteria": "compat-acceptance_criteria",
+      "action": "compat-action",
+      "benefit": "compat-benefit",
+      "criteriaEditedAt": null,
+      "criteriaUserEdited": false,
+      "displayName": "compat-displayName",
+      "id": "compat-new-UserStory",
+      "name": "compat-name",
+      "priority": "compat-priority",
+      "role": "compat-role",
+      "sequence": 7,
+      "sourceScreenName": "compat-sourceScreenName",
+      "sourceUnitId": "compat-sourceUnitId",
+      "status": "compat-status",
+      "uiDescription": "compat-uiDescription"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 14
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "UserStory"
+      ],
+      "props": {
+       "acceptanceCriteria": "compat-acceptance_criteria",
+       "action": "compat-action",
+       "benefit": "compat-benefit",
+       "createdAt": "<now>",
+       "displayName": "compat-displayName",
+       "id": "compat-new-UserStory",
+       "name": "compat-name",
+       "priority": "compat-priority",
+       "role": "compat-role",
+       "sequence": 7,
+       "sourceScreenName": "compat-sourceScreenName",
+       "sourceUnitId": "compat-sourceUnitId",
+       "status": "compat-status",
+       "uiDescription": "compat-uiDescription"
+      }
+     }
+    ]
+   },
+   "params": {
+    "acceptance_criteria": "compat-acceptance_criteria",
+    "action": "compat-action",
+    "benefit": "compat-benefit",
+    "display_name": "compat-displayName",
+    "id": "compat-new-UserStory",
+    "name": "compat-name",
+    "priority": "compat-priority",
+    "role": "compat-role",
+    "sequence": 7,
+    "source_screen_name": "compat-sourceScreenName",
+    "source_unit_id": "compat-sourceUnitId",
+    "status": "compat-status",
+    "ui_description": "compat-uiDescription"
+   }
+  },
+  {
+   "id": "robo-97689f17dc",
+   "columns": [
+    "user_story"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "acceptanceCriteria": "compat-criteria",
+      "action": "compat-action",
+      "benefit": "compat-benefit",
+      "criteriaEditedAt": "<now>",
+      "criteriaUserEdited": true,
+      "displayName": null,
+      "id": "US-001",
+      "name": null,
+      "priority": "compat-priority",
+      "role": "compat-role",
+      "sequence": null,
+      "sourceScreenName": null,
+      "sourceUnitId": null,
+      "status": "compat-status",
+      "uiDescription": null
+     }
+    ]
+   ],
+   "counters": {
+    "properties_set": 9
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":\"compat-criteria\",\"action\":\"compat-action\",\"benefit\":\"compat-benefit\",\"criteriaEditedAt\":\"<now>\",\"criteriaUserEdited\":true,\"id\":\"US-001\",\"priority\":\"compat-priority\",\"role\":\"compat-role\",\"status\":\"compat-status\",\"updatedAt\":\"<now>\"}} <- {\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"status\":\"approved\"}}"
+    ]
+   },
+   "params": {
+    "action": "compat-action",
+    "benefit": "compat-benefit",
+    "criteria": "compat-criteria",
+    "criteria_present": "compat-criteria_present",
+    "priority": "compat-priority",
+    "role": "compat-role",
+    "status": "compat-status",
+    "user_story_id": "US-001"
+   }
+  },
+  {
+   "id": "robo-8904e114de",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     {
+      "sequence": 7,
+      "us_id": "US-001"
+     }
+    ],
+    [
+     {
+      "sequence": 7,
+      "us_id": "UserStory-1"
+     }
+    ]
+   ],
+   "counters": {
+    "properties_set": 4
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":\"[\\\"acceptanceCriteria-1-a\\\", \\\"acceptanceCriteria-1-b\\\"]\",\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"<now>\"}} <- {\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":\"[\\\"acceptanceCriteria-1-a\\\", \\\"acceptanceCriteria-1-b\\\"]\",\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+     "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":\"compat-criteria\",\"action\":\"compat-action\",\"benefit\":\"compat-benefit\",\"criteriaEditedAt\":\"<now>\",\"criteriaUserEdited\":true,\"id\":\"US-001\",\"priority\":\"compat-priority\",\"role\":\"compat-role\",\"sequence\":7,\"status\":\"compat-status\",\"updatedAt\":\"<now>\"}} <- {\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":\"compat-criteria\",\"action\":\"compat-action\",\"benefit\":\"compat-benefit\",\"criteriaEditedAt\":\"<now>\",\"criteriaUserEdited\":true,\"id\":\"US-001\",\"priority\":\"compat-priority\",\"role\":\"compat-role\",\"status\":\"compat-status\",\"updatedAt\":\"<now>\"}}"
+    ]
+   },
+   "params": {
+    "rows": [
+     {
+      "sequence": 7,
+      "us_id": "US-001"
+     },
+     {
+      "sequence": 7,
+      "us_id": "UserStory-1"
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-b38b16682f",
+   "columns": [
+    "user_story"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "action": "compat-action",
+      "benefit": "compat-benefit",
+      "id": "US-001",
+      "priority": "compat-priority",
+      "role": "compat-role",
+      "status": "compat-status",
+      "uiDescription": null
+     }
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "role": "compat-role",
+    "user_story_id": "US-001"
+   }
+  }
+ ]
+}

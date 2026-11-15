@@ -1,0 +1,30 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/references.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-35361b9172",
+   "error": {
+    "code": "Neo.ClientError.Statement.TypeError",
+    "message": "COALESCE types text and boolean cannot be matched"
+   },
+   "params": {
+    "items": [
+     {
+      "srcId": "Property-1",
+      "tgtKey": "aggregate-1",
+      "tgtProp": "Property 1",
+      "tgtType": "Command"
+     },
+     {
+      "srcId": "Property-2",
+      "tgtKey": "aggregate-2",
+      "tgtProp": "Property 2",
+      "tgtType": "Property parentType 1"
+     }
+    ]
+   }
+  }
+ ]
+}

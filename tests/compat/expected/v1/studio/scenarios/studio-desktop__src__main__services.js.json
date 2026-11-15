@@ -1,0 +1,21 @@
+{
+ "scenario": "studio-desktop:src/main/services.js",
+ "graph": "ontology",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "studio-11695ae09a",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "virtual relationship SUPPLIED_BY dropped"
+    ]
+   ],
+   "effect": {}
+  }
+ ]
+}

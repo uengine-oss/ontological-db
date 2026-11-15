@@ -1,0 +1,81 @@
+{
+ "scenario": "robo-architect-lite:api/features/requirements/chat_edit/history_service.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-5acefe9921",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid1>"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 8,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "EditHistory"
+      ],
+      "props": {
+       "changes": "compat-changes",
+       "feedback": "compat-feedback",
+       "id": "<uuid>",
+       "rationale": "compat-rationale",
+       "source": "compat-source",
+       "timestamp": "<now>",
+       "userEmail": "compat-userEmail",
+       "userName": "compat-userName"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"EditHistory\"],\"props\":{\"changes\":\"compat-changes\",\"feedback\":\"compat-feedback\",\"id\":\"<uuid>\",\"rationale\":\"compat-rationale\",\"source\":\"compat-source\",\"timestamp\":\"<now>\",\"userEmail\":\"compat-userEmail\",\"userName\":\"compat-userName\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"status\":\"approved\"}}",
+      "type": "HAS_HISTORY"
+     }
+    ]
+   },
+   "params": {
+    "changes_json": "compat-changes",
+    "feedback": "compat-feedback",
+    "id": "US-001",
+    "rationale": "compat-rationale",
+    "source": "compat-source",
+    "user_email": "compat-userEmail",
+    "user_name": "compat-userName"
+   }
+  },
+  {
+   "id": "robo-6d028a1911",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"<bc-uuid>\",\"chatEditLog\":\"compat-chatEditLog\",\"createdAt\":\"<now>\",\"description\":\"신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"정상 회원가입\",\"source\":\"llm\",\"updatedAt\":\"<now>\"}} <- {\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"정상 회원가입\",\"source\":\"llm\",\"updatedAt\":\"<now>\"}}"
+    ]
+   },
+   "params": {
+    "id": "<uuid2>",
+    "log": "compat-chatEditLog"
+   }
+  }
+ ]
+}

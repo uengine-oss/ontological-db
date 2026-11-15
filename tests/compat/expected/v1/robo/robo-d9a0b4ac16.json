@@ -1,0 +1,74 @@
+{
+ "id": "robo-d9a0b4ac16",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "label",
+  "name"
+ ],
+ "row_order": "sorted",
+ "row_count": 12,
+ "rows": [
+  [
+   "<uuid1>",
+   "Aggregate",
+   "Order"
+  ],
+  [
+   "<uuid2>",
+   "BoundedContext",
+   "Order"
+  ],
+  [
+   "<uuid3>",
+   "Feature",
+   "주문 취소"
+  ],
+  [
+   "Aggregate-1",
+   "Aggregate",
+   "Aggregate 1"
+  ],
+  [
+   "Aggregate-2",
+   "Aggregate",
+   "Aggregate 2"
+  ],
+  [
+   "BoundedContext-1",
+   "BoundedContext",
+   "BoundedContext 1"
+  ],
+  [
+   "BoundedContext-2",
+   "BoundedContext",
+   "BoundedContext 2"
+  ],
+  [
+   "Feature-1",
+   "Feature",
+   "Feature 1"
+  ],
+  [
+   "Feature-2",
+   "Feature",
+   "Feature 2"
+  ],
+  [
+   "US-001",
+   "UserStory",
+   "cancel my order"
+  ],
+  [
+   "UserStory-1",
+   "UserStory",
+   "UserStory 1"
+  ],
+  [
+   "UserStory-2",
+   "UserStory",
+   "UserStory 2"
+  ]
+ ]
+}

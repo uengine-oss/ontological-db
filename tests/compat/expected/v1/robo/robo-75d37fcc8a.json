@@ -1,0 +1,32 @@
+{
+ "id": "robo-75d37fcc8a",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "p",
+  "effects"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "id": "Proposal-1",
+    "name": "Proposal 1"
+   },
+   [
+    {
+     "changeType": null,
+     "impactLevel": null,
+     "nodeId": "Aggregate-1",
+     "nodeLabel": "Aggregate",
+     "nodeTitle": "Aggregate 1",
+     "reason": null
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

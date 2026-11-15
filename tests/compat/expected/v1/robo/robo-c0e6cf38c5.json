@@ -1,0 +1,18 @@
+{
+ "id": "robo-c0e6cf38c5",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "log"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   null
+  ]
+ ],
+ "params": {
+  "id": "<uuid1>"
+ }
+}

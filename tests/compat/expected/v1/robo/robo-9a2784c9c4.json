@@ -1,0 +1,25 @@
+{
+ "id": "robo-9a2784c9c4",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "invExists",
+  "cmdExists",
+  "sameAgg",
+  "already"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   true,
+   true,
+   false,
+   false
+  ]
+ ],
+ "params": {
+  "cid": "Command-1",
+  "iid": "Invariant-1"
+ }
+}

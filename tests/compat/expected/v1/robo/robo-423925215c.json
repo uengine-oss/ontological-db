@@ -1,0 +1,20 @@
+{
+ "id": "robo-423925215c",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "td",
+  "draft"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Proposal tacticalDiff 1",
+   "Proposal planDraft 1"
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

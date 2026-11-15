@@ -1,0 +1,34 @@
+{
+ "id": "robo-9a3fa864a4",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "purpose",
+  "classification",
+  "domainRoles",
+  "ubiquitousLanguage",
+  "businessDecisions",
+  "assumptions",
+  "version"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "BoundedContext-1",
+   "BoundedContext 1",
+   "BoundedContext purpose 1",
+   "BoundedContext classification 1",
+   "BoundedContext domainRoles 1",
+   "BoundedContext ubiquitousLanguage 1",
+   "BoundedContext businessDecisions 1",
+   "BoundedContext assumptions 1",
+   10
+  ]
+ ],
+ "params": {
+  "id": "BoundedContext-1"
+ }
+}

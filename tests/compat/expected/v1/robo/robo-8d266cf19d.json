@@ -1,0 +1,55 @@
+{
+ "id": "robo-8d266cf19d",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "rmId",
+  "rmName",
+  "rmDisplayName",
+  "rmActor",
+  "rmStoredSequence",
+  "bcId",
+  "bcName",
+  "rmUiId",
+  "rmUiName",
+  "rmUiDisplayName",
+  "rmUiTemplate",
+  "triggerEventIds"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "ReadModel-1",
+   "ReadModel 1",
+   "ReadModel 1",
+   "ReadModel actor 1",
+   10,
+   "BoundedContext-1",
+   "BoundedContext 1",
+   "UI-1",
+   "UI 1",
+   "UI 1",
+   "UI template 1",
+   [
+    "Event-1"
+   ]
+  ],
+  [
+   "ReadModel-2",
+   "ReadModel 2",
+   "ReadModel 2",
+   "ReadModel actor 2",
+   20,
+   "BoundedContext-2",
+   "BoundedContext 2",
+   "UI-2",
+   "UI 2",
+   "UI 2",
+   "UI template 2",
+   [
+    "Event-2"
+   ]
+  ]
+ ]
+}

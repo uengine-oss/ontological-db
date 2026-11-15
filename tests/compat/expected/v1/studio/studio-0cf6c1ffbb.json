@@ -1,0 +1,15 @@
+{
+ "id": "studio-0cf6c1ffbb",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "cnt"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   3
+  ]
+ ]
+}

@@ -1,0 +1,21 @@
+{
+ "id": "robo-ec16d3a6ac",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "nodeId",
+  "nodeLabel",
+  "nodeTitle",
+  "diff",
+  "impactLevel",
+  "appliedAt",
+  "templateData",
+  "appliedNodeId"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "id": "RequirementChange-1"
+ }
+}

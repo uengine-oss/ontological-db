@@ -1,0 +1,20 @@
+{
+ "id": "robo-2923200754",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "name",
+  "type"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Property 1",
+   "Property type 1"
+  ]
+ ],
+ "params": {
+  "agg_id": "Aggregate-1"
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "id": "robo-863a6d5e83",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "BpmTask-1"
+  ]
+ ],
+ "params": {
+  "tid": "BpmTask-1"
+ }
+}

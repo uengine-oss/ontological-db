@@ -1,0 +1,9 @@
+{
+ "id": "analyzer-a9667cec85",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "error": {
+  "code": "Neo.ClientError.Statement.TypeError",
+  "message": "COALESCE types text and bigint cannot be matched"
+ }
+}

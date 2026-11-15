@@ -1,0 +1,36 @@
+{
+ "scenario": "robo-architect-lite:api/features/model_modifier/model_change_application.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-0bf5296f70",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_deleted": 2
+   },
+   "effect": {
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"category\":\"Command category 1\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"name\":\"Command 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UI\"],\"props\":{\"id\":\"UI-1\",\"name\":\"UI 1\"}}",
+      "type": "ATTACHED_TO"
+     },
+     {
+      "end": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 1\",\"description\":\"ReadModel description 1\",\"displayName\":\"ReadModel 1\",\"id\":\"ReadModel-1\",\"isMultipleResult\":true,\"name\":\"ReadModel 1\",\"provisioningType\":\"ReadModel provisioningType 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UI\"],\"props\":{\"id\":\"UI-1\",\"name\":\"UI 1\"}}",
+      "type": "ATTACHED_TO"
+     }
+    ]
+   },
+   "params": {
+    "id": "UI-1"
+   }
+  }
+ ]
+}

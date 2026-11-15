@@ -1,0 +1,58 @@
+{
+ "id": "robo-b4e47d69ea",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "userStory",
+  "boundedContext",
+  "aggregates",
+  "commands",
+  "events"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "action": "cancel my order",
+    "benefit": "I can get a refund if I change my mind",
+    "id": "US-001",
+    "priority": "high",
+    "role": "customer",
+    "status": "approved"
+   },
+   {
+    "description": "주문 생성, 수정, 취소 및 주문 상태 관리",
+    "id": "<uuid1>",
+    "name": "Order"
+   },
+   [
+    {
+     "id": "<uuid2>",
+     "name": "Order",
+     "rootEntity": "Order",
+     "type": "Aggregate"
+    }
+   ],
+   [
+    {
+     "actor": "customer",
+     "id": "<uuid3>",
+     "name": "CancelOrder",
+     "type": "Command"
+    }
+   ],
+   [
+    {
+     "id": "<uuid4>",
+     "name": "OrderCancelled",
+     "type": "Event",
+     "version": "1.0.0"
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "user_story_id": "US-001"
+ }
+}

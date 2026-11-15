@@ -1,0 +1,24 @@
+{
+ "id": "robo-56e02fec83",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "key",
+  "existing_bc"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "rows": [
+   {
+    "bc_id": "compat-bc_id-1",
+    "key": "aggregate-1"
+   },
+   {
+    "bc_id": "compat-bc_id-2",
+    "key": "aggregate-2"
+   }
+  ]
+ }
+}

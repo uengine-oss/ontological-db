@@ -1,0 +1,1040 @@
+{
+ "scenario": "robo-architect-lite:api/features/model_modifier/model_change_application.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-7fa304517a",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "compat-new-Command"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 4,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Command"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "id": "compat-new-Command",
+       "name": "compat-name"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"id\":\"compat-new-Command\",\"name\":\"compat-name\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "HAS_COMMAND"
+     }
+    ]
+   },
+   "params": {
+    "agg_id": "Aggregate-1",
+    "description": "compat-description",
+    "name": "compat-name",
+    "target_id": "compat-new-Command"
+   }
+  },
+  {
+   "id": "robo-bd787dd94c",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "compat-new-Command"
+    ]
+   ],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {},
+   "params": {
+    "description": "compat-description",
+    "name": "compat-name",
+    "target_id": "compat-new-Command"
+   }
+  },
+  {
+   "id": "robo-35aaa5a9b8",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "compat-new-Event"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 5,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Event"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "id": "compat-new-Event",
+       "name": "compat-name",
+       "version": "1"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"id\":\"compat-new-Event\",\"name\":\"compat-name\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "EMITS"
+     }
+    ]
+   },
+   "params": {
+    "cmd_id": "Command-1",
+    "description": "compat-description",
+    "name": "compat-name",
+    "target_id": "compat-new-Event"
+   }
+  },
+  {
+   "id": "robo-53adcdea95",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "compat-new-Event"
+    ]
+   ],
+   "counters": {
+    "properties_set": 4
+   },
+   "effect": {},
+   "params": {
+    "description": "compat-description",
+    "name": "compat-name",
+    "target_id": "compat-new-Event"
+   }
+  },
+  {
+   "id": "robo-f870190b39",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "compat-new-Policy"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 4,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Policy"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "id": "compat-new-Policy",
+       "name": "compat-name"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"id\":\"compat-new-Policy\",\"name\":\"compat-name\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_POLICY"
+     }
+    ]
+   },
+   "params": {
+    "bc_id": "BoundedContext-1",
+    "description": "compat-description",
+    "name": "compat-name",
+    "target_id": "compat-new-Policy"
+   }
+  },
+  {
+   "id": "robo-52a772ad03",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "compat-new-Policy"
+    ]
+   ],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {},
+   "params": {
+    "description": "compat-description",
+    "name": "compat-name",
+    "target_id": "compat-new-Policy"
+   }
+  },
+  {
+   "id": "robo-ce9015b79c",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "compat-new-UI"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 8,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "UI"
+      ],
+      "props": {
+       "attachedToId": "compat-attachedToId",
+       "attachedToName": "compat-attachedToName",
+       "attachedToType": "compat-attachedToType",
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "id": "compat-new-UI",
+       "name": "compat-name",
+       "template": "compat-template"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"attachedToId\":\"compat-attachedToId\",\"attachedToName\":\"compat-attachedToName\",\"attachedToType\":\"compat-attachedToType\",\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"id\":\"compat-new-UI\",\"name\":\"compat-name\",\"template\":\"compat-template\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_UI"
+     }
+    ]
+   },
+   "params": {
+    "attached_to_id": "compat-attachedToId",
+    "attached_to_name": "compat-attachedToName",
+    "attached_to_type": "compat-attachedToType",
+    "bc_id": "BoundedContext-1",
+    "description": "compat-description",
+    "name": "compat-name",
+    "target_id": "compat-new-UI",
+    "template": "compat-template"
+   }
+  },
+  {
+   "id": "robo-90ce30b8e1",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "type": "ATTACHED_TO"
+     }
+    ]
+   },
+   "params": {
+    "attached_to_id": "Command-1",
+    "ui_id": "UI-1"
+   }
+  },
+  {
+   "id": "robo-cb42930e8a",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "compat-new-UI"
+    ]
+   ],
+   "counters": {
+    "properties_set": 7
+   },
+   "effect": {},
+   "params": {
+    "attached_to_id": "compat-attachedToId",
+    "attached_to_name": "compat-attachedToName",
+    "attached_to_type": "compat-attachedToType",
+    "description": "compat-description",
+    "name": "compat-name",
+    "target_id": "compat-new-UI",
+    "template": "compat-template"
+   }
+  },
+  {
+   "id": "robo-0e5af64918",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "Event-1"
+    ]
+   ],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"bc_id\":\"BoundedContext-1\",\"condition\":\"Policy condition 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Policy description 1\",\"displayName\":\"Policy 1\",\"id\":\"Policy-1\",\"key\":\"policy-1\",\"kind\":\"cross_bc\",\"name\":\"Policy 1\",\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "type": "TRIGGERS"
+     }
+    ]
+   },
+   "params": {
+    "source_id": "Event-1",
+    "target_id": "Policy-1"
+   }
+  },
+  {
+   "id": "robo-126f86ee80",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "Policy-1"
+    ]
+   ],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Policy\"],\"props\":{\"bc_id\":\"BoundedContext-1\",\"condition\":\"Policy condition 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Policy description 1\",\"displayName\":\"Policy 1\",\"id\":\"Policy-1\",\"key\":\"policy-1\",\"kind\":\"cross_bc\",\"name\":\"Policy 1\",\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "INVOKES"
+     }
+    ]
+   },
+   "params": {
+    "source_id": "Policy-1",
+    "target_id": "Command-1"
+   }
+  },
+  {
+   "id": "robo-9d6ad427c9",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "Command-1"
+    ]
+   ],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "EMITS"
+     }
+    ]
+   },
+   "params": {
+    "source_id": "Command-1",
+    "target_id": "Event-1"
+   }
+  },
+  {
+   "id": "robo-a9c48e8eeb",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "id": "UI-1",
+    "target_id": "Command-1"
+   }
+  },
+  {
+   "id": "robo-0c46f797b2",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "source_id": "Event-1",
+    "target_id": "Policy-1"
+   }
+  },
+  {
+   "id": "robo-51b8948b52",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "source_id": "Policy-1",
+    "target_id": "Command-1"
+   }
+  },
+  {
+   "id": "robo-2d6ae8f7dc",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "source_id": "Command-1",
+    "target_id": "Event-1"
+   }
+  },
+  {
+   "id": "robo-8c83b683c3",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "REFERENCES"
+     }
+    ]
+   },
+   "params": {
+    "source_id": "Property-1",
+    "target_id": "Property-1"
+   }
+  },
+  {
+   "id": "robo-337240331e",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {},
+   "params": {
+    "description": "compat-description",
+    "id": "compat-new-Command",
+    "name": "compat-name"
+   }
+  },
+  {
+   "id": "robo-f26179feaa",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "HAS_COMMAND"
+     }
+    ]
+   },
+   "params": {
+    "agg_id": "Aggregate-1",
+    "id": "Command-1"
+   }
+  },
+  {
+   "id": "robo-15f4ceabe4",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 4
+   },
+   "effect": {},
+   "params": {
+    "description": "compat-description",
+    "id": "compat-new-Event",
+    "name": "compat-name"
+   }
+  },
+  {
+   "id": "robo-276090c64b",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {
+       "isGuaranteed": true
+      },
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "EMITS"
+     }
+    ]
+   },
+   "params": {
+    "cmd_id": "Command-1",
+    "id": "Event-1"
+   }
+  },
+  {
+   "id": "robo-2b41e41bf3",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {},
+   "params": {
+    "description": "compat-description",
+    "id": "compat-new-Policy",
+    "name": "compat-name"
+   }
+  },
+  {
+   "id": "robo-8169d23a3d",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 9,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Aggregate"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "id": "compat-id",
+       "key": "compat-new-Aggregate",
+       "name": "compat-name",
+       "rootEntity": "compat-rootEntity",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Aggregate\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"id\":\"compat-id\",\"key\":\"compat-new-Aggregate\",\"name\":\"compat-name\",\"rootEntity\":\"compat-rootEntity\",\"updatedAt\":\"<now>\"}}",
+      "props": {
+       "isPrimary": false
+      },
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_AGGREGATE"
+     }
+    ]
+   },
+   "params": {
+    "bc_id": "BoundedContext-1",
+    "description": "compat-description",
+    "id": "compat-id",
+    "key": "compat-new-Aggregate",
+    "name": "compat-name",
+    "root_entity": "compat-rootEntity"
+   }
+  },
+  {
+   "id": "robo-3353952735",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 7
+   },
+   "effect": {},
+   "params": {
+    "attached_to_id": "compat-attachedToId",
+    "attached_to_name": "compat-attachedToName",
+    "attached_to_type": "compat-attachedToType",
+    "description": "compat-description",
+    "id": "compat-new-UI",
+    "name": "compat-name",
+    "template": "compat-template"
+   }
+  },
+  {
+   "id": "robo-4fba130bcb",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 11
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Property"
+      ],
+      "props": {
+       "description": "compat-description",
+       "id": "<uuid>",
+       "isForeignKey": "true",
+       "isKey": "true",
+       "isRequired": "true",
+       "name": "compat-name",
+       "parentId": "compat-parentId",
+       "parentType": "Aggregate",
+       "type": "compat-type"
+      }
+     }
+    ]
+   },
+   "params": {
+    "description": "compat-description",
+    "is_fk": true,
+    "is_key": true,
+    "is_required": true,
+    "name": "compat-name",
+    "parent_id": "compat-parentId",
+    "parent_type": "Aggregate",
+    "type": "compat-type"
+   }
+  },
+  {
+   "id": "robo-dc81221da0",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 10,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "ReadModel"
+      ],
+      "props": {
+       "actor": "compat-actor",
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "id": "compat-id",
+       "isMultipleResult": true,
+       "key": "compat-new-ReadModel",
+       "name": "compat-name",
+       "provisioningType": "compat-provisioningType",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"compat-actor\",\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"id\":\"compat-id\",\"isMultipleResult\":true,\"key\":\"compat-new-ReadModel\",\"name\":\"compat-name\",\"provisioningType\":\"compat-provisioningType\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_READMODEL"
+     }
+    ]
+   },
+   "params": {
+    "actor": "compat-actor",
+    "bc_id": "BoundedContext-1",
+    "description": "compat-description",
+    "id": "compat-id",
+    "is_multiple_result": true,
+    "key": "compat-new-ReadModel",
+    "name": "compat-name",
+    "provisioning_type": "compat-provisioningType"
+   }
+  },
+  {
+   "id": "robo-506adefc62",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_AGGREGATE"
+     }
+    ]
+   },
+   "params": {
+    "bc_id": "BoundedContext-1",
+    "id": "Aggregate-1"
+   }
+  },
+  {
+   "id": "robo-4446f3fa85",
+   "error": {
+    "code": "Neo.ClientError.Statement.SyntaxError",
+    "message": "expected '(' at offset 7, near: …create requires targetType…"
+   }
+  },
+  {
+   "id": "robo-8acf564a11",
+   "error": {
+    "code": "Neo.ClientError.Statement.SyntaxError",
+    "message": "expected '(' at offset 7, near: …create requires targetName…"
+   }
+  },
+  {
+   "id": "robo-ff221a0d41",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid1>"
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"compat-name\",\"source\":\"llm\",\"updatedAt\":\"<now>\"}} <- {\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"정상 회원가입\",\"source\":\"llm\",\"updatedAt\":\"<now>\"}}"
+    ]
+   },
+   "params": {
+    "new_name": "compat-name",
+    "target_id": "<uuid1>"
+   }
+  },
+  {
+   "id": "robo-067e134a91",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid1>"
+    ]
+   ],
+   "counters": {
+    "properties_set": 6
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Journey\"],\"props\":{\"attachedToId\":\"compat-attachedToId\",\"attachedToName\":\"compat-attachedToName\",\"attachedToType\":\"compat-attachedToType\",\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"compat-name\",\"source\":\"llm\",\"template\":\"compat-template\",\"updatedAt\":\"<now>\"}} <- {\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"compat-name\",\"source\":\"llm\",\"updatedAt\":\"<now>\"}}"
+    ]
+   },
+   "params": {
+    "attached_to_id": "compat-attachedToId",
+    "attached_to_name": "compat-attachedToName",
+    "attached_to_type": "compat-attachedToType",
+    "description": "compat-description",
+    "target_id": "<uuid1>",
+    "template": "compat-template"
+   }
+  },
+  {
+   "id": "robo-e663d5e133",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid1>"
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "description": "compat-description",
+    "target_id": "<uuid1>"
+   }
+  },
+  {
+   "id": "robo-d19851c1e7",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid1>"
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Journey\"],\"props\":{\"attachedToId\":\"compat-attachedToId\",\"attachedToName\":\"compat-attachedToName\",\"attachedToType\":\"compat-attachedToType\",\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"deleted\":true,\"deletedAt\":\"<now>\",\"description\":\"compat-description\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"compat-name\",\"source\":\"llm\",\"template\":\"compat-template\",\"updatedAt\":\"<now>\"}} <- {\"labels\":[\"Journey\"],\"props\":{\"attachedToId\":\"compat-attachedToId\",\"attachedToName\":\"compat-attachedToName\",\"attachedToType\":\"compat-attachedToType\",\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"compat-name\",\"source\":\"llm\",\"template\":\"compat-template\",\"updatedAt\":\"<now>\"}}"
+    ]
+   },
+   "params": {
+    "target_id": "<uuid1>"
+   }
+  },
+  {
+   "id": "robo-c5cbc1fc96",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid1>"
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "description": "compat-description",
+    "id": "<uuid1>",
+    "name": "compat-name"
+   }
+  },
+  {
+   "id": "robo-faf5853d59",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid1>"
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "id": "<uuid1>",
+    "name": "compat-name"
+   }
+  },
+  {
+   "id": "robo-7f485d0310",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid1>"
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "id": "<uuid1>"
+   }
+  },
+  {
+   "id": "robo-f0dd460535",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 1,
+    "relationships_deleted": 8
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "Property"
+      ],
+      "props": {
+       "createdAt": "2026-01-11T09:00:00Z",
+       "description": "Property description 1",
+       "displayName": "Property 1",
+       "fkTargetHint": "Property fkTargetHint 1",
+       "id": "Property-1",
+       "isForeignKey": "true",
+       "isKey": "true",
+       "isRequired": "true",
+       "mutability": "Property mutability 1",
+       "name": "Property 1",
+       "parentId": "parentId-1",
+       "parentType": "Property parentType 1",
+       "proposalSource": "Property proposalSource 1",
+       "type": "Property type 1",
+       "updatedAt": "2026-01-11T09:00:00Z"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "HAS_PROPERTY"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"CQRSMapping-1\",\"name\":\"CQRSMapping 1\",\"operationId\":\"operationId-1\",\"sourceType\":\"CQRSMapping sourceType 1\",\"staticValue\":\"CQRSMapping staticValue 1\"}}",
+      "type": "SOURCE"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"CQRSMapping-1\",\"name\":\"CQRSMapping 1\",\"operationId\":\"operationId-1\",\"sourceType\":\"CQRSMapping sourceType 1\",\"staticValue\":\"CQRSMapping staticValue 1\"}}",
+      "type": "TARGET"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"CQRSWhere-1\",\"name\":\"CQRSWhere 1\",\"operationId\":\"operationId-1\",\"operator\":\"CQRSWhere operator 1\"}}",
+      "type": "SOURCE_EVENT_FIELD"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"CQRSWhere-1\",\"name\":\"CQRSWhere 1\",\"operationId\":\"operationId-1\",\"operator\":\"CQRSWhere operator 1\"}}",
+      "type": "TARGET"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "type": "HAS_PROPERTY"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "REFERENCES"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"ReadModel description 1\",\"displayName\":\"ReadModel 1\",\"id\":\"ReadModel-1\",\"isMultipleResult\":true,\"key\":\"readmodel-1\",\"name\":\"ReadModel 1\",\"provisioningType\":\"ReadModel provisioningType 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_PROPERTY"
+     }
+    ]
+   },
+   "params": {
+    "id": "Property-1"
+   }
+  }
+ ]
+}

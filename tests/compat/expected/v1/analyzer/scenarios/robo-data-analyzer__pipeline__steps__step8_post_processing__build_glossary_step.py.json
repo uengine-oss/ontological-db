@@ -1,0 +1,34 @@
+{
+ "scenario": "robo-data-analyzer:pipeline/steps/step8_post_processing/build_glossary_step.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-b3425d227e",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 4
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"GLOSSARY\"],\"props\":{\"graph_owner\":\"analyzer\",\"id\":\"glossary\",\"n_terms\":\"compat-n_terms-2\",\"name\":\"GLOSSARY 1\",\"terms_json\":\"compat-terms_json-2\"}} <- {\"labels\":[\"GLOSSARY\"],\"props\":{\"graph_owner\":\"analyzer\",\"id\":\"glossary\",\"n_terms\":\"GLOSSARY n_terms 1\",\"name\":\"GLOSSARY 1\",\"terms_json\":\"GLOSSARY terms_json 1\"}}"
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "n_terms": "compat-n_terms-1",
+      "terms_json": "compat-terms_json-1"
+     },
+     {
+      "n_terms": "compat-n_terms-2",
+      "terms_json": "compat-terms_json-2"
+     }
+    ]
+   }
+  }
+ ]
+}

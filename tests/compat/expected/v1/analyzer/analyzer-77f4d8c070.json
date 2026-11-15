@@ -1,0 +1,24 @@
+{
+ "id": "analyzer-77f4d8c070",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "procedure_name",
+  "procedure_type",
+  "access_type",
+  "start_line",
+  "end_line",
+  "statement_type",
+  "statement_line",
+  "evidence_line",
+  "file_path",
+  "code_text"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "owner": null,
+  "table_name": "TABLE 1"
+ }
+}

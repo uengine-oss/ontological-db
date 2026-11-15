@@ -1,0 +1,66 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/readmodels.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-58ad959243",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     {
+      "rm_id": "ReadModel-1",
+      "us_id": "UserStory-1"
+     }
+    ],
+    [
+     {
+      "rm_id": "ReadModel-2",
+      "us_id": "UserStory-2"
+     }
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "rows": [
+     {
+      "confidence": 0.9,
+      "readmodel_id": "ReadModel-1",
+      "user_story_id": "UserStory-1"
+     },
+     {
+      "confidence": 0.9,
+      "readmodel_id": "ReadModel-2",
+      "user_story_id": "UserStory-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-8858cb7d17",
+   "columns": [
+    "uid"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "@n1"
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "conf": 0.9,
+    "rmid": "ReadModel-1",
+    "usid": "UserStory-1"
+   }
+  }
+ ]
+}

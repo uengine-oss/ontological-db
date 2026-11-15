@@ -1,0 +1,63 @@
+{
+ "id": "robo-f485e30ff5",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "rule"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "Rule"
+    ],
+    "props": {
+     "confidence": 0.6,
+     "context_cluster": "Rule context_cluster 1",
+     "es_role": "Rule es_role 1",
+     "es_role_confidence": 1,
+     "given": "Rule given 1",
+     "id": "Rule-1",
+     "name": "Rule 1",
+     "session_id": "sess-1",
+     "source_container": "Rule source_container 1",
+     "source_function": "Rule source_function 1",
+     "source_function_id": "source_function_id-1",
+     "source_rule_id": "source_rule_id-1",
+     "title": "Rule 1",
+     "write_effects_json": "Rule write_effects_json 1"
+    }
+   }
+  ],
+  [
+   {
+    "~node": "@n2",
+    "labels": [
+     "Rule"
+    ],
+    "props": {
+     "confidence": 0.7,
+     "context_cluster": "Rule context_cluster 2",
+     "es_role": "Rule es_role 2",
+     "es_role_confidence": 1,
+     "given": "Rule given 2",
+     "id": "Rule-2",
+     "name": "Rule 2",
+     "session_id": "sess-1",
+     "source_container": "Rule source_container 2",
+     "source_function": "Rule source_function 2",
+     "source_function_id": "source_function_id-2",
+     "source_rule_id": "source_rule_id-2",
+     "title": "Rule 2",
+     "write_effects_json": "Rule write_effects_json 2"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

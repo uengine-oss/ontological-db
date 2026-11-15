@@ -1,0 +1,37 @@
+{
+ "id": "studio-515f5dfe0e",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "type",
+  "count"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 6,
+ "rows": [
+  [
+   "ORDERED_FROM",
+   3
+  ],
+  [
+   "PLACED",
+   3
+  ],
+  [
+   "REFERENCES_MFG_PROCESS_STEP",
+   2
+  ],
+  [
+   "REFERENCES_MFG_PRODUCT",
+   2
+  ],
+  [
+   "CONTAINS",
+   1
+  ],
+  [
+   "SAME_AS",
+   1
+  ]
+ ]
+}

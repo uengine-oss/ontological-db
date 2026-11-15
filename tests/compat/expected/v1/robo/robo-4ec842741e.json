@@ -1,0 +1,22 @@
+{
+ "id": "robo-4ec842741e",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "displayName"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "ReadModel-2",
+   "ReadModel 2",
+   "ReadModel 2"
+  ]
+ ],
+ "params": {
+  "srcId": "Event-1"
+ }
+}

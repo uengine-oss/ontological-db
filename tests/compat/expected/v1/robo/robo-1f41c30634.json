@@ -1,0 +1,57 @@
+{
+ "id": "robo-1f41c30634",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "swimlane"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 3,
+ "rows": [
+  [
+   {
+    "actors": [],
+    "bcDescription": "BoundedContext description 1",
+    "bcDisplayName": "BoundedContext 1",
+    "bcId": "BoundedContext-1",
+    "bcName": "BoundedContext 1",
+    "events": []
+   }
+  ],
+  [
+   {
+    "actors": [],
+    "bcDescription": "BoundedContext description 2",
+    "bcDisplayName": "BoundedContext 2",
+    "bcId": "BoundedContext-2",
+    "bcName": "BoundedContext 2",
+    "events": []
+   }
+  ],
+  [
+   {
+    "actors": [
+     "customer",
+     "customer"
+    ],
+    "bcDescription": "주문 생성, 수정, 취소 및 주문 상태 관리",
+    "bcDisplayName": null,
+    "bcId": "<uuid1>",
+    "bcName": "Order",
+    "events": [
+     {
+      "actor": "customer",
+      "aggregateId": "<uuid2>",
+      "aggregateName": "Order",
+      "commandId": "<uuid3>",
+      "commandName": "CancelOrder",
+      "displayName": null,
+      "id": "<uuid4>",
+      "name": "OrderCancelled",
+      "version": "1.0.0"
+     }
+    ]
+   }
+  ]
+ ]
+}

@@ -1,0 +1,20 @@
+{
+ "id": "studio-6be42dfa7d",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "n",
+  "_element_id",
+  "hits"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "limit": 10,
+  "terms": [
+   "acme",
+   "cable"
+  ]
+ }
+}

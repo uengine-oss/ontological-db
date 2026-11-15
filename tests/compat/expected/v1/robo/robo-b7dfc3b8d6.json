@@ -1,0 +1,33 @@
+{
+ "id": "robo-b7dfc3b8d6",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "classification",
+  "version",
+  "aggregates"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "BoundedContext-1",
+   "BoundedContext 1",
+   "BoundedContext classification 1",
+   10,
+   [
+    {
+     "id": null,
+     "name": null,
+     "rootEntity": null,
+     "version": 0
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "bc_id": "BoundedContext-1"
+ }
+}

@@ -1,0 +1,43 @@
+{
+ "id": "analyzer-9272d0b9cd",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "labels",
+  "props"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   [
+    "ANALYZER_OWNED",
+    "COLUMN"
+   ],
+   {
+    "_owner": "analyzer",
+    "analyzed_description": "COLUMN analyzed_description 1",
+    "comment": "COLUMN comment 1",
+    "data_type": "COLUMN data_type 1",
+    "default_value": "COLUMN default_value 1",
+    "description": "",
+    "description_source": "COLUMN description_source 1",
+    "dtype": "COLUMN dtype 1",
+    "graph_owner": "analyzer",
+    "id": "COLUMN-1",
+    "is_primary_key": true,
+    "is_unique": true,
+    "logical_name": "COLUMN logical_name 1",
+    "name": "COLUMN 1",
+    "nullable": true,
+    "primary_key": "COLUMN primary_key 1",
+    "summary": "COLUMN summary 1",
+    "unique": "COLUMN unique 1"
+   }
+  ]
+ ],
+ "params": {
+  "graph_owner": "analyzer",
+  "id": "COLUMN-1"
+ }
+}

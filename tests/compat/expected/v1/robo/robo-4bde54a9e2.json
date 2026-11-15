@@ -1,0 +1,27 @@
+{
+ "id": "robo-4bde54a9e2",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "tid",
+  "rid",
+  "conf"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "BpmTask-1",
+   "Rule-1",
+   null
+  ],
+  [
+   "BpmTask-2",
+   "Rule-2",
+   null
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

@@ -1,0 +1,22 @@
+{
+ "id": "robo-00c5f50499",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "displayName",
+  "description",
+  "bcName"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "UI 1",
+   "UI description 1",
+   ""
+  ]
+ ],
+ "params": {
+  "uid": "UI-1"
+ }
+}

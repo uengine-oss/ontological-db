@@ -1,0 +1,32 @@
+{
+ "id": "robo-dfcacd9acd",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "displayName"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "<uuid1>",
+   "OrderCancelled",
+   null
+  ],
+  [
+   "Event-1",
+   "Event 1",
+   "Event 1"
+  ],
+  [
+   "Event-2",
+   "Event 2",
+   "Event 2"
+  ]
+ ],
+ "params": {
+  "srcId": "Command-1"
+ }
+}

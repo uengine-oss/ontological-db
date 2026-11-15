@@ -1,0 +1,24 @@
+{
+ "id": "robo-676fca0b0a",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "id",
+  "given",
+  "when",
+  "then"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "EXAMPLE-1",
+   "EXAMPLE given 1",
+   "EXAMPLE when_ 1",
+   "EXAMPLE then_ 1"
+  ]
+ ],
+ "params": {
+  "id": "RULE-1"
+ }
+}

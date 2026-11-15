@@ -1,0 +1,16 @@
+{
+ "id": "robo-ce2715fc21",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "description"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "id": "Aggregate-1"
+ }
+}

@@ -1,0 +1,21 @@
+{
+ "id": "robo-7e31d0bd95",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "readmodel"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "id": "ReadModel-1",
+    "name": "ReadModel 1"
+   }
+  ]
+ ],
+ "params": {
+  "context_id": "BoundedContext-1"
+ }
+}

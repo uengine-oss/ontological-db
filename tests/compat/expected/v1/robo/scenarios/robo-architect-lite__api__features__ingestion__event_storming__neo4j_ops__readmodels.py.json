@@ -1,0 +1,259 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/readmodels.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-290ef9d1f3",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     {
+      "actor": "compat-actor-1",
+      "description": "compat-description-1",
+      "displayName": "compat-display_name-1",
+      "id": "<uuid1>",
+      "isMultipleResult": true,
+      "key": "compat-new-ReadModel-1",
+      "name": "compat-name-1",
+      "provisioningType": "compat-provisioning_type-1"
+     }
+    ],
+    [
+     {
+      "actor": "compat-actor-2",
+      "description": "compat-description-2",
+      "displayName": "compat-display_name-2",
+      "id": "<uuid2>",
+      "isMultipleResult": true,
+      "key": "compat-new-ReadModel-2",
+      "name": "compat-name-2",
+      "provisioningType": "compat-provisioning_type-2"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 22,
+    "relationships_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "ReadModel"
+      ],
+      "props": {
+       "actor": "compat-actor-1",
+       "createdAt": "<now>",
+       "description": "compat-description-1",
+       "displayName": "compat-display_name-1",
+       "id": "<uuid>",
+       "isMultipleResult": true,
+       "key": "compat-new-ReadModel-1",
+       "name": "compat-name-1",
+       "provisioningType": "compat-provisioning_type-1",
+       "updatedAt": "<now>"
+      }
+     },
+     {
+      "labels": [
+       "ReadModel"
+      ],
+      "props": {
+       "actor": "compat-actor-2",
+       "createdAt": "<now>",
+       "description": "compat-description-2",
+       "displayName": "compat-display_name-2",
+       "id": "<uuid>",
+       "isMultipleResult": true,
+       "key": "compat-new-ReadModel-2",
+       "name": "compat-name-2",
+       "provisioningType": "compat-provisioning_type-2",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"compat-actor-1\",\"createdAt\":\"<now>\",\"description\":\"compat-description-1\",\"displayName\":\"compat-display_name-1\",\"id\":\"<uuid>\",\"isMultipleResult\":true,\"key\":\"compat-new-ReadModel-1\",\"name\":\"compat-name-1\",\"provisioningType\":\"compat-provisioning_type-1\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_READMODEL"
+     },
+     {
+      "end": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"compat-actor-2\",\"createdAt\":\"<now>\",\"description\":\"compat-description-2\",\"displayName\":\"compat-display_name-2\",\"id\":\"<uuid>\",\"isMultipleResult\":true,\"key\":\"compat-new-ReadModel-2\",\"name\":\"compat-name-2\",\"provisioningType\":\"compat-provisioning_type-2\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 2\",\"businessDecisions\":\"BoundedContext businessDecisions 2\",\"businessModel\":\"BoundedContext businessModel 2\",\"classification\":\"BoundedContext classification 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"BoundedContext description 2\",\"displayName\":\"BoundedContext 2\",\"domainRoles\":\"BoundedContext domainRoles 2\",\"domainType\":\"BoundedContext domainType 2\",\"evolution\":\"BoundedContext evolution 2\",\"id\":\"BoundedContext-2\",\"key\":\"boundedcontext-2\",\"name\":\"BoundedContext 2\",\"owner\":\"BoundedContext owner 2\",\"proposalSource\":\"BoundedContext proposalSource 2\",\"purpose\":\"BoundedContext purpose 2\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":20}}",
+      "type": "HAS_READMODEL"
+     }
+    ]
+   },
+   "params": {
+    "rows": [
+     {
+      "actor": "compat-actor-1",
+      "bc_id": "BoundedContext-1",
+      "description": "compat-description-1",
+      "display_name": "compat-display_name-1",
+      "is_multiple_result": true,
+      "key": "compat-new-ReadModel-1",
+      "name": "compat-name-1",
+      "provisioning_type": "compat-provisioning_type-1"
+     },
+     {
+      "actor": "compat-actor-2",
+      "bc_id": "BoundedContext-2",
+      "description": "compat-description-2",
+      "display_name": "compat-display_name-2",
+      "is_multiple_result": true,
+      "key": "compat-new-ReadModel-2",
+      "name": "compat-name-2",
+      "provisioning_type": "compat-provisioning_type-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-db6ee9cfb9",
+   "columns": [
+    "readmodel"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "actor": "compat-actor",
+      "description": "compat-description",
+      "displayName": "compat-displayName",
+      "id": "<uuid3>",
+      "isMultipleResult": true,
+      "key": "compat-new-ReadModel",
+      "name": "compat-name",
+      "provisioningType": "compat-provisioningType"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 11,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "ReadModel"
+      ],
+      "props": {
+       "actor": "compat-actor",
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "displayName": "compat-displayName",
+       "id": "<uuid>",
+       "isMultipleResult": true,
+       "key": "compat-new-ReadModel",
+       "name": "compat-name",
+       "provisioningType": "compat-provisioningType",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"compat-actor\",\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"displayName\":\"compat-displayName\",\"id\":\"<uuid>\",\"isMultipleResult\":true,\"key\":\"compat-new-ReadModel\",\"name\":\"compat-name\",\"provisioningType\":\"compat-provisioningType\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_READMODEL"
+     }
+    ]
+   },
+   "params": {
+    "actor": "compat-actor",
+    "bc_id": "BoundedContext-1",
+    "description": "compat-description",
+    "display_name": "compat-displayName",
+    "is_multiple_result": true,
+    "key": "compat-new-ReadModel",
+    "name": "compat-name",
+    "provisioning_type": "compat-provisioningType"
+   }
+  },
+  {
+   "id": "robo-502d66ad17",
+   "columns": [
+    "eventId"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "Event-1"
+    ]
+   ],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 6,
+    "relationships_created": 3
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "CQRSConfig"
+      ],
+      "props": {
+       "id": "compat-new-CQRSConfig",
+       "readmodelId": "ReadModel-1"
+      }
+     },
+     {
+      "labels": [
+       "CQRSOperation"
+      ],
+      "props": {
+       "cqrsConfigId": "compat-new-CQRSConfig",
+       "id": "compat-new-CQRSOperation",
+       "operationType": "INSERT",
+       "triggerEventId": "Event-1"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"CQRSConfig\"],\"props\":{\"id\":\"compat-new-CQRSConfig\",\"readmodelId\":\"ReadModel-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"ReadModel description 1\",\"displayName\":\"ReadModel 1\",\"id\":\"ReadModel-1\",\"isMultipleResult\":true,\"key\":\"readmodel-1\",\"name\":\"ReadModel 1\",\"provisioningType\":\"ReadModel provisioningType 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_CQRS"
+     },
+     {
+      "end": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"compat-new-CQRSConfig\",\"id\":\"compat-new-CQRSOperation\",\"operationType\":\"INSERT\",\"triggerEventId\":\"Event-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSConfig\"],\"props\":{\"id\":\"compat-new-CQRSConfig\",\"readmodelId\":\"ReadModel-1\"}}",
+      "type": "HAS_OPERATION"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"compat-new-CQRSConfig\",\"id\":\"compat-new-CQRSOperation\",\"operationType\":\"INSERT\",\"triggerEventId\":\"Event-1\"}}",
+      "type": "TRIGGERED_BY"
+     }
+    ]
+   },
+   "params": {
+    "cqrs_id": "compat-new-CQRSConfig",
+    "evt_id": "Event-1",
+    "op_id": "compat-new-CQRSOperation",
+    "rm_id": "ReadModel-1"
+   }
+  }
+ ]
+}

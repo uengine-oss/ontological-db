@@ -1,0 +1,18 @@
+{
+ "id": "studio-e18febb53e",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "eid",
+  "key",
+  "name",
+  "source_system",
+  "observed"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "limit": 7
+ }
+}

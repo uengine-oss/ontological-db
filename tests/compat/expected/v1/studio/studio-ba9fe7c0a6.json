@@ -1,0 +1,17 @@
+{
+ "id": "studio-ba9fe7c0a6",
+ "graph": "ontology",
+ "kind": "read",
+ "error": {
+  "code": "Neo.ClientError.Statement.TypeError",
+  "message": "COALESCE types text and boolean cannot be matched"
+ },
+ "params": {
+  "datasource": "Table datasource 1",
+  "schema": "Table schema 1",
+  "tables": [
+   "Table 1",
+   "Table 2"
+  ]
+ }
+}

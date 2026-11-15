@@ -1,0 +1,49 @@
+{
+ "id": "robo-01ae8482bf",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "bc"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "BoundedContext"
+    ],
+    "props": {
+     "assumptions": "BoundedContext assumptions 1",
+     "businessDecisions": "BoundedContext businessDecisions 1",
+     "businessModel": "BoundedContext businessModel 1",
+     "classification": "BoundedContext classification 1",
+     "createdAt": "2026-01-11T09:00:00Z",
+     "description": "BoundedContext description 1",
+     "displayName": "BoundedContext 1",
+     "domainRoles": "BoundedContext domainRoles 1",
+     "domainType": "BoundedContext domainType 1",
+     "evolution": "BoundedContext evolution 1",
+     "id": "BoundedContext-1",
+     "key": "boundedcontext-1",
+     "name": "BoundedContext 1",
+     "owner": "BoundedContext owner 1",
+     "proposalSource": "BoundedContext proposalSource 1",
+     "purpose": "BoundedContext purpose 1",
+     "session_id": "sess-1",
+     "ubiquitousLanguage": "BoundedContext ubiquitousLanguage 1",
+     "updatedAt": "2026-01-11T09:00:00Z",
+     "userStoryIds": [
+      "US-001",
+      "UserStory-1"
+     ],
+     "version": 10
+    }
+   }
+  ]
+ ],
+ "params": {
+  "bc_id": "BoundedContext-1"
+ }
+}

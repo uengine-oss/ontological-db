@@ -1,0 +1,53 @@
+{
+ "id": "robo-78769e72ad",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "n"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "BpmTask"
+    ],
+    "props": {
+     "conditions": "BpmTask conditions 1",
+     "description": "BpmTask description 1",
+     "id": "BpmTask-1",
+     "name": "BpmTask 1",
+     "process_id": "BpmProcess-1",
+     "sequence_index": "BpmTask sequence_index 1",
+     "session_id": "sess-1",
+     "source_page": "BpmTask source_page 1",
+     "source_section": "BpmTask source_section 1"
+    }
+   }
+  ],
+  [
+   {
+    "~node": "@n2",
+    "labels": [
+     "BpmTask"
+    ],
+    "props": {
+     "conditions": "BpmTask conditions 2",
+     "description": "BpmTask description 2",
+     "id": "BpmTask-2",
+     "name": "BpmTask 2",
+     "process_id": "BpmProcess-2",
+     "sequence_index": "BpmTask sequence_index 2",
+     "session_id": "sess-1",
+     "source_page": "BpmTask source_page 2",
+     "source_section": "BpmTask source_section 2"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

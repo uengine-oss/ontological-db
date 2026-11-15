@@ -1,0 +1,29 @@
+{
+ "id": "analyzer-734f7725c9",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "dtype",
+  "is_primary_key",
+  "logical_name",
+  "description"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "COLUMN-1",
+   "COLUMN 1",
+   "COLUMN dtype 1",
+   true,
+   "COLUMN logical_name 1",
+   "COLUMN analyzed_description 1"
+  ]
+ ],
+ "params": {
+  "graph_owner": "analyzer",
+  "id": "TABLE-1"
+ }
+}

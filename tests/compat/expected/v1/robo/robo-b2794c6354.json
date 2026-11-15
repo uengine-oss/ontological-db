@@ -1,0 +1,49 @@
+{
+ "id": "robo-b2794c6354",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "e"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "BindingHistoryEvent"
+    ],
+    "props": {
+     "actor": "BindingHistoryEvent actor 2",
+     "at": "BindingHistoryEvent at 2",
+     "eventType": "BindingHistoryEvent eventType 2",
+     "figmaFileKey": "BindingHistoryEvent figmaFileKey 2",
+     "id": "BindingHistoryEvent-2",
+     "name": "BindingHistoryEvent 2",
+     "payload": "BindingHistoryEvent payload 2"
+    }
+   }
+  ],
+  [
+   {
+    "~node": "@n2",
+    "labels": [
+     "BindingHistoryEvent"
+    ],
+    "props": {
+     "actor": "BindingHistoryEvent actor 1",
+     "at": "BindingHistoryEvent at 1",
+     "eventType": "BindingHistoryEvent eventType 1",
+     "figmaFileKey": "BindingHistoryEvent figmaFileKey 1",
+     "id": "BindingHistoryEvent-1",
+     "name": "BindingHistoryEvent 1",
+     "payload": "BindingHistoryEvent payload 1"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "lim": 10
+ }
+}

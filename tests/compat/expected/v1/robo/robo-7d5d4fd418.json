@@ -1,0 +1,50 @@
+{
+ "id": "robo-7d5d4fd418",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "q",
+  "task_ids"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "BpmSequence"
+    ],
+    "props": {
+     "id": "BpmSequence-1",
+     "name": "BpmSequence 1",
+     "process_id": "BpmProcess-1",
+     "session_id": "sess-1"
+    }
+   },
+   [
+    "BpmTask-1"
+   ]
+  ],
+  [
+   {
+    "~node": "@n2",
+    "labels": [
+     "BpmSequence"
+    ],
+    "props": {
+     "id": "BpmSequence-2",
+     "name": "BpmSequence 2",
+     "process_id": "BpmProcess-2",
+     "session_id": "sess-1"
+    }
+   },
+   [
+    "BpmTask-2"
+   ]
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

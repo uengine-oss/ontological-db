@@ -1,0 +1,33 @@
+{
+ "id": "robo-3224d16734",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "pol",
+  "triggerEventId",
+  "invokeCommandId"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "Policy"
+    ],
+    "props": {
+     "description": "Policy description 1",
+     "displayName": "Policy 1",
+     "id": "Policy-1",
+     "name": "Policy 1"
+    }
+   },
+   "Event-1",
+   "Command-1"
+  ]
+ ],
+ "params": {
+  "node_id": "BoundedContext-1"
+ }
+}

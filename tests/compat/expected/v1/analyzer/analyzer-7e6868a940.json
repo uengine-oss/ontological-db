@@ -1,0 +1,32 @@
+{
+ "id": "analyzer-7e6868a940",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "name",
+  "schema",
+  "datasource",
+  "logical_name",
+  "description",
+  "summary",
+  "column_count"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "TABLE 1",
+   "TABLE schema 1",
+   "TABLE datasource 1",
+   "TABLE logical_name 1",
+   "",
+   "TABLE summary 1",
+   1
+  ]
+ ],
+ "params": {
+  "limit": 10,
+  "owner": "analyzer",
+  "schema": "TABLE schema 1"
+ }
+}

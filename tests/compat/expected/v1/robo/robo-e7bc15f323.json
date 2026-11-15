@@ -1,0 +1,81 @@
+{
+ "id": "robo-e7bc15f323",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "agg",
+  "cmd",
+  "evt",
+  "rel1",
+  "rel2",
+  "rel3"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "Aggregate"
+    ],
+    "props": {
+     "displayName": "Aggregate 1",
+     "enumerations": "Aggregate enumerations 1",
+     "id": "Aggregate-1",
+     "invariants": "Aggregate invariants 1",
+     "name": "Aggregate 1",
+     "rootEntity": "Aggregate rootEntity 1",
+     "valueObjects": "Aggregate valueObjects 1"
+    }
+   },
+   {
+    "~node": "@n2",
+    "labels": [
+     "Command"
+    ],
+    "props": {
+     "actor": "Command actor 1",
+     "category": "Command category 1",
+     "description": "Command description 1",
+     "displayName": "Command 1",
+     "id": "Command-1",
+     "inputSchema": "Command inputSchema 1",
+     "name": "Command 1"
+    }
+   },
+   {
+    "~node": "@n3",
+    "labels": [
+     "Event"
+    ],
+    "props": {
+     "description": "Event description 1",
+     "displayName": "Event 1",
+     "id": "Event-1",
+     "name": "Event 1",
+     "schema": "Event schema 1",
+     "version": 10
+    }
+   },
+   {
+    "source": "BoundedContext-1",
+    "target": "Aggregate-1",
+    "type": "HAS_AGGREGATE"
+   },
+   {
+    "source": "Aggregate-1",
+    "target": "Command-1",
+    "type": "HAS_COMMAND"
+   },
+   {
+    "source": "Command-1",
+    "target": "Event-1",
+    "type": "EMITS"
+   }
+  ]
+ ],
+ "params": {
+  "node_id": "BoundedContext-1"
+ }
+}

@@ -1,0 +1,22 @@
+{
+ "id": "studio-a14b2e9ad1",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "name",
+  "grade",
+  "credit_limit"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Daesung Cable",
+   "A",
+   5000
+  ]
+ ],
+ "params": {
+  "grade": "A"
+ }
+}

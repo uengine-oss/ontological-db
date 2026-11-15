@@ -1,0 +1,27 @@
+{
+ "id": "robo-b8ca037f30",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "rid",
+  "tname",
+  "dir"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "Rule-1",
+   "ExternalTable 1",
+   null
+  ],
+  [
+   "Rule-2",
+   "ExternalTable 2",
+   null
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

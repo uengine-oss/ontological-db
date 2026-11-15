@@ -1,0 +1,25 @@
+{
+ "id": "studio-936c009603",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "from_table",
+  "from_column",
+  "to_table",
+  "to_column"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Table 1",
+   "",
+   "Table 1",
+   ""
+  ]
+ ],
+ "params": {
+  "datasource": "Table datasource 1",
+  "schema": "Table schema 1"
+ }
+}

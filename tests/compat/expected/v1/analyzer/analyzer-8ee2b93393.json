@@ -1,0 +1,37 @@
+{
+ "id": "analyzer-8ee2b93393",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "from_table",
+  "from_schema",
+  "from_desc",
+  "to_table",
+  "to_schema",
+  "to_desc",
+  "source_column",
+  "target_column",
+  "source",
+  "rel_type"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "TABLE 1",
+   "TABLE schema_name 1",
+   "",
+   "TABLE 1",
+   "TABLE schema_name 1",
+   "",
+   null,
+   null,
+   null,
+   "FK"
+  ]
+ ],
+ "params": {
+  "owner": "analyzer",
+  "table_name": "TABLE 1"
+ }
+}

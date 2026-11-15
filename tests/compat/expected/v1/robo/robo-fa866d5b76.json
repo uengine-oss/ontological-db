@@ -1,0 +1,200 @@
+{
+ "id": "robo-fa866d5b76",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "stats"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   [
+    {
+     "count": 1,
+     "label": "Requirement"
+    },
+    {
+     "count": 2,
+     "label": "ActivityMapping"
+    },
+    {
+     "count": 2,
+     "label": "BindingHistoryEvent"
+    },
+    {
+     "count": 2,
+     "label": "BpmActor"
+    },
+    {
+     "count": 2,
+     "label": "BpmGateway"
+    },
+    {
+     "count": 2,
+     "label": "BpmProcess"
+    },
+    {
+     "count": 2,
+     "label": "BpmSequence"
+    },
+    {
+     "count": 2,
+     "label": "BpmSession"
+    },
+    {
+     "count": 2,
+     "label": "BpmTask"
+    },
+    {
+     "count": 2,
+     "label": "BusinessLogic"
+    },
+    {
+     "count": 2,
+     "label": "CQRSConfig"
+    },
+    {
+     "count": 2,
+     "label": "CQRSMapping"
+    },
+    {
+     "count": 2,
+     "label": "CQRSOperation"
+    },
+    {
+     "count": 2,
+     "label": "CQRSWhere"
+    },
+    {
+     "count": 2,
+     "label": "Constitution"
+    },
+    {
+     "count": 2,
+     "label": "DeletionRecord"
+    },
+    {
+     "count": 2,
+     "label": "DocumentPassage"
+    },
+    {
+     "count": 2,
+     "label": "EditHistory"
+    },
+    {
+     "count": 2,
+     "label": "FigmaBinding"
+    },
+    {
+     "count": 2,
+     "label": "FigmaComponent"
+    },
+    {
+     "count": 2,
+     "label": "GlossaryTerm"
+    },
+    {
+     "count": 2,
+     "label": "Policy"
+    },
+    {
+     "count": 2,
+     "label": "Process"
+    },
+    {
+     "count": 2,
+     "label": "Proposal"
+    },
+    {
+     "count": 2,
+     "label": "ReadModel"
+    },
+    {
+     "count": 2,
+     "label": "Role"
+    },
+    {
+     "count": 2,
+     "label": "Rule"
+    },
+    {
+     "count": 2,
+     "label": "StoryboardPageMapping"
+    },
+    {
+     "count": 2,
+     "label": "SyncRun"
+    },
+    {
+     "count": 2,
+     "label": "Task"
+    },
+    {
+     "count": 2,
+     "label": "Test"
+    },
+    {
+     "count": 3,
+     "label": "Aggregate"
+    },
+    {
+     "count": 3,
+     "label": "BoundedContext"
+    },
+    {
+     "count": 3,
+     "label": "ChangeSet"
+    },
+    {
+     "count": 3,
+     "label": "Command"
+    },
+    {
+     "count": 3,
+     "label": "Event"
+    },
+    {
+     "count": 3,
+     "label": "Feature"
+    },
+    {
+     "count": 3,
+     "label": "Given"
+    },
+    {
+     "count": 3,
+     "label": "ImplementationFile"
+    },
+    {
+     "count": 3,
+     "label": "Invariant"
+    },
+    {
+     "count": 3,
+     "label": "Journey"
+    },
+    {
+     "count": 3,
+     "label": "JourneyStep"
+    },
+    {
+     "count": 3,
+     "label": "Property"
+    },
+    {
+     "count": 3,
+     "label": "RequirementChange"
+    },
+    {
+     "count": 3,
+     "label": "UI"
+    },
+    {
+     "count": 3,
+     "label": "UserStory"
+    }
+   ]
+  ]
+ ]
+}

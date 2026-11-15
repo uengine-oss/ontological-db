@@ -1,0 +1,14 @@
+{
+ "id": "robo-374ca73247",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "user_story"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "bc_id": "BoundedContext-1"
+ }
+}

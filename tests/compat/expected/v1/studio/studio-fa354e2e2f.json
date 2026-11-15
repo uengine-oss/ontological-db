@@ -1,0 +1,15 @@
+{
+ "id": "studio-fa354e2e2f",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "confs"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "a": "cust-1",
+  "b": "cust-2"
+ }
+}

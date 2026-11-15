@@ -1,0 +1,15 @@
+{
+ "id": "robo-da22e4f8a0",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "author"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "id": "CS-001"
+ }
+}

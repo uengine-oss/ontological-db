@@ -1,0 +1,18 @@
+{
+ "id": "robo-bb2e8ddd00",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "refs"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Proposal legacyReferences 1"
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

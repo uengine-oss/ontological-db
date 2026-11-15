@@ -1,0 +1,57 @@
+{
+ "scenario": "robo-data-analyzer:graph/node_upsert.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-67f14a7dc6",
+   "columns": [
+    "created"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     2
+    ]
+   ],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 8
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "RULE"
+      ],
+      "props": {
+       "graph_owner": "analyzer",
+       "id": "compat-new-RULE-1"
+      }
+     },
+     {
+      "labels": [
+       "RULE"
+      ],
+      "props": {
+       "graph_owner": "analyzer",
+       "id": "compat-new-RULE-2"
+      }
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "id": "compat-new-RULE-1"
+     },
+     {
+      "id": "compat-new-RULE-2"
+     }
+    ]
+   }
+  }
+ ]
+}

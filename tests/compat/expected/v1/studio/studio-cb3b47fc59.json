@@ -1,0 +1,1211 @@
+{
+ "id": "studio-cb3b47fc59",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "value"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "CONTAINS": {
+     "count": 1,
+     "properties": {},
+     "type": "relationship"
+    },
+    "Chunk": {
+     "count": 2,
+     "labels": [],
+     "properties": {
+      "chunk_id": {
+       "existence": false,
+       "indexed": true,
+       "type": "STRING",
+       "unique": false
+      },
+      "chunk_ref": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "document_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "embedding": {
+       "existence": false,
+       "indexed": true,
+       "type": "VECTOR",
+       "unique": false
+      },
+      "source_page": {
+       "existence": false,
+       "indexed": false,
+       "type": "INTEGER",
+       "unique": false
+      },
+      "source_text": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "HAS_CHUNK": {
+       "count": 2,
+       "direction": "in",
+       "labels": [
+        "Document"
+       ],
+       "properties": {}
+      },
+      "NEXT_CHUNK": {
+       "count": 1,
+       "direction": "out",
+       "labels": [
+        "Chunk"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    },
+    "Column": {
+     "count": 2,
+     "labels": [],
+     "properties": {
+      "description": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "dtype": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "is_primary_key": {
+       "existence": false,
+       "indexed": false,
+       "type": "BOOLEAN",
+       "unique": false
+      },
+      "name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "nullable": {
+       "existence": false,
+       "indexed": false,
+       "type": "BOOLEAN",
+       "unique": false
+      },
+      "ordinal_position": {
+       "existence": false,
+       "indexed": false,
+       "type": "INTEGER",
+       "unique": false
+      },
+      "primary_key": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "type": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "HAS_COLUMN": {
+       "count": 2,
+       "direction": "in",
+       "labels": [
+        "Table"
+       ],
+       "properties": {}
+      },
+      "REFERENCES": {
+       "count": 2,
+       "direction": "out",
+       "labels": [
+        "Column"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    },
+    "Customer": {
+     "count": 3,
+     "labels": [],
+     "properties": {
+      "_source_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "_source_system": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "content": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "credit_limit": {
+       "existence": false,
+       "indexed": false,
+       "type": "INTEGER",
+       "unique": false
+      },
+      "customer_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "email": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "embedding": {
+       "existence": false,
+       "indexed": true,
+       "type": "VECTOR",
+       "unique": false
+      },
+      "grade": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "number": {
+       "existence": false,
+       "indexed": false,
+       "type": "INTEGER",
+       "unique": false
+      },
+      "title": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "PLACED": {
+       "count": 3,
+       "direction": "out",
+       "labels": [
+        "PurchaseOrder"
+       ],
+       "properties": {
+        "_confidence": {
+         "existence": false,
+         "indexed": false,
+         "type": "FLOAT",
+         "unique": false
+        },
+        "channel": {
+         "existence": false,
+         "indexed": false,
+         "type": "STRING",
+         "unique": false
+        }
+       }
+      },
+      "SAME_AS": {
+       "count": 1,
+       "direction": "out",
+       "labels": [
+        "Customer"
+       ],
+       "properties": {
+        "_confidence": {
+         "existence": false,
+         "indexed": false,
+         "type": "FLOAT",
+         "unique": false
+        },
+        "method": {
+         "existence": false,
+         "indexed": false,
+         "type": "STRING",
+         "unique": false
+        }
+       }
+      }
+     },
+     "type": "node"
+    },
+    "Document": {
+     "count": 1,
+     "labels": [],
+     "properties": {
+      "document_id": {
+       "existence": false,
+       "indexed": true,
+       "type": "STRING",
+       "unique": false
+      },
+      "file_name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "source_path": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "HAS_CHUNK": {
+       "count": 2,
+       "direction": "out",
+       "labels": [
+        "Chunk"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    },
+    "ErpPurchaseOrder": {
+     "count": 0,
+     "labels": [],
+     "properties": {
+      "amount": {
+       "existence": false,
+       "indexed": false,
+       "type": "INTEGER",
+       "unique": false
+      },
+      "ordered_on": {
+       "existence": false,
+       "indexed": false,
+       "type": "DATE",
+       "unique": false
+      },
+      "po_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "status": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "supplier_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {},
+     "type": "node"
+    },
+    "ErpSupplier": {
+     "count": 0,
+     "labels": [],
+     "properties": {
+      "city": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "rating": {
+       "existence": false,
+       "indexed": false,
+       "type": "FLOAT",
+       "unique": false
+      },
+      "supplier_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {},
+     "type": "node"
+    },
+    "FK_TO_TABLE": {
+     "count": 2,
+     "properties": {},
+     "type": "relationship"
+    },
+    "HAS_ACTION": {
+     "count": 1,
+     "properties": {},
+     "type": "relationship"
+    },
+    "HAS_BEHAVIOR": {
+     "count": 2,
+     "properties": {},
+     "type": "relationship"
+    },
+    "HAS_BINDING": {
+     "count": 2,
+     "properties": {},
+     "type": "relationship"
+    },
+    "HAS_CHUNK": {
+     "count": 2,
+     "properties": {},
+     "type": "relationship"
+    },
+    "HAS_CLASS": {
+     "count": 4,
+     "properties": {},
+     "type": "relationship"
+    },
+    "HAS_COLUMN": {
+     "count": 2,
+     "properties": {},
+     "type": "relationship"
+    },
+    "HAS_RELATIONSHIP": {
+     "count": 2,
+     "properties": {},
+     "type": "relationship"
+    },
+    "MfgProcessStep": {
+     "count": 2,
+     "labels": [],
+     "properties": {
+      "embedding": {
+       "existence": false,
+       "indexed": false,
+       "type": "VECTOR",
+       "unique": false
+      },
+      "id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "step_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "step_name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "REFERENCES_MFG_PROCESS_STEP": {
+       "count": 2,
+       "direction": "in",
+       "labels": [
+        "MfgProductRouting"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    },
+    "MfgProduct": {
+     "count": 2,
+     "labels": [],
+     "properties": {
+      "embedding": {
+       "existence": false,
+       "indexed": false,
+       "type": "VECTOR",
+       "unique": false
+      },
+      "id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "product_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "REFERENCES_MFG_PRODUCT": {
+       "count": 2,
+       "direction": "out",
+       "labels": [
+        "MfgProductRouting"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    },
+    "MfgProductRouting": {
+     "count": 2,
+     "labels": [],
+     "properties": {
+      "embedding": {
+       "existence": false,
+       "indexed": false,
+       "type": "VECTOR",
+       "unique": false
+      },
+      "id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "REFERENCES_MFG_PROCESS_STEP": {
+       "count": 2,
+       "direction": "out",
+       "labels": [
+        "MfgProcessStep"
+       ],
+       "properties": {}
+      },
+      "REFERENCES_MFG_PRODUCT": {
+       "count": 2,
+       "direction": "in",
+       "labels": [
+        "MfgProduct"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    },
+    "NEXT_CHUNK": {
+     "count": 1,
+     "properties": {},
+     "type": "relationship"
+    },
+    "ORDERED_FROM": {
+     "count": 3,
+     "properties": {},
+     "type": "relationship"
+    },
+    "PLACED": {
+     "count": 3,
+     "properties": {
+      "_confidence": {
+       "existence": false,
+       "indexed": false,
+       "type": "FLOAT",
+       "unique": false
+      },
+      "channel": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "type": "relationship"
+    },
+    "PurchaseOrder": {
+     "count": 3,
+     "labels": [],
+     "properties": {
+      "_source_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "amount": {
+       "existence": false,
+       "indexed": false,
+       "type": "INTEGER",
+       "unique": false
+      },
+      "embedding": {
+       "existence": false,
+       "indexed": true,
+       "type": "VECTOR",
+       "unique": false
+      },
+      "name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "number": {
+       "existence": false,
+       "indexed": false,
+       "type": "INTEGER",
+       "unique": false
+      },
+      "po_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "status": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "CONTAINS": {
+       "count": 1,
+       "direction": "in",
+       "labels": [
+        "Supplier"
+       ],
+       "properties": {}
+      },
+      "ORDERED_FROM": {
+       "count": 3,
+       "direction": "out",
+       "labels": [
+        "Supplier"
+       ],
+       "properties": {}
+      },
+      "PLACED": {
+       "count": 3,
+       "direction": "in",
+       "labels": [
+        "Customer"
+       ],
+       "properties": {
+        "_confidence": {
+         "existence": false,
+         "indexed": false,
+         "type": "FLOAT",
+         "unique": false
+        },
+        "channel": {
+         "existence": false,
+         "indexed": false,
+         "type": "STRING",
+         "unique": false
+        }
+       }
+      }
+     },
+     "type": "node"
+    },
+    "REFERENCES": {
+     "count": 2,
+     "properties": {},
+     "type": "relationship"
+    },
+    "REFERENCES_MFG_PROCESS_STEP": {
+     "count": 2,
+     "properties": {},
+     "type": "relationship"
+    },
+    "REFERENCES_MFG_PRODUCT": {
+     "count": 2,
+     "properties": {},
+     "type": "relationship"
+    },
+    "SAME_AS": {
+     "count": 1,
+     "properties": {
+      "_confidence": {
+       "existence": false,
+       "indexed": false,
+       "type": "FLOAT",
+       "unique": false
+      },
+      "method": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "type": "relationship"
+    },
+    "SUPPLIED_BY": {
+     "count": 0,
+     "properties": {},
+     "type": "relationship"
+    },
+    "Supplier": {
+     "count": 2,
+     "labels": [],
+     "properties": {
+      "_source_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "embedding": {
+       "existence": false,
+       "indexed": true,
+       "type": "VECTOR",
+       "unique": false
+      },
+      "name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "number": {
+       "existence": false,
+       "indexed": false,
+       "type": "INTEGER",
+       "unique": false
+      },
+      "rating": {
+       "existence": false,
+       "indexed": false,
+       "type": "FLOAT",
+       "unique": false
+      },
+      "supplier_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "title": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "CONTAINS": {
+       "count": 1,
+       "direction": "out",
+       "labels": [
+        "PurchaseOrder"
+       ],
+       "properties": {}
+      },
+      "ORDERED_FROM": {
+       "count": 3,
+       "direction": "in",
+       "labels": [
+        "PurchaseOrder"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    },
+    "Table": {
+     "count": 2,
+     "labels": [],
+     "properties": {
+      "datasource": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "db": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "description": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "schema": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "FK_TO_TABLE": {
+       "count": 2,
+       "direction": "out",
+       "labels": [
+        "Table"
+       ],
+       "properties": {}
+      },
+      "HAS_COLUMN": {
+       "count": 2,
+       "direction": "out",
+       "labels": [
+        "Column"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    },
+    "_Entity": {
+     "count": 0,
+     "labels": [],
+     "properties": {},
+     "relationships": {},
+     "type": "node"
+    },
+    "_OntologyBehavior": {
+     "count": 3,
+     "labels": [],
+     "properties": {
+      "behavior_name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "behavior_type": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "class_name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "cypher_template": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "description": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "golden_question": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "max_rows": {
+       "existence": false,
+       "indexed": false,
+       "type": "INTEGER",
+       "unique": false
+      },
+      "output_columns": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "parameters": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "result_kind": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "sql_template": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "HAS_ACTION": {
+       "count": 1,
+       "direction": "in",
+       "labels": [
+        "_OntologyClass"
+       ],
+       "properties": {}
+      },
+      "HAS_BEHAVIOR": {
+       "count": 2,
+       "direction": "in",
+       "labels": [
+        "_OntologyClass",
+        "_OntologyBinding"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    },
+    "_OntologyBinding": {
+     "count": 2,
+     "labels": [],
+     "properties": {
+      "base_conditions": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "class_name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "column_map": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "datasource": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "default_limit": {
+       "existence": false,
+       "indexed": false,
+       "type": "INTEGER",
+       "unique": false
+      },
+      "extra_tables": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "key_columns": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "label_property": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "source_schema": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "table_name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "virtual_node": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "HAS_BEHAVIOR": {
+       "count": 2,
+       "direction": "out",
+       "labels": [
+        "_OntologyBehavior"
+       ],
+       "properties": {}
+      },
+      "HAS_BINDING": {
+       "count": 2,
+       "direction": "in",
+       "labels": [
+        "_OntologyClass"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    },
+    "_OntologyClass": {
+     "count": 4,
+     "labels": [],
+     "properties": {
+      "binding_kind": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "certified": {
+       "existence": false,
+       "indexed": false,
+       "type": "BOOLEAN",
+       "unique": false
+      },
+      "class_name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "description": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "properties": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "HAS_ACTION": {
+       "count": 1,
+       "direction": "out",
+       "labels": [
+        "_OntologyBehavior"
+       ],
+       "properties": {}
+      },
+      "HAS_BEHAVIOR": {
+       "count": 2,
+       "direction": "out",
+       "labels": [
+        "_OntologyBehavior"
+       ],
+       "properties": {}
+      },
+      "HAS_BINDING": {
+       "count": 2,
+       "direction": "out",
+       "labels": [
+        "_OntologyBinding"
+       ],
+       "properties": {}
+      },
+      "HAS_CLASS": {
+       "count": 4,
+       "direction": "in",
+       "labels": [
+        "_OntologyModel"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    },
+    "_OntologyModel": {
+     "count": 2,
+     "labels": [],
+     "properties": {
+      "description": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "golden_cypher": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "golden_questions": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "intent": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "schema_id": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "HAS_CLASS": {
+       "count": 4,
+       "direction": "out",
+       "labels": [
+        "_OntologyClass"
+       ],
+       "properties": {}
+      },
+      "HAS_RELATIONSHIP": {
+       "count": 2,
+       "direction": "out",
+       "labels": [
+        "_OntologyRelationship"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    },
+    "_OntologyRelationship": {
+     "count": 2,
+     "labels": [],
+     "properties": {
+      "description": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "from_class": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "name": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "properties": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      },
+      "to_class": {
+       "existence": false,
+       "indexed": false,
+       "type": "STRING",
+       "unique": false
+      }
+     },
+     "relationships": {
+      "HAS_RELATIONSHIP": {
+       "count": 2,
+       "direction": "in",
+       "labels": [
+        "_OntologyModel"
+       ],
+       "properties": {}
+      }
+     },
+     "type": "node"
+    }
+   }
+  ]
+ ]
+}

@@ -1,0 +1,21 @@
+{
+ "id": "robo-43a6bb8387",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "hist"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "CHG-001",
+   "[]"
+  ]
+ ],
+ "params": {
+  "id": "CS-001",
+  "s": "DRAFT"
+ }
+}

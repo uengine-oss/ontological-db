@@ -1,0 +1,15 @@
+{
+ "id": "robo-7a01b6b927",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "bc_data"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "bc_id": "BoundedContext-1",
+  "session_id": "compat-session_id"
+ }
+}

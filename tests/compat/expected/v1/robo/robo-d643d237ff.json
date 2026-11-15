@@ -1,0 +1,18 @@
+{
+ "id": "robo-d643d237ff",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Proposal-1"
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

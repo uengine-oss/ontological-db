@@ -1,0 +1,20 @@
+{
+ "id": "robo-6a652997aa",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "prompt",
+  "sd"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Proposal originalPrompt 1",
+   "Proposal strategicDiff 1"
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

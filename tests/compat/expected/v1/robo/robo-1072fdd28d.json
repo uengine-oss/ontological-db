@@ -1,0 +1,14 @@
+{
+ "id": "robo-1072fdd28d",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "fqn",
+  "name",
+  "summary",
+  "stereotype"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": []
+}

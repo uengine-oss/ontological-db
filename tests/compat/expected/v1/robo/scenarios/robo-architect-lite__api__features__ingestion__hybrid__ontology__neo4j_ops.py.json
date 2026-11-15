@@ -1,0 +1,870 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/hybrid/ontology/neo4j_ops.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-d0f7e96a28",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 6
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "BpmProcess"
+      ],
+      "props": {
+       "domain_keywords": "compat-domain_keywords",
+       "id": "compat-new-BpmProcess",
+       "name": "compat-name",
+       "session_id": "compat-session_id",
+       "source_pdf_name": "compat-source_pdf_name",
+       "updated_at": "<now>"
+      }
+     }
+    ]
+   },
+   "params": {
+    "id": "compat-new-BpmProcess",
+    "keywords": "compat-domain_keywords",
+    "name": "compat-name",
+    "pdf_name": "compat-source_pdf_name",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-bdbec76a43",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 4
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "BpmSession"
+      ],
+      "props": {
+       "bpmn_xml": "compat-bpmn_xml",
+       "id": "compat-new-BpmSession",
+       "session_id": "compat-new-BpmSession",
+       "updated_at": "<now>"
+      }
+     }
+    ]
+   },
+   "params": {
+    "sid": "compat-new-BpmSession",
+    "xml": "compat-bpmn_xml"
+   }
+  },
+  {
+   "id": "robo-5e02fec29d",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 6
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"BpmProcess\"],\"props\":{\"bpmn_xml\":\"compat-bpmn_xml\",\"description\":\"compat-description\",\"domain_keywords\":\"compat-domain_keywords\",\"id\":\"compat-new-BpmProcess\",\"name\":\"compat-name\",\"session_id\":\"compat-session_id\",\"source_pdf_name\":\"compat-source_pdf_name\",\"updated_at\":\"<now>\"}} <- {\"labels\":[\"BpmProcess\"],\"props\":{\"domain_keywords\":\"compat-domain_keywords\",\"id\":\"compat-new-BpmProcess\",\"name\":\"compat-name\",\"session_id\":\"compat-session_id\",\"source_pdf_name\":\"compat-source_pdf_name\",\"updated_at\":\"<now>\"}}"
+    ]
+   },
+   "params": {
+    "desc": "compat-description",
+    "id": "compat-new-BpmProcess",
+    "keywords": "compat-domain_keywords",
+    "name": "compat-name",
+    "pdf_name": "compat-source_pdf_name",
+    "sid": "compat-session_id",
+    "xml": "compat-bpmn_xml"
+   }
+  },
+  {
+   "id": "robo-b5df00cb3c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 5
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "BpmActor"
+      ],
+      "props": {
+       "description": "compat-description",
+       "id": "compat-new-BpmActor",
+       "name": "compat-name",
+       "process_id": "compat-process_id",
+       "session_id": "compat-session_id"
+      }
+     }
+    ]
+   },
+   "params": {
+    "description": "compat-description",
+    "id": "compat-new-BpmActor",
+    "name": "compat-name",
+    "pid": "compat-process_id",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-303d6a02da",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "aid": "BpmActor-1",
+    "pid": "BpmProcess-1",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-79faf9fe0c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 8
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "BpmTask"
+      ],
+      "props": {
+       "description": "compat-description",
+       "id": "compat-new-BpmTask",
+       "name": "compat-name",
+       "process_id": "compat-process_id",
+       "sequence_index": "compat-sequence_index",
+       "session_id": "compat-session_id",
+       "source_page": "compat-source_page",
+       "source_section": "compat-source_section"
+      }
+     }
+    ]
+   },
+   "params": {
+    "description": "compat-description",
+    "id": "compat-new-BpmTask",
+    "name": "compat-name",
+    "page": "compat-source_page",
+    "pid": "compat-process_id",
+    "section": "compat-source_section",
+    "seq": "compat-sequence_index",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-edd82b3eb2",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "pid": "BpmProcess-1",
+    "sid": "compat-session_id",
+    "tid": "BpmTask-1"
+   }
+  },
+  {
+   "id": "robo-62e7f6ae6a",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "aid": "BpmActor-1",
+    "sid": "compat-session_id",
+    "tid": "BpmTask-1"
+   }
+  },
+  {
+   "id": "robo-e78eb22729",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 4
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "BpmSequence"
+      ],
+      "props": {
+       "id": "compat-new-BpmSequence",
+       "name": "compat-name",
+       "process_id": "compat-process_id",
+       "session_id": "compat-session_id"
+      }
+     }
+    ]
+   },
+   "params": {
+    "id": "compat-new-BpmSequence",
+    "name": "compat-name",
+    "pid": "compat-process_id",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-0a528cc17d",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "qid": "BpmSequence-1",
+    "sid": "compat-session_id",
+    "tid": "BpmTask-1"
+   }
+  },
+  {
+   "id": "robo-5bc5185573",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "a": "BpmTask-1",
+    "b": "BpmTask-1",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-468ca2e817",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 7
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "BpmGateway"
+      ],
+      "props": {
+       "condition_data": "compat-condition_data",
+       "description": "compat-description",
+       "gateway_type": "compat-gateway_type",
+       "id": "compat-new-BpmGateway",
+       "name": "compat-name",
+       "process_id": "compat-process_id",
+       "session_id": "compat-session_id"
+      }
+     }
+    ]
+   },
+   "params": {
+    "cond": "compat-condition_data",
+    "desc": "compat-description",
+    "gtype": "compat-gateway_type",
+    "id": "compat-new-BpmGateway",
+    "name": "compat-name",
+    "pid": "compat-process_id",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-97bfea6cb7",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "gid": "BpmGateway-1",
+    "pid": "BpmProcess-1",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-5c1933b84c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "aid": "BpmActor-1",
+    "gid": "BpmGateway-1",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-11c76f7668",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 15
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Rule"
+      ],
+      "props": {
+       "confidence": 0.9,
+       "context_cluster": "compat-context_cluster",
+       "es_role": "compat-es_role",
+       "es_role_confidence": "compat-es_role_confidence",
+       "given": "compat-given",
+       "id": "compat-new-Rule",
+       "session_id": "compat-session_id",
+       "source_container": "compat-source_container",
+       "source_function": "compat-source_function",
+       "source_function_id": "compat-source_function_id",
+       "source_rule_id": "compat-source_rule_id",
+       "then": "compat-then",
+       "title": "compat-title",
+       "when": "compat-when",
+       "write_effects_json": "compat-write_effects_json"
+      }
+     }
+    ],
+    "nodes_changed": [
+     "{\"labels\":[\"Rule\"],\"props\":{\"confidence\":0.6,\"context_cluster\":\"Rule context_cluster 1\",\"es_role\":\"Rule es_role 1\",\"es_role_confidence\":\"1\",\"given\":\"Rule given 1\",\"id\":\"Rule-1\",\"name\":\"Rule 1\",\"session_id\":\"sess-1\",\"source_container\":\"Rule source_container 1\",\"source_function\":\"Rule source_function 1\",\"source_function_id\":\"source_function_id-1\",\"source_rule_id\":\"source_rule_id-1\",\"title\":\"Rule 1\",\"write_effects_json\":\"Rule write_effects_json 1\"}} <- {\"labels\":[\"Rule\"],\"props\":{\"confidence\":0.6,\"context_cluster\":\"Rule context_cluster 1\",\"es_role\":\"Rule es_role 1\",\"es_role_confidence\":1,\"given\":\"Rule given 1\",\"id\":\"Rule-1\",\"name\":\"Rule 1\",\"session_id\":\"sess-1\",\"source_container\":\"Rule source_container 1\",\"source_function\":\"Rule source_function 1\",\"source_function_id\":\"source_function_id-1\",\"source_rule_id\":\"source_rule_id-1\",\"title\":\"Rule 1\",\"write_effects_json\":\"Rule write_effects_json 1\"}}",
+     "{\"labels\":[\"Rule\"],\"props\":{\"confidence\":0.7,\"context_cluster\":\"Rule context_cluster 2\",\"es_role\":\"Rule es_role 2\",\"es_role_confidence\":\"1\",\"given\":\"Rule given 2\",\"id\":\"Rule-2\",\"name\":\"Rule 2\",\"session_id\":\"sess-1\",\"source_container\":\"Rule source_container 2\",\"source_function\":\"Rule source_function 2\",\"source_function_id\":\"source_function_id-2\",\"source_rule_id\":\"source_rule_id-2\",\"title\":\"Rule 2\",\"write_effects_json\":\"Rule write_effects_json 2\"}} <- {\"labels\":[\"Rule\"],\"props\":{\"confidence\":0.7,\"context_cluster\":\"Rule context_cluster 2\",\"es_role\":\"Rule es_role 2\",\"es_role_confidence\":1,\"given\":\"Rule given 2\",\"id\":\"Rule-2\",\"name\":\"Rule 2\",\"session_id\":\"sess-1\",\"source_container\":\"Rule source_container 2\",\"source_function\":\"Rule source_function 2\",\"source_function_id\":\"source_function_id-2\",\"source_rule_id\":\"source_rule_id-2\",\"title\":\"Rule 2\",\"write_effects_json\":\"Rule write_effects_json 2\"}}"
+    ]
+   },
+   "params": {
+    "conf": 0.9,
+    "ctx": "compat-context_cluster",
+    "es_role": "compat-es_role",
+    "es_role_conf": "compat-es_role_confidence",
+    "given": "compat-given",
+    "id": "compat-new-Rule",
+    "sc": "compat-source_container",
+    "sf": "compat-source_function",
+    "sfid": "compat-source_function_id",
+    "sid": "compat-session_id",
+    "srid": "compat-source_rule_id",
+    "then": "compat-then",
+    "title": "compat-title",
+    "when": "compat-when",
+    "writes": "compat-write_effects_json"
+   }
+  },
+  {
+   "id": "robo-cfe53d7988",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 5
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "GlossaryTerm"
+      ],
+      "props": {
+       "aliases": "compat-aliases",
+       "code_candidates": "compat-code_candidates",
+       "session_id": "compat-session_id",
+       "source": "compat-source",
+       "term": "compat-term"
+      }
+     }
+    ],
+    "nodes_changed": [
+     "{\"labels\":[\"GlossaryTerm\"],\"props\":{\"aliases\":\"[\\\"aliases-1-a\\\", \\\"aliases-1-b\\\"]\",\"code_candidates\":\"GlossaryTerm code_candidates 1\",\"id\":\"GlossaryTerm-1\",\"name\":\"GlossaryTerm 1\",\"session_id\":\"sess-1\",\"source\":\"GlossaryTerm source 1\",\"term\":\"GlossaryTerm term 1\"}} <- {\"labels\":[\"GlossaryTerm\"],\"props\":{\"aliases\":[\"aliases-1-a\",\"aliases-1-b\"],\"code_candidates\":\"GlossaryTerm code_candidates 1\",\"id\":\"GlossaryTerm-1\",\"name\":\"GlossaryTerm 1\",\"session_id\":\"sess-1\",\"source\":\"GlossaryTerm source 1\",\"term\":\"GlossaryTerm term 1\"}}",
+     "{\"labels\":[\"GlossaryTerm\"],\"props\":{\"aliases\":\"[\\\"aliases-2-a\\\", \\\"aliases-2-b\\\"]\",\"code_candidates\":\"GlossaryTerm code_candidates 2\",\"id\":\"GlossaryTerm-2\",\"name\":\"GlossaryTerm 2\",\"session_id\":\"sess-1\",\"source\":\"GlossaryTerm source 2\",\"term\":\"GlossaryTerm term 2\"}} <- {\"labels\":[\"GlossaryTerm\"],\"props\":{\"aliases\":[\"aliases-2-a\",\"aliases-2-b\"],\"code_candidates\":\"GlossaryTerm code_candidates 2\",\"id\":\"GlossaryTerm-2\",\"name\":\"GlossaryTerm 2\",\"session_id\":\"sess-1\",\"source\":\"GlossaryTerm source 2\",\"term\":\"GlossaryTerm term 2\"}}"
+    ]
+   },
+   "params": {
+    "aliases": "compat-aliases",
+    "candidates": "compat-code_candidates",
+    "sid": "compat-session_id",
+    "source": "compat-source",
+    "term": "compat-term"
+   }
+  },
+  {
+   "id": "robo-b75608d543",
+   "error": {
+    "code": "Neo.ClientError.Statement.ArgumentError",
+    "message": "cannot alter type of a column used by a view or rule"
+   },
+   "params": {
+    "id": "compat-new-ActivityMapping",
+    "method": "compat-method",
+    "rationale": "compat-rationale",
+    "reviewed": "compat-reviewed",
+    "rid": "compat-rule_id",
+    "score": 0.9,
+    "sid": "compat-session_id",
+    "tid": "compat-task_id"
+   }
+  },
+  {
+   "id": "robo-5e24f043eb",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 7
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "ActivityMapping"
+      ],
+      "props": {
+       "id": "compat-new-ActivityMapping",
+       "method": "compat-method",
+       "reviewed": false,
+       "rule_id": "compat-rule_id",
+       "score": 0.9,
+       "session_id": "compat-session_id",
+       "task_id": "compat-task_id"
+      }
+     }
+    ]
+   },
+   "params": {
+    "id": "compat-new-ActivityMapping",
+    "method": "compat-method",
+    "rid": "compat-rule_id",
+    "score": 0.9,
+    "sid": "compat-session_id",
+    "tid": "compat-task_id"
+   }
+  },
+  {
+   "id": "robo-84a6d48057",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 8
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "DocumentPassage"
+      ],
+      "props": {
+       "char_end": "compat-char_end",
+       "char_start": "compat-char_start",
+       "chunk_method": "compat-chunk_method",
+       "heading": "compat-heading",
+       "id": "compat-new-DocumentPassage",
+       "page": "compat-page",
+       "session_id": "compat-session_id",
+       "text": "compat-text"
+      }
+     }
+    ]
+   },
+   "params": {
+    "ce": "compat-char_end",
+    "cs": "compat-char_start",
+    "heading": "compat-heading",
+    "id": "compat-new-DocumentPassage",
+    "method": "compat-chunk_method",
+    "page": "compat-page",
+    "sid": "compat-session_id",
+    "text": "compat-text"
+   }
+  },
+  {
+   "id": "robo-c1bc7a6a21",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 6
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"ActivityMapping\"],\"props\":{\"evidence_role\":\"primary\",\"id\":\"compat-new-ActivityMapping\",\"method\":\"manual\",\"reviewed\":true,\"rule_id\":\"compat-rule_id\",\"score\":0.9,\"session_id\":\"compat-session_id\",\"task_id\":\"compat-task_id\"}} <- {\"labels\":[\"ActivityMapping\"],\"props\":{\"id\":\"compat-new-ActivityMapping\",\"method\":\"compat-method\",\"reviewed\":false,\"rule_id\":\"compat-rule_id\",\"score\":0.9,\"session_id\":\"compat-session_id\",\"task_id\":\"compat-task_id\"}}"
+    ]
+   },
+   "params": {
+    "conf": 0.9,
+    "id": "compat-new-ActivityMapping",
+    "rid": "compat-rule_id",
+    "sid": "compat-session_id",
+    "tid": "compat-task_id"
+   }
+  },
+  {
+   "id": "robo-a22e87f13b",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "conf": "compat-es_role_confidence",
+    "rid": "Rule-1",
+    "role": "compat-es_role",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-653aa6dd1c",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "ctx": "compat-context_cluster",
+    "rid": "Rule-1",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-a7af8a7cd7",
+   "columns": [
+    "c"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"BpmnProcess\"],\"props\":{\"description\":\"Process description 1\",\"id\":\"Process-1\",\"name\":\"Process 1\",\"proc_id\":\"proc_id-1\",\"purpose\":\"Process purpose 1\",\"session_id\":\"sess-1\"}} <- {\"labels\":[\"Process\"],\"props\":{\"description\":\"Process description 1\",\"id\":\"Process-1\",\"name\":\"Process 1\",\"proc_id\":\"proc_id-1\",\"purpose\":\"Process purpose 1\",\"session_id\":\"sess-1\"}}",
+     "{\"labels\":[\"BpmnProcess\"],\"props\":{\"description\":\"Process description 2\",\"id\":\"Process-2\",\"name\":\"Process 2\",\"proc_id\":\"proc_id-2\",\"purpose\":\"Process purpose 2\",\"session_id\":\"sess-1\"}} <- {\"labels\":[\"Process\"],\"props\":{\"description\":\"Process description 2\",\"id\":\"Process-2\",\"name\":\"Process 2\",\"proc_id\":\"proc_id-2\",\"purpose\":\"Process purpose 2\",\"session_id\":\"sess-1\"}}"
+    ]
+   },
+   "params": {
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-3dd27f4028",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "rid": "Rule-1",
+    "role": "compat-evidence_role",
+    "sid": "compat-session_id",
+    "tid": "BpmTask-1"
+   }
+  },
+  {
+   "id": "robo-a7f9340b1d",
+   "columns": [
+    "score",
+    "method"
+   ],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "rid": "Rule-1",
+    "sid": "compat-session_id",
+    "tid": "BpmTask-1"
+   }
+  },
+  {
+   "id": "robo-1d0ccf13f6",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "rid": "Rule-1",
+    "role": "compat-es_role",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-c3ec46e5ce",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "conds": "compat-conditions",
+    "sid": "compat-session_id",
+    "tid": "BpmTask-1"
+   }
+  },
+  {
+   "id": "robo-e2cff4d712",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "id": "BpmProcess-1",
+    "sid": "compat-session_id",
+    "xml": "compat-bpmn_xml"
+   }
+  },
+  {
+   "id": "robo-faa4e2eadd",
+   "columns": [
+    "c"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     1
+    ]
+   ],
+   "counters": {
+    "nodes_deleted": 1
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "BpmTask"
+      ],
+      "props": {
+       "description": "compat-description",
+       "id": "compat-new-BpmTask",
+       "name": "compat-name",
+       "process_id": "compat-process_id",
+       "sequence_index": "compat-sequence_index",
+       "session_id": "compat-session_id",
+       "source_page": "compat-source_page",
+       "source_section": "compat-source_section"
+      }
+     }
+    ]
+   },
+   "params": {
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-da309470d3",
+   "columns": [
+    "c"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     1
+    ],
+    [
+     1
+    ]
+   ],
+   "counters": {
+    "nodes_deleted": 2,
+    "relationships_deleted": 14
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "BpmTask"
+      ],
+      "props": {
+       "conditions": "BpmTask conditions 1",
+       "description": "BpmTask description 1",
+       "id": "BpmTask-1",
+       "name": "BpmTask 1",
+       "process_id": "BpmProcess-1",
+       "sequence_index": "BpmTask sequence_index 1",
+       "session_id": "sess-1",
+       "source_page": "BpmTask source_page 1",
+       "source_section": "BpmTask source_section 1"
+      }
+     },
+     {
+      "labels": [
+       "BpmTask"
+      ],
+      "props": {
+       "conditions": "BpmTask conditions 2",
+       "description": "BpmTask description 2",
+       "id": "BpmTask-2",
+       "name": "BpmTask 2",
+       "process_id": "BpmProcess-2",
+       "sequence_index": "BpmTask sequence_index 2",
+       "session_id": "sess-1",
+       "source_page": "BpmTask source_page 2",
+       "source_section": "BpmTask source_section 2"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmActor\"],\"props\":{\"description\":\"BpmActor description 1\",\"id\":\"BpmActor-1\",\"name\":\"BpmActor 1\",\"process_id\":\"BpmProcess-1\",\"session_id\":\"sess-1\"}}",
+      "type": "PERFORMS"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmProcess\"],\"props\":{\"bpmn_xml\":\"BpmProcess bpmn_xml 1\",\"description\":\"BpmProcess description 1\",\"domain_keywords\":\"BpmProcess domain_keywords 1\",\"id\":\"BpmProcess-1\",\"name\":\"BpmProcess 1\",\"process_index\":10,\"session_id\":\"sess-1\",\"source_pdf_name\":\"BpmProcess source_pdf_name 1\",\"updated_at\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_TASK"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmSequence\"],\"props\":{\"id\":\"BpmSequence-1\",\"name\":\"BpmSequence 1\",\"process_id\":\"BpmProcess-1\",\"session_id\":\"sess-1\"}}",
+      "type": "CONTAINS"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "type": "NEXT"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "PROMOTED_FROM"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmActor\"],\"props\":{\"description\":\"BpmActor description 2\",\"id\":\"BpmActor-2\",\"name\":\"BpmActor 2\",\"process_id\":\"BpmProcess-2\",\"session_id\":\"sess-1\"}}",
+      "type": "PERFORMS"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmProcess\"],\"props\":{\"bpmn_xml\":\"BpmProcess bpmn_xml 2\",\"description\":\"BpmProcess description 2\",\"domain_keywords\":\"BpmProcess domain_keywords 2\",\"id\":\"BpmProcess-2\",\"name\":\"BpmProcess 2\",\"process_index\":20,\"session_id\":\"sess-1\",\"source_pdf_name\":\"BpmProcess source_pdf_name 2\",\"updated_at\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "HAS_TASK"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmSequence\"],\"props\":{\"id\":\"BpmSequence-2\",\"name\":\"BpmSequence 2\",\"process_id\":\"BpmProcess-2\",\"session_id\":\"sess-1\"}}",
+      "type": "CONTAINS"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "type": "NEXT"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 2\",\"aggregate_id\":\"Aggregate-2\",\"category\":\"Command category 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Command description 2\",\"displayName\":\"Command 2\",\"id\":\"Command-2\",\"inputSchema\":\"Command inputSchema 2\",\"key\":\"command-2\",\"name\":\"Command 2\",\"postconditions\":\"Command postconditions 2\",\"preconditions\":\"Command preconditions 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "PROMOTED_FROM"
+     },
+     {
+      "end": "{\"labels\":[\"Rule\"],\"props\":{\"confidence\":0.6,\"context_cluster\":\"Rule context_cluster 1\",\"es_role\":\"Rule es_role 1\",\"es_role_confidence\":\"1\",\"given\":\"Rule given 1\",\"id\":\"Rule-1\",\"name\":\"Rule 1\",\"session_id\":\"sess-1\",\"source_container\":\"Rule source_container 1\",\"source_function\":\"Rule source_function 1\",\"source_function_id\":\"source_function_id-1\",\"source_rule_id\":\"source_rule_id-1\",\"title\":\"Rule 1\",\"write_effects_json\":\"Rule write_effects_json 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "type": "REALIZED_BY"
+     },
+     {
+      "end": "{\"labels\":[\"Rule\"],\"props\":{\"confidence\":0.7,\"context_cluster\":\"Rule context_cluster 2\",\"es_role\":\"Rule es_role 2\",\"es_role_confidence\":\"1\",\"given\":\"Rule given 2\",\"id\":\"Rule-2\",\"name\":\"Rule 2\",\"session_id\":\"sess-1\",\"source_container\":\"Rule source_container 2\",\"source_function\":\"Rule source_function 2\",\"source_function_id\":\"source_function_id-2\",\"source_rule_id\":\"source_rule_id-2\",\"title\":\"Rule 2\",\"write_effects_json\":\"Rule write_effects_json 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "type": "REALIZED_BY"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "type": "PROMOTED_TO"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "type": "PROMOTED_TO"
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-738c717e66",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "rid": "Rule-1",
+    "sid": "compat-session_id",
+    "tid": "BpmTask-1"
+   }
+  }
+ ]
+}

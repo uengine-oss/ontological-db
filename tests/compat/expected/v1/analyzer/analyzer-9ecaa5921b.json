@@ -1,0 +1,22 @@
+{
+ "id": "analyzer-9ecaa5921b",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "name",
+  "schema",
+  "description"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "TABLE 2",
+   "TABLE schema 2",
+   "N/A"
+  ]
+ ],
+ "params": {
+  "owner": "analyzer"
+ }
+}

@@ -1,0 +1,33 @@
+{
+ "id": "studio-3f3309d6da",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "key",
+  "name",
+  "source_system",
+  "p_email"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "cust-1",
+   "Daesung Cable",
+   "erp",
+   "buy@daesung.example"
+  ],
+  [
+   "cust-2",
+   "Acme",
+   "crm",
+   "ops@acme.example"
+  ],
+  [
+   "cust-3",
+   "Acme Korea",
+   "erp",
+   "kr@acme.example"
+  ]
+ ]
+}

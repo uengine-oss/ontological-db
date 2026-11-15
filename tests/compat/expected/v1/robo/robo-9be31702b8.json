@@ -1,0 +1,39 @@
+{
+ "id": "robo-9be31702b8",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "totalUS",
+  "orphanUS",
+  "sample"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "<uuid1>",
+   "Order",
+   1,
+   1,
+   [
+    "cancel my order"
+   ]
+  ],
+  [
+   "BoundedContext-1",
+   "BoundedContext 1",
+   0,
+   0,
+   []
+  ],
+  [
+   "BoundedContext-2",
+   "BoundedContext 2",
+   0,
+   0,
+   []
+  ]
+ ]
+}

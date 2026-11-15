@@ -1,0 +1,15 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/workflow/phases/bounded_contexts.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-ffb37a6324",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {}
+  }
+ ]
+}

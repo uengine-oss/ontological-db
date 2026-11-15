@@ -1,0 +1,20 @@
+{
+ "id": "robo-b1038e904b",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "name",
+  "type"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Property 1",
+   "Property type 1"
+  ]
+ ],
+ "params": {
+  "evt_id": "Event-1"
+ }
+}

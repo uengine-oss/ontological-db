@@ -1,0 +1,36 @@
+{
+ "id": "studio-87cca3eab5",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "schema_name",
+  "name",
+  "from_class",
+  "to_class",
+  "description",
+  "properties"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "compat",
+   "ORDERED_FROM",
+   "PurchaseOrder",
+   "Supplier",
+   "vendor",
+   "[]"
+  ],
+  [
+   "compat",
+   "PLACED",
+   "Customer",
+   "PurchaseOrder",
+   "who ordered",
+   "[]"
+  ]
+ ],
+ "params": {
+  "schema_name": "compat"
+ }
+}

@@ -1,0 +1,233 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/hybrid/event_storming_bridge/promote_to_es.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-c50f4f3fee",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 8
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Policy"
+      ],
+      "props": {
+       "bc_id": "compat-bc_id",
+       "description": "compat-description",
+       "displayName": "compat-name",
+       "id": "<uuid>",
+       "key": "compat-new-Policy",
+       "kind": "cross_bc",
+       "name": "compat-name",
+       "session_id": "compat-session_id"
+      }
+     }
+    ]
+   },
+   "params": {
+    "bcid": "compat-bc_id",
+    "desc": "compat-description",
+    "key": "compat-new-Policy",
+    "name": "compat-name",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-02001d888c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "ek": "event-1",
+    "pk": "compat-new-Policy",
+    "sid": "sess-1"
+   }
+  },
+  {
+   "id": "robo-51f54de714",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "ck": "command-1",
+    "pk": "compat-new-Policy",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-6bb0cdd3c3",
+   "columns": [
+    "c"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-2b7590a88f",
+   "columns": [
+    "c"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     1
+    ],
+    [
+     1
+    ]
+   ],
+   "counters": {
+    "nodes_deleted": 2,
+    "relationships_deleted": 14
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "BpmTask"
+      ],
+      "props": {
+       "conditions": "BpmTask conditions 1",
+       "description": "BpmTask description 1",
+       "id": "BpmTask-1",
+       "name": "BpmTask 1",
+       "process_id": "BpmProcess-1",
+       "sequence_index": "BpmTask sequence_index 1",
+       "session_id": "sess-1",
+       "source_page": "BpmTask source_page 1",
+       "source_section": "BpmTask source_section 1"
+      }
+     },
+     {
+      "labels": [
+       "BpmTask"
+      ],
+      "props": {
+       "conditions": "BpmTask conditions 2",
+       "description": "BpmTask description 2",
+       "id": "BpmTask-2",
+       "name": "BpmTask 2",
+       "process_id": "BpmProcess-2",
+       "sequence_index": "BpmTask sequence_index 2",
+       "session_id": "sess-1",
+       "source_page": "BpmTask source_page 2",
+       "source_section": "BpmTask source_section 2"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmActor\"],\"props\":{\"description\":\"BpmActor description 1\",\"id\":\"BpmActor-1\",\"name\":\"BpmActor 1\",\"process_id\":\"BpmProcess-1\",\"session_id\":\"sess-1\"}}",
+      "type": "PERFORMS"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmProcess\"],\"props\":{\"bpmn_xml\":\"BpmProcess bpmn_xml 1\",\"description\":\"BpmProcess description 1\",\"domain_keywords\":\"BpmProcess domain_keywords 1\",\"id\":\"BpmProcess-1\",\"name\":\"BpmProcess 1\",\"process_index\":10,\"session_id\":\"sess-1\",\"source_pdf_name\":\"BpmProcess source_pdf_name 1\",\"updated_at\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_TASK"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmSequence\"],\"props\":{\"id\":\"BpmSequence-1\",\"name\":\"BpmSequence 1\",\"process_id\":\"BpmProcess-1\",\"session_id\":\"sess-1\"}}",
+      "type": "CONTAINS"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "type": "NEXT"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "PROMOTED_FROM"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmActor\"],\"props\":{\"description\":\"BpmActor description 2\",\"id\":\"BpmActor-2\",\"name\":\"BpmActor 2\",\"process_id\":\"BpmProcess-2\",\"session_id\":\"sess-1\"}}",
+      "type": "PERFORMS"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmProcess\"],\"props\":{\"bpmn_xml\":\"BpmProcess bpmn_xml 2\",\"description\":\"BpmProcess description 2\",\"domain_keywords\":\"BpmProcess domain_keywords 2\",\"id\":\"BpmProcess-2\",\"name\":\"BpmProcess 2\",\"process_index\":20,\"session_id\":\"sess-1\",\"source_pdf_name\":\"BpmProcess source_pdf_name 2\",\"updated_at\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "HAS_TASK"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmSequence\"],\"props\":{\"id\":\"BpmSequence-2\",\"name\":\"BpmSequence 2\",\"process_id\":\"BpmProcess-2\",\"session_id\":\"sess-1\"}}",
+      "type": "CONTAINS"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "type": "NEXT"
+     },
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 2\",\"aggregate_id\":\"Aggregate-2\",\"category\":\"Command category 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Command description 2\",\"displayName\":\"Command 2\",\"id\":\"Command-2\",\"inputSchema\":\"Command inputSchema 2\",\"key\":\"command-2\",\"name\":\"Command 2\",\"postconditions\":\"Command postconditions 2\",\"preconditions\":\"Command preconditions 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "PROMOTED_FROM"
+     },
+     {
+      "end": "{\"labels\":[\"Rule\"],\"props\":{\"confidence\":0.6,\"context_cluster\":\"Rule context_cluster 1\",\"es_role\":\"Rule es_role 1\",\"es_role_confidence\":1,\"given\":\"Rule given 1\",\"id\":\"Rule-1\",\"name\":\"Rule 1\",\"session_id\":\"sess-1\",\"source_container\":\"Rule source_container 1\",\"source_function\":\"Rule source_function 1\",\"source_function_id\":\"source_function_id-1\",\"source_rule_id\":\"source_rule_id-1\",\"title\":\"Rule 1\",\"write_effects_json\":\"Rule write_effects_json 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "type": "REALIZED_BY"
+     },
+     {
+      "end": "{\"labels\":[\"Rule\"],\"props\":{\"confidence\":0.7,\"context_cluster\":\"Rule context_cluster 2\",\"es_role\":\"Rule es_role 2\",\"es_role_confidence\":1,\"given\":\"Rule given 2\",\"id\":\"Rule-2\",\"name\":\"Rule 2\",\"session_id\":\"sess-1\",\"source_container\":\"Rule source_container 2\",\"source_function\":\"Rule source_function 2\",\"source_function_id\":\"source_function_id-2\",\"source_rule_id\":\"source_rule_id-2\",\"title\":\"Rule 2\",\"write_effects_json\":\"Rule write_effects_json 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "type": "REALIZED_BY"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "type": "PROMOTED_TO"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 2\",\"description\":\"BpmTask description 2\",\"id\":\"BpmTask-2\",\"name\":\"BpmTask 2\",\"process_id\":\"BpmProcess-2\",\"sequence_index\":\"BpmTask sequence_index 2\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 2\",\"source_section\":\"BpmTask source_section 2\"}}",
+      "type": "PROMOTED_TO"
+     }
+    ]
+   },
+   "params": {
+    "sid": "sess-1"
+   }
+  }
+ ]
+}

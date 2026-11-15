@@ -1,0 +1,36 @@
+{
+ "id": "robo-250193f314",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "name",
+  "description",
+  "stateTransitions",
+  "correctivePolicies",
+  "throughput",
+  "invProp",
+  "version",
+  "commands",
+  "events",
+  "invNodes"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Aggregate 1",
+   "Aggregate description 1",
+   "Aggregate stateTransitions 1",
+   "Aggregate correctivePolicies 1",
+   "Aggregate throughput 1",
+   "Aggregate invariants 1",
+   10,
+   [],
+   [],
+   []
+  ]
+ ],
+ "params": {
+  "id": "Aggregate-1"
+ }
+}

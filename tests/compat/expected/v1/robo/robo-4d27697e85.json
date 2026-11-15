@@ -1,0 +1,45 @@
+{
+ "id": "robo-4d27697e85",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "h"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "BpmSession"
+    ],
+    "props": {
+     "bpmn_xml": "BpmSession bpmn_xml 1",
+     "id": "BpmSession-1",
+     "name": "BpmSession 1",
+     "session_id": "sess-1",
+     "updated_at": "2026-01-11T09:00:00Z"
+    }
+   }
+  ],
+  [
+   {
+    "~node": "@n2",
+    "labels": [
+     "BpmSession"
+    ],
+    "props": {
+     "bpmn_xml": "BpmSession bpmn_xml 2",
+     "id": "BpmSession-2",
+     "name": "BpmSession 2",
+     "session_id": "sess-1",
+     "updated_at": "2026-01-12T09:00:00Z"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

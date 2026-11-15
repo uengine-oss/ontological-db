@@ -1,0 +1,180 @@
+{
+ "scenario": "studio-app:backend/src/modules/quality/ingest_gate.py",
+ "graph": "ontology",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "studio-68cd2da15b",
+   "columns": [
+    "sid"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "@n1"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 9
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Customer"
+      ],
+      "props": {
+       "created_at": "<now>",
+       "name": "compat-s_name",
+       "updated_at": "<now>"
+      }
+     }
+    ]
+   },
+   "params": {
+    "evidence_ref": "compat-_evidence_ref",
+    "run_id": "compat-_run_id",
+    "s_conf": 0.9,
+    "s_key": "compat-new-Customer",
+    "s_name": "compat-s_name",
+    "s_skey": "compat-_source_key",
+    "s_sys": "compat-_source_system"
+   }
+  },
+  {
+   "id": "studio-5cc42271b4",
+   "columns": [
+    "sid",
+    "oid",
+    "rid"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "@n1",
+     "@n2",
+     "@r1"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 16,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "PurchaseOrder"
+      ],
+      "props": {
+       "created_at": "<now>",
+       "name": "compat-o_name",
+       "updated_at": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"PurchaseOrder\"],\"props\":{\"created_at\":\"<now>\",\"name\":\"compat-o_name\",\"updated_at\":\"<now>\"}}",
+      "props": {
+       "created_at": "<now>",
+       "updated_at": "<now>"
+      },
+      "start": "{\"labels\":[\"Customer\"],\"props\":{\"created_at\":\"<now>\",\"name\":\"compat-s_name\",\"updated_at\":\"<now>\"}}",
+      "type": "PLACED"
+     }
+    ]
+   },
+   "params": {
+    "confidence": 0.9,
+    "evidence_ref": "compat-_evidence_ref",
+    "o_conf": 0.9,
+    "o_key": "compat-new-PurchaseOrder",
+    "o_name": "compat-o_name",
+    "o_skey": "compat-_source_key",
+    "o_sys": "compat-_source_system",
+    "run_id": "compat-_run_id",
+    "s_conf": 0.9,
+    "s_key": "compat-new-Customer",
+    "s_name": "compat-s_name",
+    "s_skey": "compat-_source_key",
+    "s_sys": "compat-_source_system"
+   }
+  },
+  {
+   "id": "studio-51ddd052b8",
+   "columns": [
+    "sid"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "@n1"
+    ]
+   ],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Customer\"],\"props\":{\"created_at\":\"<now>\",\"grade\":\"compat-grade\",\"name\":\"compat-s_name\",\"updated_at\":\"<now>\"}} <- {\"labels\":[\"Customer\"],\"props\":{\"created_at\":\"<now>\",\"name\":\"compat-s_name\",\"updated_at\":\"<now>\"}}"
+    ]
+   },
+   "params": {
+    "evidence_ref": "compat-_evidence_ref",
+    "run_id": "compat-_run_id",
+    "s_conf": 0.9,
+    "s_key": "compat-new-Customer",
+    "s_name": "compat-s_name",
+    "s_skey": "compat-_source_key",
+    "s_sys": "compat-_source_system",
+    "value": "compat-grade"
+   }
+  },
+  {
+   "id": "studio-394e56b303",
+   "columns": [
+    "rid"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "@r2"
+    ]
+   ],
+   "counters": {
+    "properties_set": 5,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"PurchaseOrder\"],\"props\":{\"created_at\":\"<now>\",\"name\":\"compat-o_name\",\"updated_at\":\"<now>\"}}",
+      "props": {
+       "created_at": "<now>",
+       "method": "compat-method",
+       "since": "<now>"
+      },
+      "start": "{\"labels\":[\"Customer\"],\"props\":{\"created_at\":\"<now>\",\"grade\":\"compat-grade\",\"name\":\"compat-s_name\",\"updated_at\":\"<now>\"}}",
+      "type": "SAME_AS"
+     }
+    ]
+   },
+   "params": {
+    "a": "compat-new-Customer",
+    "b": "compat-new-PurchaseOrder",
+    "method": "compat-method",
+    "run_id": "compat-_run_id",
+    "score": 0.9
+   }
+  }
+ ]
+}

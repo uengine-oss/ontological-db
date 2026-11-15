@@ -1,0 +1,14 @@
+{
+ "id": "robo-a207a788be",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "aggId"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "id": "<uuid1>"
+ }
+}

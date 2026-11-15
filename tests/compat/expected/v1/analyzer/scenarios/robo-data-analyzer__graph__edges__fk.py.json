@@ -1,0 +1,64 @@
+{
+ "scenario": "robo-data-analyzer:graph/edges/fk.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-7160c9983e",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 8,
+    "relationships_created": 2
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"TABLE\"],\"props\":{\"analyzed_description\":\"TABLE analyzed_description 1\",\"comment\":\"TABLE comment 1\",\"datasource\":\"TABLE datasource 1\",\"db\":\"TABLE db 1\",\"description\":\"\",\"description_source\":\"TABLE description_source 1\",\"graph_owner\":\"analyzer\",\"id\":\"TABLE-1\",\"logical_name\":\"TABLE logical_name 1\",\"name\":\"TABLE 1\",\"schema\":\"TABLE schema 1\",\"schema_name\":\"TABLE schema_name 1\",\"summary\":\"TABLE summary 1\",\"table_type\":\"TABLE table_type 1\"}}",
+      "props": {
+       "fk_type": "compat-fk_type-1",
+       "from_column": "compat-from_column-1",
+       "is_candidate": true,
+       "to_column": "compat-to_column-1"
+      },
+      "start": "{\"labels\":[\"TABLE\"],\"props\":{\"analyzed_description\":\"TABLE analyzed_description 1\",\"comment\":\"TABLE comment 1\",\"datasource\":\"TABLE datasource 1\",\"db\":\"TABLE db 1\",\"description\":\"\",\"description_source\":\"TABLE description_source 1\",\"graph_owner\":\"analyzer\",\"id\":\"TABLE-1\",\"logical_name\":\"TABLE logical_name 1\",\"name\":\"TABLE 1\",\"schema\":\"TABLE schema 1\",\"schema_name\":\"TABLE schema_name 1\",\"summary\":\"TABLE summary 1\",\"table_type\":\"TABLE table_type 1\"}}",
+      "type": "FK"
+     },
+     {
+      "end": "{\"labels\":[\"TABLE\"],\"props\":{\"analyzed_description\":\"TABLE analyzed_description 2\",\"comment\":\"TABLE comment 2\",\"datasource\":\"TABLE datasource 2\",\"db\":\"TABLE db 2\",\"description\":\"N/A\",\"description_source\":\"TABLE description_source 2\",\"graph_owner\":\"analyzer\",\"id\":\"TABLE-2\",\"logical_name\":\"TABLE logical_name 2\",\"name\":\"TABLE 2\",\"schema\":\"TABLE schema 2\",\"schema_name\":\"TABLE schema_name 2\",\"summary\":\"TABLE summary 2\",\"table_type\":\"TABLE table_type 2\"}}",
+      "props": {
+       "fk_type": "compat-fk_type-2",
+       "from_column": "compat-from_column-2",
+       "is_candidate": true,
+       "to_column": "compat-to_column-2"
+      },
+      "start": "{\"labels\":[\"TABLE\"],\"props\":{\"analyzed_description\":\"TABLE analyzed_description 2\",\"comment\":\"TABLE comment 2\",\"datasource\":\"TABLE datasource 2\",\"db\":\"TABLE db 2\",\"description\":\"N/A\",\"description_source\":\"TABLE description_source 2\",\"graph_owner\":\"analyzer\",\"id\":\"TABLE-2\",\"logical_name\":\"TABLE logical_name 2\",\"name\":\"TABLE 2\",\"schema\":\"TABLE schema 2\",\"schema_name\":\"TABLE schema_name 2\",\"summary\":\"TABLE summary 2\",\"table_type\":\"TABLE table_type 2\"}}",
+      "type": "FK"
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "fk_type": "compat-fk_type-1",
+      "from_column": "compat-from_column-1",
+      "from_id": "TABLE-1",
+      "is_candidate": true,
+      "to_column": "compat-to_column-1",
+      "to_id": "TABLE-1"
+     },
+     {
+      "fk_type": "compat-fk_type-2",
+      "from_column": "compat-from_column-2",
+      "from_id": "TABLE-2",
+      "is_candidate": true,
+      "to_column": "compat-to_column-2",
+      "to_id": "TABLE-2"
+     }
+    ]
+   }
+  }
+ ]
+}

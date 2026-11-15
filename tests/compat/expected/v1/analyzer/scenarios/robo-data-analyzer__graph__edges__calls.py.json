@@ -1,0 +1,234 @@
+{
+ "scenario": "robo-data-analyzer:graph/edges/calls.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-abea97f45b",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 4,
+    "relationships_created": 2
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 1\",\"comment\":\"COLUMN comment 1\",\"data_type\":\"COLUMN data_type 1\",\"default_value\":\"COLUMN default_value 1\",\"description\":\"\",\"description_source\":\"COLUMN description_source 1\",\"dtype\":\"COLUMN dtype 1\",\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-1\",\"is_primary_key\":true,\"is_unique\":true,\"logical_name\":\"COLUMN logical_name 1\",\"name\":\"COLUMN 1\",\"nullable\":true,\"primary_key\":\"COLUMN primary_key 1\",\"summary\":\"COLUMN summary 1\",\"unique\":\"COLUMN unique 1\"}}",
+      "props": {
+       "recursive": true,
+       "scope": "compat-scope-1"
+      },
+      "start": "{\"labels\":[\"EMBED_META\"],\"props\":{\"dim\":\"EMBED_META dim 1\",\"embedded_count\":10,\"fingerprint\":\"EMBED_META fingerprint 1\",\"graph_owner\":\"analyzer\",\"id\":\"EMBED_META-1\",\"name\":\"EMBED_META 1\"}}",
+      "type": "CALLS"
+     },
+     {
+      "end": "{\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 2\",\"comment\":\"COLUMN comment 2\",\"data_type\":\"COLUMN data_type 2\",\"default_value\":\"COLUMN default_value 2\",\"description\":\"N/A\",\"description_source\":\"COLUMN description_source 2\",\"dtype\":\"COLUMN dtype 2\",\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-2\",\"is_primary_key\":false,\"is_unique\":false,\"logical_name\":\"COLUMN logical_name 2\",\"name\":\"COLUMN 2\",\"nullable\":false,\"primary_key\":\"COLUMN primary_key 2\",\"summary\":\"COLUMN summary 2\",\"unique\":\"COLUMN unique 2\"}}",
+      "props": {
+       "recursive": true,
+       "scope": "compat-scope-2"
+      },
+      "start": "{\"labels\":[\"EMBED_META\"],\"props\":{\"dim\":\"EMBED_META dim 2\",\"embedded_count\":20,\"fingerprint\":\"EMBED_META fingerprint 2\",\"graph_owner\":\"analyzer\",\"id\":\"EMBED_META-2\",\"name\":\"EMBED_META 2\"}}",
+      "type": "CALLS"
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "callee_id": "COLUMN-1",
+      "caller_id": "EMBED_META-1",
+      "recursive": true,
+      "scope": "compat-scope-1"
+     },
+     {
+      "callee_id": "COLUMN-2",
+      "caller_id": "EMBED_META-2",
+      "recursive": true,
+      "scope": "compat-scope-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "analyzer-897d7c528c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 4,
+    "nodes_created": 4,
+    "properties_set": 28,
+    "relationships_created": 4
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "FUNCTION"
+      ],
+      "props": {
+       "external": true,
+       "graph_owner": "analyzer",
+       "id": "compat-new-FUNCTION-1",
+       "name": "compat-callee_name-1",
+       "type": "FUNCTION"
+      }
+     },
+     {
+      "labels": [
+       "FUNCTION"
+      ],
+      "props": {
+       "external": true,
+       "graph_owner": "analyzer",
+       "id": "compat-new-FUNCTION-2",
+       "name": "compat-callee_name-2",
+       "type": "FUNCTION"
+      }
+     },
+     {
+      "labels": [
+       "MODULE"
+      ],
+      "props": {
+       "external": true,
+       "graph_owner": "analyzer",
+       "id": "compat-new-MODULE-1",
+       "name": "compat-callee_name-1",
+       "type": "MODULE"
+      }
+     },
+     {
+      "labels": [
+       "MODULE"
+      ],
+      "props": {
+       "external": true,
+       "graph_owner": "analyzer",
+       "id": "compat-new-MODULE-2",
+       "name": "compat-callee_name-2",
+       "type": "MODULE"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"FUNCTION\"],\"props\":{\"external\":true,\"graph_owner\":\"analyzer\",\"id\":\"compat-new-FUNCTION-1\",\"name\":\"compat-callee_name-1\",\"type\":\"FUNCTION\"}}",
+      "props": {
+       "recursive": true,
+       "scope": "compat-scope-1"
+      },
+      "start": "{\"labels\":[\"FUNCTION\"],\"props\":{\"external\":true,\"graph_owner\":\"analyzer\",\"id\":\"FUNCTION-1\",\"name\":\"FUNCTION 1\",\"type\":\"FUNCTION type 1\"}}",
+      "type": "CALLS"
+     },
+     {
+      "end": "{\"labels\":[\"FUNCTION\"],\"props\":{\"external\":true,\"graph_owner\":\"analyzer\",\"id\":\"compat-new-FUNCTION-1\",\"name\":\"compat-callee_name-1\",\"type\":\"FUNCTION\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"MODULE\"],\"props\":{\"external\":true,\"graph_owner\":\"analyzer\",\"id\":\"compat-new-MODULE-1\",\"name\":\"compat-callee_name-1\",\"type\":\"MODULE\"}}",
+      "type": "HAS_MEMBER"
+     },
+     {
+      "end": "{\"labels\":[\"FUNCTION\"],\"props\":{\"external\":true,\"graph_owner\":\"analyzer\",\"id\":\"compat-new-FUNCTION-2\",\"name\":\"compat-callee_name-2\",\"type\":\"FUNCTION\"}}",
+      "props": {
+       "recursive": true,
+       "scope": "compat-scope-2"
+      },
+      "start": "{\"labels\":[\"FUNCTION\"],\"props\":{\"external\":true,\"graph_owner\":\"analyzer\",\"id\":\"FUNCTION-2\",\"name\":\"FUNCTION 2\",\"type\":\"FUNCTION type 2\"}}",
+      "type": "CALLS"
+     },
+     {
+      "end": "{\"labels\":[\"FUNCTION\"],\"props\":{\"external\":true,\"graph_owner\":\"analyzer\",\"id\":\"compat-new-FUNCTION-2\",\"name\":\"compat-callee_name-2\",\"type\":\"FUNCTION\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"MODULE\"],\"props\":{\"external\":true,\"graph_owner\":\"analyzer\",\"id\":\"compat-new-MODULE-2\",\"name\":\"compat-callee_name-2\",\"type\":\"MODULE\"}}",
+      "type": "HAS_MEMBER"
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "callee_id": "compat-new-FUNCTION-1",
+      "callee_module": "compat-new-MODULE-1",
+      "callee_name": "compat-callee_name-1",
+      "caller_id": "FUNCTION-1",
+      "recursive": true,
+      "scope": "compat-scope-1"
+     },
+     {
+      "callee_id": "compat-new-FUNCTION-2",
+      "callee_module": "compat-new-MODULE-2",
+      "callee_name": "compat-callee_name-2",
+      "caller_id": "FUNCTION-2",
+      "recursive": true,
+      "scope": "compat-scope-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "analyzer-f80eb1b761",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 6,
+    "relationships_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "PACKAGE"
+      ],
+      "props": {
+       "graph_owner": "analyzer",
+       "id": "compat-new-PACKAGE-1"
+      }
+     },
+     {
+      "labels": [
+       "PACKAGE"
+      ],
+      "props": {
+       "graph_owner": "analyzer",
+       "id": "compat-new-PACKAGE-2"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"PACKAGE\"],\"props\":{\"graph_owner\":\"analyzer\",\"id\":\"compat-new-PACKAGE-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 1\",\"comment\":\"COLUMN comment 1\",\"data_type\":\"COLUMN data_type 1\",\"default_value\":\"COLUMN default_value 1\",\"description\":\"\",\"description_source\":\"COLUMN description_source 1\",\"dtype\":\"COLUMN dtype 1\",\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-1\",\"is_primary_key\":true,\"is_unique\":true,\"logical_name\":\"COLUMN logical_name 1\",\"name\":\"COLUMN 1\",\"nullable\":true,\"primary_key\":\"COLUMN primary_key 1\",\"summary\":\"COLUMN summary 1\",\"unique\":\"COLUMN unique 1\"}}",
+      "type": "BELONGS_TO"
+     },
+     {
+      "end": "{\"labels\":[\"PACKAGE\"],\"props\":{\"graph_owner\":\"analyzer\",\"id\":\"compat-new-PACKAGE-2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 2\",\"comment\":\"COLUMN comment 2\",\"data_type\":\"COLUMN data_type 2\",\"default_value\":\"COLUMN default_value 2\",\"description\":\"N/A\",\"description_source\":\"COLUMN description_source 2\",\"dtype\":\"COLUMN dtype 2\",\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-2\",\"is_primary_key\":false,\"is_unique\":false,\"logical_name\":\"COLUMN logical_name 2\",\"name\":\"COLUMN 2\",\"nullable\":false,\"primary_key\":\"COLUMN primary_key 2\",\"summary\":\"COLUMN summary 2\",\"unique\":\"COLUMN unique 2\"}}",
+      "type": "BELONGS_TO"
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "callee_module": "COLUMN-1",
+      "callee_package": "compat-new-PACKAGE-1"
+     },
+     {
+      "callee_module": "COLUMN-2",
+      "callee_package": "compat-new-PACKAGE-2"
+     }
+    ]
+   }
+  }
+ ]
+}

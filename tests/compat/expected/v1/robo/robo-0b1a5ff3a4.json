@@ -1,0 +1,20 @@
+{
+ "id": "robo-0b1a5ff3a4",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "fnid",
+  "name"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "figmaNodeId-1",
+   "UI 1"
+  ]
+ ],
+ "params": {
+  "uid": "UI-1"
+ }
+}

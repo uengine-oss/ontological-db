@@ -1,0 +1,68 @@
+{
+ "id": "studio-c17eed91cf",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "key",
+  "name",
+  "labels"
+ ],
+ "row_order": "sorted",
+ "row_count": 6,
+ "rows": [
+  [
+   "cust-1",
+   "Daesung Cable",
+   [
+    "Customer",
+    "_Entity"
+   ]
+  ],
+  [
+   "cust-2",
+   "Acme",
+   [
+    "Customer",
+    "_Entity"
+   ]
+  ],
+  [
+   "cust-3",
+   "Acme Korea",
+   [
+    "Customer",
+    "_Entity"
+   ]
+  ],
+  [
+   "po-1",
+   "PO-1",
+   [
+    "PurchaseOrder",
+    "_Entity"
+   ]
+  ],
+  [
+   "po-2",
+   "PO-2",
+   [
+    "PurchaseOrder",
+    "_Entity"
+   ]
+  ],
+  [
+   "po-3",
+   "PO-3",
+   [
+    "PurchaseOrder",
+    "_Entity"
+   ]
+  ]
+ ],
+ "params": {
+  "classes": [
+   "Customer",
+   "PurchaseOrder"
+  ]
+ }
+}

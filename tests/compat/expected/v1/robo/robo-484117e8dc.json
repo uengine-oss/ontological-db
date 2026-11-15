@@ -1,0 +1,60 @@
+{
+ "id": "robo-484117e8dc",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "startCommand"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 4,
+ "rows": [
+  [
+   {
+    "actor": "customer",
+    "aggregateId": "<uuid1>",
+    "aggregateName": "Order",
+    "bcId": "<uuid2>",
+    "bcName": "Order",
+    "displayName": null,
+    "id": "<uuid3>",
+    "name": "CancelOrder"
+   }
+  ],
+  [
+   {
+    "actor": "customer",
+    "aggregateId": "<uuid1>",
+    "aggregateName": "Order",
+    "bcId": "<uuid2>",
+    "bcName": "Order",
+    "displayName": null,
+    "id": "<uuid3>",
+    "name": "CancelOrder"
+   }
+  ],
+  [
+   {
+    "actor": "customer",
+    "aggregateId": "<uuid1>",
+    "aggregateName": "Order",
+    "bcId": "<uuid2>",
+    "bcName": "Order",
+    "displayName": null,
+    "id": "<uuid3>",
+    "name": "CancelOrder"
+   }
+  ],
+  [
+   {
+    "actor": "customer",
+    "aggregateId": "<uuid1>",
+    "aggregateName": "Order",
+    "bcId": "<uuid2>",
+    "bcName": "Order",
+    "displayName": null,
+    "id": "<uuid3>",
+    "name": "CancelOrder"
+   }
+  ]
+ ]
+}

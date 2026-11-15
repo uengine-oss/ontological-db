@@ -1,0 +1,16 @@
+{
+ "id": "studio-5584d7bbfe",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "n"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "limit": 10,
+  "q": "Acme"
+ }
+}

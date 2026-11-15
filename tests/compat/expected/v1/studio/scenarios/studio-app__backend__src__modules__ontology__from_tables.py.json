@@ -1,0 +1,105 @@
+{
+ "scenario": "studio-app:backend/src/modules/ontology/from_tables.py",
+ "graph": "ontology",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "studio-ed05ce5331",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "virtual node ErpItem ← erp.item (2 properties)"
+    ]
+   ],
+   "effect": {}
+  },
+  {
+   "id": "studio-330f6da983",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "virtual relationship (:ErpPurchaseOrder)-[:ITEM_OF]->(:ErpSupplier) on ErpPurchaseOrder.supplier_id = ErpSupplier.supplier_id"
+    ]
+   ],
+   "effect": {}
+  },
+  {
+   "id": "studio-4df72d6fbe",
+   "error": {
+    "code": "Neo.ClientError.Statement.ArgumentError",
+    "message": "ALTER action ADD COLUMN cannot be performed on relation \"n_221\""
+   }
+  },
+  {
+   "id": "studio-ea587804dc",
+   "columns": [
+    "e0",
+    "e1"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "@n1",
+     "@n2"
+    ]
+   ],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Customer"
+      ],
+      "props": {}
+     },
+     {
+      "labels": [
+       "Supplier"
+      ],
+      "props": {}
+     }
+    ]
+   }
+  },
+  {
+   "id": "studio-4cbca4cd74",
+   "error": {
+    "code": "Neo.ClientError.Statement.ArgumentError",
+    "message": "cannot delete node <n>: it still has 2 relationship(s). use DETACH DELETE"
+   },
+   "params": {
+    "e0": "@n3",
+    "e1": "@n4"
+   }
+  },
+  {
+   "id": "studio-fae3d57fb9",
+   "error": {
+    "code": "Neo.ClientError.Statement.ArgumentError",
+    "message": "cannot delete node <n>: it still has 2 relationship(s). use DETACH DELETE"
+   },
+   "params": {
+    "eid": "@n3"
+   }
+  },
+  {
+   "id": "studio-3f1875650d",
+   "error": {
+    "code": "Neo.ClientError.Statement.ArgumentError",
+    "message": "virtual relationships still join on 'ErpPurchaseOrder' (ITEM_OF, SUPPLIED_BY); drop them first"
+   }
+  }
+ ]
+}

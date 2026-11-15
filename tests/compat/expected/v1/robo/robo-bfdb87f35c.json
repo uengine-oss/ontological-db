@@ -1,0 +1,20 @@
+{
+ "id": "robo-bfdb87f35c",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "status",
+  "worktreePath"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "DESTROYED",
+   "Proposal sandboxWorktreePath 1"
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

@@ -1,0 +1,36 @@
+{
+ "id": "robo-67845eb406",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "c"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "FigmaComponent"
+    ],
+    "props": {
+     "bindingFileKey": "FigmaComponent bindingFileKey 1",
+     "figmaKey": "FigmaComponent figmaKey 1",
+     "figmaNodeId": "figmaNodeId-1",
+     "figmaNodeLastModified": "FigmaComponent figmaNodeLastModified 1",
+     "heightPx": "FigmaComponent heightPx 1",
+     "id": "FigmaComponent-1",
+     "name": "FigmaComponent 1",
+     "pageName": "FigmaComponent pageName 1",
+     "scannedAt": "2026-01-11T09:00:00Z",
+     "vlmDescription": "FigmaComponent vlmDescription 1",
+     "widthPx": "FigmaComponent widthPx 1"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "fk": "FigmaComponent bindingFileKey 1"
+ }
+}

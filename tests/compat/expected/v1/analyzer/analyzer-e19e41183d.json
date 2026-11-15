@@ -1,0 +1,28 @@
+{
+ "id": "analyzer-e19e41183d",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "source_id",
+  "target_id",
+  "evidence_lines",
+  "evidence_files",
+  "dml_types",
+  "evidence_locations"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "items": [
+   {
+    "source_id": null,
+    "target_id": "TABLE-1"
+   },
+   {
+    "source_id": null,
+    "target_id": "TABLE-2"
+   }
+  ]
+ }
+}

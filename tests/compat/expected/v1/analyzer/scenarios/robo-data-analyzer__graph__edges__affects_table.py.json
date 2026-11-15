@@ -1,0 +1,52 @@
+{
+ "scenario": "robo-data-analyzer:graph/edges/affects_table.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-b6bdbba3e7",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2,
+    "relationships_created": 2
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"TABLE\"],\"props\":{\"analyzed_description\":\"TABLE analyzed_description 1\",\"comment\":\"TABLE comment 1\",\"datasource\":\"TABLE datasource 1\",\"db\":\"TABLE db 1\",\"description\":\"\",\"description_source\":\"TABLE description_source 1\",\"graph_owner\":\"analyzer\",\"id\":\"TABLE-1\",\"logical_name\":\"TABLE logical_name 1\",\"name\":\"TABLE 1\",\"schema\":\"TABLE schema 1\",\"schema_name\":\"TABLE schema_name 1\",\"summary\":\"TABLE summary 1\",\"table_type\":\"TABLE table_type 1\"}}",
+      "props": {
+       "op": "compat-op-1"
+      },
+      "start": "{\"labels\":[\"EXAMPLE\"],\"props\":{\"given\":\"EXAMPLE given 1\",\"graph_owner\":\"analyzer\",\"id\":\"EXAMPLE-1\",\"name\":\"EXAMPLE 1\",\"then_\":\"EXAMPLE then_ 1\",\"when_\":\"EXAMPLE when_ 1\"}}",
+      "type": "AFFECTS_TABLE"
+     },
+     {
+      "end": "{\"labels\":[\"TABLE\"],\"props\":{\"analyzed_description\":\"TABLE analyzed_description 2\",\"comment\":\"TABLE comment 2\",\"datasource\":\"TABLE datasource 2\",\"db\":\"TABLE db 2\",\"description\":\"N/A\",\"description_source\":\"TABLE description_source 2\",\"graph_owner\":\"analyzer\",\"id\":\"TABLE-2\",\"logical_name\":\"TABLE logical_name 2\",\"name\":\"TABLE 2\",\"schema\":\"TABLE schema 2\",\"schema_name\":\"TABLE schema_name 2\",\"summary\":\"TABLE summary 2\",\"table_type\":\"TABLE table_type 2\"}}",
+      "props": {
+       "op": "compat-op-2"
+      },
+      "start": "{\"labels\":[\"EXAMPLE\"],\"props\":{\"given\":\"EXAMPLE given 2\",\"graph_owner\":\"analyzer\",\"id\":\"EXAMPLE-2\",\"name\":\"EXAMPLE 2\",\"then_\":\"EXAMPLE then_ 2\",\"when_\":\"EXAMPLE when_ 2\"}}",
+      "type": "AFFECTS_TABLE"
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "op": "compat-op-1",
+      "source_id": "EXAMPLE-1",
+      "target_id": "TABLE-1"
+     },
+     {
+      "op": "compat-op-2",
+      "source_id": "EXAMPLE-2",
+      "target_id": "TABLE-2"
+     }
+    ]
+   }
+  }
+ ]
+}

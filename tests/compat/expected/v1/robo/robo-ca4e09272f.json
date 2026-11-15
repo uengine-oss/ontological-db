@@ -1,0 +1,67 @@
+{
+ "id": "robo-ca4e09272f",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "p",
+  "task_ids",
+  "actor_ids"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "BpmProcess"
+    ],
+    "props": {
+     "bpmn_xml": "BpmProcess bpmn_xml 1",
+     "description": "BpmProcess description 1",
+     "domain_keywords": "BpmProcess domain_keywords 1",
+     "id": "BpmProcess-1",
+     "name": "BpmProcess 1",
+     "process_index": 10,
+     "session_id": "sess-1",
+     "source_pdf_name": "BpmProcess source_pdf_name 1",
+     "updated_at": "2026-01-11T09:00:00Z"
+    }
+   },
+   [
+    "BpmTask-1"
+   ],
+   [
+    "BpmActor-1"
+   ]
+  ],
+  [
+   {
+    "~node": "@n2",
+    "labels": [
+     "BpmProcess"
+    ],
+    "props": {
+     "bpmn_xml": "BpmProcess bpmn_xml 2",
+     "description": "BpmProcess description 2",
+     "domain_keywords": "BpmProcess domain_keywords 2",
+     "id": "BpmProcess-2",
+     "name": "BpmProcess 2",
+     "process_index": 20,
+     "session_id": "sess-1",
+     "source_pdf_name": "BpmProcess source_pdf_name 2",
+     "updated_at": "2026-01-12T09:00:00Z"
+    }
+   },
+   [
+    "BpmTask-2"
+   ],
+   [
+    "BpmActor-2"
+   ]
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

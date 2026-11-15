@@ -1,0 +1,21 @@
+{
+ "id": "analyzer-4b42161a21",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "fp",
+  "dim"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "EMBED_META fingerprint 1",
+   "EMBED_META dim 1"
+  ],
+  [
+   "EMBED_META fingerprint 2",
+   "EMBED_META dim 2"
+  ]
+ ]
+}

@@ -1,0 +1,17 @@
+{
+ "id": "robo-5629158f16",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "uiId",
+  "uiName",
+  "uiDisplayName",
+  "uiTemplate",
+  "uiActor",
+  "uiStoredSequence",
+  "bcId"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": []
+}

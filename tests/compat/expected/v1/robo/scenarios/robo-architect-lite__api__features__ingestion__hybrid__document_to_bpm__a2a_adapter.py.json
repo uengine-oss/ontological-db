@@ -1,0 +1,27 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/hybrid/document_to_bpm/a2a_adapter.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-ae3ece659c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"BpmnProcess\"],\"props\":{\"description\":\"Process description 1\",\"id\":\"Process-1\",\"name\":\"Process 1\",\"proc_id\":\"proc_id-1\",\"purpose\":\"Process purpose 1\",\"session_id\":\"sess-1\"}} <- {\"labels\":[\"Process\"],\"props\":{\"description\":\"Process description 1\",\"id\":\"Process-1\",\"name\":\"Process 1\",\"proc_id\":\"proc_id-1\",\"purpose\":\"Process purpose 1\",\"session_id\":\"sess-1\"}}",
+     "{\"labels\":[\"BpmnProcess\"],\"props\":{\"description\":\"Process description 2\",\"id\":\"Process-2\",\"name\":\"Process 2\",\"proc_id\":\"proc_id-2\",\"purpose\":\"Process purpose 2\",\"session_id\":\"sess-1\"}} <- {\"labels\":[\"Process\"],\"props\":{\"description\":\"Process description 2\",\"id\":\"Process-2\",\"name\":\"Process 2\",\"proc_id\":\"proc_id-2\",\"purpose\":\"Process purpose 2\",\"session_id\":\"sess-1\"}}"
+    ]
+   },
+   "params": {
+    "pids": [
+     "proc_id-1",
+     "proc_id-2"
+    ],
+    "sid": "compat-session_id"
+   }
+  }
+ ]
+}

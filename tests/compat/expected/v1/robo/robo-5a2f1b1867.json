@@ -1,0 +1,18 @@
+{
+ "id": "robo-5a2f1b1867",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "c"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   0
+  ]
+ ],
+ "params": {
+  "us_id": "UserStory-1"
+ }
+}

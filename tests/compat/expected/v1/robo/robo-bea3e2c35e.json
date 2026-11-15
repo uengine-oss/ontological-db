@@ -1,0 +1,15 @@
+{
+ "id": "robo-bea3e2c35e",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "1"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   1
+  ]
+ ]
+}

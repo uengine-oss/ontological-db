@@ -1,0 +1,63 @@
+{
+ "scenario": "robo-data-analyzer:graph/nodes/example.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-515858998b",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 12
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "EXAMPLE"
+      ],
+      "props": {
+       "given": "compat-given-1",
+       "graph_owner": "analyzer",
+       "id": "compat-new-EXAMPLE-1",
+       "then_": "compat-then_-1",
+       "when_": "compat-when_-1"
+      }
+     },
+     {
+      "labels": [
+       "EXAMPLE"
+      ],
+      "props": {
+       "given": "compat-given-2",
+       "graph_owner": "analyzer",
+       "id": "compat-new-EXAMPLE-2",
+       "then_": "compat-then_-2",
+       "when_": "compat-when_-2"
+      }
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "given": "compat-given-1",
+      "id": "compat-new-EXAMPLE-1",
+      "then_": "compat-then_-1",
+      "when_": "compat-when_-1"
+     },
+     {
+      "given": "compat-given-2",
+      "id": "compat-new-EXAMPLE-2",
+      "then_": "compat-then_-2",
+      "when_": "compat-when_-2"
+     }
+    ]
+   }
+  }
+ ]
+}

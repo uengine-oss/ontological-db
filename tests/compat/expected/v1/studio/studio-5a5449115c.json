@@ -1,0 +1,30 @@
+{
+ "id": "studio-5a5449115c",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "eid",
+  "key",
+  "name",
+  "source_system",
+  "value"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "@n1",
+   "cust-1",
+   "Daesung Cable",
+   "erp",
+   "A"
+  ],
+  [
+   "@n2",
+   "cust-2",
+   "Acme",
+   "crm",
+   "B"
+  ]
+ ]
+}

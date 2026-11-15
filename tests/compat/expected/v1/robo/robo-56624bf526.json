@@ -1,0 +1,30 @@
+{
+ "id": "robo-56624bf526",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "description",
+  "attachedToName",
+  "attachedToId",
+  "attachedToType",
+  "template"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "UI-1",
+   "UI 1",
+   "UI description 1",
+   "UI attachedToName 1",
+   "",
+   "",
+   "UI template 1"
+  ]
+ ],
+ "params": {
+  "id": "UI-1"
+ }
+}

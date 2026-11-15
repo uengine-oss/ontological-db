@@ -1,0 +1,20 @@
+{
+ "id": "robo-bfba4a3c76",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "displayName",
+  "name",
+  "description",
+  "bcName",
+  "bcDescription"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "uid": "UI-1"
+ }
+}

@@ -1,0 +1,25 @@
+{
+ "id": "robo-d1a905a3bd",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "feature"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "boundedContextId": "BoundedContext-1",
+    "description": "Feature description 1",
+    "id": "Feature-1",
+    "key": null,
+    "name": "Feature 1",
+    "source": "Feature source 1"
+   }
+  ]
+ ],
+ "params": {
+  "id": "Feature-1"
+ }
+}

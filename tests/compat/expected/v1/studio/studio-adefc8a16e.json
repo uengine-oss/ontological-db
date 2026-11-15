@@ -1,0 +1,37 @@
+{
+ "id": "studio-adefc8a16e",
+ "graph": "ontology",
+ "kind": "fabric-read",
+ "columns": [
+  "column",
+  "type",
+  "nullable",
+  "key",
+  "primary_key"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "item_id",
+   "text",
+   false,
+   false,
+   true
+  ],
+  [
+   "name",
+   "text",
+   true,
+   false,
+   false
+  ],
+  [
+   "unit",
+   "text",
+   true,
+   false,
+   false
+  ]
+ ]
+}

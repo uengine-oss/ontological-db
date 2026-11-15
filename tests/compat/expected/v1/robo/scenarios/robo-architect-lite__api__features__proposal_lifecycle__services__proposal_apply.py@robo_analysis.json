@@ -1,0 +1,224 @@
+{
+ "scenario": "robo-architect-lite:api/features/proposal_lifecycle/services/proposal_apply.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-ebb0a0a644",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 5
+   },
+   "effect": {},
+   "params": {
+    "ct": "compat-changeType",
+    "diff": "compat-diff",
+    "impact": "compat-impactLevel",
+    "nid": "Aggregate-1",
+    "pid": "Proposal-1",
+    "reason": "compat-reason"
+   }
+  },
+  {
+   "id": "robo-819d652019",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "fid": "Feature-1",
+    "us": "UserStory-1"
+   }
+  },
+  {
+   "id": "robo-3c829629dc",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "bid": "BoundedContext-1",
+    "fid": "Feature-1"
+   }
+  },
+  {
+   "id": "robo-b2aad60511",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "cid": "Command-1",
+    "iid": "Invariant-1"
+   }
+  },
+  {
+   "id": "robo-18f7acd778",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "bid": "BoundedContext-1",
+    "uid": "UI-1"
+   }
+  },
+  {
+   "id": "robo-b165fe3d44",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "did": "Aggregate-1",
+    "us": "UserStory-1"
+   }
+  },
+  {
+   "id": "robo-1631441fdb",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "aid": "Aggregate-1",
+    "bid": "BoundedContext-1"
+   }
+  },
+  {
+   "id": "robo-af98962538",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "aid": "Aggregate-1",
+    "cid": "Command-1"
+   }
+  },
+  {
+   "id": "robo-1b820ae3a9",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "cid": "Command-1",
+    "eid": "Event-1"
+   }
+  },
+  {
+   "id": "robo-bfc70d8c76",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "bid": "BoundedContext-1",
+    "rid": "ReadModel-1"
+   }
+  },
+  {
+   "id": "robo-99f932d1bc",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "bid": "BoundedContext-1",
+    "pid": "Policy-1"
+   }
+  },
+  {
+   "id": "robo-074e9e3b0b",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "eid": "Event-1",
+    "pid": "Policy-1"
+   }
+  },
+  {
+   "id": "robo-f521a2b2bf",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "cid": "Command-1",
+    "pid": "Policy-1"
+   }
+  },
+  {
+   "id": "robo-27e3522cd9",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "bid": "BoundedContext-1",
+    "jid": "Journey-1"
+   }
+  },
+  {
+   "id": "robo-1526a947b3",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "a": "JourneyStep-1",
+    "b": "JourneyStep-1",
+    "cond": "compat-condition"
+   }
+  },
+  {
+   "id": "robo-df67b1ae15",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Aggregate\"],\"props\":{\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"name\":\"Aggregate 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"valueObjects\":\"Aggregate valueObjects 1\"}}",
+      "props": {
+       "appliedAt": "<now>",
+       "changeType": "compat-changeType",
+       "diff": "compat-diff",
+       "impactLevel": "compat-impactLevel",
+       "reason": "compat-reason"
+      },
+      "start": "{\"labels\":[\"Proposal\"],\"props\":{\"id\":\"Proposal-1\",\"name\":\"Proposal 1\"}}",
+      "type": "EFFECT"
+     }
+    ]
+   },
+   "params": {
+    "pid": "Proposal-1"
+   }
+  }
+ ]
+}

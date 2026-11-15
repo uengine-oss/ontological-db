@@ -1,0 +1,21 @@
+{
+ "id": "robo-d89ecc5efb",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "seq",
+  "title",
+  "given",
+  "wh",
+  "th",
+  "function_id",
+  "function_name",
+  "write_effects_json"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "fid": "<uuid1>"
+ }
+}

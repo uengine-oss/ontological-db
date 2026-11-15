@@ -1,0 +1,26 @@
+{
+ "id": "robo-833d05d95e",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "kind",
+  "classification",
+  "version"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "BoundedContext-1",
+   "BoundedContext 1",
+   "BoundedContext",
+   "BoundedContext classification 1",
+   10
+  ]
+ ],
+ "params": {
+  "q": "BoundedContext 1"
+ }
+}

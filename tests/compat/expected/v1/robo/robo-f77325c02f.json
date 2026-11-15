@@ -1,0 +1,18 @@
+{
+ "id": "robo-f77325c02f",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "n"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   1
+  ]
+ ],
+ "params": {
+  "fk": "FigmaComponent bindingFileKey 1"
+ }
+}

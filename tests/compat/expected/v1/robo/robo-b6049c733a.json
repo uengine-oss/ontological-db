@@ -1,0 +1,15 @@
+{
+ "id": "robo-b6049c733a",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "uid"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "rid": "ReadModel-1"
+ }
+}

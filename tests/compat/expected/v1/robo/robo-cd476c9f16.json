@@ -1,0 +1,53 @@
+{
+ "id": "robo-cd476c9f16",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "rm",
+  "eid"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "actor": "ReadModel actor 1",
+    "createdAt": "2026-01-11T09:00:00Z",
+    "description": "ReadModel description 1",
+    "displayName": "ReadModel 1",
+    "id": "ReadModel-1",
+    "isMultipleResult": true,
+    "key": "readmodel-1",
+    "name": "ReadModel 1",
+    "provisioningType": "ReadModel provisioningType 1",
+    "sequence": 10,
+    "session_id": "sess-1",
+    "updatedAt": "2026-01-11T09:00:00Z"
+   },
+   "Event-1"
+  ],
+  [
+   {
+    "actor": "ReadModel actor 2",
+    "createdAt": "2026-01-12T09:00:00Z",
+    "description": "ReadModel description 2",
+    "displayName": "ReadModel 2",
+    "id": "ReadModel-2",
+    "isMultipleResult": false,
+    "key": "readmodel-2",
+    "name": "ReadModel 2",
+    "provisioningType": "ReadModel provisioningType 2",
+    "sequence": 20,
+    "session_id": "sess-1",
+    "updatedAt": "2026-01-12T09:00:00Z"
+   },
+   "Event-2"
+  ]
+ ],
+ "params": {
+  "eids": [
+   "Event-1",
+   "Event-2"
+  ]
+ }
+}

@@ -1,0 +1,150 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/features.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-bd7e9fb977",
+   "columns": [
+    "feature"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "assumptions": null,
+      "boundedContextId": "BoundedContext-1",
+      "description": "compat-description",
+      "edgeCases": "compat-edgeCases",
+      "id": "<uuid1>",
+      "key": "compat-new-Feature",
+      "name": "compat-name",
+      "source": "compat-source"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 12,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Feature"
+      ],
+      "props": {
+       "boundedContextId": "BoundedContext-1",
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "edgeCases": "compat-edgeCases",
+       "id": "<uuid>",
+       "key": "compat-new-Feature",
+       "name": "compat-name",
+       "sequence": 7,
+       "session_id": "compat-session_id",
+       "source": "compat-source",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Feature\"],\"props\":{\"boundedContextId\":\"BoundedContext-1\",\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"edgeCases\":\"compat-edgeCases\",\"id\":\"<uuid>\",\"key\":\"compat-new-Feature\",\"name\":\"compat-name\",\"sequence\":7,\"session_id\":\"compat-session_id\",\"source\":\"compat-source\",\"updatedAt\":\"<now>\"}}",
+      "props": {
+       "createdAt": "<now>"
+      },
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"id\":\"BoundedContext-1\",\"name\":\"BoundedContext 1\",\"session_id\":\"sess-1\"}}",
+      "type": "HAS_FEATURE"
+     }
+    ]
+   },
+   "params": {
+    "bc_id": "BoundedContext-1",
+    "description": "compat-description",
+    "edgeCases": "compat-edgeCases",
+    "key": "compat-new-Feature",
+    "name": "compat-name",
+    "sequence": 7,
+    "session_id": "compat-session_id",
+    "source": "compat-source"
+   }
+  },
+  {
+   "id": "robo-b9561b6867",
+   "columns": [
+    "us_id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "UserStory-1"
+    ]
+   ],
+   "counters": {
+    "properties_set": 3,
+    "relationships_created": 1,
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"displayName\":\"UserStory 1\",\"id\":\"UserStory-1\",\"name\":\"UserStory 1\",\"role\":\"UserStory role 1\",\"session_id\":\"sess-1\",\"sourceUnitId\":\"sourceUnitId-1\"}}",
+      "props": {
+       "confidence": 0.9,
+       "createdAt": "<now>",
+       "source": "compat-source"
+      },
+      "start": "{\"labels\":[\"Feature\"],\"props\":{\"boundedContextId\":\"BoundedContext-1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Feature description 1\",\"edgeCases\":\"Feature edgeCases 1\",\"id\":\"Feature-1\",\"key\":\"feature-1\",\"name\":\"Feature 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"source\":\"Feature source 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_USER_STORY"
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"displayName\":\"UserStory 1\",\"id\":\"UserStory-1\",\"name\":\"UserStory 1\",\"role\":\"UserStory role 1\",\"session_id\":\"sess-1\",\"sourceUnitId\":\"sourceUnitId-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Feature\"],\"props\":{\"boundedContextId\":\"BoundedContext-1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Feature description 1\",\"edgeCases\":\"Feature edgeCases 1\",\"id\":\"Feature-1\",\"key\":\"feature-1\",\"name\":\"Feature 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"source\":\"Feature source 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_USER_STORY"
+     }
+    ]
+   },
+   "params": {
+    "confidence": 0.9,
+    "feature_id": "Feature-1",
+    "source": "compat-source",
+    "us_id": "UserStory-1"
+   }
+  },
+  {
+   "id": "robo-60f219b866",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"displayName\":\"UserStory 1\",\"id\":\"UserStory-1\",\"name\":\"UserStory 1\",\"role\":\"UserStory role 1\",\"session_id\":\"sess-1\",\"sourceUnitId\":\"sourceUnitId-1\"}}",
+      "props": {
+       "confidence": 0.9,
+       "createdAt": "<now>",
+       "source": "compat-source"
+      },
+      "start": "{\"labels\":[\"Feature\"],\"props\":{\"boundedContextId\":\"BoundedContext-1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Feature description 1\",\"edgeCases\":\"Feature edgeCases 1\",\"id\":\"Feature-1\",\"key\":\"feature-1\",\"name\":\"Feature 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"source\":\"Feature source 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_USER_STORY"
+     }
+    ]
+   },
+   "params": {
+    "us_id": "UserStory-1"
+   }
+  }
+ ]
+}

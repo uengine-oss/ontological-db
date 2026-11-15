@@ -1,0 +1,18 @@
+{
+ "id": "studio-3a72355fcb",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "name"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "Busan Parts"
+  ],
+  [
+   "Hanil Steel"
+  ]
+ ]
+}

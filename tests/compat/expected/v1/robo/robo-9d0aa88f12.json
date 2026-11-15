@@ -1,0 +1,14 @@
+{
+ "id": "robo-9d0aa88f12",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "bcId": "BoundedContext-1"
+ }
+}

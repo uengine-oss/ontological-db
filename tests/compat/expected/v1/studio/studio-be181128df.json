@@ -1,0 +1,18 @@
+{
+ "id": "studio-be181128df",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "from_table",
+  "from_column",
+  "to_table",
+  "to_column"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "datasource": "Table datasource 1",
+  "schema": "Table schema 1"
+ }
+}

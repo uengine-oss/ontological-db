@@ -1,0 +1,676 @@
+{
+ "scenario": "robo-architect-lite:api/features/canvas_graph/routes/event_modeling.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-32e006f1c5",
+   "columns": [
+    "id",
+    "name",
+    "displayName"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid1>",
+     "compat-name",
+     "compat-displayName"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 7,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Event"
+      ],
+      "props": {
+       "actor": "compat-actor",
+       "createdAt": "<now>",
+       "displayName": "compat-displayName",
+       "id": "<uuid>",
+       "name": "compat-name",
+       "sequence": 7,
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"compat-actor\",\"createdAt\":\"<now>\",\"displayName\":\"compat-displayName\",\"id\":\"<uuid>\",\"name\":\"compat-name\",\"sequence\":7,\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_EVENT"
+     }
+    ]
+   },
+   "params": {
+    "actor": "compat-actor",
+    "bcId": "BoundedContext-1",
+    "displayName": "compat-displayName",
+    "name": "compat-name",
+    "sequence": 7
+   }
+  },
+  {
+   "id": "robo-a54ede5e52",
+   "columns": [
+    "id",
+    "name",
+    "displayName"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid2>",
+     "compat-name",
+     "compat-displayName"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 7,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Command"
+      ],
+      "props": {
+       "actor": "compat-actor",
+       "createdAt": "<now>",
+       "displayName": "compat-displayName",
+       "id": "<uuid>",
+       "name": "compat-name",
+       "sequence": 7,
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"compat-actor\",\"createdAt\":\"<now>\",\"displayName\":\"compat-displayName\",\"id\":\"<uuid>\",\"name\":\"compat-name\",\"sequence\":7,\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "HAS_COMMAND"
+     }
+    ]
+   },
+   "params": {
+    "actor": "compat-actor",
+    "aggId": "Aggregate-1",
+    "displayName": "compat-displayName",
+    "name": "compat-name",
+    "sequence": 7
+   }
+  },
+  {
+   "id": "robo-a6183fc8d4",
+   "columns": [
+    "id",
+    "name",
+    "displayName"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid3>",
+     "compat-name",
+     "compat-displayName"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 7,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "ReadModel"
+      ],
+      "props": {
+       "actor": "compat-actor",
+       "createdAt": "<now>",
+       "displayName": "compat-displayName",
+       "id": "<uuid>",
+       "name": "compat-name",
+       "sequence": 7,
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"compat-actor\",\"createdAt\":\"<now>\",\"displayName\":\"compat-displayName\",\"id\":\"<uuid>\",\"name\":\"compat-name\",\"sequence\":7,\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_READMODEL"
+     }
+    ]
+   },
+   "params": {
+    "actor": "compat-actor",
+    "bcId": "BoundedContext-1",
+    "displayName": "compat-displayName",
+    "name": "compat-name",
+    "sequence": 7
+   }
+  },
+  {
+   "id": "robo-bce812a945",
+   "columns": [
+    "id",
+    "name",
+    "displayName"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "<uuid4>",
+     "compat-name",
+     "compat-displayName"
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 9
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "UI"
+      ],
+      "props": {
+       "actor": "compat-actor",
+       "attachedToId": "compat-attachedToId",
+       "attachedToType": "compat-attachedToType",
+       "createdAt": "<now>",
+       "displayName": "compat-displayName",
+       "id": "<uuid>",
+       "name": "compat-name",
+       "sequence": 7,
+       "updatedAt": "<now>"
+      }
+     }
+    ]
+   },
+   "params": {
+    "actor": "compat-actor",
+    "attachedToId": "compat-attachedToId",
+    "attachedToType": "compat-attachedToType",
+    "displayName": "compat-displayName",
+    "name": "compat-name",
+    "sequence": 7
+   }
+  },
+  {
+   "id": "robo-b61670861a",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "type": "ATTACHED_TO"
+     }
+    ]
+   },
+   "params": {
+    "targetId": "Command-1",
+    "uiId": "UI-1"
+   }
+  },
+  {
+   "id": "robo-441c83fe0a",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_UI"
+     }
+    ]
+   },
+   "params": {
+    "bcId": "BoundedContext-1",
+    "uiId": "UI-1"
+   }
+  },
+  {
+   "id": "robo-04c4c7204d",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 2,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "CQRSConfig"
+      ],
+      "props": {
+       "id": "compat-new-CQRSConfig",
+       "readmodelId": "ReadModel-1"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"CQRSConfig\"],\"props\":{\"id\":\"compat-new-CQRSConfig\",\"readmodelId\":\"ReadModel-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"ReadModel description 1\",\"displayName\":\"ReadModel 1\",\"id\":\"ReadModel-1\",\"isMultipleResult\":true,\"key\":\"readmodel-1\",\"name\":\"ReadModel 1\",\"provisioningType\":\"ReadModel provisioningType 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_CQRS"
+     }
+    ]
+   },
+   "params": {
+    "cqrsId": "compat-new-CQRSConfig",
+    "rmId": "ReadModel-1"
+   }
+  },
+  {
+   "id": "robo-082d3a64fb",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 4,
+    "relationships_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "CQRSOperation"
+      ],
+      "props": {
+       "cqrsConfigId": "CQRSConfig-1",
+       "id": "compat-new-CQRSOperation",
+       "operationType": "INSERT",
+       "triggerEventId": "Event-1"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"CQRSConfig-1\",\"id\":\"compat-new-CQRSOperation\",\"operationType\":\"INSERT\",\"triggerEventId\":\"Event-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSConfig\"],\"props\":{\"id\":\"CQRSConfig-1\",\"name\":\"CQRSConfig 1\",\"readmodelId\":\"readmodelId-1\"}}",
+      "type": "HAS_OPERATION"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"CQRSConfig-1\",\"id\":\"compat-new-CQRSOperation\",\"operationType\":\"INSERT\",\"triggerEventId\":\"Event-1\"}}",
+      "type": "TRIGGERED_BY"
+     }
+    ]
+   },
+   "params": {
+    "cqrsId": "CQRSConfig-1",
+    "evtId": "Event-1",
+    "opId": "compat-new-CQRSOperation"
+   }
+  },
+  {
+   "id": "robo-364341e443",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "srcId": "Command-1",
+    "tgtId": "Event-1"
+   }
+  },
+  {
+   "id": "robo-aaf8408660",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "EMITS"
+     }
+    ]
+   },
+   "params": {
+    "srcId": "Command-1",
+    "tgtId": "Event-1"
+   }
+  },
+  {
+   "id": "robo-83a319073f",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}} <- {\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}"
+    ]
+   },
+   "params": {
+    "id": "Event-1",
+    "seq": 7
+   }
+  },
+  {
+   "id": "robo-8ee8d87d10",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}} <- {\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}"
+    ]
+   },
+   "params": {
+    "id": "Command-1",
+    "seq": 7
+   }
+  },
+  {
+   "id": "robo-1c67075f9c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"compat-attachedToId\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"compat-attachedToType\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}} <- {\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}"
+    ]
+   },
+   "params": {
+    "aid": "compat-attachedToId",
+    "atype": "compat-attachedToType",
+    "uid": "UI-1"
+   }
+  },
+  {
+   "id": "robo-366e75359b",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}} <- {\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"compat-attachedToId\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"compat-attachedToType\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}"
+    ]
+   },
+   "params": {
+    "uid": "UI-1"
+   }
+  },
+  {
+   "id": "robo-ddc1b02656",
+   "columns": [
+    "cnt"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     1
+    ]
+   ],
+   "counters": {
+    "nodes_deleted": 1,
+    "relationships_deleted": 19
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "Command"
+      ],
+      "props": {
+       "actor": "Command actor 1",
+       "aggregate_id": "Aggregate-1",
+       "category": "Command category 1",
+       "createdAt": "2026-01-11T09:00:00Z",
+       "description": "Command description 1",
+       "displayName": "Command 1",
+       "id": "Command-1",
+       "inputSchema": "Command inputSchema 1",
+       "key": "command-1",
+       "name": "Command 1",
+       "postconditions": "Command postconditions 1",
+       "preconditions": "Command preconditions 1",
+       "sequence": 7,
+       "session_id": "sess-1",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"conditions\":\"BpmTask conditions 1\",\"description\":\"BpmTask description 1\",\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"BpmProcess-1\",\"sequence_index\":\"BpmTask sequence_index 1\",\"session_id\":\"sess-1\",\"source_page\":\"BpmTask source_page 1\",\"source_section\":\"BpmTask source_section 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "PROMOTED_FROM"
+     },
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_AGGREGATE"
+     },
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_COMMAND"
+     },
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_POLICY"
+     },
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "type": "EMITS"
+     },
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "type": "ATTACHED_TO"
+     },
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "EMITS"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "ATTACHED_TO"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "EMITS"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "HAS_AGGREGATE"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "HAS_COMMAND"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "HAS_POLICY"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "HAS_THEN"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "HAS_UI"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "INVOKES"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "REFERENCES"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "TRIGGERS"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "IMPLEMENTS"
+     }
+    ]
+   },
+   "params": {
+    "id": "Command-1"
+   }
+  },
+  {
+   "id": "robo-ae9a1dacba",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 1,
+    "relationships_deleted": 2
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "CQRSOperation"
+      ],
+      "props": {
+       "cqrsConfigId": "CQRSConfig-1",
+       "id": "compat-new-CQRSOperation",
+       "operationType": "INSERT",
+       "triggerEventId": "Event-1"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"CQRSConfig-1\",\"id\":\"compat-new-CQRSOperation\",\"operationType\":\"INSERT\",\"triggerEventId\":\"Event-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSConfig\"],\"props\":{\"id\":\"CQRSConfig-1\",\"name\":\"CQRSConfig 1\",\"readmodelId\":\"readmodelId-1\"}}",
+      "type": "HAS_OPERATION"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"CQRSConfig-1\",\"id\":\"compat-new-CQRSOperation\",\"operationType\":\"INSERT\",\"triggerEventId\":\"Event-1\"}}",
+      "type": "TRIGGERED_BY"
+     }
+    ]
+   },
+   "params": {
+    "cqrsId": "CQRSConfig-1",
+    "evtId": "Event-1"
+   }
+  }
+ ]
+}

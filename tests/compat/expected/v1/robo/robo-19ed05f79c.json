@@ -1,0 +1,30 @@
+{
+ "id": "robo-19ed05f79c",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "inv",
+  "refCount",
+  "ownCount"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "declaration": "Invariant declaration 1",
+    "description": null,
+    "id": "Invariant-1",
+    "key": null,
+    "name": "Invariant 1",
+    "seq": 10,
+    "source": null
+   },
+   1,
+   1
+  ]
+ ],
+ "params": {
+  "aid": "Aggregate-1"
+ }
+}

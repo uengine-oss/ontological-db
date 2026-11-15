@@ -1,0 +1,24 @@
+{
+ "id": "robo-7513d1457f",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "commandId",
+  "commandName",
+  "hasGwt",
+  "alreadyReferenced"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Command-1",
+   "Command 1",
+   true,
+   true
+  ]
+ ],
+ "params": {
+  "id": "Invariant-1"
+ }
+}

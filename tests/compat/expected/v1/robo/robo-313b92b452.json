@@ -1,0 +1,24 @@
+{
+ "id": "robo-313b92b452",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "rmName",
+  "rmDesc",
+  "fields"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "ReadModel 1",
+   "ReadModel description 1",
+   [
+    "Property 1"
+   ]
+  ]
+ ],
+ "params": {
+  "id": "ReadModel-1"
+ }
+}

@@ -1,0 +1,22 @@
+{
+ "id": "robo-9c275ee734",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "fileKey",
+  "nodeId",
+  "updatedAt"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "UI figmaFileKey 1",
+   "figmaNodeId-1",
+   "2026-01-11T09:00:00Z"
+  ]
+ ],
+ "params": {
+  "id": "UI-1"
+ }
+}

@@ -1,0 +1,12 @@
+{
+ "id": "analyzer-df99eeb32c",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "id",
+  "fi"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": []
+}

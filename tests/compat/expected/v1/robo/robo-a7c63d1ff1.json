@@ -1,0 +1,20 @@
+{
+ "id": "robo-a7c63d1ff1",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "title",
+  "tasksJson"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Proposal 1",
+   "Proposal tasksJson 1"
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

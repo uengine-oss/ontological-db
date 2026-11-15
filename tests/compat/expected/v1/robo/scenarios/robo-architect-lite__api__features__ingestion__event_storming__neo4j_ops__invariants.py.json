@@ -1,0 +1,131 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/invariants.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-71e69c34fb",
+   "columns": [
+    "invariant"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "declaration": "compat-declaration",
+      "id": "<uuid1>",
+      "key": "compat-new-Invariant",
+      "name": "compat-name",
+      "seq": 7,
+      "source": "compat-source"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 10,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Invariant"
+      ],
+      "props": {
+       "aggregateId": "Aggregate-1",
+       "createdAt": "<now>",
+       "declaration": "compat-declaration",
+       "id": "<uuid>",
+       "key": "compat-new-Invariant",
+       "name": "compat-name",
+       "seq": 7,
+       "session_id": "compat-session_id",
+       "source": "compat-source",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Invariant\"],\"props\":{\"aggregateId\":\"Aggregate-1\",\"createdAt\":\"<now>\",\"declaration\":\"compat-declaration\",\"id\":\"<uuid>\",\"key\":\"compat-new-Invariant\",\"name\":\"compat-name\",\"seq\":7,\"session_id\":\"compat-session_id\",\"source\":\"compat-source\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "HAS_INVARIANT"
+     }
+    ]
+   },
+   "params": {
+    "aid": "Aggregate-1",
+    "declaration": "compat-declaration",
+    "key": "compat-new-Invariant",
+    "name": "compat-name",
+    "seq": 7,
+    "session_id": "compat-session_id",
+    "source": "compat-source"
+   }
+  },
+  {
+   "id": "robo-f494112864",
+   "columns": [
+    "pruned"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     2
+    ]
+   ],
+   "counters": {
+    "nodes_deleted": 2
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "Invariant"
+      ],
+      "props": {
+       "aggregateId": "Aggregate-1",
+       "createdAt": "2026-01-11T09:00:00Z",
+       "declaration": "Invariant declaration 1",
+       "description": "Invariant description 1",
+       "id": "Invariant-1",
+       "key": "invariant-1",
+       "name": "Invariant 1",
+       "proposalSource": "Invariant proposalSource 1",
+       "seq": 10,
+       "session_id": "sess-1",
+       "source": "migrated",
+       "statement": "Invariant statement 1",
+       "updatedAt": "2026-01-11T09:00:00Z"
+      }
+     },
+     {
+      "labels": [
+       "Invariant"
+      ],
+      "props": {
+       "aggregateId": "Aggregate-2",
+       "createdAt": "2026-01-12T09:00:00Z",
+       "declaration": "Invariant declaration 2",
+       "description": "Invariant description 2",
+       "id": "Invariant-2",
+       "key": "invariant-2",
+       "name": "Invariant 2",
+       "proposalSource": "Invariant proposalSource 2",
+       "seq": 20,
+       "session_id": "sess-1",
+       "source": "ingested",
+       "statement": "Invariant statement 2",
+       "updatedAt": "2026-01-12T09:00:00Z"
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

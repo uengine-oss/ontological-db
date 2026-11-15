@@ -1,0 +1,16 @@
+{
+ "id": "robo-325f6cdc0d",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "actor",
+  "seq"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "cid": "Command-1"
+ }
+}

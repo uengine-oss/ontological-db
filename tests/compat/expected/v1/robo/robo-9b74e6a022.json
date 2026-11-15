@@ -1,0 +1,31 @@
+{
+ "id": "robo-9b74e6a022",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "node"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "boundedContextId": "<bc-uuid>",
+    "createdAt": "<now>",
+    "description": "신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정",
+    "id": "<uuid1>",
+    "journeyId": "normal-signup-abc123",
+    "key": "membership.journey.normal-signup-abc123",
+    "labels": [
+     "Journey"
+    ],
+    "name": "정상 회원가입",
+    "source": "llm",
+    "updatedAt": "<now>"
+   }
+  ]
+ ],
+ "params": {
+  "node_id": "<uuid1>"
+ }
+}

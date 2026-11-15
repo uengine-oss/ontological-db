@@ -1,0 +1,12 @@
+{
+ "id": "robo-cce04adba7",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "child",
+  "parent"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": []
+}

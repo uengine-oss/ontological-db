@@ -1,0 +1,44 @@
+{
+ "id": "robo-d85fccc2ee",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "itemId",
+  "labels",
+  "itemName",
+  "id",
+  "timestamp",
+  "userName",
+  "userEmail",
+  "changes",
+  "source",
+  "feedback",
+  "rationale"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "UserStory-1",
+   [
+    "UserStory"
+   ],
+   "UserStory role 1: UserStory action 1",
+   "EditHistory-1",
+   "2026-01-11T09:00:00Z",
+   "EditHistory userName 1",
+   "EditHistory userEmail 1",
+   "EditHistory changes 1",
+   "EditHistory source 1",
+   "EditHistory feedback 1",
+   "EditHistory rationale 1"
+  ]
+ ],
+ "params": {
+  "ids": [
+   "US-001",
+   "UserStory-1"
+  ],
+  "limit": 10
+ }
+}

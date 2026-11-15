@@ -1,0 +1,82 @@
+{
+ "id": "studio-9c595bde08",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "schema_name",
+  "class_name",
+  "description",
+  "binding_kind",
+  "properties",
+  "synonyms",
+  "certified",
+  "datasource",
+  "source_schema",
+  "table_name",
+  "key_columns",
+  "virtual_node",
+  "column_map",
+  "base_conditions",
+  "behavior_count"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "compat",
+   "Customer",
+   "a buyer",
+   "materialized",
+   "[{\"name\": \"name\", \"type\": \"string\"}, {\"name\": \"grade\", \"type\": \"string\"}, {\"name\": \"email\", \"type\": \"string\", \"identifier\": true}]",
+   [
+    "client"
+   ],
+   true,
+   "erp",
+   "compat_erp",
+   "customer",
+   "[\"customer_id\"]",
+   "",
+   "[{\"column\": \"customer_id\", \"property\": \"customer_id\"}]",
+   "[]",
+   0
+  ],
+  [
+   "compat",
+   "PurchaseOrder",
+   "an order",
+   "materialized",
+   "[{\"name\": \"amount\", \"type\": \"int\"}]",
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   0
+  ],
+  [
+   "compat",
+   "Supplier",
+   "a vendor",
+   "virtual",
+   "[{\"name\": \"name\", \"type\": \"string\"}]",
+   null,
+   null,
+   "erp",
+   "compat_erp",
+   "supplier",
+   "[\"supplier_id\"]",
+   "ErpSupplier",
+   "[{\"column\": \"supplier_id\", \"property\": \"supplier_id\"}, {\"column\": \"name\", \"property\": \"name\"}]",
+   "[]",
+   1
+  ]
+ ],
+ "params": {
+  "schema_name": "compat"
+ }
+}

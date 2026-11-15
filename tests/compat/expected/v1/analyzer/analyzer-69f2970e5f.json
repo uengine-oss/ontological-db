@@ -1,0 +1,142 @@
+{
+ "id": "analyzer-69f2970e5f",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "relId",
+  "startId",
+  "endId",
+  "relType",
+  "props"
+ ],
+ "row_order": "sorted",
+ "row_count": 14,
+ "rows": [
+  [
+   "@r1",
+   "@n1",
+   "@n2",
+   "AFFECTS_TABLE",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r2",
+   "@n3",
+   "@n4",
+   "AFFECTS_TABLE",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r3",
+   "@n2",
+   "@n2",
+   "DATA_FLOWS_TO",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r4",
+   "@n4",
+   "@n4",
+   "DATA_FLOWS_TO",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r5",
+   "@n2",
+   "@n2",
+   "FK",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r6",
+   "@n4",
+   "@n4",
+   "FK",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r7",
+   "@n2",
+   "@n2",
+   "FK_CANDIDATE",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r8",
+   "@n4",
+   "@n4",
+   "FK_CANDIDATE",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r9",
+   "@n2",
+   "@n5",
+   "HAS_COLUMN",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r10",
+   "@n4",
+   "@n6",
+   "HAS_COLUMN",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r11",
+   "@n7",
+   "@n1",
+   "HAS_EXAMPLE",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r12",
+   "@n8",
+   "@n3",
+   "HAS_EXAMPLE",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r13",
+   "@n9",
+   "@n10",
+   "HAS_MEMBER",
+   {
+    "embedding": null
+   }
+  ],
+  [
+   "@r14",
+   "@n11",
+   "@n12",
+   "HAS_MEMBER",
+   {
+    "embedding": null
+   }
+  ]
+ ]
+}

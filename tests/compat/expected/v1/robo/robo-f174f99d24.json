@@ -1,0 +1,18 @@
+{
+ "id": "robo-f174f99d24",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "c"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   2
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

@@ -1,0 +1,29 @@
+{
+ "id": "robo-9df70c812a",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "current",
+  "history"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "action": "UserStory action 1",
+    "benefit": "UserStory benefit 1",
+    "displayName": "UserStory 1",
+    "id": "UserStory-1",
+    "name": "UserStory 1",
+    "role": "UserStory role 1",
+    "session_id": "sess-1",
+    "sourceUnitId": "sourceUnitId-1"
+   },
+   []
+  ]
+ ],
+ "params": {
+  "user_story_id": "UserStory-1"
+ }
+}

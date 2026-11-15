@@ -1,0 +1,9 @@
+{
+ "id": "analyzer-04f40f550f",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "error": {
+  "code": "Neo.ClientError.Statement.SyntaxError",
+  "message": "expected '(' at offset 6, near: …MATCH {pattern} RETURN type(r) AS ty…"
+ }
+}

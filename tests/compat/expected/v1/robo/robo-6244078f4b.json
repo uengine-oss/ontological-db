@@ -1,0 +1,63 @@
+{
+ "id": "robo-6244078f4b",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "nid",
+  "props"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "Aggregate-1",
+   [
+    {
+     "createdAt": "2026-01-11T09:00:00Z",
+     "description": "Property description 1",
+     "displayName": "Property 1",
+     "fkTargetHint": "Property fkTargetHint 1",
+     "id": "Property-1",
+     "isForeignKey": "true",
+     "isKey": "true",
+     "isRequired": "true",
+     "mutability": "Property mutability 1",
+     "name": "Property 1",
+     "parentId": "parentId-1",
+     "parentType": "Property parentType 1",
+     "proposalSource": "Property proposalSource 1",
+     "type": "Property type 1",
+     "updatedAt": "2026-01-11T09:00:00Z"
+    }
+   ]
+  ],
+  [
+   "Aggregate-2",
+   [
+    {
+     "createdAt": "2026-01-12T09:00:00Z",
+     "description": "Property description 2",
+     "displayName": "Property 2",
+     "fkTargetHint": "Property fkTargetHint 2",
+     "id": "Property-2",
+     "isForeignKey": "true",
+     "isKey": "true",
+     "isRequired": "false",
+     "mutability": "Property mutability 2",
+     "name": "Property 2",
+     "parentId": "parentId-2",
+     "parentType": "Property parentType 2",
+     "proposalSource": "Property proposalSource 2",
+     "type": "Property type 2",
+     "updatedAt": "2026-01-12T09:00:00Z"
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "ids": [
+   "Aggregate-1",
+   "Aggregate-2"
+  ]
+ }
+}

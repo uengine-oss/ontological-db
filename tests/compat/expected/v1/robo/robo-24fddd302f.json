@@ -1,0 +1,130 @@
+{
+ "id": "robo-24fddd302f",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "n",
+  "labels"
+ ],
+ "row_order": "sorted",
+ "row_count": 6,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "BpmActor"
+    ],
+    "props": {
+     "description": "BpmActor description 1",
+     "id": "BpmActor-1",
+     "name": "BpmActor 1",
+     "process_id": "BpmProcess-1",
+     "session_id": "sess-1"
+    }
+   },
+   [
+    "BpmActor"
+   ]
+  ],
+  [
+   {
+    "~node": "@n2",
+    "labels": [
+     "BpmActor"
+    ],
+    "props": {
+     "description": "BpmActor description 2",
+     "id": "BpmActor-2",
+     "name": "BpmActor 2",
+     "process_id": "BpmProcess-2",
+     "session_id": "sess-1"
+    }
+   },
+   [
+    "BpmActor"
+   ]
+  ],
+  [
+   {
+    "~node": "@n3",
+    "labels": [
+     "BpmSequence"
+    ],
+    "props": {
+     "id": "BpmSequence-1",
+     "name": "BpmSequence 1",
+     "process_id": "BpmProcess-1",
+     "session_id": "sess-1"
+    }
+   },
+   [
+    "BpmSequence"
+   ]
+  ],
+  [
+   {
+    "~node": "@n4",
+    "labels": [
+     "BpmSequence"
+    ],
+    "props": {
+     "id": "BpmSequence-2",
+     "name": "BpmSequence 2",
+     "process_id": "BpmProcess-2",
+     "session_id": "sess-1"
+    }
+   },
+   [
+    "BpmSequence"
+   ]
+  ],
+  [
+   {
+    "~node": "@n5",
+    "labels": [
+     "BpmTask"
+    ],
+    "props": {
+     "conditions": "BpmTask conditions 1",
+     "description": "BpmTask description 1",
+     "id": "BpmTask-1",
+     "name": "BpmTask 1",
+     "process_id": "BpmProcess-1",
+     "sequence_index": "BpmTask sequence_index 1",
+     "session_id": "sess-1",
+     "source_page": "BpmTask source_page 1",
+     "source_section": "BpmTask source_section 1"
+    }
+   },
+   [
+    "BpmTask"
+   ]
+  ],
+  [
+   {
+    "~node": "@n6",
+    "labels": [
+     "BpmTask"
+    ],
+    "props": {
+     "conditions": "BpmTask conditions 2",
+     "description": "BpmTask description 2",
+     "id": "BpmTask-2",
+     "name": "BpmTask 2",
+     "process_id": "BpmProcess-2",
+     "sequence_index": "BpmTask sequence_index 2",
+     "session_id": "sess-1",
+     "source_page": "BpmTask source_page 2",
+     "source_section": "BpmTask source_section 2"
+    }
+   },
+   [
+    "BpmTask"
+   ]
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

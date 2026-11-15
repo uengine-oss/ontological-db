@@ -1,0 +1,29 @@
+{
+ "id": "robo-50976d0c02",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "description",
+  "source",
+  "bcId",
+  "sequence",
+  "edgeCases",
+  "assumptions"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "<uuid1>",
+   "주문 취소",
+   "고객이 주문을 취소하고 환불을 받는 기능 묶음",
+   "llm",
+   "<uuid2>",
+   1,
+   null,
+   null
+  ]
+ ]
+}

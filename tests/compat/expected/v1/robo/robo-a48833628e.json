@@ -1,0 +1,20 @@
+{
+ "id": "robo-a48833628e",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "name",
+  "bcName"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   "Event 2",
+   "BoundedContext 2"
+  ]
+ ],
+ "params": {
+  "bc_id": "BoundedContext-1"
+ }
+}

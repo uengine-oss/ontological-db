@@ -1,0 +1,27 @@
+{
+ "id": "robo-42fb92bb23",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "userStoryId",
+  "raw"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "US-001",
+   "[]"
+  ],
+  [
+   "UserStory-1",
+   "UserStory clarifications 1"
+  ]
+ ],
+ "params": {
+  "ids": [
+   "US-001",
+   "UserStory-1"
+  ]
+ }
+}

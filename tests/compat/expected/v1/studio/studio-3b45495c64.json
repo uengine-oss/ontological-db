@@ -1,0 +1,27 @@
+{
+ "id": "studio-3b45495c64",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "grade",
+  "count",
+  "avg_credit"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "B",
+   1,
+   1200
+  ],
+  [
+   null,
+   1,
+   300
+  ]
+ ],
+ "params": {
+  "q": "Acme"
+ }
+}

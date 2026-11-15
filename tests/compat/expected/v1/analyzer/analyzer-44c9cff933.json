@@ -1,0 +1,19 @@
+{
+ "id": "analyzer-44c9cff933",
+ "graph": "analyzer_run",
+ "kind": "fabric-read",
+ "columns": [
+  "relationship",
+  "from",
+  "to"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "AN_SUPPLIED_BY",
+   "AnPurchaseOrder.supplier_id",
+   "AnSupplier.supplier_id"
+  ]
+ ]
+}

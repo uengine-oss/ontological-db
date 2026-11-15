@@ -1,0 +1,34 @@
+{
+ "id": "robo-3bda8c93de",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "mode",
+  "prompt",
+  "sd",
+  "plan",
+  "arts",
+  "draftArts",
+  "cur",
+  "projectRoot",
+  "legacyRefs"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Proposal decompositionMode 1",
+   "Proposal originalPrompt 1",
+   "Proposal strategicDiff 1",
+   "Proposal stagePlan 1",
+   "Proposal stageArtifacts 1",
+   "Proposal stageDraftArtifacts 1",
+   "SCOPE",
+   "Proposal projectRoot 1",
+   "Proposal legacyReferences 1"
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

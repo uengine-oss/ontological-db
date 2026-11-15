@@ -1,0 +1,413 @@
+{
+ "scenario": "studio-app:backend/src/modules/document_indexing/service.py",
+ "graph": "ontology",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "studio-7378399c68",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "constraints_added": 1
+   },
+   "effect": {}
+  },
+  {
+   "id": "studio-6c1447dc91",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "constraints_added": 1
+   },
+   "effect": {}
+  },
+  {
+   "id": "studio-0e814d3f8e",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "indexes_added": 1
+   },
+   "effect": {}
+  },
+  {
+   "id": "studio-656e87cf94",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "indexes_added": 1
+   },
+   "effect": {}
+  },
+  {
+   "id": "studio-9195022330",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 9
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Document"
+      ],
+      "props": {
+       "created_at": "<now>",
+       "document_id": "compat-document_id",
+       "document_sha256": "compat-document_sha256",
+       "file_name": "compat-name",
+       "name": "compat-name",
+       "ocr_engine": "compat-ocr_engine",
+       "page_count": 7,
+       "source_path": "compat-source_path",
+       "updated_at": "<now>"
+      }
+     }
+    ]
+   },
+   "params": {
+    "document_id": "compat-document_id",
+    "document_name": "compat-name",
+    "document_sha256": "compat-document_sha256",
+    "ocr_engine": "compat-ocr_engine",
+    "page_count": 7,
+    "source_path": "compat-source_path"
+   }
+  },
+  {
+   "id": "studio-50e989ed35",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 26,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Chunk"
+      ],
+      "props": {
+       "char_count": 7,
+       "chunk_id": "compat-chunk_id",
+       "chunk_index": "compat-chunk_index-2",
+       "chunk_ref": "compat-chunk_ref-2",
+       "created_at": "<now>",
+       "document_id": "compat-document_id-2",
+       "document_name": "compat-document_name-2",
+       "embedding": "[0,0.5,1,0.4,0.9,0.3,0.8,0.2]",
+       "page_sha256": "compat-page_sha256-2",
+       "page_text_hash": "compat-page_text_hash-2",
+       "source_page": "compat-source_page-2",
+       "source_text": "compat-source_text-2",
+       "text_hash": "compat-text_hash-2",
+       "updated_at": "<now>"
+      }
+     }
+    ],
+    "nodes_changed": [
+     "{\"labels\":[\"Chunk\"],\"props\":{\"chunk_id\":\"doc-1#1\",\"chunk_ref\":\"p1\",\"document_id\":\"doc-1\",\"embedding\":\"[0.8,0.1,0.1,0.2,0.1,0,0.3,0.1]\",\"source_page\":\"1\",\"source_text\":\"Customer Daesung Cable orders steel wire from Hanil Steel.\"}} <- {\"labels\":[\"Chunk\"],\"props\":{\"chunk_id\":\"doc-1#1\",\"chunk_ref\":\"p1\",\"document_id\":\"doc-1\",\"embedding\":\"[0.8,0.1,0.1,0.2,0.1,0,0.3,0.1]\",\"source_page\":1,\"source_text\":\"Customer Daesung Cable orders steel wire from Hanil Steel.\"}}",
+     "{\"labels\":[\"Chunk\"],\"props\":{\"chunk_id\":\"doc-1#2\",\"chunk_ref\":\"p2\",\"document_id\":\"doc-1\",\"embedding\":\"[0.1,0.7,0.2,0.1,0,0.1,0.1,0.3]\",\"source_page\":\"2\",\"source_text\":\"Payment is due in 30 days. Customer Acme pays by card.\"}} <- {\"labels\":[\"Chunk\"],\"props\":{\"chunk_id\":\"doc-1#2\",\"chunk_ref\":\"p2\",\"document_id\":\"doc-1\",\"embedding\":\"[0.1,0.7,0.2,0.1,0,0.1,0.1,0.3]\",\"source_page\":2,\"source_text\":\"Payment is due in 30 days. Customer Acme pays by card.\"}}"
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Chunk\"],\"props\":{\"char_count\":7,\"chunk_id\":\"compat-chunk_id\",\"chunk_index\":\"compat-chunk_index-2\",\"chunk_ref\":\"compat-chunk_ref-2\",\"created_at\":\"<now>\",\"document_id\":\"compat-document_id-2\",\"document_name\":\"compat-document_name-2\",\"embedding\":\"[0,0.5,1,0.4,0.9,0.3,0.8,0.2]\",\"page_sha256\":\"compat-page_sha256-2\",\"page_text_hash\":\"compat-page_text_hash-2\",\"source_page\":\"compat-source_page-2\",\"source_text\":\"compat-source_text-2\",\"text_hash\":\"compat-text_hash-2\",\"updated_at\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Document\"],\"props\":{\"created_at\":\"<now>\",\"document_id\":\"compat-document_id\",\"document_sha256\":\"compat-document_sha256\",\"file_name\":\"compat-name\",\"name\":\"compat-name\",\"ocr_engine\":\"compat-ocr_engine\",\"page_count\":7,\"source_path\":\"compat-source_path\",\"updated_at\":\"<now>\"}}",
+      "type": "HAS_CHUNK"
+     }
+    ]
+   },
+   "params": {
+    "chunks": [
+     {
+      "char_count": 7,
+      "chunk_id": "compat-chunk_id",
+      "chunk_index": "compat-chunk_index-1",
+      "chunk_ref": "compat-chunk_ref-1",
+      "document_id": "compat-document_id-1",
+      "document_name": "compat-document_name-1",
+      "embedding": [
+       0.0,
+       0.5,
+       1.0,
+       0.4,
+       0.9,
+       0.3,
+       0.8,
+       0.2
+      ],
+      "page_sha256": "compat-page_sha256-1",
+      "page_text_hash": "compat-page_text_hash-1",
+      "source_page": "compat-source_page-1",
+      "source_text": "compat-source_text-1",
+      "text_hash": "compat-text_hash-1"
+     },
+     {
+      "char_count": 7,
+      "chunk_id": "compat-chunk_id",
+      "chunk_index": "compat-chunk_index-2",
+      "chunk_ref": "compat-chunk_ref-2",
+      "document_id": "compat-document_id-2",
+      "document_name": "compat-document_name-2",
+      "embedding": [
+       0.0,
+       0.5,
+       1.0,
+       0.4,
+       0.9,
+       0.3,
+       0.8,
+       0.2
+      ],
+      "page_sha256": "compat-page_sha256-2",
+      "page_text_hash": "compat-page_text_hash-2",
+      "source_page": "compat-source_page-2",
+      "source_text": "compat-source_text-2",
+      "text_hash": "compat-text_hash-2"
+     }
+    ],
+    "document_id": "compat-document_id"
+   }
+  },
+  {
+   "id": "studio-bcfbefa042",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Chunk\"],\"props\":{\"char_count\":7,\"chunk_id\":\"compat-chunk_id\",\"chunk_index\":\"compat-chunk_index-2\",\"chunk_ref\":\"compat-chunk_ref-2\",\"created_at\":\"<now>\",\"document_id\":\"compat-document_id-2\",\"document_name\":\"compat-document_name-2\",\"embedding\":\"[0,0.5,1,0.4,0.9,0.3,0.8,0.2]\",\"page_sha256\":\"compat-page_sha256-2\",\"page_text_hash\":\"compat-page_text_hash-2\",\"source_page\":\"compat-source_page-2\",\"source_text\":\"compat-source_text-2\",\"text_hash\":\"compat-text_hash-2\",\"updated_at\":\"<now>\"}}",
+      "props": {
+       "created_at": "<now>",
+       "updated_at": "<now>"
+      },
+      "start": "{\"labels\":[\"Chunk\"],\"props\":{\"char_count\":7,\"chunk_id\":\"compat-chunk_id\",\"chunk_index\":\"compat-chunk_index-2\",\"chunk_ref\":\"compat-chunk_ref-2\",\"created_at\":\"<now>\",\"document_id\":\"compat-document_id-2\",\"document_name\":\"compat-document_name-2\",\"embedding\":\"[0,0.5,1,0.4,0.9,0.3,0.8,0.2]\",\"page_sha256\":\"compat-page_sha256-2\",\"page_text_hash\":\"compat-page_text_hash-2\",\"source_page\":\"compat-source_page-2\",\"source_text\":\"compat-source_text-2\",\"text_hash\":\"compat-text_hash-2\",\"updated_at\":\"<now>\"}}",
+      "type": "NEXT_CHUNK"
+     }
+    ]
+   },
+   "params": {
+    "document_id": "compat-document_id",
+    "links": [
+     {
+      "from_chunk_id": "compat-chunk_id",
+      "to_chunk_id": "compat-chunk_id"
+     },
+     {
+      "from_chunk_id": "doc-1#1",
+      "to_chunk_id": "doc-1#1"
+     }
+    ]
+   }
+  },
+  {
+   "id": "studio-6555f2d5d9",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "chunk_ids": [
+     "compat-chunk_id",
+     "doc-1#1"
+    ],
+    "document_id": "compat-document_id"
+   }
+  },
+  {
+   "id": "studio-46773b0767",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Chunk\"],\"props\":{\"char_count\":7,\"chunk_id\":\"compat-chunk_id\",\"chunk_index\":\"compat-chunk_index-2\",\"chunk_ref\":\"compat-chunk_ref-2\",\"created_at\":\"<now>\",\"document_id\":\"compat-document_id-2\",\"document_name\":\"compat-document_name-2\",\"embedding\":\"[0,0.5,1,0.4,0.9,0.3,0.8,0.2]\",\"page_sha256\":\"compat-page_sha256-2\",\"page_text_hash\":\"compat-page_text_hash-2\",\"source_page\":\"compat-source_page-2\",\"source_text\":\"compat-source_text-2\",\"text_hash\":\"compat-text_hash-2\",\"updated_at\":\"<now>\"}}",
+      "props": {
+       "created_at": "<now>",
+       "updated_at": "<now>"
+      },
+      "start": "{\"labels\":[\"Chunk\"],\"props\":{\"char_count\":7,\"chunk_id\":\"compat-chunk_id\",\"chunk_index\":\"compat-chunk_index-2\",\"chunk_ref\":\"compat-chunk_ref-2\",\"created_at\":\"<now>\",\"document_id\":\"compat-document_id-2\",\"document_name\":\"compat-document_name-2\",\"embedding\":\"[0,0.5,1,0.4,0.9,0.3,0.8,0.2]\",\"page_sha256\":\"compat-page_sha256-2\",\"page_text_hash\":\"compat-page_text_hash-2\",\"source_page\":\"compat-source_page-2\",\"source_text\":\"compat-source_text-2\",\"text_hash\":\"compat-text_hash-2\",\"updated_at\":\"<now>\"}}",
+      "type": "NEXT_CHUNK"
+     }
+    ]
+   },
+   "params": {
+    "document_id": "compat-document_id"
+   }
+  },
+  {
+   "id": "studio-f6a3a3c6fd",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_deleted": 3
+   },
+   "effect": {
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Chunk\"],\"props\":{\"char_count\":7,\"chunk_id\":\"compat-chunk_id\",\"chunk_index\":\"compat-chunk_index-2\",\"chunk_ref\":\"compat-chunk_ref-2\",\"created_at\":\"<now>\",\"document_id\":\"compat-document_id-2\",\"document_name\":\"compat-document_name-2\",\"embedding\":\"[0,0.5,1,0.4,0.9,0.3,0.8,0.2]\",\"page_sha256\":\"compat-page_sha256-2\",\"page_text_hash\":\"compat-page_text_hash-2\",\"source_page\":\"compat-source_page-2\",\"source_text\":\"compat-source_text-2\",\"text_hash\":\"compat-text_hash-2\",\"updated_at\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Document\"],\"props\":{\"created_at\":\"<now>\",\"document_id\":\"compat-document_id\",\"document_sha256\":\"compat-document_sha256\",\"file_name\":\"compat-name\",\"name\":\"compat-name\",\"ocr_engine\":\"compat-ocr_engine\",\"page_count\":7,\"source_path\":\"compat-source_path\",\"updated_at\":\"<now>\"}}",
+      "type": "HAS_CHUNK"
+     },
+     {
+      "end": "{\"labels\":[\"Chunk\"],\"props\":{\"chunk_id\":\"doc-1#1\",\"chunk_ref\":\"p1\",\"document_id\":\"doc-1\",\"embedding\":\"[0.8,0.1,0.1,0.2,0.1,0,0.3,0.1]\",\"source_page\":\"1\",\"source_text\":\"Customer Daesung Cable orders steel wire from Hanil Steel.\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Document\"],\"props\":{\"document_id\":\"doc-1\",\"file_name\":\"contract.pdf\",\"name\":\"supply contract\",\"source_path\":\"/docs/contract.pdf\"}}",
+      "type": "HAS_CHUNK"
+     },
+     {
+      "end": "{\"labels\":[\"Chunk\"],\"props\":{\"chunk_id\":\"doc-1#2\",\"chunk_ref\":\"p2\",\"document_id\":\"doc-1\",\"embedding\":\"[0.1,0.7,0.2,0.1,0,0.1,0.1,0.3]\",\"source_page\":\"2\",\"source_text\":\"Payment is due in 30 days. Customer Acme pays by card.\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Document\"],\"props\":{\"document_id\":\"doc-1\",\"file_name\":\"contract.pdf\",\"name\":\"supply contract\",\"source_path\":\"/docs/contract.pdf\"}}",
+      "type": "HAS_CHUNK"
+     }
+    ]
+   }
+  },
+  {
+   "id": "studio-21aa2fa08a",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 2
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "Document"
+      ],
+      "props": {
+       "created_at": "<now>",
+       "document_id": "compat-document_id",
+       "document_sha256": "compat-document_sha256",
+       "file_name": "compat-name",
+       "name": "compat-name",
+       "ocr_engine": "compat-ocr_engine",
+       "page_count": 7,
+       "source_path": "compat-source_path",
+       "updated_at": "<now>"
+      }
+     },
+     {
+      "labels": [
+       "Document"
+      ],
+      "props": {
+       "document_id": "doc-1",
+       "file_name": "contract.pdf",
+       "name": "supply contract",
+       "source_path": "/docs/contract.pdf"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "studio-916997a131",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 3,
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "Chunk"
+      ],
+      "props": {
+       "char_count": 7,
+       "chunk_id": "compat-chunk_id",
+       "chunk_index": "compat-chunk_index-2",
+       "chunk_ref": "compat-chunk_ref-2",
+       "created_at": "<now>",
+       "document_id": "compat-document_id-2",
+       "document_name": "compat-document_name-2",
+       "embedding": "[0,0.5,1,0.4,0.9,0.3,0.8,0.2]",
+       "page_sha256": "compat-page_sha256-2",
+       "page_text_hash": "compat-page_text_hash-2",
+       "source_page": "compat-source_page-2",
+       "source_text": "compat-source_text-2",
+       "text_hash": "compat-text_hash-2",
+       "updated_at": "<now>"
+      }
+     },
+     {
+      "labels": [
+       "Chunk"
+      ],
+      "props": {
+       "chunk_id": "doc-1#1",
+       "chunk_ref": "p1",
+       "document_id": "doc-1",
+       "embedding": "[0.8,0.1,0.1,0.2,0.1,0,0.3,0.1]",
+       "source_page": "1",
+       "source_text": "Customer Daesung Cable orders steel wire from Hanil Steel."
+      }
+     },
+     {
+      "labels": [
+       "Chunk"
+      ],
+      "props": {
+       "chunk_id": "doc-1#2",
+       "chunk_ref": "p2",
+       "document_id": "doc-1",
+       "embedding": "[0.1,0.7,0.2,0.1,0,0.1,0.1,0.3]",
+       "source_page": "2",
+       "source_text": "Payment is due in 30 days. Customer Acme pays by card."
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Chunk\"],\"props\":{\"chunk_id\":\"doc-1#2\",\"chunk_ref\":\"p2\",\"document_id\":\"doc-1\",\"embedding\":\"[0.1,0.7,0.2,0.1,0,0.1,0.1,0.3]\",\"source_page\":\"2\",\"source_text\":\"Payment is due in 30 days. Customer Acme pays by card.\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Chunk\"],\"props\":{\"chunk_id\":\"doc-1#1\",\"chunk_ref\":\"p1\",\"document_id\":\"doc-1\",\"embedding\":\"[0.8,0.1,0.1,0.2,0.1,0,0.3,0.1]\",\"source_page\":\"1\",\"source_text\":\"Customer Daesung Cable orders steel wire from Hanil Steel.\"}}",
+      "type": "NEXT_CHUNK"
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,18 @@
+{
+ "id": "robo-44ce14fa1a",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "template"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "UI template 1"
+  ]
+ ],
+ "params": {
+  "key": "ui-1"
+ }
+}

@@ -1,0 +1,68 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/ui_flow.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-c706706f1a",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 12,
+    "relationships_created": 2
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"JourneyStep\"],\"props\":{\"id\":\"JourneyStep-1\",\"kind\":\"JourneyStep kind 1\",\"name\":\"JourneyStep 1\"}}",
+      "props": {
+       "condition": "compat-condition-1",
+       "createdAt": "<now>",
+       "documentExcerpt": "compat-document_excerpt-1",
+       "id": "compat-id-1",
+       "source": "compat-source-1",
+       "updatedAt": "<now>"
+      },
+      "start": "{\"labels\":[\"JourneyStep\"],\"props\":{\"id\":\"JourneyStep-1\",\"kind\":\"JourneyStep kind 1\",\"name\":\"JourneyStep 1\"}}",
+      "type": "NEXT"
+     },
+     {
+      "end": "{\"labels\":[\"JourneyStep\"],\"props\":{\"id\":\"JourneyStep-2\",\"kind\":\"JourneyStep kind 2\",\"name\":\"JourneyStep 2\"}}",
+      "props": {
+       "condition": "compat-condition-2",
+       "createdAt": "<now>",
+       "documentExcerpt": "compat-document_excerpt-2",
+       "id": "compat-id-2",
+       "source": "compat-source-2",
+       "updatedAt": "<now>"
+      },
+      "start": "{\"labels\":[\"JourneyStep\"],\"props\":{\"id\":\"JourneyStep-2\",\"kind\":\"JourneyStep kind 2\",\"name\":\"JourneyStep 2\"}}",
+      "type": "NEXT"
+     }
+    ]
+   },
+   "params": {
+    "edges": [
+     {
+      "condition": "compat-condition-1",
+      "document_excerpt": "compat-document_excerpt-1",
+      "id": "compat-id-1",
+      "source": "compat-source-1",
+      "source_step_id": "JourneyStep-1",
+      "target_step_id": "JourneyStep-1"
+     },
+     {
+      "condition": "compat-condition-2",
+      "document_excerpt": "compat-document_excerpt-2",
+      "id": "compat-id-2",
+      "source": "compat-source-2",
+      "source_step_id": "JourneyStep-2",
+      "target_step_id": "JourneyStep-2"
+     }
+    ]
+   }
+  }
+ ]
+}

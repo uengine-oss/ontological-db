@@ -1,0 +1,103 @@
+{
+ "scenario": "robo-data-catalog:enrichment/fk_store.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-13ec91aee9",
+   "columns": [
+    "created"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "items": [
+     {
+      "props": "compat-props-1",
+      "sid": "compat-sid-1",
+      "tid": "compat-tid-1"
+     },
+     {
+      "props": "compat-props-2",
+      "sid": "compat-sid-2",
+      "tid": "compat-tid-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "analyzer-5c5855ae89",
+   "columns": [
+    "created"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "items": [
+     {
+      "props": "compat-props-1",
+      "sid": "compat-sid-1",
+      "tid": "compat-tid-1"
+     },
+     {
+      "props": "compat-props-2",
+      "sid": "compat-sid-2",
+      "tid": "compat-tid-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "analyzer-c6b8b465f1",
+   "columns": [
+    "updated"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "items": [
+     {
+      "props": "compat-props-1",
+      "rid": "compat-rid-1"
+     },
+     {
+      "props": "compat-props-2",
+      "rid": "compat-rid-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "analyzer-3d4e6d600c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "ids": [
+     "@n1",
+     "@n2"
+    ]
+   }
+  }
+ ]
+}

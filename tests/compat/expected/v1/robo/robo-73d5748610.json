@@ -1,0 +1,30 @@
+{
+ "id": "robo-73d5748610",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "cmdId",
+  "givenRef",
+  "whenRef",
+  "thenRef",
+  "testCases"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "Command-1",
+   "GWT givenRef 1",
+   "GWT whenRef 1",
+   "GWT thenRef 1",
+   "[]"
+  ],
+  [
+   "Command-2",
+   "GWT givenRef 2",
+   "GWT whenRef 2",
+   "GWT thenRef 2",
+   "[]"
+  ]
+ ]
+}

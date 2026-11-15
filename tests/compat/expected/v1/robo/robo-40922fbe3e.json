@@ -1,0 +1,35 @@
+{
+ "id": "robo-40922fbe3e",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "b"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "FigmaBinding"
+    ],
+    "props": {
+     "connectedAt": "2026-01-11T09:00:00Z",
+     "connectedBy": "FigmaBinding connectedBy 1",
+     "currentRunHolder": "FigmaBinding currentRunHolder 1",
+     "currentRunId": "currentRunId-1",
+     "figmaFileKey": "FigmaBinding figmaFileKey 1",
+     "figmaFileName": "FigmaBinding figmaFileName 1",
+     "id": "FigmaBinding-1",
+     "lastSyncAt": "2026-01-11T09:00:00Z",
+     "name": "FigmaBinding 1",
+     "status": "active"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "id": "FigmaBinding-1"
+ }
+}

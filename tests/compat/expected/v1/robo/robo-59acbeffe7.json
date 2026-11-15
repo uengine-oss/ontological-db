@@ -1,0 +1,19 @@
+{
+ "id": "robo-59acbeffe7",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "score"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "keywords": [
+   "compat-a",
+   "compat-b"
+  ]
+ }
+}

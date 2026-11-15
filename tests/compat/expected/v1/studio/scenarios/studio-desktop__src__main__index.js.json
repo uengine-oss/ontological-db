@@ -1,0 +1,17 @@
+{
+ "scenario": "studio-desktop:src/main/index.js",
+ "graph": "ontology",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "studio-d07cbd376b",
+   "error": {
+    "code": "Neo.ClientError.Statement.ArgumentError",
+    "message": "a credentials reference needs ontological.fabric_credentials_dir: the directory where the application that keeps the secrets writes them for the connectors"
+   },
+   "params": {
+    "ref": "keychain:erp"
+   }
+  }
+ ]
+}

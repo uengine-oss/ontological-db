@@ -1,0 +1,26 @@
+{
+ "id": "robo-e06d7f98a8",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "readmodelId",
+  "operation",
+  "triggerEventName"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   "ReadModel-1",
+   {
+    "id": "CQRSOperation-1",
+    "operationType": "INSERT",
+    "triggerEventId": "triggerEventId-1"
+   },
+   "Event 1"
+  ]
+ ],
+ "params": {
+  "context_id": "BoundedContext-1"
+ }
+}

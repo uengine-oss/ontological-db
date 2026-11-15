@@ -1,0 +1,53 @@
+{
+ "id": "studio-1be7d75919",
+ "graph": "ontology",
+ "kind": "fabric-read",
+ "columns": [
+  "table",
+  "columns",
+  "virtual_node",
+  "kind",
+  "primary_key"
+ ],
+ "row_order": "sorted",
+ "row_count": 4,
+ "rows": [
+  [
+   "erp.item",
+   3,
+   null,
+   "table",
+   [
+    "item_id"
+   ]
+  ],
+  [
+   "erp.po_line",
+   4,
+   null,
+   "table",
+   [
+    "po_id",
+    "line_no"
+   ]
+  ],
+  [
+   "erp.purchase_order",
+   5,
+   "AnPurchaseOrder, ErpPurchaseOrder",
+   "table",
+   [
+    "po_id"
+   ]
+  ],
+  [
+   "erp.supplier",
+   4,
+   "AnSupplier, ErpSupplier",
+   "table",
+   [
+    "supplier_id"
+   ]
+  ]
+ ]
+}

@@ -1,0 +1,17 @@
+{
+ "id": "studio-6fca4bd946",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "count",
+  "total_credit"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   3,
+   6500
+  ]
+ ]
+}

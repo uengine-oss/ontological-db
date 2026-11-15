@@ -1,0 +1,21 @@
+{
+ "id": "robo-54a0f3b3e4",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "name",
+  "displayName"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Event 1",
+   "Event 1"
+  ]
+ ],
+ "params": {
+  "agg_id": "Aggregate-1",
+  "bc_id": "BoundedContext-1"
+ }
+}

@@ -1,0 +1,80 @@
+{
+ "scenario": "robo-architect-lite:api/features/proposal_lifecycle/services/staged_runner.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-e258035814",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Proposal\"],\"props\":{\"acceptedAt\":\"2026-01-11T09:00:00Z\",\"author\":\"Proposal author 1\",\"clarificationLog\":\"[]\",\"constitutionHash\":\"Proposal constitutionHash 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"currentStage\":\"compat-currentStage\",\"decompositionMode\":\"Proposal decompositionMode 1\",\"destroyedAt\":\"2026-01-11T09:00:00Z\",\"id\":\"Proposal-1\",\"impactMap\":\"Proposal impactMap 1\",\"implementationPlan\":\"Proposal implementationPlan 1\",\"intent\":\"Proposal intent 1\",\"intentFeedbackLog\":\"Proposal intentFeedbackLog 1\",\"journeys\":\"Proposal journeys 1\",\"legacyReferences\":\"Proposal legacyReferences 1\",\"memoryConflicts\":\"Proposal memoryConflicts 1\",\"name\":\"Proposal 1\",\"oda\":\"Proposal oda 1\",\"odaArtifacts\":\"Proposal odaArtifacts 1\",\"odaConformance\":\"Proposal odaConformance 1\",\"originalPrompt\":\"Proposal originalPrompt 1\",\"plan\":\"Proposal plan 1\",\"planDraft\":\"Proposal planDraft 1\",\"projectRoot\":\"Proposal projectRoot 1\",\"sandboxBranch\":\"Proposal sandboxBranch 1\",\"sandboxStatus\":\"DESTROYED\",\"sandboxWorktreePath\":\"Proposal sandboxWorktreePath 1\",\"stageArtifacts\":\"Proposal stageArtifacts 1\",\"stageDraftArtifacts\":\"Proposal stageDraftArtifacts 1\",\"stagePlan\":\"compat-stagePlan\",\"status\":\"DESTROYED\",\"statusHistory\":\"[]\",\"strategicDiff\":\"Proposal strategicDiff 1\",\"tacticalDiff\":\"Proposal tacticalDiff 1\",\"tasksJson\":\"Proposal tasksJson 1\",\"testResults\":\"Proposal testResults 1\",\"title\":\"Proposal 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}} <- {\"labels\":[\"Proposal\"],\"props\":{\"acceptedAt\":\"2026-01-11T09:00:00Z\",\"author\":\"Proposal author 1\",\"clarificationLog\":\"[]\",\"constitutionHash\":\"Proposal constitutionHash 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"currentStage\":\"SCOPE\",\"decompositionMode\":\"Proposal decompositionMode 1\",\"destroyedAt\":\"2026-01-11T09:00:00Z\",\"id\":\"Proposal-1\",\"impactMap\":\"Proposal impactMap 1\",\"implementationPlan\":\"Proposal implementationPlan 1\",\"intent\":\"Proposal intent 1\",\"intentFeedbackLog\":\"Proposal intentFeedbackLog 1\",\"journeys\":\"Proposal journeys 1\",\"legacyReferences\":\"Proposal legacyReferences 1\",\"memoryConflicts\":\"Proposal memoryConflicts 1\",\"name\":\"Proposal 1\",\"oda\":\"Proposal oda 1\",\"odaArtifacts\":\"Proposal odaArtifacts 1\",\"odaConformance\":\"Proposal odaConformance 1\",\"originalPrompt\":\"Proposal originalPrompt 1\",\"plan\":\"Proposal plan 1\",\"planDraft\":\"Proposal planDraft 1\",\"projectRoot\":\"Proposal projectRoot 1\",\"sandboxBranch\":\"Proposal sandboxBranch 1\",\"sandboxStatus\":\"DESTROYED\",\"sandboxWorktreePath\":\"Proposal sandboxWorktreePath 1\",\"stageArtifacts\":\"Proposal stageArtifacts 1\",\"stageDraftArtifacts\":\"Proposal stageDraftArtifacts 1\",\"stagePlan\":\"Proposal stagePlan 1\",\"status\":\"DESTROYED\",\"statusHistory\":\"[]\",\"strategicDiff\":\"Proposal strategicDiff 1\",\"tacticalDiff\":\"Proposal tacticalDiff 1\",\"tasksJson\":\"Proposal tasksJson 1\",\"testResults\":\"Proposal testResults 1\",\"title\":\"Proposal 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}"
+    ]
+   },
+   "params": {
+    "cur": "compat-currentStage",
+    "id": "Proposal-1",
+    "plan": "compat-stagePlan"
+   }
+  },
+  {
+   "id": "robo-a40ba078cb",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Proposal\"],\"props\":{\"acceptedAt\":\"2026-01-11T09:00:00Z\",\"author\":\"Proposal author 1\",\"clarificationLog\":\"[]\",\"constitutionHash\":\"Proposal constitutionHash 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"currentStage\":\"compat-currentStage\",\"decompositionMode\":\"Proposal decompositionMode 1\",\"destroyedAt\":\"2026-01-11T09:00:00Z\",\"id\":\"Proposal-1\",\"impactMap\":\"Proposal impactMap 1\",\"implementationPlan\":\"Proposal implementationPlan 1\",\"intent\":\"Proposal intent 1\",\"intentFeedbackLog\":\"Proposal intentFeedbackLog 1\",\"journeys\":\"Proposal journeys 1\",\"legacyReferences\":\"Proposal legacyReferences 1\",\"memoryConflicts\":\"Proposal memoryConflicts 1\",\"name\":\"Proposal 1\",\"oda\":\"Proposal oda 1\",\"odaArtifacts\":\"Proposal odaArtifacts 1\",\"odaConformance\":\"Proposal odaConformance 1\",\"originalPrompt\":\"Proposal originalPrompt 1\",\"plan\":\"Proposal plan 1\",\"planDraft\":\"Proposal planDraft 1\",\"projectRoot\":\"Proposal projectRoot 1\",\"sandboxBranch\":\"Proposal sandboxBranch 1\",\"sandboxStatus\":\"DESTROYED\",\"sandboxWorktreePath\":\"Proposal sandboxWorktreePath 1\",\"stageArtifacts\":\"compat-stageArtifacts\",\"stageDraftArtifacts\":\"compat-stageDraftArtifacts\",\"stagePlan\":\"compat-stagePlan\",\"status\":\"DESTROYED\",\"statusHistory\":\"[]\",\"strategicDiff\":\"Proposal strategicDiff 1\",\"tacticalDiff\":\"Proposal tacticalDiff 1\",\"tasksJson\":\"Proposal tasksJson 1\",\"testResults\":\"Proposal testResults 1\",\"title\":\"Proposal 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}} <- {\"labels\":[\"Proposal\"],\"props\":{\"acceptedAt\":\"2026-01-11T09:00:00Z\",\"author\":\"Proposal author 1\",\"clarificationLog\":\"[]\",\"constitutionHash\":\"Proposal constitutionHash 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"currentStage\":\"compat-currentStage\",\"decompositionMode\":\"Proposal decompositionMode 1\",\"destroyedAt\":\"2026-01-11T09:00:00Z\",\"id\":\"Proposal-1\",\"impactMap\":\"Proposal impactMap 1\",\"implementationPlan\":\"Proposal implementationPlan 1\",\"intent\":\"Proposal intent 1\",\"intentFeedbackLog\":\"Proposal intentFeedbackLog 1\",\"journeys\":\"Proposal journeys 1\",\"legacyReferences\":\"Proposal legacyReferences 1\",\"memoryConflicts\":\"Proposal memoryConflicts 1\",\"name\":\"Proposal 1\",\"oda\":\"Proposal oda 1\",\"odaArtifacts\":\"Proposal odaArtifacts 1\",\"odaConformance\":\"Proposal odaConformance 1\",\"originalPrompt\":\"Proposal originalPrompt 1\",\"plan\":\"Proposal plan 1\",\"planDraft\":\"Proposal planDraft 1\",\"projectRoot\":\"Proposal projectRoot 1\",\"sandboxBranch\":\"Proposal sandboxBranch 1\",\"sandboxStatus\":\"DESTROYED\",\"sandboxWorktreePath\":\"Proposal sandboxWorktreePath 1\",\"stageArtifacts\":\"Proposal stageArtifacts 1\",\"stageDraftArtifacts\":\"Proposal stageDraftArtifacts 1\",\"stagePlan\":\"compat-stagePlan\",\"status\":\"DESTROYED\",\"statusHistory\":\"[]\",\"strategicDiff\":\"Proposal strategicDiff 1\",\"tacticalDiff\":\"Proposal tacticalDiff 1\",\"tasksJson\":\"Proposal tasksJson 1\",\"testResults\":\"Proposal testResults 1\",\"title\":\"Proposal 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}"
+    ]
+   },
+   "params": {
+    "arts": "compat-stageArtifacts",
+    "cur": "compat-currentStage",
+    "draftArts": "compat-stageDraftArtifacts",
+    "id": "Proposal-1"
+   }
+  },
+  {
+   "id": "robo-3fe9d2d8f3",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {},
+   "params": {
+    "draftArts": "compat-stageDraftArtifacts",
+    "id": "Proposal-1"
+   }
+  },
+  {
+   "id": "robo-f42c1cc818",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {},
+   "params": {
+    "cur": "compat-currentStage",
+    "draftArts": "compat-stageDraftArtifacts",
+    "id": "Proposal-1",
+    "plan": "compat-stagePlan"
+   }
+  }
+ ]
+}

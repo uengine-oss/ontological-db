@@ -1,0 +1,114 @@
+{
+ "scenario": "robo-data-catalog:lineage/sql_extract.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-060316a90f",
+   "error": {
+    "code": "Neo.ClientError.Statement.SyntaxError",
+    "message": "expected a name at offset 316, near: …)-[__cy_r__:%s {_owner: $catalog_own…"
+   },
+   "params": {
+    "analyzer_owner": null,
+    "catalog_owner": "compat-catalog_owner",
+    "operation_type": "compat-operation_type",
+    "proc_name": null,
+    "table_name": "TABLE 1"
+   }
+  },
+  {
+   "id": "analyzer-0922dffa2a",
+   "columns": [
+    "__cy_src__",
+    "__cy_r__",
+    "__cy_tgt__"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "~node": "@n1",
+      "labels": [
+       "TABLE"
+      ],
+      "props": {
+       "analyzed_description": "TABLE analyzed_description 1",
+       "comment": "TABLE comment 1",
+       "datasource": "TABLE datasource 1",
+       "db": "TABLE db 1",
+       "description": "",
+       "description_source": "TABLE description_source 1",
+       "graph_owner": "analyzer",
+       "id": "TABLE-1",
+       "logical_name": "TABLE logical_name 1",
+       "name": "TABLE 1",
+       "schema": "TABLE schema 1",
+       "schema_name": "TABLE schema_name 1",
+       "summary": "TABLE summary 1",
+       "table_type": "TABLE table_type 1"
+      }
+     },
+     {
+      "~rel": "@r1",
+      "type": "DATA_FLOWS_TO",
+      "start": "@n1",
+      "end": "@n2",
+      "props": {
+       "description": "compat-description",
+       "via": "compat-etl_name"
+      }
+     },
+     {
+      "~node": "@n2",
+      "labels": [
+       "TABLE"
+      ],
+      "props": {
+       "analyzed_description": "TABLE analyzed_description 2",
+       "comment": "TABLE comment 2",
+       "datasource": "TABLE datasource 2",
+       "db": "TABLE db 2",
+       "description": "N/A",
+       "description_source": "TABLE description_source 2",
+       "graph_owner": "analyzer",
+       "id": "TABLE-2",
+       "logical_name": "TABLE logical_name 2",
+       "name": "TABLE 2",
+       "schema": "TABLE schema 2",
+       "schema_name": "TABLE schema_name 2",
+       "summary": "TABLE summary 2",
+       "table_type": "TABLE table_type 2"
+      }
+     }
+    ]
+   ],
+   "counters": {
+    "properties_set": 3,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"TABLE\"],\"props\":{\"analyzed_description\":\"TABLE analyzed_description 2\",\"comment\":\"TABLE comment 2\",\"datasource\":\"TABLE datasource 2\",\"db\":\"TABLE db 2\",\"description\":\"N/A\",\"description_source\":\"TABLE description_source 2\",\"graph_owner\":\"analyzer\",\"id\":\"TABLE-2\",\"logical_name\":\"TABLE logical_name 2\",\"name\":\"TABLE 2\",\"schema\":\"TABLE schema 2\",\"schema_name\":\"TABLE schema_name 2\",\"summary\":\"TABLE summary 2\",\"table_type\":\"TABLE table_type 2\"}}",
+      "props": {
+       "description": "compat-description",
+       "via": "compat-etl_name"
+      },
+      "start": "{\"labels\":[\"TABLE\"],\"props\":{\"analyzed_description\":\"TABLE analyzed_description 1\",\"comment\":\"TABLE comment 1\",\"datasource\":\"TABLE datasource 1\",\"db\":\"TABLE db 1\",\"description\":\"\",\"description_source\":\"TABLE description_source 1\",\"graph_owner\":\"analyzer\",\"id\":\"TABLE-1\",\"logical_name\":\"TABLE logical_name 1\",\"name\":\"TABLE 1\",\"schema\":\"TABLE schema 1\",\"schema_name\":\"TABLE schema_name 1\",\"summary\":\"TABLE summary 1\",\"table_type\":\"TABLE table_type 1\"}}",
+      "type": "DATA_FLOWS_TO"
+     }
+    ]
+   },
+   "params": {
+    "analyzer_owner": "analyzer",
+    "catalog_owner": "compat-catalog_owner",
+    "etl_name": "compat-etl_name",
+    "operation_type": "compat-description",
+    "src_name": "TABLE 1",
+    "tgt_name": "TABLE 2"
+   }
+  }
+ ]
+}

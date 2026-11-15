@@ -1,0 +1,15 @@
+{
+ "id": "robo-914033e34e",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "bc"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "node_id": "ReadModel-1"
+ }
+}

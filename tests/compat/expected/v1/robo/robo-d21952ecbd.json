@@ -1,0 +1,27 @@
+{
+ "id": "robo-d21952ecbd",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "version"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "<uuid1>",
+   0
+  ],
+  [
+   "<uuid2>",
+   0
+  ]
+ ],
+ "params": {
+  "ids": [
+   "<uuid1>",
+   "<uuid2>"
+  ]
+ }
+}

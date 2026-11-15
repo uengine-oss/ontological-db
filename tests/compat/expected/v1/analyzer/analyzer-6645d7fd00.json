@@ -1,0 +1,15 @@
+{
+ "id": "analyzer-6645d7fd00",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "c"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   4
+  ]
+ ]
+}

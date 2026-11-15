@@ -1,0 +1,18 @@
+{
+ "id": "robo-ceb671e73c",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "createdAt"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "<now>"
+  ]
+ ],
+ "params": {
+  "id": "CHG-001"
+ }
+}

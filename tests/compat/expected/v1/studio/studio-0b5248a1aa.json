@@ -1,0 +1,70 @@
+{
+ "id": "studio-0b5248a1aa",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "schema_name",
+  "class_name",
+  "description",
+  "binding_kind",
+  "properties",
+  "column_map",
+  "key_columns",
+  "label_property",
+  "virtual_node",
+  "synonyms",
+  "certified",
+  "certified_by"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "compat",
+   "Customer",
+   "a buyer",
+   "materialized",
+   "[{\"name\": \"name\", \"type\": \"string\"}, {\"name\": \"grade\", \"type\": \"string\"}, {\"name\": \"email\", \"type\": \"string\", \"identifier\": true}]",
+   "[{\"column\": \"customer_id\", \"property\": \"customer_id\"}]",
+   "[\"customer_id\"]",
+   "name",
+   "",
+   [
+    "client"
+   ],
+   true,
+   null
+  ],
+  [
+   "compat",
+   "PurchaseOrder",
+   "an order",
+   "materialized",
+   "[{\"name\": \"amount\", \"type\": \"int\"}]",
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  [
+   "compat",
+   "Supplier",
+   "a vendor",
+   "virtual",
+   "[{\"name\": \"name\", \"type\": \"string\"}]",
+   "[{\"column\": \"supplier_id\", \"property\": \"supplier_id\"}, {\"column\": \"name\", \"property\": \"name\"}]",
+   "[\"supplier_id\"]",
+   "name",
+   "ErpSupplier",
+   null,
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "schema_name": "compat"
+ }
+}

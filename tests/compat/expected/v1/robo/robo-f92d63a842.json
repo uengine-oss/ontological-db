@@ -1,0 +1,17 @@
+{
+ "id": "robo-f92d63a842",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "label",
+  "name"
+ ],
+ "row_order": "sorted",
+ "row_count": 10,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "limit": 10
+ }
+}

@@ -1,0 +1,58 @@
+{
+ "id": "robo-144d2bcab9",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "aggId",
+  "aggKey",
+  "aggName",
+  "rootEntity",
+  "commands",
+  "events"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "Aggregate-1",
+   "aggregate-1",
+   "Aggregate 1",
+   "Aggregate rootEntity 1",
+   [
+    {
+     "id": null,
+     "name": null
+    }
+   ],
+   []
+  ],
+  [
+   "Aggregate-2",
+   "aggregate-2",
+   "Aggregate 2",
+   "Aggregate rootEntity 2",
+   [
+    {
+     "id": null,
+     "name": null
+    }
+   ],
+   []
+  ],
+  [
+   "<uuid1>",
+   "order.order",
+   "Order",
+   "Order",
+   [
+    {
+     "id": "<uuid2>",
+     "name": "CancelOrder"
+    }
+   ],
+   [
+    "OrderCancelled"
+   ]
+  ]
+ ]
+}

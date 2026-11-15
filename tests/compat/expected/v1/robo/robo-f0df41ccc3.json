@@ -1,0 +1,16 @@
+{
+ "id": "robo-f0df41ccc3",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "bc_id",
+  "agg_id",
+  "agg_name"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "hint": "Aggregate 1"
+ }
+}

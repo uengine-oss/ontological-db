@@ -1,0 +1,16 @@
+{
+ "id": "robo-a6feb8d05f",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "access",
+  "table_name",
+  "columns"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "fid": "@n1"
+ }
+}

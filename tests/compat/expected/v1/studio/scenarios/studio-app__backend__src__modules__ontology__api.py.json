@@ -1,0 +1,767 @@
+{
+ "scenario": "studio-app:backend/src/modules/ontology/api.py",
+ "graph": "ontology",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "studio-5a5ba188a3",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Client\"],\"props\":{\"content\":\"Acme branch\",\"credit_limit\":300,\"customer_id\":\"C003\",\"email\":\"kr@acme.example\",\"name\":\"Acme Korea\",\"number\":3,\"title\":\"Acme Korea\"}} <- {\"labels\":[\"Customer\"],\"props\":{\"content\":\"Acme branch\",\"credit_limit\":300,\"customer_id\":\"C003\",\"email\":\"kr@acme.example\",\"name\":\"Acme Korea\",\"number\":3,\"title\":\"Acme Korea\"}}",
+     "{\"labels\":[\"Client\"],\"props\":{\"content\":\"Acme corp, spare parts\",\"credit_limit\":1200,\"customer_id\":\"C002\",\"email\":\"ops@acme.example\",\"embedding\":\"[0.1,0.8,0.2,0,0,0.1,0.1,0.4]\",\"grade\":\"B\",\"name\":\"Acme\",\"number\":2,\"title\":\"Acme\"}} <- {\"labels\":[\"Customer\"],\"props\":{\"content\":\"Acme corp, spare parts\",\"credit_limit\":1200,\"customer_id\":\"C002\",\"email\":\"ops@acme.example\",\"embedding\":\"[0.1,0.8,0.2,0,0,0.1,0.1,0.4]\",\"grade\":\"B\",\"name\":\"Acme\",\"number\":2,\"title\":\"Acme\"}}",
+     "{\"labels\":[\"Client\"],\"props\":{\"content\":\"cable maker, buys steel wire\",\"credit_limit\":5000,\"customer_id\":\"C001\",\"email\":\"buy@daesung.example\",\"embedding\":\"[0.9,0.1,0,0.2,0.1,0,0.3,0.1]\",\"grade\":\"A\",\"name\":\"Daesung Cable\",\"number\":1,\"title\":\"Daesung Cable\"}} <- {\"labels\":[\"Customer\"],\"props\":{\"content\":\"cable maker, buys steel wire\",\"credit_limit\":5000,\"customer_id\":\"C001\",\"email\":\"buy@daesung.example\",\"embedding\":\"[0.9,0.1,0,0.2,0.1,0,0.3,0.1]\",\"grade\":\"A\",\"name\":\"Daesung Cable\",\"number\":1,\"title\":\"Daesung Cable\"}}"
+    ]
+   }
+  },
+  {
+   "id": "studio-1e9fa2ff3d",
+   "columns": [
+    "n"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "~node": "@n1",
+      "labels": [
+       "Column"
+      ],
+      "props": {
+       "description": "Column description 1",
+       "dtype": "Column dtype 1",
+       "grade": "compat-grade",
+       "id": "Column-1",
+       "is_primary_key": true,
+       "name": "compat-name",
+       "nullable": true,
+       "ordinal_position": 10,
+       "primary_key": "Column primary_key 1",
+       "type": "Column type 1",
+       "updated_at": "<now>"
+      }
+     }
+    ]
+   ],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Column\"],\"props\":{\"description\":\"Column description 1\",\"dtype\":\"Column dtype 1\",\"grade\":\"compat-grade\",\"id\":\"Column-1\",\"is_primary_key\":true,\"name\":\"compat-name\",\"nullable\":true,\"ordinal_position\":10,\"primary_key\":\"Column primary_key 1\",\"type\":\"Column type 1\",\"updated_at\":\"<now>\"}} <- {\"labels\":[\"Column\"],\"props\":{\"description\":\"Column description 1\",\"dtype\":\"Column dtype 1\",\"id\":\"Column-1\",\"is_primary_key\":true,\"name\":\"Column 1\",\"nullable\":true,\"ordinal_position\":10,\"primary_key\":\"Column primary_key 1\",\"type\":\"Column type 1\"}}"
+    ]
+   },
+   "params": {
+    "grade": "compat-grade",
+    "id": "@n1",
+    "name": "compat-name"
+   }
+  },
+  {
+   "id": "studio-a87b41f378",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 1,
+    "relationships_deleted": 2
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "Column"
+      ],
+      "props": {
+       "description": "Column description 1",
+       "dtype": "Column dtype 1",
+       "grade": "compat-grade",
+       "id": "Column-1",
+       "is_primary_key": true,
+       "name": "compat-name",
+       "nullable": true,
+       "ordinal_position": 10,
+       "primary_key": "Column primary_key 1",
+       "type": "Column type 1",
+       "updated_at": "<now>"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Column\"],\"props\":{\"description\":\"Column description 1\",\"dtype\":\"Column dtype 1\",\"grade\":\"compat-grade\",\"id\":\"Column-1\",\"is_primary_key\":true,\"name\":\"compat-name\",\"nullable\":true,\"ordinal_position\":10,\"primary_key\":\"Column primary_key 1\",\"type\":\"Column type 1\",\"updated_at\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Column\"],\"props\":{\"description\":\"Column description 1\",\"dtype\":\"Column dtype 1\",\"grade\":\"compat-grade\",\"id\":\"Column-1\",\"is_primary_key\":true,\"name\":\"compat-name\",\"nullable\":true,\"ordinal_position\":10,\"primary_key\":\"Column primary_key 1\",\"type\":\"Column type 1\",\"updated_at\":\"<now>\"}}",
+      "type": "REFERENCES"
+     },
+     {
+      "end": "{\"labels\":[\"Column\"],\"props\":{\"description\":\"Column description 1\",\"dtype\":\"Column dtype 1\",\"grade\":\"compat-grade\",\"id\":\"Column-1\",\"is_primary_key\":true,\"name\":\"compat-name\",\"nullable\":true,\"ordinal_position\":10,\"primary_key\":\"Column primary_key 1\",\"type\":\"Column type 1\",\"updated_at\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Table\"],\"props\":{\"datasource\":\"Table datasource 1\",\"db\":\"Table db 1\",\"description\":\"Table description 1\",\"id\":\"Table-1\",\"name\":\"Table 1\",\"schema\":\"Table schema 1\"}}",
+      "type": "HAS_COLUMN"
+     }
+    ]
+   },
+   "params": {
+    "id": "@n1"
+   }
+  },
+  {
+   "id": "studio-546d002909",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_deleted": 30
+   },
+   "effect": {
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Chunk\"],\"props\":{\"chunk_id\":\"doc-1#1\",\"chunk_ref\":\"p1\",\"document_id\":\"doc-1\",\"embedding\":\"[0.8,0.1,0.1,0.2,0.1,0,0.3,0.1]\",\"source_page\":1,\"source_text\":\"Customer Daesung Cable orders steel wire from Hanil Steel.\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Document\"],\"props\":{\"document_id\":\"doc-1\",\"file_name\":\"contract.pdf\",\"name\":\"supply contract\",\"source_path\":\"/docs/contract.pdf\"}}",
+      "type": "HAS_CHUNK"
+     },
+     {
+      "end": "{\"labels\":[\"Chunk\"],\"props\":{\"chunk_id\":\"doc-1#2\",\"chunk_ref\":\"p2\",\"document_id\":\"doc-1\",\"embedding\":\"[0.1,0.7,0.2,0.1,0,0.1,0.1,0.3]\",\"source_page\":2,\"source_text\":\"Payment is due in 30 days. Customer Acme pays by card.\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Chunk\"],\"props\":{\"chunk_id\":\"doc-1#1\",\"chunk_ref\":\"p1\",\"document_id\":\"doc-1\",\"embedding\":\"[0.8,0.1,0.1,0.2,0.1,0,0.3,0.1]\",\"source_page\":1,\"source_text\":\"Customer Daesung Cable orders steel wire from Hanil Steel.\"}}",
+      "type": "NEXT_CHUNK"
+     },
+     {
+      "end": "{\"labels\":[\"Chunk\"],\"props\":{\"chunk_id\":\"doc-1#2\",\"chunk_ref\":\"p2\",\"document_id\":\"doc-1\",\"embedding\":\"[0.1,0.7,0.2,0.1,0,0.1,0.1,0.3]\",\"source_page\":2,\"source_text\":\"Payment is due in 30 days. Customer Acme pays by card.\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Document\"],\"props\":{\"document_id\":\"doc-1\",\"file_name\":\"contract.pdf\",\"name\":\"supply contract\",\"source_path\":\"/docs/contract.pdf\"}}",
+      "type": "HAS_CHUNK"
+     },
+     {
+      "end": "{\"labels\":[\"Client\"],\"props\":{\"content\":\"Acme branch\",\"credit_limit\":300,\"customer_id\":\"C003\",\"email\":\"kr@acme.example\",\"name\":\"Acme Korea\",\"number\":3,\"title\":\"Acme Korea\"}}",
+      "props": {
+       "method": "name"
+      },
+      "start": "{\"labels\":[\"Client\"],\"props\":{\"content\":\"Acme corp, spare parts\",\"credit_limit\":1200,\"customer_id\":\"C002\",\"email\":\"ops@acme.example\",\"embedding\":\"[0.1,0.8,0.2,0,0,0.1,0.1,0.4]\",\"grade\":\"B\",\"name\":\"Acme\",\"number\":2,\"title\":\"Acme\"}}",
+      "type": "SAME_AS"
+     },
+     {
+      "end": "{\"labels\":[\"Column\"],\"props\":{\"description\":\"Column description 2\",\"dtype\":\"Column dtype 2\",\"id\":\"Column-2\",\"is_primary_key\":false,\"name\":\"Column 2\",\"nullable\":false,\"ordinal_position\":20,\"primary_key\":\"Column primary_key 2\",\"type\":\"Column type 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Column\"],\"props\":{\"description\":\"Column description 2\",\"dtype\":\"Column dtype 2\",\"id\":\"Column-2\",\"is_primary_key\":false,\"name\":\"Column 2\",\"nullable\":false,\"ordinal_position\":20,\"primary_key\":\"Column primary_key 2\",\"type\":\"Column type 2\"}}",
+      "type": "REFERENCES"
+     },
+     {
+      "end": "{\"labels\":[\"Column\"],\"props\":{\"description\":\"Column description 2\",\"dtype\":\"Column dtype 2\",\"id\":\"Column-2\",\"is_primary_key\":false,\"name\":\"Column 2\",\"nullable\":false,\"ordinal_position\":20,\"primary_key\":\"Column primary_key 2\",\"type\":\"Column type 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Table\"],\"props\":{\"datasource\":\"Table datasource 2\",\"db\":\"Table db 2\",\"description\":\"Table description 2\",\"id\":\"Table-2\",\"name\":\"Table 2\",\"schema\":\"Table schema 2\"}}",
+      "type": "HAS_COLUMN"
+     },
+     {
+      "end": "{\"labels\":[\"MfgProcessStep\"],\"props\":{\"id\":\"MfgProcessStep-1\",\"name\":\"MfgProcessStep 1\",\"step_id\":\"step_id-1\",\"step_name\":\"MfgProcessStep step_name 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"MfgProductRouting\"],\"props\":{\"id\":\"MfgProductRouting-1\",\"name\":\"MfgProductRouting 1\"}}",
+      "type": "REFERENCES_MFG_PROCESS_STEP"
+     },
+     {
+      "end": "{\"labels\":[\"MfgProcessStep\"],\"props\":{\"id\":\"MfgProcessStep-2\",\"name\":\"MfgProcessStep 2\",\"step_id\":\"step_id-2\",\"step_name\":\"MfgProcessStep step_name 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"MfgProductRouting\"],\"props\":{\"id\":\"MfgProductRouting-2\",\"name\":\"MfgProductRouting 2\"}}",
+      "type": "REFERENCES_MFG_PROCESS_STEP"
+     },
+     {
+      "end": "{\"labels\":[\"MfgProductRouting\"],\"props\":{\"id\":\"MfgProductRouting-1\",\"name\":\"MfgProductRouting 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"MfgProduct\"],\"props\":{\"id\":\"MfgProduct-1\",\"name\":\"MfgProduct 1\",\"product_id\":\"product_id-1\"}}",
+      "type": "REFERENCES_MFG_PRODUCT"
+     },
+     {
+      "end": "{\"labels\":[\"MfgProductRouting\"],\"props\":{\"id\":\"MfgProductRouting-2\",\"name\":\"MfgProductRouting 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"MfgProduct\"],\"props\":{\"id\":\"MfgProduct-2\",\"name\":\"MfgProduct 2\",\"product_id\":\"product_id-2\"}}",
+      "type": "REFERENCES_MFG_PRODUCT"
+     },
+     {
+      "end": "{\"labels\":[\"PurchaseOrder\"],\"props\":{\"amount\":1500,\"name\":\"PO-1\",\"number\":21,\"po_id\":\"PO-1\",\"status\":\"open\"}}",
+      "props": {
+       "channel": "web"
+      },
+      "start": "{\"labels\":[\"Client\"],\"props\":{\"content\":\"cable maker, buys steel wire\",\"credit_limit\":5000,\"customer_id\":\"C001\",\"email\":\"buy@daesung.example\",\"embedding\":\"[0.9,0.1,0,0.2,0.1,0,0.3,0.1]\",\"grade\":\"A\",\"name\":\"Daesung Cable\",\"number\":1,\"title\":\"Daesung Cable\"}}",
+      "type": "PLACED"
+     },
+     {
+      "end": "{\"labels\":[\"PurchaseOrder\"],\"props\":{\"amount\":1500,\"name\":\"PO-1\",\"number\":21,\"po_id\":\"PO-1\",\"status\":\"open\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Supplier\"],\"props\":{\"embedding\":\"[0.7,0.2,0.1,0.1,0.3,0,0.2,0]\",\"name\":\"Hanil Steel\",\"number\":11,\"rating\":4.5,\"supplier_id\":\"S01\",\"title\":\"Hanil Steel\"}}",
+      "type": "CONTAINS"
+     },
+     {
+      "end": "{\"labels\":[\"PurchaseOrder\"],\"props\":{\"amount\":700,\"name\":\"PO-2\",\"number\":22,\"po_id\":\"PO-2\",\"status\":\"closed\"}}",
+      "props": {
+       "channel": "web"
+      },
+      "start": "{\"labels\":[\"Client\"],\"props\":{\"content\":\"Acme corp, spare parts\",\"credit_limit\":1200,\"customer_id\":\"C002\",\"email\":\"ops@acme.example\",\"embedding\":\"[0.1,0.8,0.2,0,0,0.1,0.1,0.4]\",\"grade\":\"B\",\"name\":\"Acme\",\"number\":2,\"title\":\"Acme\"}}",
+      "type": "PLACED"
+     },
+     {
+      "end": "{\"labels\":[\"PurchaseOrder\"],\"props\":{\"amount\":90,\"name\":\"PO-3\",\"number\":23,\"po_id\":\"PO-3\",\"status\":\"open\"}}",
+      "props": {
+       "channel": "phone"
+      },
+      "start": "{\"labels\":[\"Client\"],\"props\":{\"content\":\"cable maker, buys steel wire\",\"credit_limit\":5000,\"customer_id\":\"C001\",\"email\":\"buy@daesung.example\",\"embedding\":\"[0.9,0.1,0,0.2,0.1,0,0.3,0.1]\",\"grade\":\"A\",\"name\":\"Daesung Cable\",\"number\":1,\"title\":\"Daesung Cable\"}}",
+      "type": "PLACED"
+     },
+     {
+      "end": "{\"labels\":[\"Supplier\"],\"props\":{\"embedding\":\"[0.7,0.2,0.1,0.1,0.3,0,0.2,0]\",\"name\":\"Hanil Steel\",\"number\":11,\"rating\":4.5,\"supplier_id\":\"S01\",\"title\":\"Hanil Steel\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"PurchaseOrder\"],\"props\":{\"amount\":1500,\"name\":\"PO-1\",\"number\":21,\"po_id\":\"PO-1\",\"status\":\"open\"}}",
+      "type": "ORDERED_FROM"
+     },
+     {
+      "end": "{\"labels\":[\"Supplier\"],\"props\":{\"embedding\":\"[0.7,0.2,0.1,0.1,0.3,0,0.2,0]\",\"name\":\"Hanil Steel\",\"number\":11,\"rating\":4.5,\"supplier_id\":\"S01\",\"title\":\"Hanil Steel\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"PurchaseOrder\"],\"props\":{\"amount\":90,\"name\":\"PO-3\",\"number\":23,\"po_id\":\"PO-3\",\"status\":\"open\"}}",
+      "type": "ORDERED_FROM"
+     },
+     {
+      "end": "{\"labels\":[\"Supplier\"],\"props\":{\"name\":\"Busan Parts\",\"number\":12,\"rating\":3.2,\"supplier_id\":\"S02\",\"title\":\"Busan Parts\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"PurchaseOrder\"],\"props\":{\"amount\":700,\"name\":\"PO-2\",\"number\":22,\"po_id\":\"PO-2\",\"status\":\"closed\"}}",
+      "type": "ORDERED_FROM"
+     },
+     {
+      "end": "{\"labels\":[\"Table\"],\"props\":{\"datasource\":\"Table datasource 1\",\"db\":\"Table db 1\",\"description\":\"Table description 1\",\"id\":\"Table-1\",\"name\":\"Table 1\",\"schema\":\"Table schema 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Table\"],\"props\":{\"datasource\":\"Table datasource 1\",\"db\":\"Table db 1\",\"description\":\"Table description 1\",\"id\":\"Table-1\",\"name\":\"Table 1\",\"schema\":\"Table schema 1\"}}",
+      "type": "FK_TO_TABLE"
+     },
+     {
+      "end": "{\"labels\":[\"Table\"],\"props\":{\"datasource\":\"Table datasource 2\",\"db\":\"Table db 2\",\"description\":\"Table description 2\",\"id\":\"Table-2\",\"name\":\"Table 2\",\"schema\":\"Table schema 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Table\"],\"props\":{\"datasource\":\"Table datasource 2\",\"db\":\"Table db 2\",\"description\":\"Table description 2\",\"id\":\"Table-2\",\"name\":\"Table 2\",\"schema\":\"Table schema 2\"}}",
+      "type": "FK_TO_TABLE"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"set_grade\",\"behavior_type\":\"action\",\"class_name\":\"Customer\",\"description\":\"change a grade\",\"parameters\":\"[{\\\"name\\\": \\\"grade\\\"}]\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_ACTION"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"supplier_rating\",\"behavior_type\":\"sql\",\"class_name\":\"Supplier\",\"description\":\"rating\",\"max_rows\":20,\"output_columns\":\"[\\\"name\\\", \\\"rating\\\"]\",\"parameters\":\"[]\",\"result_kind\":\"table\",\"sql_template\":\"SELECT name, rating FROM erp.supplier\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"[]\",\"class_name\":\"Supplier\",\"column_map\":\"[{\\\"column\\\": \\\"supplier_id\\\", \\\"property\\\": \\\"supplier_id\\\"}, {\\\"column\\\": \\\"name\\\", \\\"property\\\": \\\"name\\\"}]\",\"datasource\":\"erp\",\"default_limit\":100,\"extra_tables\":\"[]\",\"key_columns\":\"[\\\"supplier_id\\\"]\",\"label_property\":\"name\",\"source_schema\":\"compat_erp\",\"table_name\":\"supplier\",\"virtual_node\":\"ErpSupplier\"}}",
+      "type": "HAS_BEHAVIOR"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBehavior\"],\"props\":{\"behavior_name\":\"top_customers\",\"behavior_type\":\"cypher\",\"class_name\":\"Customer\",\"cypher_template\":\"MATCH (n:_Entity:Customer) RETURN n.name ORDER BY n.credit_limit DESC LIMIT $limit\",\"description\":\"customers by credit\",\"golden_question\":\"who buys most?\",\"max_rows\":50,\"output_columns\":\"[\\\"name\\\"]\",\"parameters\":\"[]\",\"result_kind\":\"table\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_BEHAVIOR"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"[]\",\"class_name\":\"Customer\",\"column_map\":\"[{\\\"column\\\": \\\"customer_id\\\", \\\"property\\\": \\\"customer_id\\\"}]\",\"datasource\":\"erp\",\"default_limit\":100,\"extra_tables\":\"[]\",\"key_columns\":\"[\\\"customer_id\\\"]\",\"label_property\":\"name\",\"source_schema\":\"compat_erp\",\"table_name\":\"customer\",\"virtual_node\":\"\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "type": "HAS_BINDING"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyBinding\"],\"props\":{\"base_conditions\":\"[]\",\"class_name\":\"Supplier\",\"column_map\":\"[{\\\"column\\\": \\\"supplier_id\\\", \\\"property\\\": \\\"supplier_id\\\"}, {\\\"column\\\": \\\"name\\\", \\\"property\\\": \\\"name\\\"}]\",\"datasource\":\"erp\",\"default_limit\":100,\"extra_tables\":\"[]\",\"key_columns\":\"[\\\"supplier_id\\\"]\",\"label_property\":\"name\",\"source_schema\":\"compat_erp\",\"table_name\":\"supplier\",\"virtual_node\":\"ErpSupplier\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"virtual\",\"class_name\":\"Supplier\",\"description\":\"a vendor\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}]\"}}",
+      "type": "HAS_BINDING"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"certified\":true,\"class_name\":\"Customer\",\"description\":\"a buyer\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"grade\\\", \\\"type\\\": \\\"string\\\"}, {\\\"name\\\": \\\"email\\\", \\\"type\\\": \\\"string\\\", \\\"identifier\\\": true}]\",\"synonyms\":[\"client\"]}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_CLASS"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"materialized\",\"class_name\":\"PurchaseOrder\",\"description\":\"an order\",\"properties\":\"[{\\\"name\\\": \\\"amount\\\", \\\"type\\\": \\\"int\\\"}]\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_CLASS"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"virtual\",\"class_name\":\"Item\",\"description\":\"stock item\",\"properties\":\"[]\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"another model\",\"name\":\"other\",\"schema_id\":\"schema-2\"}}",
+      "type": "HAS_CLASS"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyClass\"],\"props\":{\"binding_kind\":\"virtual\",\"class_name\":\"Supplier\",\"description\":\"a vendor\",\"properties\":\"[{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}]\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_CLASS"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyRelationship\"],\"props\":{\"description\":\"vendor\",\"from_class\":\"PurchaseOrder\",\"name\":\"ORDERED_FROM\",\"properties\":\"[]\",\"to_class\":\"Supplier\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_RELATIONSHIP"
+     },
+     {
+      "end": "{\"labels\":[\"_OntologyRelationship\"],\"props\":{\"description\":\"who ordered\",\"from_class\":\"Customer\",\"name\":\"PLACED\",\"properties\":\"[]\",\"to_class\":\"PurchaseOrder\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"_OntologyModel\"],\"props\":{\"description\":\"compat corpus model\",\"golden_cypher\":\"[]\",\"golden_questions\":\"[]\",\"intent\":\"orders\",\"name\":\"compat\",\"schema_id\":\"schema-1\"}}",
+      "type": "HAS_RELATIONSHIP"
+     }
+    ]
+   }
+  },
+  {
+   "id": "studio-92d9497673",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 33
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "Chunk"
+      ],
+      "props": {
+       "chunk_id": "doc-1#1",
+       "chunk_ref": "p1",
+       "document_id": "doc-1",
+       "embedding": "[0.8,0.1,0.1,0.2,0.1,0,0.3,0.1]",
+       "source_page": 1,
+       "source_text": "Customer Daesung Cable orders steel wire from Hanil Steel."
+      }
+     },
+     {
+      "labels": [
+       "Chunk"
+      ],
+      "props": {
+       "chunk_id": "doc-1#2",
+       "chunk_ref": "p2",
+       "document_id": "doc-1",
+       "embedding": "[0.1,0.7,0.2,0.1,0,0.1,0.1,0.3]",
+       "source_page": 2,
+       "source_text": "Payment is due in 30 days. Customer Acme pays by card."
+      }
+     },
+     {
+      "labels": [
+       "Client"
+      ],
+      "props": {
+       "content": "Acme branch",
+       "credit_limit": 300,
+       "customer_id": "C003",
+       "email": "kr@acme.example",
+       "name": "Acme Korea",
+       "number": 3,
+       "title": "Acme Korea"
+      }
+     },
+     {
+      "labels": [
+       "Client"
+      ],
+      "props": {
+       "content": "Acme corp, spare parts",
+       "credit_limit": 1200,
+       "customer_id": "C002",
+       "email": "ops@acme.example",
+       "embedding": "[0.1,0.8,0.2,0,0,0.1,0.1,0.4]",
+       "grade": "B",
+       "name": "Acme",
+       "number": 2,
+       "title": "Acme"
+      }
+     },
+     {
+      "labels": [
+       "Client"
+      ],
+      "props": {
+       "content": "cable maker, buys steel wire",
+       "credit_limit": 5000,
+       "customer_id": "C001",
+       "email": "buy@daesung.example",
+       "embedding": "[0.9,0.1,0,0.2,0.1,0,0.3,0.1]",
+       "grade": "A",
+       "name": "Daesung Cable",
+       "number": 1,
+       "title": "Daesung Cable"
+      }
+     },
+     {
+      "labels": [
+       "Column"
+      ],
+      "props": {
+       "description": "Column description 2",
+       "dtype": "Column dtype 2",
+       "id": "Column-2",
+       "is_primary_key": false,
+       "name": "Column 2",
+       "nullable": false,
+       "ordinal_position": 20,
+       "primary_key": "Column primary_key 2",
+       "type": "Column type 2"
+      }
+     },
+     {
+      "labels": [
+       "Document"
+      ],
+      "props": {
+       "document_id": "doc-1",
+       "file_name": "contract.pdf",
+       "name": "supply contract",
+       "source_path": "/docs/contract.pdf"
+      }
+     },
+     {
+      "labels": [
+       "MfgProcessStep"
+      ],
+      "props": {
+       "id": "MfgProcessStep-1",
+       "name": "MfgProcessStep 1",
+       "step_id": "step_id-1",
+       "step_name": "MfgProcessStep step_name 1"
+      }
+     },
+     {
+      "labels": [
+       "MfgProcessStep"
+      ],
+      "props": {
+       "id": "MfgProcessStep-2",
+       "name": "MfgProcessStep 2",
+       "step_id": "step_id-2",
+       "step_name": "MfgProcessStep step_name 2"
+      }
+     },
+     {
+      "labels": [
+       "MfgProduct"
+      ],
+      "props": {
+       "id": "MfgProduct-1",
+       "name": "MfgProduct 1",
+       "product_id": "product_id-1"
+      }
+     },
+     {
+      "labels": [
+       "MfgProduct"
+      ],
+      "props": {
+       "id": "MfgProduct-2",
+       "name": "MfgProduct 2",
+       "product_id": "product_id-2"
+      }
+     },
+     {
+      "labels": [
+       "MfgProductRouting"
+      ],
+      "props": {
+       "id": "MfgProductRouting-1",
+       "name": "MfgProductRouting 1"
+      }
+     },
+     {
+      "labels": [
+       "MfgProductRouting"
+      ],
+      "props": {
+       "id": "MfgProductRouting-2",
+       "name": "MfgProductRouting 2"
+      }
+     },
+     {
+      "labels": [
+       "PurchaseOrder"
+      ],
+      "props": {
+       "amount": 1500,
+       "name": "PO-1",
+       "number": 21,
+       "po_id": "PO-1",
+       "status": "open"
+      }
+     },
+     {
+      "labels": [
+       "PurchaseOrder"
+      ],
+      "props": {
+       "amount": 700,
+       "name": "PO-2",
+       "number": 22,
+       "po_id": "PO-2",
+       "status": "closed"
+      }
+     },
+     {
+      "labels": [
+       "PurchaseOrder"
+      ],
+      "props": {
+       "amount": 90,
+       "name": "PO-3",
+       "number": 23,
+       "po_id": "PO-3",
+       "status": "open"
+      }
+     },
+     {
+      "labels": [
+       "Supplier"
+      ],
+      "props": {
+       "embedding": "[0.7,0.2,0.1,0.1,0.3,0,0.2,0]",
+       "name": "Hanil Steel",
+       "number": 11,
+       "rating": 4.5,
+       "supplier_id": "S01",
+       "title": "Hanil Steel"
+      }
+     },
+     {
+      "labels": [
+       "Supplier"
+      ],
+      "props": {
+       "name": "Busan Parts",
+       "number": 12,
+       "rating": 3.2,
+       "supplier_id": "S02",
+       "title": "Busan Parts"
+      }
+     },
+     {
+      "labels": [
+       "Table"
+      ],
+      "props": {
+       "datasource": "Table datasource 1",
+       "db": "Table db 1",
+       "description": "Table description 1",
+       "id": "Table-1",
+       "name": "Table 1",
+       "schema": "Table schema 1"
+      }
+     },
+     {
+      "labels": [
+       "Table"
+      ],
+      "props": {
+       "datasource": "Table datasource 2",
+       "db": "Table db 2",
+       "description": "Table description 2",
+       "id": "Table-2",
+       "name": "Table 2",
+       "schema": "Table schema 2"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "set_grade",
+       "behavior_type": "action",
+       "class_name": "Customer",
+       "description": "change a grade",
+       "parameters": "[{\"name\": \"grade\"}]"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "supplier_rating",
+       "behavior_type": "sql",
+       "class_name": "Supplier",
+       "description": "rating",
+       "max_rows": 20,
+       "output_columns": "[\"name\", \"rating\"]",
+       "parameters": "[]",
+       "result_kind": "table",
+       "sql_template": "SELECT name, rating FROM erp.supplier"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBehavior"
+      ],
+      "props": {
+       "behavior_name": "top_customers",
+       "behavior_type": "cypher",
+       "class_name": "Customer",
+       "cypher_template": "MATCH (n:_Entity:Customer) RETURN n.name ORDER BY n.credit_limit DESC LIMIT $limit",
+       "description": "customers by credit",
+       "golden_question": "who buys most?",
+       "max_rows": 50,
+       "output_columns": "[\"name\"]",
+       "parameters": "[]",
+       "result_kind": "table"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBinding"
+      ],
+      "props": {
+       "base_conditions": "[]",
+       "class_name": "Customer",
+       "column_map": "[{\"column\": \"customer_id\", \"property\": \"customer_id\"}]",
+       "datasource": "erp",
+       "default_limit": 100,
+       "extra_tables": "[]",
+       "key_columns": "[\"customer_id\"]",
+       "label_property": "name",
+       "source_schema": "compat_erp",
+       "table_name": "customer",
+       "virtual_node": ""
+      }
+     },
+     {
+      "labels": [
+       "_OntologyBinding"
+      ],
+      "props": {
+       "base_conditions": "[]",
+       "class_name": "Supplier",
+       "column_map": "[{\"column\": \"supplier_id\", \"property\": \"supplier_id\"}, {\"column\": \"name\", \"property\": \"name\"}]",
+       "datasource": "erp",
+       "default_limit": 100,
+       "extra_tables": "[]",
+       "key_columns": "[\"supplier_id\"]",
+       "label_property": "name",
+       "source_schema": "compat_erp",
+       "table_name": "supplier",
+       "virtual_node": "ErpSupplier"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "materialized",
+       "certified": true,
+       "class_name": "Customer",
+       "description": "a buyer",
+       "properties": "[{\"name\": \"name\", \"type\": \"string\"}, {\"name\": \"grade\", \"type\": \"string\"}, {\"name\": \"email\", \"type\": \"string\", \"identifier\": true}]",
+       "synonyms": [
+        "client"
+       ]
+      }
+     },
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "materialized",
+       "class_name": "PurchaseOrder",
+       "description": "an order",
+       "properties": "[{\"name\": \"amount\", \"type\": \"int\"}]"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "virtual",
+       "class_name": "Item",
+       "description": "stock item",
+       "properties": "[]"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyClass"
+      ],
+      "props": {
+       "binding_kind": "virtual",
+       "class_name": "Supplier",
+       "description": "a vendor",
+       "properties": "[{\"name\": \"name\", \"type\": \"string\"}]"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyModel"
+      ],
+      "props": {
+       "description": "another model",
+       "name": "other",
+       "schema_id": "schema-2"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyModel"
+      ],
+      "props": {
+       "description": "compat corpus model",
+       "golden_cypher": "[]",
+       "golden_questions": "[]",
+       "intent": "orders",
+       "name": "compat",
+       "schema_id": "schema-1"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyRelationship"
+      ],
+      "props": {
+       "description": "vendor",
+       "from_class": "PurchaseOrder",
+       "name": "ORDERED_FROM",
+       "properties": "[]",
+       "to_class": "Supplier"
+      }
+     },
+     {
+      "labels": [
+       "_OntologyRelationship"
+      ],
+      "props": {
+       "description": "who ordered",
+       "from_class": "Customer",
+       "name": "PLACED",
+       "properties": "[]",
+       "to_class": "PurchaseOrder"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "studio-34b840ddda",
+   "columns": [
+    "cnt"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {}
+  }
+ ]
+}

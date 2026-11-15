@@ -1,0 +1,14 @@
+{
+ "id": "studio-68c5f7522c",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "labels(n)",
+  "n.number",
+  "n.title",
+  "substring(toString(n.content), 0, 300)"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": []
+}

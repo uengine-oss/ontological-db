@@ -1,0 +1,81 @@
+{
+ "id": "analyzer-f83eace09f",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "rid",
+  "type",
+  "props",
+  "sid",
+  "from_datasource",
+  "from_schema",
+  "from_table",
+  "tid",
+  "to_datasource",
+  "to_schema",
+  "to_table"
+ ],
+ "row_order": "sorted",
+ "row_count": 4,
+ "rows": [
+  [
+   "@r1",
+   "FK",
+   {},
+   "@n1",
+   "TABLE datasource 1",
+   "TABLE schema 1",
+   "TABLE 1",
+   "@n1",
+   "TABLE datasource 1",
+   "TABLE schema 1",
+   "TABLE 1"
+  ],
+  [
+   "@r2",
+   "FK",
+   {},
+   "@n2",
+   "TABLE datasource 2",
+   "TABLE schema 2",
+   "TABLE 2",
+   "@n2",
+   "TABLE datasource 2",
+   "TABLE schema 2",
+   "TABLE 2"
+  ],
+  [
+   "@r3",
+   "FK_CANDIDATE",
+   {},
+   "@n1",
+   "TABLE datasource 1",
+   "TABLE schema 1",
+   "TABLE 1",
+   "@n1",
+   "TABLE datasource 1",
+   "TABLE schema 1",
+   "TABLE 1"
+  ],
+  [
+   "@r4",
+   "FK_CANDIDATE",
+   {},
+   "@n2",
+   "TABLE datasource 2",
+   "TABLE schema 2",
+   "TABLE 2",
+   "@n2",
+   "TABLE datasource 2",
+   "TABLE schema 2",
+   "TABLE 2"
+  ]
+ ],
+ "params": {
+  "datasources": [
+   "TABLE datasource 1",
+   "TABLE datasource 2"
+  ],
+  "owner": "analyzer"
+ }
+}

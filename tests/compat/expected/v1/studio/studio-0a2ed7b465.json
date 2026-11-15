@@ -1,0 +1,20 @@
+{
+ "id": "studio-0a2ed7b465",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "step_id",
+  "step_name"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "step_id-1",
+   "MfgProcessStep step_name 1"
+  ]
+ ],
+ "params": {
+  "pid": "product_id-1"
+ }
+}

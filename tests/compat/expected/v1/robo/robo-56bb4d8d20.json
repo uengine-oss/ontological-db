@@ -1,0 +1,23 @@
+{
+ "id": "robo-56bb4d8d20",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "property"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "id": "Property-1",
+    "isRequired": "true",
+    "name": "Property 1",
+    "type": "Property type 1"
+   }
+  ]
+ ],
+ "params": {
+  "readmodel_id": "ReadModel-1"
+ }
+}

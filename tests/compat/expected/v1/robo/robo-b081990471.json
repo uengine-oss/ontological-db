@@ -1,0 +1,27 @@
+{
+ "id": "robo-b081990471",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "event"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "bcId": "<uuid1>",
+    "bcName": "Order",
+    "id": "<uuid2>",
+    "name": "OrderCancelled",
+    "properties": [
+     {
+      "id": null,
+      "name": null,
+      "type": null
+     }
+    ]
+   }
+  ]
+ ]
+}

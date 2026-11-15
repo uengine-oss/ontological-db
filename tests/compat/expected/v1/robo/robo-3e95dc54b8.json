@@ -1,0 +1,14 @@
+{
+ "id": "robo-3e95dc54b8",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "bc_id"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "agg_id": "Aggregate-1"
+ }
+}

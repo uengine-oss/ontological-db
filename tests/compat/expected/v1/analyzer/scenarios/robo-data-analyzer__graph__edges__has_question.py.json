@@ -1,0 +1,45 @@
+{
+ "scenario": "robo-data-analyzer:graph/edges/has_question.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-c645bde46e",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 2
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"QUESTION\"],\"props\":{\"graph_owner\":\"analyzer\",\"id\":\"QUESTION-1\",\"name\":\"QUESTION 1\",\"reason\":\"QUESTION reason 1\",\"text\":\"QUESTION text 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 1\",\"comment\":\"COLUMN comment 1\",\"data_type\":\"COLUMN data_type 1\",\"default_value\":\"COLUMN default_value 1\",\"description\":\"\",\"description_source\":\"COLUMN description_source 1\",\"dtype\":\"COLUMN dtype 1\",\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-1\",\"is_primary_key\":true,\"is_unique\":true,\"logical_name\":\"COLUMN logical_name 1\",\"name\":\"COLUMN 1\",\"nullable\":true,\"primary_key\":\"COLUMN primary_key 1\",\"summary\":\"COLUMN summary 1\",\"unique\":\"COLUMN unique 1\"}}",
+      "type": "HAS_QUESTION"
+     },
+     {
+      "end": "{\"labels\":[\"QUESTION\"],\"props\":{\"graph_owner\":\"analyzer\",\"id\":\"QUESTION-2\",\"name\":\"QUESTION 2\",\"reason\":\"QUESTION reason 2\",\"text\":\"QUESTION text 2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 2\",\"comment\":\"COLUMN comment 2\",\"data_type\":\"COLUMN data_type 2\",\"default_value\":\"COLUMN default_value 2\",\"description\":\"N/A\",\"description_source\":\"COLUMN description_source 2\",\"dtype\":\"COLUMN dtype 2\",\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-2\",\"is_primary_key\":false,\"is_unique\":false,\"logical_name\":\"COLUMN logical_name 2\",\"name\":\"COLUMN 2\",\"nullable\":false,\"primary_key\":\"COLUMN primary_key 2\",\"summary\":\"COLUMN summary 2\",\"unique\":\"COLUMN unique 2\"}}",
+      "type": "HAS_QUESTION"
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "source_id": "COLUMN-1",
+      "target_id": "QUESTION-1"
+     },
+     {
+      "source_id": "COLUMN-2",
+      "target_id": "QUESTION-2"
+     }
+    ]
+   }
+  }
+ ]
+}

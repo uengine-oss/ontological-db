@@ -1,0 +1,17 @@
+{
+ "id": "analyzer-e0a89ebe64",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "file_path",
+  "start_line",
+  "summary",
+  "search_text",
+  "domain_terms_json"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": []
+}

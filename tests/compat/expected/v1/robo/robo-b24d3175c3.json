@@ -1,0 +1,30 @@
+{
+ "id": "robo-b24d3175c3",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "description",
+  "purpose",
+  "domainType",
+  "businessModel",
+  "evolution"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "BoundedContext-1",
+   "BoundedContext 1",
+   "BoundedContext description 1",
+   "BoundedContext purpose 1",
+   "BoundedContext domainType 1",
+   "BoundedContext businessModel 1",
+   "BoundedContext evolution 1"
+  ]
+ ],
+ "params": {
+  "id": "BoundedContext-1"
+ }
+}

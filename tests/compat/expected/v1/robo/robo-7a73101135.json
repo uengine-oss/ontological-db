@@ -1,0 +1,24 @@
+{
+ "id": "robo-7a73101135",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "sg",
+  "name",
+  "dn",
+  "fid"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "UI sceneGraph 1",
+   "UI 1",
+   "UI 1",
+   "figmaNodeId-1"
+  ]
+ ],
+ "params": {
+  "id": "UI-1"
+ }
+}

@@ -1,0 +1,34 @@
+{
+ "id": "robo-8c9fb752f2",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "r"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "SyncRun"
+    ],
+    "props": {
+     "actor": "SyncRun actor 1",
+     "bindingFileKey": "SyncRun bindingFileKey 1",
+     "finishedAt": "2026-01-11T09:00:00Z",
+     "id": "SyncRun-1",
+     "kind": "SyncRun kind 1",
+     "name": "SyncRun 1",
+     "startedAt": "2026-01-11T09:00:00Z",
+     "status": "running",
+     "summary": "SyncRun summary 1"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "rid": "SyncRun-1"
+ }
+}

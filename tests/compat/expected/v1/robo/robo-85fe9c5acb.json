@@ -1,0 +1,21 @@
+{
+ "id": "robo-85fe9c5acb",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "s"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "Feature 2"
+  ],
+  [
+   "주문 취소"
+  ]
+ ],
+ "params": {
+  "id": "Feature-1"
+ }
+}

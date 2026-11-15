@@ -1,0 +1,893 @@
+{
+ "scenario": "robo-architect-lite:api/features/proposal_lifecycle/services/proposal_apply.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-677583aca1",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 12
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "UserStory"
+      ],
+      "props": {
+       "acceptanceCriteria": "compat-acceptanceCriteria",
+       "action": "compat-action",
+       "benefit": "compat-benefit",
+       "createdAt": "<now>",
+       "displayName": "compat-name",
+       "id": "compat-new-UserStory",
+       "name": "compat-name",
+       "priority": "medium",
+       "proposalSource": "compat-proposalSource",
+       "role": "compat-role",
+       "status": "draft",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "nodes_changed": [
+     "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":\"[\\\"acceptanceCriteria-1-a\\\", \\\"acceptanceCriteria-1-b\\\"]\",\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}} <- {\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-1-a\",\"acceptanceCriteria-1-b\"],\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+     "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":\"[\\\"acceptanceCriteria-2-a\\\", \\\"acceptanceCriteria-2-b\\\"]\",\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}} <- {\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":[\"acceptanceCriteria-2-a\",\"acceptanceCriteria-2-b\"],\"action\":\"UserStory action 2\",\"benefit\":\"UserStory benefit 2\",\"boundedContextId\":\"BoundedContext-2\",\"clarifications\":\"UserStory clarifications 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-12T09:00:00Z\",\"criteriaUserEdited\":false,\"displayName\":\"UserStory 2\",\"featureId\":\"Feature-2\",\"id\":\"UserStory-2\",\"key\":\"userstory-2\",\"name\":\"UserStory 2\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 2\",\"role\":\"UserStory role 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 2\",\"sourceUnitId\":\"sourceUnitId-2\",\"status\":\"new\",\"title\":\"UserStory 2\",\"uiDescription\":\"UserStory uiDescription 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}"
+    ]
+   },
+   "params": {
+    "ac": "compat-acceptanceCriteria",
+    "action": "compat-action",
+    "benefit": "compat-benefit",
+    "id": "compat-new-UserStory",
+    "name": "compat-name",
+    "pid": "compat-proposalSource",
+    "role": "compat-role"
+   }
+  },
+  {
+   "id": "robo-c5a8b42474",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"status\":\"approved\"}}",
+      "type": "IMPLEMENTS"
+     }
+    ]
+   },
+   "params": {
+    "bid": "BoundedContext-1",
+    "us": "US-001"
+   }
+  },
+  {
+   "id": "robo-ee63bab513",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 9
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Aggregate"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "displayName": "compat-name",
+       "id": "compat-new-Aggregate",
+       "key": "compat-new-Aggregate",
+       "name": "compat-name",
+       "proposalSource": "compat-proposalSource",
+       "title": "compat-name",
+       "updatedAt": "<now>"
+      }
+     }
+    ]
+   },
+   "params": {
+    "desc": "compat-description",
+    "id": "compat-new-Aggregate",
+    "key": "compat-new-Aggregate",
+    "name": "compat-name",
+    "pid": "compat-proposalSource"
+   }
+  },
+  {
+   "id": "robo-f045f977c0",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "REFERENCES"
+     }
+    ]
+   },
+   "params": {
+    "f": "Property-1",
+    "t": "Property-1"
+   }
+  },
+  {
+   "id": "robo-43b532b8a2",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 14,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Property"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "displayName": "compat-displayName",
+       "fkTargetHint": "compat-fkTargetHint",
+       "id": "compat-new-Property",
+       "isForeignKey": "true",
+       "isKey": "true",
+       "isRequired": "true",
+       "name": "compat-name",
+       "parentId": "Aggregate-1",
+       "parentType": "compat-parentType",
+       "proposalSource": "compat-proposalSource",
+       "type": "compat-type",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"displayName\":\"compat-displayName\",\"fkTargetHint\":\"compat-fkTargetHint\",\"id\":\"compat-new-Property\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"name\":\"compat-name\",\"parentId\":\"Aggregate-1\",\"parentType\":\"compat-parentType\",\"proposalSource\":\"compat-proposalSource\",\"type\":\"compat-type\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "HAS_PROPERTY"
+     }
+    ]
+   },
+   "params": {
+    "desc": "compat-description",
+    "dn": "compat-displayName",
+    "fkHint": "compat-fkTargetHint",
+    "id": "compat-new-Property",
+    "isFk": true,
+    "isKey": true,
+    "isReq": true,
+    "name": "compat-name",
+    "parent": "Aggregate-1",
+    "pid": "compat-proposalSource",
+    "ptype": "compat-parentType",
+    "type": "compat-type"
+   }
+  },
+  {
+   "id": "robo-94520b322b",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 9,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Given"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "fieldValues": "compat-fieldValues",
+       "id": "compat-new-Given",
+       "name": "compat-name",
+       "parentId": "Command-1",
+       "parentType": "Command",
+       "proposalSource": "compat-proposalSource",
+       "scenario": "compat-scenario"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Given\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"fieldValues\":\"compat-fieldValues\",\"id\":\"compat-new-Given\",\"name\":\"compat-name\",\"parentId\":\"Command-1\",\"parentType\":\"Command\",\"proposalSource\":\"compat-proposalSource\",\"scenario\":\"compat-scenario\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_GIVEN"
+     }
+    ]
+   },
+   "params": {
+    "cmd": "Command-1",
+    "desc": "compat-description",
+    "fv": "compat-fieldValues",
+    "id": "compat-new-Given",
+    "name": "compat-name",
+    "pid": "compat-proposalSource",
+    "scenario": "compat-scenario"
+   }
+  },
+  {
+   "id": "robo-23d742c75a",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 10,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Invariant"
+      ],
+      "props": {
+       "aggregateId": "Aggregate-1",
+       "createdAt": "<now>",
+       "declaration": "compat-declaration",
+       "description": "compat-description",
+       "id": "compat-new-Invariant",
+       "name": "compat-name",
+       "proposalSource": "compat-proposalSource",
+       "seq": 7,
+       "source": "ingested",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Invariant\"],\"props\":{\"aggregateId\":\"Aggregate-1\",\"createdAt\":\"<now>\",\"declaration\":\"compat-declaration\",\"description\":\"compat-description\",\"id\":\"compat-new-Invariant\",\"name\":\"compat-name\",\"proposalSource\":\"compat-proposalSource\",\"seq\":7,\"source\":\"ingested\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "HAS_INVARIANT"
+     }
+    ]
+   },
+   "params": {
+    "agg": "Aggregate-1",
+    "decl": "compat-declaration",
+    "desc": "compat-description",
+    "id": "compat-new-Invariant",
+    "name": "compat-name",
+    "pid": "compat-proposalSource",
+    "seq": 7
+   }
+  },
+  {
+   "id": "robo-b26e11168d",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 12,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "UI"
+      ],
+      "props": {
+       "attachedToId": "Command-1",
+       "attachedToName": "compat-attachedToName",
+       "attachedToType": "compat-attachedToType",
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "designSource": "html",
+       "id": "compat-new-UI",
+       "name": "compat-name",
+       "proposalSource": "compat-proposalSource",
+       "template": "compat-template",
+       "updatedAt": "<now>",
+       "userStoryId": "compat-userStoryId"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UI\"],\"props\":{\"attachedToId\":\"Command-1\",\"attachedToName\":\"compat-attachedToName\",\"attachedToType\":\"compat-attachedToType\",\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"designSource\":\"html\",\"id\":\"compat-new-UI\",\"name\":\"compat-name\",\"proposalSource\":\"compat-proposalSource\",\"template\":\"compat-template\",\"updatedAt\":\"<now>\",\"userStoryId\":\"compat-userStoryId\"}}",
+      "type": "ATTACHED_TO"
+     }
+    ]
+   },
+   "params": {
+    "desc": "compat-description",
+    "did": "Command-1",
+    "dname": "compat-attachedToName",
+    "dtype": "compat-attachedToType",
+    "id": "compat-new-UI",
+    "name": "compat-name",
+    "pid": "compat-proposalSource",
+    "tpl": "compat-template",
+    "usid": "compat-userStoryId"
+   }
+  },
+  {
+   "id": "robo-42b304f212",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {},
+   "params": {
+    "id": "compat-new-Aggregate",
+    "key": "compat-key",
+    "pid": "compat-proposalSource"
+   }
+  },
+  {
+   "id": "robo-8067863185",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 6
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Journey"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "id": "compat-new-Journey",
+       "name": "compat-name",
+       "proposalSource": "compat-proposalSource",
+       "updatedAt": "<now>"
+      }
+     }
+    ]
+   },
+   "params": {
+    "desc": "compat-description",
+    "id": "compat-new-Journey",
+    "name": "compat-name",
+    "pid": "compat-proposalSource"
+   }
+  },
+  {
+   "id": "robo-050934d0ed",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 6,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "JourneyStep"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "id": "compat-new-JourneyStep",
+       "kind": "compat-kind",
+       "name": "compat-name",
+       "proposalSource": "compat-proposalSource",
+       "seq": 7
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"JourneyStep\"],\"props\":{\"createdAt\":\"<now>\",\"id\":\"compat-new-JourneyStep\",\"kind\":\"compat-kind\",\"name\":\"compat-name\",\"proposalSource\":\"compat-proposalSource\",\"seq\":7}}",
+      "props": {},
+      "start": "{\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"정상 회원가입\",\"source\":\"llm\",\"updatedAt\":\"<now>\"}}",
+      "type": "HAS_STEP"
+     }
+    ]
+   },
+   "params": {
+    "id": "compat-new-JourneyStep",
+    "jid": "<uuid1>",
+    "kind": "compat-kind",
+    "name": "compat-name",
+    "pid": "compat-proposalSource",
+    "seq": 7
+   }
+  },
+  {
+   "id": "robo-aaf1633c8d",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"attachedToId\":\"Command-1\",\"attachedToName\":\"compat-attachedToName\",\"attachedToType\":\"compat-attachedToType\",\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"designSource\":\"html\",\"id\":\"compat-new-UI\",\"name\":\"compat-name\",\"proposalSource\":\"compat-proposalSource\",\"template\":\"compat-template\",\"updatedAt\":\"<now>\",\"userStoryId\":\"compat-userStoryId\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"JourneyStep\"],\"props\":{\"createdAt\":\"<now>\",\"id\":\"<uuid>\",\"key\":\"membership.journey.normal-signup-abc123.step.gateway.approve-xyz\",\"kind\":\"gateway\",\"label\":\"가입 가능 여부?\",\"sequence\":3,\"source\":\"llm\",\"updatedAt\":\"<now>\"}}",
+      "type": "SHOWS"
+     }
+    ]
+   },
+   "params": {
+    "did": "Command-1",
+    "sid": "<uuid2>"
+   }
+  },
+  {
+   "id": "robo-1a981b8283",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"compat-description\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}} <- {\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}"
+    ]
+   },
+   "params": {
+    "id": "Aggregate-1",
+    "v": "compat-description"
+   }
+  },
+  {
+   "id": "robo-d69b9c1fe8",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 10,
+    "relationships_deleted": 26
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "Aggregate"
+      ],
+      "props": {
+       "correctivePolicies": "Aggregate correctivePolicies 1",
+       "createdAt": "2026-01-11T09:00:00Z",
+       "description": "compat-description",
+       "displayName": "Aggregate 1",
+       "enumerations": "Aggregate enumerations 1",
+       "exceptions": "Aggregate exceptions 1",
+       "fieldDescriptors": "Aggregate fieldDescriptors 1",
+       "id": "Aggregate-1",
+       "invariants": "Aggregate invariants 1",
+       "invariantsMigratedAt": "2026-01-11T09:00:00Z",
+       "key": "aggregate-1",
+       "name": "Aggregate 1",
+       "proposalSource": "Aggregate proposalSource 1",
+       "rootEntity": "Aggregate rootEntity 1",
+       "session_id": "sess-1",
+       "stateTransitions": "Aggregate stateTransitions 1",
+       "throughput": "Aggregate throughput 1",
+       "title": "Aggregate 1",
+       "updatedAt": "2026-01-11T09:00:00Z",
+       "valueObjects": "Aggregate valueObjects 1",
+       "version": 10
+      }
+     },
+     {
+      "labels": [
+       "Given"
+      ],
+      "props": {
+       "createdAt": "2026-01-11T09:00:00Z",
+       "description": "Given description 1",
+       "fieldValues": "Given fieldValues 1",
+       "id": "Given-1",
+       "name": "Given 1",
+       "parentId": "parentId-1",
+       "parentType": "Command",
+       "proposalSource": "Given proposalSource 1",
+       "scenario": "Given scenario 1"
+      }
+     },
+     {
+      "labels": [
+       "Invariant"
+      ],
+      "props": {
+       "aggregateId": "Aggregate-1",
+       "createdAt": "<now>",
+       "declaration": "compat-declaration",
+       "description": "compat-description",
+       "id": "compat-new-Invariant",
+       "name": "compat-name",
+       "proposalSource": "compat-proposalSource",
+       "seq": 7,
+       "source": "ingested",
+       "updatedAt": "<now>"
+      }
+     },
+     {
+      "labels": [
+       "Property"
+      ],
+      "props": {
+       "createdAt": "2026-01-11T09:00:00Z",
+       "description": "Property description 1",
+       "displayName": "Property 1",
+       "fkTargetHint": "Property fkTargetHint 1",
+       "id": "Property-1",
+       "isForeignKey": "true",
+       "isKey": "true",
+       "isRequired": "true",
+       "mutability": "Property mutability 1",
+       "name": "Property 1",
+       "parentId": "parentId-1",
+       "parentType": "Property parentType 1",
+       "proposalSource": "Property proposalSource 1",
+       "type": "Property type 1",
+       "updatedAt": "2026-01-11T09:00:00Z"
+      }
+     },
+     {
+      "labels": [
+       "Property"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "displayName": "compat-displayName",
+       "fkTargetHint": "compat-fkTargetHint",
+       "id": "compat-new-Property",
+       "isForeignKey": "true",
+       "isKey": "true",
+       "isRequired": "true",
+       "name": "compat-name",
+       "parentId": "Aggregate-1",
+       "parentType": "compat-parentType",
+       "proposalSource": "compat-proposalSource",
+       "type": "compat-type",
+       "updatedAt": "<now>"
+      }
+     },
+     {
+      "labels": [
+       "UI"
+      ],
+      "props": {
+       "actor": "UI actor 1",
+       "attachedToId": "",
+       "attachedToName": "UI attachedToName 1",
+       "attachedToType": "",
+       "createdAt": "2026-01-11T09:00:00Z",
+       "description": "UI description 1",
+       "designSource": "backend",
+       "displayName": "UI 1",
+       "figmaFileKey": "UI figmaFileKey 1",
+       "figmaNodeId": "figmaNodeId-1",
+       "figmaPageId": "figmaPageId-1",
+       "figmaSyncBindingFileKey": "UI figmaSyncBindingFileKey 1",
+       "figmaSyncLastAttemptAt": "2026-01-11T09:00:00Z",
+       "figmaSyncLastError": "UI figmaSyncLastError 1",
+       "figmaSyncStatus": "ok",
+       "id": "UI-1",
+       "key": "ui-1",
+       "name": "UI 1",
+       "proposalSource": "UI proposalSource 1",
+       "sceneGraph": "UI sceneGraph 1",
+       "sequence": 10,
+       "template": "UI template 1",
+       "updatedAt": "2026-01-11T09:00:00Z",
+       "userStoryId": "US-001"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"compat-description\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":\"[\\\"acceptanceCriteria-1-a\\\", \\\"acceptanceCriteria-1-b\\\"]\",\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"compat-description\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "SCOPE_EVENT"
+     },
+     {
+      "end": "{\"labels\":[\"Given\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Given description 1\",\"fieldValues\":\"Given fieldValues 1\",\"id\":\"Given-1\",\"name\":\"Given 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Command\",\"proposalSource\":\"Given proposalSource 1\",\"scenario\":\"Given scenario 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"compat-description\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "HAS_GIVEN"
+     },
+     {
+      "end": "{\"labels\":[\"Invariant\"],\"props\":{\"aggregateId\":\"Aggregate-1\",\"createdAt\":\"<now>\",\"declaration\":\"compat-declaration\",\"description\":\"compat-description\",\"id\":\"compat-new-Invariant\",\"name\":\"compat-name\",\"proposalSource\":\"compat-proposalSource\",\"seq\":7,\"source\":\"ingested\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"compat-description\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "HAS_INVARIANT"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"compat-description\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "HAS_PROPERTY"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"CQRSMapping-1\",\"name\":\"CQRSMapping 1\",\"operationId\":\"operationId-1\",\"sourceType\":\"CQRSMapping sourceType 1\",\"staticValue\":\"CQRSMapping staticValue 1\"}}",
+      "type": "SOURCE"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"CQRSMapping-1\",\"name\":\"CQRSMapping 1\",\"operationId\":\"operationId-1\",\"sourceType\":\"CQRSMapping sourceType 1\",\"staticValue\":\"CQRSMapping staticValue 1\"}}",
+      "type": "TARGET"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"CQRSWhere-1\",\"name\":\"CQRSWhere 1\",\"operationId\":\"operationId-1\",\"operator\":\"CQRSWhere operator 1\"}}",
+      "type": "SOURCE_EVENT_FIELD"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"CQRSWhere-1\",\"name\":\"CQRSWhere 1\",\"operationId\":\"operationId-1\",\"operator\":\"CQRSWhere operator 1\"}}",
+      "type": "TARGET"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "type": "HAS_PROPERTY"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "REFERENCES"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"ReadModel description 1\",\"displayName\":\"ReadModel 1\",\"id\":\"ReadModel-1\",\"isMultipleResult\":true,\"key\":\"readmodel-1\",\"name\":\"ReadModel 1\",\"provisioningType\":\"ReadModel provisioningType 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_PROPERTY"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"displayName\":\"compat-displayName\",\"fkTargetHint\":\"compat-fkTargetHint\",\"id\":\"compat-new-Property\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"name\":\"compat-name\",\"parentId\":\"Aggregate-1\",\"parentType\":\"compat-parentType\",\"proposalSource\":\"compat-proposalSource\",\"type\":\"compat-type\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"compat-description\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "HAS_PROPERTY"
+     },
+     {
+      "end": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"ReadModel description 1\",\"displayName\":\"ReadModel 1\",\"id\":\"ReadModel-1\",\"isMultipleResult\":true,\"key\":\"readmodel-1\",\"name\":\"ReadModel 1\",\"provisioningType\":\"ReadModel provisioningType 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "type": "ATTACHED_TO"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"compat-description\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "HAS_THEN"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "ATTACHED_TO"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "EMITS"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_AGGREGATE"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_COMMAND"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_POLICY"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_THEN"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_UI"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "INVOKES"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "REFERENCES"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "TRIGGERS"
+     },
+     {
+      "end": "{\"labels\":[\"UserStory\"],\"props\":{\"acceptanceCriteria\":\"[\\\"acceptanceCriteria-1-a\\\", \\\"acceptanceCriteria-1-b\\\"]\",\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"boundedContextId\":\"BoundedContext-1\",\"clarifications\":\"UserStory clarifications 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"criteriaEditedAt\":\"2026-01-11T09:00:00Z\",\"criteriaUserEdited\":true,\"displayName\":\"UserStory 1\",\"featureId\":\"Feature-1\",\"id\":\"UserStory-1\",\"key\":\"userstory-1\",\"name\":\"UserStory 1\",\"priority\":\"medium\",\"proposalSource\":\"UserStory proposalSource 1\",\"role\":\"UserStory role 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"sourceScreenName\":\"UserStory sourceScreenName 1\",\"sourceUnitId\":\"sourceUnitId-1\",\"status\":\"draft\",\"title\":\"UserStory 1\",\"uiDescription\":\"UserStory uiDescription 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"compat-description\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "type": "IMPLEMENTS"
+     }
+    ]
+   },
+   "params": {
+    "id": "Aggregate-1"
+   }
+  },
+  {
+   "id": "robo-3f30cc458c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 1,
+    "relationships_deleted": 7
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "Property"
+      ],
+      "props": {
+       "createdAt": "2026-01-12T09:00:00Z",
+       "description": "Property description 2",
+       "displayName": "Property 2",
+       "fkTargetHint": "Property fkTargetHint 2",
+       "id": "Property-2",
+       "isForeignKey": "true",
+       "isKey": "true",
+       "isRequired": "false",
+       "mutability": "Property mutability 2",
+       "name": "Property 2",
+       "parentId": "parentId-2",
+       "parentType": "Property parentType 2",
+       "proposalSource": "Property proposalSource 2",
+       "type": "Property type 2",
+       "updatedAt": "2026-01-12T09:00:00Z"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Property description 2\",\"displayName\":\"Property 2\",\"fkTargetHint\":\"Property fkTargetHint 2\",\"id\":\"Property-2\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"false\",\"mutability\":\"Property mutability 2\",\"name\":\"Property 2\",\"parentId\":\"parentId-2\",\"parentType\":\"Property parentType 2\",\"proposalSource\":\"Property proposalSource 2\",\"type\":\"Property type 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Aggregate description 2\",\"displayName\":\"Aggregate 2\",\"enumerations\":\"Aggregate enumerations 2\",\"exceptions\":\"Aggregate exceptions 2\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 2\",\"id\":\"Aggregate-2\",\"invariants\":\"Aggregate invariants 2\",\"invariantsMigratedAt\":\"2026-01-12T09:00:00Z\",\"key\":\"aggregate-2\",\"name\":\"Aggregate 2\",\"proposalSource\":\"Aggregate proposalSource 2\",\"rootEntity\":\"Aggregate rootEntity 2\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 2\",\"throughput\":\"Aggregate throughput 2\",\"title\":\"Aggregate 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 2\",\"version\":20}}",
+      "type": "HAS_PROPERTY"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Property description 2\",\"displayName\":\"Property 2\",\"fkTargetHint\":\"Property fkTargetHint 2\",\"id\":\"Property-2\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"false\",\"mutability\":\"Property mutability 2\",\"name\":\"Property 2\",\"parentId\":\"parentId-2\",\"parentType\":\"Property parentType 2\",\"proposalSource\":\"Property proposalSource 2\",\"type\":\"Property type 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"CQRSMapping-2\",\"name\":\"CQRSMapping 2\",\"operationId\":\"operationId-2\",\"sourceType\":\"CQRSMapping sourceType 2\",\"staticValue\":\"CQRSMapping staticValue 2\"}}",
+      "type": "SOURCE"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Property description 2\",\"displayName\":\"Property 2\",\"fkTargetHint\":\"Property fkTargetHint 2\",\"id\":\"Property-2\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"false\",\"mutability\":\"Property mutability 2\",\"name\":\"Property 2\",\"parentId\":\"parentId-2\",\"parentType\":\"Property parentType 2\",\"proposalSource\":\"Property proposalSource 2\",\"type\":\"Property type 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"CQRSMapping-2\",\"name\":\"CQRSMapping 2\",\"operationId\":\"operationId-2\",\"sourceType\":\"CQRSMapping sourceType 2\",\"staticValue\":\"CQRSMapping staticValue 2\"}}",
+      "type": "TARGET"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Property description 2\",\"displayName\":\"Property 2\",\"fkTargetHint\":\"Property fkTargetHint 2\",\"id\":\"Property-2\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"false\",\"mutability\":\"Property mutability 2\",\"name\":\"Property 2\",\"parentId\":\"parentId-2\",\"parentType\":\"Property parentType 2\",\"proposalSource\":\"Property proposalSource 2\",\"type\":\"Property type 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"CQRSWhere-2\",\"name\":\"CQRSWhere 2\",\"operationId\":\"operationId-2\",\"operator\":\"CQRSWhere operator 2\"}}",
+      "type": "SOURCE_EVENT_FIELD"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Property description 2\",\"displayName\":\"Property 2\",\"fkTargetHint\":\"Property fkTargetHint 2\",\"id\":\"Property-2\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"false\",\"mutability\":\"Property mutability 2\",\"name\":\"Property 2\",\"parentId\":\"parentId-2\",\"parentType\":\"Property parentType 2\",\"proposalSource\":\"Property proposalSource 2\",\"type\":\"Property type 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"CQRSWhere-2\",\"name\":\"CQRSWhere 2\",\"operationId\":\"operationId-2\",\"operator\":\"CQRSWhere operator 2\"}}",
+      "type": "TARGET"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Property description 2\",\"displayName\":\"Property 2\",\"fkTargetHint\":\"Property fkTargetHint 2\",\"id\":\"Property-2\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"false\",\"mutability\":\"Property mutability 2\",\"name\":\"Property 2\",\"parentId\":\"parentId-2\",\"parentType\":\"Property parentType 2\",\"proposalSource\":\"Property proposalSource 2\",\"type\":\"Property type 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Event description 2\",\"displayName\":\"Event 2\",\"hotspot\":false,\"id\":\"Event-2\",\"isBreaking\":false,\"key\":\"event-2\",\"name\":\"Event 2\",\"payload\":\"Event payload 2\",\"pivotal\":false,\"schema\":\"Event schema 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryId\":\"UserStory-1\",\"version\":\"1.0.0\"}}",
+      "type": "HAS_PROPERTY"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Property description 2\",\"displayName\":\"Property 2\",\"fkTargetHint\":\"Property fkTargetHint 2\",\"id\":\"Property-2\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"false\",\"mutability\":\"Property mutability 2\",\"name\":\"Property 2\",\"parentId\":\"parentId-2\",\"parentType\":\"Property parentType 2\",\"proposalSource\":\"Property proposalSource 2\",\"type\":\"Property type 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"ReadModel description 2\",\"displayName\":\"ReadModel 2\",\"id\":\"ReadModel-2\",\"isMultipleResult\":false,\"key\":\"readmodel-2\",\"name\":\"ReadModel 2\",\"provisioningType\":\"ReadModel provisioningType 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "HAS_PROPERTY"
+     }
+    ]
+   },
+   "params": {
+    "pid": "Property proposalSource 2"
+   }
+  }
+ ]
+}

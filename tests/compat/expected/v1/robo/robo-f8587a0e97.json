@@ -1,0 +1,27 @@
+{
+ "id": "robo-f8587a0e97",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "aggs",
+  "cmds",
+  "evts",
+  "rms"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   0,
+   0,
+   0,
+   2
+  ]
+ ],
+ "params": {
+  "bcs": [
+   "BoundedContext-1",
+   "BoundedContext-2"
+  ]
+ }
+}

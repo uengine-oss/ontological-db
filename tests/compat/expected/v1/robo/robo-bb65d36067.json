@@ -1,0 +1,18 @@
+{
+ "id": "robo-bb65d36067",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "actor"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Command actor 1"
+  ]
+ ],
+ "params": {
+  "id": "Command-1"
+ }
+}

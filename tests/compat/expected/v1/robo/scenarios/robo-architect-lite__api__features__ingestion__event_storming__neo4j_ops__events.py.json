@@ -1,0 +1,242 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/events.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-df21e29ed3",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     {
+      "description": "compat-description-1",
+      "displayName": "compat-display_name-1",
+      "id": "<uuid1>",
+      "key": "compat-new-Event-1",
+      "name": "compat-name-1",
+      "payload": "compat-payload-1",
+      "schema": "compat-schema-1",
+      "version": 7
+     }
+    ],
+    [
+     {
+      "description": "compat-description-2",
+      "displayName": "compat-display_name-2",
+      "id": "<uuid2>",
+      "key": "compat-new-Event-2",
+      "name": "compat-name-2",
+      "payload": "compat-payload-2",
+      "schema": "compat-schema-2",
+      "version": 7
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 26,
+    "relationships_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Event"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description-1",
+       "displayName": "compat-display_name-1",
+       "id": "<uuid>",
+       "isBreaking": false,
+       "key": "compat-new-Event-1",
+       "name": "compat-name-1",
+       "payload": "compat-payload-1",
+       "schema": "compat-schema-1",
+       "updatedAt": "<now>",
+       "version": "7"
+      }
+     },
+     {
+      "labels": [
+       "Event"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description-2",
+       "displayName": "compat-display_name-2",
+       "id": "<uuid>",
+       "isBreaking": false,
+       "key": "compat-new-Event-2",
+       "name": "compat-name-2",
+       "payload": "compat-payload-2",
+       "schema": "compat-schema-2",
+       "updatedAt": "<now>",
+       "version": "7"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description-1\",\"displayName\":\"compat-display_name-1\",\"id\":\"<uuid>\",\"isBreaking\":false,\"key\":\"compat-new-Event-1\",\"name\":\"compat-name-1\",\"payload\":\"compat-payload-1\",\"schema\":\"compat-schema-1\",\"updatedAt\":\"<now>\",\"version\":\"7\"}}",
+      "props": {
+       "isGuaranteed": true
+      },
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "EMITS"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description-2\",\"displayName\":\"compat-display_name-2\",\"id\":\"<uuid>\",\"isBreaking\":false,\"key\":\"compat-new-Event-2\",\"name\":\"compat-name-2\",\"payload\":\"compat-payload-2\",\"schema\":\"compat-schema-2\",\"updatedAt\":\"<now>\",\"version\":\"7\"}}",
+      "props": {
+       "isGuaranteed": true
+      },
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 2\",\"aggregate_id\":\"Aggregate-2\",\"category\":\"Command category 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Command description 2\",\"displayName\":\"Command 2\",\"id\":\"Command-2\",\"inputSchema\":\"Command inputSchema 2\",\"key\":\"command-2\",\"name\":\"Command 2\",\"postconditions\":\"Command postconditions 2\",\"preconditions\":\"Command preconditions 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "type": "EMITS"
+     }
+    ]
+   },
+   "params": {
+    "rows": [
+     {
+      "command_id": "Command-1",
+      "description": "compat-description-1",
+      "display_name": "compat-display_name-1",
+      "key": "compat-new-Event-1",
+      "name": "compat-name-1",
+      "payload": "compat-payload-1",
+      "schema": "compat-schema-1",
+      "version": 7
+     },
+     {
+      "command_id": "Command-2",
+      "description": "compat-description-2",
+      "display_name": "compat-display_name-2",
+      "key": "compat-new-Event-2",
+      "name": "compat-name-2",
+      "payload": "compat-payload-2",
+      "schema": "compat-schema-2",
+      "version": 7
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-4ebaf07ce3",
+   "columns": [
+    "event"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "description": "compat-description",
+      "displayName": "compat-displayName",
+      "id": "<uuid3>",
+      "key": "compat-new-Event",
+      "name": "compat-name",
+      "payload": "compat-payload",
+      "schema": "compat-schema",
+      "version": 7
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 13,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Event"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "displayName": "compat-displayName",
+       "id": "<uuid>",
+       "isBreaking": false,
+       "key": "compat-new-Event",
+       "name": "compat-name",
+       "payload": "compat-payload",
+       "schema": "compat-schema",
+       "updatedAt": "<now>",
+       "version": "7"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"displayName\":\"compat-displayName\",\"id\":\"<uuid>\",\"isBreaking\":false,\"key\":\"compat-new-Event\",\"name\":\"compat-name\",\"payload\":\"compat-payload\",\"schema\":\"compat-schema\",\"updatedAt\":\"<now>\",\"version\":\"7\"}}",
+      "props": {
+       "isGuaranteed": true
+      },
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "EMITS"
+     }
+    ]
+   },
+   "params": {
+    "command_id": "Command-1",
+    "description": "compat-description",
+    "display_name": "compat-displayName",
+    "key": "compat-new-Event",
+    "name": "compat-name",
+    "payload": "compat-payload",
+    "schema": "compat-schema",
+    "version": 7
+   }
+  },
+  {
+   "id": "robo-971820aeee",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     {
+      "evt_id": "Event-1",
+      "sequence": 7
+     }
+    ],
+    [
+     {
+      "evt_id": "Event-2",
+      "sequence": 7
+     }
+    ]
+   ],
+   "counters": {
+    "properties_set": 4
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\",\"userStoryId\":\"US-001\",\"version\":\"1\"}} <- {\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+     "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Event description 2\",\"displayName\":\"Event 2\",\"hotspot\":false,\"id\":\"Event-2\",\"isBreaking\":false,\"key\":\"event-2\",\"name\":\"Event 2\",\"payload\":\"Event payload 2\",\"pivotal\":false,\"schema\":\"Event schema 2\",\"sequence\":7,\"session_id\":\"sess-1\",\"updatedAt\":\"<now>\",\"userStoryId\":\"UserStory-1\",\"version\":\"1.0.0\"}} <- {\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Event description 2\",\"displayName\":\"Event 2\",\"hotspot\":false,\"id\":\"Event-2\",\"isBreaking\":false,\"key\":\"event-2\",\"name\":\"Event 2\",\"payload\":\"Event payload 2\",\"pivotal\":false,\"schema\":\"Event schema 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryId\":\"UserStory-1\",\"version\":\"1.0.0\"}}"
+    ]
+   },
+   "params": {
+    "rows": [
+     {
+      "evt_id": "Event-1",
+      "sequence": 7
+     },
+     {
+      "evt_id": "Event-2",
+      "sequence": 7
+     }
+    ]
+   }
+  }
+ ]
+}

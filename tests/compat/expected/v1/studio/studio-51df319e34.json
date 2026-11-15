@@ -1,0 +1,53 @@
+{
+ "id": "studio-51df319e34",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "n"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "ErpSupplier"
+    ],
+    "props": {
+     "city": "Busan",
+     "name": "Busan Parts",
+     "rating": 3.2,
+     "supplier_id": "S02"
+    }
+   }
+  ],
+  [
+   {
+    "~node": "@n2",
+    "labels": [
+     "ErpSupplier"
+    ],
+    "props": {
+     "city": "Busan",
+     "name": "Hanil Steel",
+     "rating": 4.5,
+     "supplier_id": "S01"
+    }
+   }
+  ],
+  [
+   {
+    "~node": "@n3",
+    "labels": [
+     "ErpSupplier"
+    ],
+    "props": {
+     "city": "Seoul",
+     "name": "Nord Cable",
+     "supplier_id": "S03"
+    }
+   }
+  ]
+ ]
+}

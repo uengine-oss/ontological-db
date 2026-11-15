@@ -1,0 +1,34 @@
+{
+ "id": "analyzer-a1f91d4b6d",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "id",
+  "datasource",
+  "schema",
+  "name"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "@n1",
+   "TABLE datasource 1",
+   "TABLE schema 1",
+   "TABLE 1"
+  ],
+  [
+   "@n2",
+   "TABLE datasource 2",
+   "TABLE schema 2",
+   "TABLE 2"
+  ]
+ ],
+ "params": {
+  "datasources": [
+   "TABLE datasource 1",
+   "TABLE datasource 2"
+  ],
+  "owner": "analyzer"
+ }
+}

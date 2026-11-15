@@ -1,0 +1,16 @@
+{
+ "id": "robo-b3b95825ab",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "n",
+  "nodeType"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "node_id": "<uuid1>"
+ }
+}

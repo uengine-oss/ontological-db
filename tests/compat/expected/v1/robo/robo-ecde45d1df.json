@@ -1,0 +1,15 @@
+{
+ "id": "robo-ecde45d1df",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "cmd",
+  "evt"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "node_id": "Aggregate-1"
+ }
+}

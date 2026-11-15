@@ -1,0 +1,18 @@
+{
+ "id": "robo-71cf70d1da",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "maxSeq"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   0
+  ]
+ ],
+ "params": {
+  "aid": "Aggregate-1"
+ }
+}

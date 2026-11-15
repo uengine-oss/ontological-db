@@ -1,0 +1,24 @@
+{
+ "id": "analyzer-3eed836022",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "id",
+  "eid",
+  "name",
+  "logical_name",
+  "summary",
+  "relation"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "graph_owner": "analyzer",
+  "id": "COLUMN-1",
+  "rels": [
+   "compat-rels-a",
+   "compat-rels-b"
+  ]
+ }
+}

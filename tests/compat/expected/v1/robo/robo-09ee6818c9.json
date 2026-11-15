@@ -1,0 +1,12 @@
+{
+ "id": "robo-09ee6818c9",
+ "graph": "robo",
+ "kind": "read",
+ "error": {
+  "code": "Neo.ClientError.Statement.TypeError",
+  "message": "operator does not exist: text = boolean"
+ },
+ "params": {
+  "pid": "Property proposalSource 1"
+ }
+}

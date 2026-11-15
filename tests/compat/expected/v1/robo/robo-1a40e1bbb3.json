@@ -1,0 +1,27 @@
+{
+ "id": "robo-1a40e1bbb3",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "actor"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "ReadModel-1",
+   "ReadModel actor 1"
+  ],
+  [
+   "ReadModel-2",
+   "ReadModel actor 2"
+  ]
+ ],
+ "params": {
+  "ids": [
+   "ReadModel-1",
+   "ReadModel-2"
+  ]
+ }
+}

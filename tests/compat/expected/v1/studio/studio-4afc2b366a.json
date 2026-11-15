@@ -1,0 +1,40 @@
+{
+ "id": "studio-4afc2b366a",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "h",
+  "r",
+  "t"
+ ],
+ "row_order": "sorted",
+ "row_count": 4,
+ "rows": [
+  [
+   "cust-1",
+   "PLACED",
+   "po-1"
+  ],
+  [
+   "cust-1",
+   "PLACED",
+   "po-3"
+  ],
+  [
+   "cust-2",
+   "PLACED",
+   "po-2"
+  ],
+  [
+   "cust-2",
+   "SAME_AS",
+   "cust-3"
+  ]
+ ],
+ "params": {
+  "classes": [
+   "Customer",
+   "PurchaseOrder"
+  ]
+ }
+}

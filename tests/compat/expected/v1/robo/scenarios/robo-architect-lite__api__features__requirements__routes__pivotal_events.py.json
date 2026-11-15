@@ -1,0 +1,30 @@
+{
+ "scenario": "robo-architect-lite:api/features/requirements/routes/pivotal_events.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-a6967e2464",
+   "columns": [
+    "pivotal",
+    "hotspot"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     true,
+     true
+    ]
+   ],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {},
+   "params": {
+    "id": "Event-1",
+    "pivotal": true
+   }
+  }
+ ]
+}

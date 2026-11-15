@@ -1,0 +1,17 @@
+{
+ "id": "robo-b96431b2a9",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "event",
+  "bc"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "OrderCancelled",
+   null
+  ]
+ ]
+}

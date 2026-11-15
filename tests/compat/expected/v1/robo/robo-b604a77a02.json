@@ -1,0 +1,39 @@
+{
+ "id": "robo-b604a77a02",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "template",
+  "sceneGraph",
+  "attachedToType",
+  "attachedToName",
+  "actor"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "<uuid1>",
+   "CancelOrder UI",
+   "",
+   null,
+   "Command",
+   "CancelOrder",
+   null
+  ],
+  [
+   "UI-1",
+   "UI 1",
+   "UI template 1",
+   "UI sceneGraph 1",
+   "",
+   "UI attachedToName 1",
+   "UI actor 1"
+  ]
+ ],
+ "params": {
+  "usid": "US-001"
+ }
+}

@@ -1,0 +1,37 @@
+{
+ "id": "studio-fec5ca17d7",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "class",
+  "count"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 6,
+ "rows": [
+  [
+   "Customer",
+   3
+  ],
+  [
+   "PurchaseOrder",
+   3
+  ],
+  [
+   "MfgProcessStep",
+   2
+  ],
+  [
+   "MfgProduct",
+   2
+  ],
+  [
+   "MfgProductRouting",
+   2
+  ],
+  [
+   "Supplier",
+   2
+  ]
+ ]
+}

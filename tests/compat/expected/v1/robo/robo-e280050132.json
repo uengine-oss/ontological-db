@@ -1,0 +1,20 @@
+{
+ "id": "robo-e280050132",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "role",
+  "action",
+  "benefit",
+  "priority",
+  "criteria",
+  "aggregate_id"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "id": "BoundedContext-1"
+ }
+}

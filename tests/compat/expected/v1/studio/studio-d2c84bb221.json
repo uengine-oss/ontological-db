@@ -1,0 +1,39 @@
+{
+ "id": "studio-d2c84bb221",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "schema_name",
+  "name",
+  "from_class",
+  "to_class",
+  "description",
+  "synonyms",
+  "certified"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "compat",
+   "ORDERED_FROM",
+   "PurchaseOrder",
+   "Supplier",
+   "vendor",
+   null,
+   null
+  ],
+  [
+   "compat",
+   "PLACED",
+   "Customer",
+   "PurchaseOrder",
+   "who ordered",
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "schema_name": "compat"
+ }
+}

@@ -1,0 +1,42 @@
+{
+ "id": "robo-6826093f62",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "change"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "author": "user@example.com",
+    "createdAt": "<now>",
+    "id": "CHG-001",
+    "originalPrompt": "반품 기간을 7일에서 14일로 변경",
+    "sourceType": "PROMPT",
+    "status": "DRAFT",
+    "statusHistory": "[]",
+    "title": "반품 기간 연장"
+   }
+  ],
+  [
+   {
+    "author": "RequirementChange author 1",
+    "changeSetId": "CS-001",
+    "createdAt": "2026-01-11T09:00:00Z",
+    "id": "RequirementChange-1",
+    "name": "RequirementChange 1",
+    "originalPrompt": "RequirementChange originalPrompt 1",
+    "sourceType": "RequirementChange sourceType 1",
+    "status": "DRAFT",
+    "statusHistory": "[]",
+    "title": "RequirementChange 1"
+   }
+  ]
+ ],
+ "params": {
+  "limit": 10,
+  "status": "DRAFT"
+ }
+}

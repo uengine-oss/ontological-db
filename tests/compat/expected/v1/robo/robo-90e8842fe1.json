@@ -1,0 +1,26 @@
+{
+ "id": "robo-90e8842fe1",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "nodeId",
+  "nodeLabel",
+  "nodeTitle",
+  "reason",
+  "impactLevel"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "CreationIntent-1",
+   "CreationIntent",
+   "CreationIntent 1",
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "id": "RequirementChange-1"
+ }
+}

@@ -1,0 +1,147 @@
+{
+ "scenario": "robo-architect-lite:api/features/constitution/services/constitution_store.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-b82ef09529",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 5
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Constitution"
+      ],
+      "props": {
+       "id": "compat-new-Constitution",
+       "principles": "compat-principles",
+       "raw": "compat-raw",
+       "scope": "PROJECT",
+       "updatedAt": "2026-01-15T09:00:00Z"
+      }
+     }
+    ]
+   },
+   "params": {
+    "id": "compat-new-Constitution",
+    "principles": "compat-principles",
+    "raw": "compat-raw",
+    "updatedAt": "2026-01-15T09:00:00Z"
+   }
+  },
+  {
+   "id": "robo-9bc370b07c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Constitution\"],\"props\":{\"id\":\"compat-new-Constitution\",\"principles\":\"compat-principles\",\"raw\":\"compat-raw\",\"scope\":\"PROJECT\",\"strategicMemory\":\"compat-strategicMemory\",\"updatedAt\":\"2026-01-15T09:00:00Z\"}} <- {\"labels\":[\"Constitution\"],\"props\":{\"id\":\"compat-new-Constitution\",\"principles\":\"compat-principles\",\"raw\":\"compat-raw\",\"scope\":\"PROJECT\",\"updatedAt\":\"2026-01-15T09:00:00Z\"}}"
+    ]
+   },
+   "params": {
+    "id": "compat-new-Constitution",
+    "mem": "compat-strategicMemory",
+    "updatedAt": "2026-01-15T09:00:00Z"
+   }
+  },
+  {
+   "id": "robo-2bd05f6e8e",
+   "error": {
+    "code": "Neo.ClientError.Statement.ArgumentError",
+    "message": "duplicate key value violates unique constraint \"uq_72_constitution_id_unique\""
+   },
+   "params": {
+    "bcId": "BoundedContext-1",
+    "cid": "compat-new-Constitution",
+    "mem": "compat-strategicMemory",
+    "updatedAt": "2026-01-15T09:00:00Z"
+   }
+  },
+  {
+   "id": "robo-d3dd86ca3d",
+   "error": {
+    "code": "Neo.ClientError.Statement.ArgumentError",
+    "message": "duplicate key value violates unique constraint \"uq_72_constitution_id_unique\""
+   },
+   "params": {
+    "bcId": "BoundedContext-1",
+    "cid": "compat-new-Constitution",
+    "principles": "compat-principles",
+    "raw": "compat-raw",
+    "updatedAt": "2026-01-15T09:00:00Z"
+   }
+  },
+  {
+   "id": "robo-44f1818c2f",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Proposal\"],\"props\":{\"acceptedAt\":\"2026-01-11T09:00:00Z\",\"author\":\"Proposal author 1\",\"clarificationLog\":\"[]\",\"constitutionHash\":\"compat-constitutionHash\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"currentStage\":\"SCOPE\",\"decompositionMode\":\"Proposal decompositionMode 1\",\"destroyedAt\":\"2026-01-11T09:00:00Z\",\"id\":\"Proposal-1\",\"impactMap\":\"Proposal impactMap 1\",\"implementationPlan\":\"Proposal implementationPlan 1\",\"intent\":\"Proposal intent 1\",\"intentFeedbackLog\":\"Proposal intentFeedbackLog 1\",\"journeys\":\"Proposal journeys 1\",\"legacyReferences\":\"Proposal legacyReferences 1\",\"memoryConflicts\":\"Proposal memoryConflicts 1\",\"name\":\"Proposal 1\",\"oda\":\"Proposal oda 1\",\"odaArtifacts\":\"Proposal odaArtifacts 1\",\"odaConformance\":\"Proposal odaConformance 1\",\"originalPrompt\":\"Proposal originalPrompt 1\",\"plan\":\"Proposal plan 1\",\"planDraft\":\"Proposal planDraft 1\",\"projectRoot\":\"Proposal projectRoot 1\",\"sandboxBranch\":\"Proposal sandboxBranch 1\",\"sandboxStatus\":\"DESTROYED\",\"sandboxWorktreePath\":\"Proposal sandboxWorktreePath 1\",\"stageArtifacts\":\"Proposal stageArtifacts 1\",\"stageDraftArtifacts\":\"Proposal stageDraftArtifacts 1\",\"stagePlan\":\"Proposal stagePlan 1\",\"status\":\"DESTROYED\",\"statusHistory\":\"[]\",\"strategicDiff\":\"Proposal strategicDiff 1\",\"tacticalDiff\":\"Proposal tacticalDiff 1\",\"tasksJson\":\"Proposal tasksJson 1\",\"testResults\":\"Proposal testResults 1\",\"title\":\"Proposal 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}} <- {\"labels\":[\"Proposal\"],\"props\":{\"acceptedAt\":\"2026-01-11T09:00:00Z\",\"author\":\"Proposal author 1\",\"clarificationLog\":\"[]\",\"constitutionHash\":\"Proposal constitutionHash 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"currentStage\":\"SCOPE\",\"decompositionMode\":\"Proposal decompositionMode 1\",\"destroyedAt\":\"2026-01-11T09:00:00Z\",\"id\":\"Proposal-1\",\"impactMap\":\"Proposal impactMap 1\",\"implementationPlan\":\"Proposal implementationPlan 1\",\"intent\":\"Proposal intent 1\",\"intentFeedbackLog\":\"Proposal intentFeedbackLog 1\",\"journeys\":\"Proposal journeys 1\",\"legacyReferences\":\"Proposal legacyReferences 1\",\"memoryConflicts\":\"Proposal memoryConflicts 1\",\"name\":\"Proposal 1\",\"oda\":\"Proposal oda 1\",\"odaArtifacts\":\"Proposal odaArtifacts 1\",\"odaConformance\":\"Proposal odaConformance 1\",\"originalPrompt\":\"Proposal originalPrompt 1\",\"plan\":\"Proposal plan 1\",\"planDraft\":\"Proposal planDraft 1\",\"projectRoot\":\"Proposal projectRoot 1\",\"sandboxBranch\":\"Proposal sandboxBranch 1\",\"sandboxStatus\":\"DESTROYED\",\"sandboxWorktreePath\":\"Proposal sandboxWorktreePath 1\",\"stageArtifacts\":\"Proposal stageArtifacts 1\",\"stageDraftArtifacts\":\"Proposal stageDraftArtifacts 1\",\"stagePlan\":\"Proposal stagePlan 1\",\"status\":\"DESTROYED\",\"statusHistory\":\"[]\",\"strategicDiff\":\"Proposal strategicDiff 1\",\"tacticalDiff\":\"Proposal tacticalDiff 1\",\"tasksJson\":\"Proposal tasksJson 1\",\"testResults\":\"Proposal testResults 1\",\"title\":\"Proposal 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+     "{\"labels\":[\"Proposal\"],\"props\":{\"acceptedAt\":\"2026-01-12T09:00:00Z\",\"author\":\"Proposal author 2\",\"clarificationLog\":\"[]\",\"constitutionHash\":\"compat-constitutionHash\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"currentStage\":\"SCOPE\",\"decompositionMode\":\"Proposal decompositionMode 2\",\"destroyedAt\":\"2026-01-12T09:00:00Z\",\"id\":\"Proposal-2\",\"impactMap\":\"Proposal impactMap 2\",\"implementationPlan\":\"Proposal implementationPlan 2\",\"intent\":\"Proposal intent 2\",\"intentFeedbackLog\":\"Proposal intentFeedbackLog 2\",\"journeys\":\"Proposal journeys 2\",\"legacyReferences\":\"Proposal legacyReferences 2\",\"memoryConflicts\":\"Proposal memoryConflicts 2\",\"name\":\"Proposal 2\",\"oda\":\"Proposal oda 2\",\"odaArtifacts\":\"Proposal odaArtifacts 2\",\"odaConformance\":\"Proposal odaConformance 2\",\"originalPrompt\":\"Proposal originalPrompt 2\",\"plan\":\"Proposal plan 2\",\"planDraft\":\"Proposal planDraft 2\",\"projectRoot\":\"Proposal projectRoot 2\",\"sandboxBranch\":\"Proposal sandboxBranch 2\",\"sandboxStatus\":\"DONE\",\"sandboxWorktreePath\":\"Proposal sandboxWorktreePath 2\",\"stageArtifacts\":\"Proposal stageArtifacts 2\",\"stageDraftArtifacts\":\"Proposal stageDraftArtifacts 2\",\"stagePlan\":\"Proposal stagePlan 2\",\"status\":\"SUBMITTED\",\"statusHistory\":\"[]\",\"strategicDiff\":\"Proposal strategicDiff 2\",\"tacticalDiff\":\"Proposal tacticalDiff 2\",\"tasksJson\":\"Proposal tasksJson 2\",\"testResults\":\"Proposal testResults 2\",\"title\":\"Proposal 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}} <- {\"labels\":[\"Proposal\"],\"props\":{\"acceptedAt\":\"2026-01-12T09:00:00Z\",\"author\":\"Proposal author 2\",\"clarificationLog\":\"[]\",\"constitutionHash\":\"Proposal constitutionHash 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"currentStage\":\"SCOPE\",\"decompositionMode\":\"Proposal decompositionMode 2\",\"destroyedAt\":\"2026-01-12T09:00:00Z\",\"id\":\"Proposal-2\",\"impactMap\":\"Proposal impactMap 2\",\"implementationPlan\":\"Proposal implementationPlan 2\",\"intent\":\"Proposal intent 2\",\"intentFeedbackLog\":\"Proposal intentFeedbackLog 2\",\"journeys\":\"Proposal journeys 2\",\"legacyReferences\":\"Proposal legacyReferences 2\",\"memoryConflicts\":\"Proposal memoryConflicts 2\",\"name\":\"Proposal 2\",\"oda\":\"Proposal oda 2\",\"odaArtifacts\":\"Proposal odaArtifacts 2\",\"odaConformance\":\"Proposal odaConformance 2\",\"originalPrompt\":\"Proposal originalPrompt 2\",\"plan\":\"Proposal plan 2\",\"planDraft\":\"Proposal planDraft 2\",\"projectRoot\":\"Proposal projectRoot 2\",\"sandboxBranch\":\"Proposal sandboxBranch 2\",\"sandboxStatus\":\"DONE\",\"sandboxWorktreePath\":\"Proposal sandboxWorktreePath 2\",\"stageArtifacts\":\"Proposal stageArtifacts 2\",\"stageDraftArtifacts\":\"Proposal stageDraftArtifacts 2\",\"stagePlan\":\"Proposal stagePlan 2\",\"status\":\"SUBMITTED\",\"statusHistory\":\"[]\",\"strategicDiff\":\"Proposal strategicDiff 2\",\"tacticalDiff\":\"Proposal tacticalDiff 2\",\"tasksJson\":\"Proposal tasksJson 2\",\"testResults\":\"Proposal testResults 2\",\"title\":\"Proposal 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}"
+    ]
+   },
+   "params": {
+    "h": "compat-constitutionHash"
+   }
+  },
+  {
+   "id": "robo-32cdda2508",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 1,
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "Constitution"
+      ],
+      "props": {
+       "id": "Constitution-1",
+       "name": "Constitution 1",
+       "principles": "Constitution principles 1",
+       "raw": "Constitution raw 1",
+       "scope": "PROJECT",
+       "strategicMemory": "Constitution strategicMemory 1",
+       "updatedAt": "2026-01-11T09:00:00Z"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Constitution\"],\"props\":{\"id\":\"Constitution-1\",\"name\":\"Constitution 1\",\"principles\":\"Constitution principles 1\",\"raw\":\"Constitution raw 1\",\"scope\":\"PROJECT\",\"strategicMemory\":\"Constitution strategicMemory 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_CONSTITUTION"
+     }
+    ]
+   },
+   "params": {
+    "bcId": "BoundedContext-1"
+   }
+  }
+ ]
+}

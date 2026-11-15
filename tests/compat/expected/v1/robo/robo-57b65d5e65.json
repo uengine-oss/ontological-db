@@ -1,0 +1,25 @@
+{
+ "id": "robo-57b65d5e65",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "role",
+  "action",
+  "benefit",
+  "bcId",
+  "featureId"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "US-001",
+   "customer",
+   "cancel my order",
+   "I can get a refund if I change my mind",
+   "<uuid1>",
+   "<uuid2>"
+  ]
+ ]
+}

@@ -1,0 +1,42 @@
+{
+ "id": "robo-6bedda67ea",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "batchId",
+  "scope",
+  "rootLabel",
+  "rootName",
+  "actor",
+  "createdAt",
+  "restored",
+  "nodeCount",
+  "relCount"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "batchId-2",
+   "DeletionRecord scope 2",
+   "DeletionRecord rootLabel 2",
+   "DeletionRecord rootName 2",
+   "DeletionRecord actor 2",
+   "2026-01-12T09:00:00Z",
+   true,
+   20,
+   20
+  ],
+  [
+   "batchId-1",
+   "DeletionRecord scope 1",
+   "DeletionRecord rootLabel 1",
+   "DeletionRecord rootName 1",
+   "DeletionRecord actor 1",
+   "2026-01-11T09:00:00Z",
+   false,
+   10,
+   10
+  ]
+ ]
+}

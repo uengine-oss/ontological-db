@@ -1,0 +1,15 @@
+{
+ "id": "robo-43f2a3899c",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "cmdId",
+  "cmdName",
+  "bcId",
+  "bcName",
+  "firstAggId"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": []
+}

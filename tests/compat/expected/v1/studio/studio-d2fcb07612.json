@@ -1,0 +1,17 @@
+{
+ "id": "studio-d2fcb07612",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "n",
+  "_element_id"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "limit": 10,
+  "text": "Acme"
+ }
+}

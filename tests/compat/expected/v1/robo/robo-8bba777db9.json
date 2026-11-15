@@ -1,0 +1,22 @@
+{
+ "id": "robo-8bba777db9",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "displayName"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Event-1",
+   "Event 1",
+   "Event 1"
+  ]
+ ],
+ "params": {
+  "bc_id": "BoundedContext-1"
+ }
+}

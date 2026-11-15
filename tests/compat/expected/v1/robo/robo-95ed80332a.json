@@ -1,0 +1,26 @@
+{
+ "id": "robo-95ed80332a",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "readmodel"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "actor": "ReadModel actor 1",
+    "description": "ReadModel description 1",
+    "displayName": "ReadModel 1",
+    "id": "ReadModel-1",
+    "isMultipleResult": true,
+    "name": "ReadModel 1",
+    "provisioningType": "ReadModel provisioningType 1"
+   }
+  ]
+ ],
+ "params": {
+  "context_id": "BoundedContext-1"
+ }
+}

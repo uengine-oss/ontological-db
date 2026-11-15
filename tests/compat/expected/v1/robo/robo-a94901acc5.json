@@ -1,0 +1,18 @@
+{
+ "id": "robo-a94901acc5",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "classification"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "BoundedContext classification 1"
+  ]
+ ],
+ "params": {
+  "bc_id": "BoundedContext-1"
+ }
+}

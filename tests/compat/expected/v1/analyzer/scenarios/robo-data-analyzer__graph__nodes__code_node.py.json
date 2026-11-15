@@ -1,0 +1,28 @@
+{
+ "scenario": "robo-data-analyzer:graph/nodes/code_node.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-7735797b58",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 6
+   },
+   "effect": {},
+   "params": {
+    "items": [
+     {
+      "id": "COLUMN-1"
+     },
+     {
+      "id": "COLUMN-2"
+     }
+    ]
+   }
+  }
+ ]
+}

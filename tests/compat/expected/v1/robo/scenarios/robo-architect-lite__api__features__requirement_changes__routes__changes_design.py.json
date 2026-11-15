@@ -1,0 +1,25 @@
+{
+ "scenario": "robo-architect-lite:api/features/requirement_changes/routes/changes_design.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-0111bfee6b",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"PLAN_APPROVED\",\"statusHistory\":\"[]\",\"title\":\"반품 기간 연장\"}} <- {\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"반품 기간 연장\"}}"
+    ]
+   },
+   "params": {
+    "id": "CHG-001"
+   }
+  }
+ ]
+}

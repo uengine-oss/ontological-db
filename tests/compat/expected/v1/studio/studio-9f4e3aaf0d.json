@@ -1,0 +1,37 @@
+{
+ "id": "studio-9f4e3aaf0d",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "n",
+  "eid"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "Customer"
+    ],
+    "props": {
+     "content": "cable maker, buys steel wire",
+     "credit_limit": 5000,
+     "customer_id": "C001",
+     "email": "buy@daesung.example",
+     "embedding": "[0.9,0.1,0,0.2,0.1,0,0.3,0.1]",
+     "grade": "A",
+     "name": "Daesung Cable",
+     "number": 1,
+     "title": "Daesung Cable"
+    }
+   },
+   "@n1"
+  ]
+ ],
+ "params": {
+  "limit": 10,
+  "p0": "A"
+ }
+}

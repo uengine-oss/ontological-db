@@ -1,0 +1,16 @@
+{
+ "id": "robo-db12eafec6",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "agg",
+  "cmd",
+  "evt"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "bc_id": "BoundedContext-1"
+ }
+}

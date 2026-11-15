@@ -1,0 +1,41 @@
+{
+ "id": "robo-2cbbb14c0b",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "agg",
+  "inv",
+  "refs",
+  "hasOwnGwt"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "id": "Aggregate-1",
+    "name": "Aggregate 1"
+   },
+   {
+    "declaration": "Invariant declaration 1",
+    "description": null,
+    "id": "Invariant-1",
+    "key": null,
+    "name": "Invariant 1",
+    "seq": 10,
+    "source": null
+   },
+   [
+    {
+     "commandId": "Command-1",
+     "commandName": "Command 1",
+     "hasGwt": true
+    }
+   ],
+   true
+  ]
+ ],
+ "params": {
+  "id": "Invariant-1"
+ }
+}

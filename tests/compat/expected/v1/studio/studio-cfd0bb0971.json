@@ -1,0 +1,86 @@
+{
+ "id": "studio-cfd0bb0971",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "eid",
+  "name",
+  "title",
+  "content"
+ ],
+ "row_order": "sorted",
+ "row_count": 11,
+ "rows": [
+  [
+   "@n1",
+   "Acme Korea",
+   "Acme Korea",
+   "Acme branch"
+  ],
+  [
+   "@n2",
+   "Busan Parts",
+   "Busan Parts",
+   null
+  ],
+  [
+   "@n3",
+   "MfgProcessStep 1",
+   null,
+   null
+  ],
+  [
+   "@n4",
+   "MfgProcessStep 2",
+   null,
+   null
+  ],
+  [
+   "@n5",
+   "MfgProduct 1",
+   null,
+   null
+  ],
+  [
+   "@n6",
+   "MfgProduct 2",
+   null,
+   null
+  ],
+  [
+   "@n7",
+   "MfgProductRouting 1",
+   null,
+   null
+  ],
+  [
+   "@n8",
+   "MfgProductRouting 2",
+   null,
+   null
+  ],
+  [
+   "@n9",
+   "PO-1",
+   null,
+   null
+  ],
+  [
+   "@n10",
+   "PO-2",
+   null,
+   null
+  ],
+  [
+   "@n11",
+   "PO-3",
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "virtual": [
+   "ErpSupplier"
+  ]
+ }
+}

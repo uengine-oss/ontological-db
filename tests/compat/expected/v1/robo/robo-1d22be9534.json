@@ -1,0 +1,40 @@
+{
+ "id": "robo-1d22be9534",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "aggregates",
+  "commands",
+  "events"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   [
+    {
+     "id": null,
+     "name": null,
+     "type": "Aggregate"
+    }
+   ],
+   [
+    {
+     "id": null,
+     "name": null,
+     "type": "Command"
+    }
+   ],
+   [
+    {
+     "id": null,
+     "name": null,
+     "type": "Event"
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "bc_id": "BoundedContext-1"
+ }
+}

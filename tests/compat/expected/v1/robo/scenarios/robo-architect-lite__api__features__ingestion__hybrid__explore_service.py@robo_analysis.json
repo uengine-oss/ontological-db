@@ -1,0 +1,31 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/hybrid/explore_service.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-750321b045",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Rule\"],\"props\":{\"given\":\"Rule given 1\",\"id\":\"Rule-1\",\"name\":\"Rule 1\",\"session_id\":\"sess-1\",\"source_function\":\"Rule source_function 1\",\"source_function_id\":\"source_function_id-1\",\"source_rule_id\":\"source_rule_id-1\",\"title\":\"Rule 1\",\"write_effects_json\":\"Rule write_effects_json 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"process_id-1\",\"session_id\":\"sess-1\"}}",
+      "type": "REALIZED_BY"
+     }
+    ]
+   },
+   "params": {
+    "sid": "sess-1",
+    "tid": "BpmTask-1"
+   }
+  }
+ ]
+}

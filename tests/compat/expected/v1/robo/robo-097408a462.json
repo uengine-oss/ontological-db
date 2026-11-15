@@ -1,0 +1,20 @@
+{
+ "id": "robo-097408a462",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "TABLE-1",
+   "TABLE 1"
+  ]
+ ],
+ "params": {
+  "id": "RULE-1"
+ }
+}

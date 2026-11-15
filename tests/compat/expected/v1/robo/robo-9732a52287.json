@@ -1,0 +1,27 @@
+{
+ "id": "robo-9732a52287",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "present"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "UI-1",
+   true
+  ],
+  [
+   "UI-2",
+   true
+  ]
+ ],
+ "params": {
+  "ids": [
+   "UI-1",
+   "UI-2"
+  ]
+ }
+}

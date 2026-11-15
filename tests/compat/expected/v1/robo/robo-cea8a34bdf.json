@@ -1,0 +1,23 @@
+{
+ "id": "robo-cea8a34bdf",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "targetBcId",
+  "currentBcId",
+  "usExists"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "BoundedContext-1",
+   "<uuid1>",
+   "US-001"
+  ]
+ ],
+ "params": {
+  "fid": "Feature-1",
+  "usid": "US-001"
+ }
+}

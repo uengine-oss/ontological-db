@@ -1,0 +1,17 @@
+{
+ "id": "studio-3bed3ec38e",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "a",
+  "b"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "cust-2",
+   "cust-3"
+  ]
+ ]
+}

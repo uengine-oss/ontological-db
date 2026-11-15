@@ -1,0 +1,29 @@
+{
+ "id": "studio-f61cbc9cea",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "n"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "MfgProcessStep"
+    ],
+    "props": {
+     "id": "MfgProcessStep-1",
+     "name": "MfgProcessStep 1",
+     "step_id": "step_id-1",
+     "step_name": "MfgProcessStep step_name 1"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "node_id": "@n1"
+ }
+}

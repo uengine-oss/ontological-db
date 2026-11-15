@@ -1,0 +1,201 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/hybrid/ontology/neo4j_ops.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-2c504581b0",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"BpmTask\"],\"props\":{\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"process_id-1\",\"session_id\":\"sess-1\"}}",
+      "props": {
+       "condition": "compat-condition",
+       "id": "compat-fid",
+       "name": "compat-name"
+      },
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"process_id-1\",\"session_id\":\"sess-1\"}}",
+      "type": "BPMN_FLOW"
+     }
+    ]
+   },
+   "params": {
+    "cond": "compat-condition",
+    "dst": "BpmTask-1",
+    "fid": "compat-fid",
+    "name": "compat-name",
+    "sid": "sess-1",
+    "src": "BpmTask-1"
+   }
+  },
+  {
+   "id": "robo-a065fbadd5",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 8
+   },
+   "effect": {},
+   "params": {
+    "agent_verdict": "compat-agent_verdict",
+    "evidence_path": "compat-evidence_path",
+    "evidence_refs": "compat-evidence_refs",
+    "method": "compat-method",
+    "rationale": "compat-rationale",
+    "reviewed": "compat-reviewed",
+    "rid": "Rule-1",
+    "score": 0.9,
+    "sid": "sess-1",
+    "tid": "BpmTask-1"
+   }
+  },
+  {
+   "id": "robo-e3436e9a93",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "ExternalTable"
+      ],
+      "props": {
+       "name": "compat-name",
+       "session_id": "compat-session_id"
+      }
+     }
+    ]
+   },
+   "params": {
+    "direction": "compat-direction",
+    "name": "compat-name",
+    "rid": "Rule-1",
+    "sid": "compat-session_id"
+   }
+  },
+  {
+   "id": "robo-6c8aa0c224",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {},
+   "params": {
+    "lowc": "compat-low_confidence",
+    "pid": "DocumentPassage-1",
+    "rank": 7,
+    "score": 0.9,
+    "sid": "sess-1",
+    "tid": "BpmTask-1"
+   }
+  },
+  {
+   "id": "robo-dd6aecdb29",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 4
+   },
+   "effect": {},
+   "params": {
+    "method": "compat-method",
+    "rid": "Rule-1",
+    "score": 0.9,
+    "sid": "sess-1",
+    "tid": "BpmTask-1"
+   }
+  },
+  {
+   "id": "robo-0c5ea41294",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 4
+   },
+   "effect": {},
+   "params": {
+    "conf": 0.9,
+    "rid": "Rule-1",
+    "sid": "sess-1",
+    "tid": "BpmTask-1"
+   }
+  },
+  {
+   "id": "robo-28f97ab4a0",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "rationale": "compat-rationale",
+    "rid": "Rule-1",
+    "role": "compat-evidence_role",
+    "sid": "sess-1",
+    "tid": "BpmTask-1"
+   }
+  },
+  {
+   "id": "robo-5958db2f88",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Rule\"],\"props\":{\"given\":\"Rule given 1\",\"id\":\"Rule-1\",\"name\":\"Rule 1\",\"session_id\":\"sess-1\",\"source_function\":\"Rule source_function 1\",\"source_function_id\":\"source_function_id-1\",\"source_rule_id\":\"source_rule_id-1\",\"title\":\"Rule 1\",\"write_effects_json\":\"Rule write_effects_json 1\"}}",
+      "props": {
+       "agent_verdict": "compat-agent_verdict",
+       "confidence": 0.9,
+       "evidence_path": "compat-evidence_path",
+       "evidence_refs": "compat-evidence_refs",
+       "evidence_role": "compat-evidence_role",
+       "evidence_role_rationale": "compat-rationale",
+       "method": "manual",
+       "rationale": "compat-rationale",
+       "reviewed": "true"
+      },
+      "start": "{\"labels\":[\"BpmTask\"],\"props\":{\"id\":\"BpmTask-1\",\"name\":\"BpmTask 1\",\"process_id\":\"process_id-1\",\"session_id\":\"sess-1\"}}",
+      "type": "REALIZED_BY"
+     }
+    ]
+   },
+   "params": {
+    "rid": "Rule-1",
+    "sid": "sess-1",
+    "tid": "BpmTask-1"
+   }
+  }
+ ]
+}

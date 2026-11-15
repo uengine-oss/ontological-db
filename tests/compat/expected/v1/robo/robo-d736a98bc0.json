@@ -1,0 +1,20 @@
+{
+ "id": "robo-d736a98bc0",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "enumerations",
+  "valueObjects"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Aggregate enumerations 1",
+   "Aggregate valueObjects 1"
+  ]
+ ],
+ "params": {
+  "agg_id": "Aggregate-1"
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "id": "robo-081c69c556",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "displayName",
+  "bc_id",
+  "bc_name",
+  "bc_key"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   "<uuid1>",
+   "CancelOrder UI",
+   "<uuid2>",
+   "Order",
+   "order"
+  ]
+ ]
+}

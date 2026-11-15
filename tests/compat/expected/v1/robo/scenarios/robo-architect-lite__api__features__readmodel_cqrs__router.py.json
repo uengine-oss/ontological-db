@@ -1,0 +1,546 @@
+{
+ "scenario": "robo-architect-lite:api/features/readmodel_cqrs/router.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-8e0101bf35",
+   "columns": [
+    "config"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "id": "compat-new-CQRSConfig",
+      "readmodelId": "ReadModel-1"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 2,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "CQRSConfig"
+      ],
+      "props": {
+       "id": "compat-new-CQRSConfig",
+       "readmodelId": "ReadModel-1"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"CQRSConfig\"],\"props\":{\"id\":\"compat-new-CQRSConfig\",\"readmodelId\":\"ReadModel-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"ReadModel description 1\",\"displayName\":\"ReadModel 1\",\"id\":\"ReadModel-1\",\"isMultipleResult\":true,\"key\":\"readmodel-1\",\"name\":\"ReadModel 1\",\"provisioningType\":\"ReadModel provisioningType 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_CQRS"
+     }
+    ]
+   },
+   "params": {
+    "cqrs_id": "compat-new-CQRSConfig",
+    "readmodel_id": "ReadModel-1"
+   }
+  },
+  {
+   "id": "robo-4a9939c541",
+   "columns": [
+    "operation"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "cqrsConfigId": "compat-new-CQRSConfig",
+      "id": "compat-new-CQRSOperation",
+      "operationType": "compat-operationType",
+      "triggerEventId": "Event-1"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 5,
+    "relationships_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "CQRSOperation"
+      ],
+      "props": {
+       "cqrsConfigId": "compat-new-CQRSConfig",
+       "id": "compat-new-CQRSOperation",
+       "operationType": "compat-operationType",
+       "triggerEventId": "Event-1"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"compat-new-CQRSConfig\",\"id\":\"compat-new-CQRSOperation\",\"operationType\":\"compat-operationType\",\"triggerEventId\":\"Event-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSConfig\"],\"props\":{\"id\":\"compat-new-CQRSConfig\",\"readmodelId\":\"ReadModel-1\"}}",
+      "type": "HAS_OPERATION"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"compat-new-CQRSConfig\",\"id\":\"compat-new-CQRSOperation\",\"operationType\":\"compat-operationType\",\"triggerEventId\":\"Event-1\"}}",
+      "type": "TRIGGERED_BY"
+     }
+    ]
+   },
+   "params": {
+    "cqrs_id": "compat-new-CQRSConfig",
+    "op_id": "compat-new-CQRSOperation",
+    "operation_type": "compat-operationType",
+    "readmodel_id": "ReadModel-1",
+    "trigger_event_id": "Event-1"
+   }
+  },
+  {
+   "id": "robo-92be0af891",
+   "columns": [
+    "mapping"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "id": "compat-new-CQRSMapping",
+      "operationId": "CQRSOperation-1",
+      "sourceType": "compat-sourceType"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 4,
+    "relationships_created": 3
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "CQRSMapping"
+      ],
+      "props": {
+       "id": "compat-new-CQRSMapping",
+       "operationId": "CQRSOperation-1",
+       "sourceType": "compat-sourceType"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"compat-new-CQRSMapping\",\"operationId\":\"CQRSOperation-1\",\"sourceType\":\"compat-sourceType\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"cqrsConfigId-1\",\"id\":\"CQRSOperation-1\",\"name\":\"CQRSOperation 1\",\"operationType\":\"INSERT\",\"triggerEventId\":\"triggerEventId-1\"}}",
+      "type": "HAS_MAPPING"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"compat-new-CQRSMapping\",\"operationId\":\"CQRSOperation-1\",\"sourceType\":\"compat-sourceType\"}}",
+      "type": "SOURCE"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"compat-new-CQRSMapping\",\"operationId\":\"CQRSOperation-1\",\"sourceType\":\"compat-sourceType\"}}",
+      "type": "TARGET"
+     }
+    ]
+   },
+   "params": {
+    "mapping_id": "compat-new-CQRSMapping",
+    "operation_id": "CQRSOperation-1",
+    "source_property_id": "Property-1",
+    "source_type": "compat-sourceType",
+    "target_property_id": "Property-1"
+   }
+  },
+  {
+   "id": "robo-c2931a7a84",
+   "columns": [
+    "mapping"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "id": "compat-new-CQRSMapping",
+      "operationId": "CQRSOperation-1",
+      "sourceType": "compat-sourceType",
+      "staticValue": "compat-staticValue"
+     }
+    ]
+   ],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"compat-new-CQRSMapping\",\"operationId\":\"CQRSOperation-1\",\"sourceType\":\"compat-sourceType\",\"staticValue\":\"compat-staticValue\"}} <- {\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"compat-new-CQRSMapping\",\"operationId\":\"CQRSOperation-1\",\"sourceType\":\"compat-sourceType\"}}"
+    ]
+   },
+   "params": {
+    "mapping_id": "compat-new-CQRSMapping",
+    "operation_id": "CQRSOperation-1",
+    "source_type": "compat-sourceType",
+    "static_value": "compat-staticValue",
+    "target_property_id": "Property-1"
+   }
+  },
+  {
+   "id": "robo-d97fe0e407",
+   "columns": [
+    "whereCondition"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "id": "compat-new-CQRSWhere",
+      "operationId": "CQRSOperation-1",
+      "operator": "compat-operator"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 3,
+    "relationships_created": 3
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "CQRSWhere"
+      ],
+      "props": {
+       "id": "compat-new-CQRSWhere",
+       "operationId": "CQRSOperation-1",
+       "operator": "compat-operator"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"compat-new-CQRSWhere\",\"operationId\":\"CQRSOperation-1\",\"operator\":\"compat-operator\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"cqrsConfigId-1\",\"id\":\"CQRSOperation-1\",\"name\":\"CQRSOperation 1\",\"operationType\":\"INSERT\",\"triggerEventId\":\"triggerEventId-1\"}}",
+      "type": "HAS_WHERE"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"compat-new-CQRSWhere\",\"operationId\":\"CQRSOperation-1\",\"operator\":\"compat-operator\"}}",
+      "type": "SOURCE_EVENT_FIELD"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"compat-new-CQRSWhere\",\"operationId\":\"CQRSOperation-1\",\"operator\":\"compat-operator\"}}",
+      "type": "TARGET"
+     }
+    ]
+   },
+   "params": {
+    "operation_id": "CQRSOperation-1",
+    "operator": "compat-operator",
+    "source_event_field_id": "Property-1",
+    "target_property_id": "Property-1",
+    "where_id": "compat-new-CQRSWhere"
+   }
+  },
+  {
+   "id": "robo-2588de1d49",
+   "columns": [
+    "deleted"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     5
+    ]
+   ],
+   "counters": {
+    "nodes_deleted": 18,
+    "relationships_deleted": 18
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "CQRSConfig"
+      ],
+      "props": {
+       "id": "CQRSConfig-1",
+       "name": "CQRSConfig 1",
+       "readmodelId": "readmodelId-1"
+      }
+     },
+     {
+      "labels": [
+       "CQRSConfig"
+      ],
+      "props": {
+       "id": "compat-new-CQRSConfig",
+       "readmodelId": "ReadModel-1"
+      }
+     },
+     {
+      "labels": [
+       "CQRSMapping"
+      ],
+      "props": {
+       "id": "CQRSMapping-1",
+       "name": "CQRSMapping 1",
+       "operationId": "operationId-1",
+       "sourceType": "CQRSMapping sourceType 1",
+       "staticValue": "CQRSMapping staticValue 1"
+      }
+     },
+     {
+      "labels": [
+       "CQRSMapping"
+      ],
+      "props": {
+       "id": "compat-new-CQRSMapping",
+       "operationId": "CQRSOperation-1",
+       "sourceType": "compat-sourceType",
+       "staticValue": "compat-staticValue"
+      }
+     },
+     {
+      "labels": [
+       "CQRSOperation"
+      ],
+      "props": {
+       "cqrsConfigId": "compat-new-CQRSConfig",
+       "id": "compat-new-CQRSOperation",
+       "operationType": "compat-operationType",
+       "triggerEventId": "Event-1"
+      }
+     },
+     {
+      "labels": [
+       "CQRSOperation"
+      ],
+      "props": {
+       "cqrsConfigId": "cqrsConfigId-1",
+       "id": "CQRSOperation-1",
+       "name": "CQRSOperation 1",
+       "operationType": "INSERT",
+       "triggerEventId": "triggerEventId-1"
+      }
+     },
+     {
+      "labels": [
+       "CQRSWhere"
+      ],
+      "props": {
+       "id": "CQRSWhere-1",
+       "name": "CQRSWhere 1",
+       "operationId": "operationId-1",
+       "operator": "CQRSWhere operator 1"
+      }
+     },
+     {
+      "labels": [
+       "CQRSWhere"
+      ],
+      "props": {
+       "id": "compat-new-CQRSWhere",
+       "operationId": "CQRSOperation-1",
+       "operator": "compat-operator"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"CQRSConfig\"],\"props\":{\"id\":\"CQRSConfig-1\",\"name\":\"CQRSConfig 1\",\"readmodelId\":\"readmodelId-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"ReadModel description 1\",\"displayName\":\"ReadModel 1\",\"id\":\"ReadModel-1\",\"isMultipleResult\":true,\"key\":\"readmodel-1\",\"name\":\"ReadModel 1\",\"provisioningType\":\"ReadModel provisioningType 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_CQRS"
+     },
+     {
+      "end": "{\"labels\":[\"CQRSConfig\"],\"props\":{\"id\":\"compat-new-CQRSConfig\",\"readmodelId\":\"ReadModel-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"ReadModel description 1\",\"displayName\":\"ReadModel 1\",\"id\":\"ReadModel-1\",\"isMultipleResult\":true,\"key\":\"readmodel-1\",\"name\":\"ReadModel 1\",\"provisioningType\":\"ReadModel provisioningType 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "HAS_CQRS"
+     },
+     {
+      "end": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"CQRSMapping-1\",\"name\":\"CQRSMapping 1\",\"operationId\":\"operationId-1\",\"sourceType\":\"CQRSMapping sourceType 1\",\"staticValue\":\"CQRSMapping staticValue 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"cqrsConfigId-1\",\"id\":\"CQRSOperation-1\",\"name\":\"CQRSOperation 1\",\"operationType\":\"INSERT\",\"triggerEventId\":\"triggerEventId-1\"}}",
+      "type": "HAS_MAPPING"
+     },
+     {
+      "end": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"compat-new-CQRSMapping\",\"operationId\":\"CQRSOperation-1\",\"sourceType\":\"compat-sourceType\",\"staticValue\":\"compat-staticValue\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"cqrsConfigId-1\",\"id\":\"CQRSOperation-1\",\"name\":\"CQRSOperation 1\",\"operationType\":\"INSERT\",\"triggerEventId\":\"triggerEventId-1\"}}",
+      "type": "HAS_MAPPING"
+     },
+     {
+      "end": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"compat-new-CQRSConfig\",\"id\":\"compat-new-CQRSOperation\",\"operationType\":\"compat-operationType\",\"triggerEventId\":\"Event-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSConfig\"],\"props\":{\"id\":\"compat-new-CQRSConfig\",\"readmodelId\":\"ReadModel-1\"}}",
+      "type": "HAS_OPERATION"
+     },
+     {
+      "end": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"cqrsConfigId-1\",\"id\":\"CQRSOperation-1\",\"name\":\"CQRSOperation 1\",\"operationType\":\"INSERT\",\"triggerEventId\":\"triggerEventId-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSConfig\"],\"props\":{\"id\":\"CQRSConfig-1\",\"name\":\"CQRSConfig 1\",\"readmodelId\":\"readmodelId-1\"}}",
+      "type": "HAS_OPERATION"
+     },
+     {
+      "end": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"CQRSWhere-1\",\"name\":\"CQRSWhere 1\",\"operationId\":\"operationId-1\",\"operator\":\"CQRSWhere operator 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"cqrsConfigId-1\",\"id\":\"CQRSOperation-1\",\"name\":\"CQRSOperation 1\",\"operationType\":\"INSERT\",\"triggerEventId\":\"triggerEventId-1\"}}",
+      "type": "HAS_WHERE"
+     },
+     {
+      "end": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"compat-new-CQRSWhere\",\"operationId\":\"CQRSOperation-1\",\"operator\":\"compat-operator\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"cqrsConfigId-1\",\"id\":\"CQRSOperation-1\",\"name\":\"CQRSOperation 1\",\"operationType\":\"INSERT\",\"triggerEventId\":\"triggerEventId-1\"}}",
+      "type": "HAS_WHERE"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"compat-new-CQRSConfig\",\"id\":\"compat-new-CQRSOperation\",\"operationType\":\"compat-operationType\",\"triggerEventId\":\"Event-1\"}}",
+      "type": "TRIGGERED_BY"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSOperation\"],\"props\":{\"cqrsConfigId\":\"cqrsConfigId-1\",\"id\":\"CQRSOperation-1\",\"name\":\"CQRSOperation 1\",\"operationType\":\"INSERT\",\"triggerEventId\":\"triggerEventId-1\"}}",
+      "type": "TRIGGERED_BY"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"CQRSMapping-1\",\"name\":\"CQRSMapping 1\",\"operationId\":\"operationId-1\",\"sourceType\":\"CQRSMapping sourceType 1\",\"staticValue\":\"CQRSMapping staticValue 1\"}}",
+      "type": "SOURCE"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"CQRSMapping-1\",\"name\":\"CQRSMapping 1\",\"operationId\":\"operationId-1\",\"sourceType\":\"CQRSMapping sourceType 1\",\"staticValue\":\"CQRSMapping staticValue 1\"}}",
+      "type": "TARGET"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"compat-new-CQRSMapping\",\"operationId\":\"CQRSOperation-1\",\"sourceType\":\"compat-sourceType\",\"staticValue\":\"compat-staticValue\"}}",
+      "type": "SOURCE"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSMapping\"],\"props\":{\"id\":\"compat-new-CQRSMapping\",\"operationId\":\"CQRSOperation-1\",\"sourceType\":\"compat-sourceType\",\"staticValue\":\"compat-staticValue\"}}",
+      "type": "TARGET"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"CQRSWhere-1\",\"name\":\"CQRSWhere 1\",\"operationId\":\"operationId-1\",\"operator\":\"CQRSWhere operator 1\"}}",
+      "type": "SOURCE_EVENT_FIELD"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"CQRSWhere-1\",\"name\":\"CQRSWhere 1\",\"operationId\":\"operationId-1\",\"operator\":\"CQRSWhere operator 1\"}}",
+      "type": "TARGET"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"compat-new-CQRSWhere\",\"operationId\":\"CQRSOperation-1\",\"operator\":\"compat-operator\"}}",
+      "type": "SOURCE_EVENT_FIELD"
+     },
+     {
+      "end": "{\"labels\":[\"Property\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Property description 1\",\"displayName\":\"Property 1\",\"fkTargetHint\":\"Property fkTargetHint 1\",\"id\":\"Property-1\",\"isForeignKey\":\"true\",\"isKey\":\"true\",\"isRequired\":\"true\",\"mutability\":\"Property mutability 1\",\"name\":\"Property 1\",\"parentId\":\"parentId-1\",\"parentType\":\"Property parentType 1\",\"proposalSource\":\"Property proposalSource 1\",\"type\":\"Property type 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"CQRSWhere\"],\"props\":{\"id\":\"compat-new-CQRSWhere\",\"operationId\":\"CQRSOperation-1\",\"operator\":\"compat-operator\"}}",
+      "type": "TARGET"
+     }
+    ]
+   },
+   "params": {
+    "readmodel_id": "ReadModel-1"
+   }
+  },
+  {
+   "id": "robo-d864db49f4",
+   "columns": [
+    "deleted"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "operation_id": "CQRSOperation-1"
+   }
+  },
+  {
+   "id": "robo-7ed245195a",
+   "columns": [
+    "deleted"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "mapping_id": "CQRSMapping-1"
+   }
+  },
+  {
+   "id": "robo-ecf560777f",
+   "columns": [
+    "deleted"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "where_id": "CQRSWhere-1"
+   }
+  }
+ ]
+}

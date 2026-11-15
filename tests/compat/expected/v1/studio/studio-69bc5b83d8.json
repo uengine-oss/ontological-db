@@ -1,0 +1,9 @@
+{
+ "id": "studio-69bc5b83d8",
+ "graph": "ontology",
+ "kind": "read",
+ "error": {
+  "code": "Neo.ClientError.Statement.ArgumentError",
+  "message": "cypher error: procedure 'db.schema.nodetypeproperties' is not available. supported: db.index.vector.queryNodes, db.index.fulltext.queryNodes, apoc.meta.schema, apoc.neighbors.tohop, db.labels, db.relationshipTypes, db.propertyKeys, dbms.components"
+ }
+}

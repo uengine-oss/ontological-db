@@ -1,0 +1,18 @@
+{
+ "id": "robo-edb556937f",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "name"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "TABLE 1"
+  ],
+  [
+   "TABLE 2"
+  ]
+ ]
+}

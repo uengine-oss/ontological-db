@@ -1,0 +1,32 @@
+{
+ "id": "robo-12a0d1c92d",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "c"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "Constitution"
+    ],
+    "props": {
+     "id": "Constitution-1",
+     "name": "Constitution 1",
+     "principles": "Constitution principles 1",
+     "raw": "Constitution raw 1",
+     "scope": "PROJECT",
+     "strategicMemory": "Constitution strategicMemory 1",
+     "updatedAt": "2026-01-11T09:00:00Z"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "id": "Constitution-1"
+ }
+}

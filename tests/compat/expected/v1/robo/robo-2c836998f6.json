@@ -1,0 +1,32 @@
+{
+ "id": "robo-2c836998f6",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "m"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "StoryboardPageMapping"
+    ],
+    "props": {
+     "commandId": "Command-1",
+     "figmaPageId": "figmaPageId-1",
+     "figmaPageName": "StoryboardPageMapping figmaPageName 1",
+     "id": "StoryboardPageMapping-1",
+     "lastRenameAt": "2026-01-11T09:00:00Z",
+     "name": "StoryboardPageMapping 1",
+     "status": "active"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "cid": "Command-1"
+ }
+}

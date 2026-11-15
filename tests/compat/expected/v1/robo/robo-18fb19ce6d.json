@@ -1,0 +1,30 @@
+{
+ "id": "robo-18fb19ce6d",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "role",
+  "action",
+  "benefit",
+  "priority",
+  "status",
+  "acceptanceCriteria",
+  "updatedAt"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "customer",
+   "cancel my order",
+   "I can get a refund if I change my mind",
+   "high",
+   "approved",
+   [],
+   null
+  ]
+ ],
+ "params": {
+  "id": "US-001"
+ }
+}

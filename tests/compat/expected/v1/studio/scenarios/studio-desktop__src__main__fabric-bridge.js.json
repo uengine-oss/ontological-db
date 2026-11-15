@@ -1,0 +1,107 @@
+{
+ "scenario": "studio-desktop:src/main/fabric-bridge.js",
+ "graph": "ontology",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "studio-42c0c12c0c",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "datasource erp_new (postgres): 4 tables as erp_new.*"
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "database": "og_compat",
+    "host": "127.0.0.1",
+    "password": "",
+    "port": 28830,
+    "schema": "compat_erp",
+    "user": "og"
+   }
+  },
+  {
+   "id": "studio-fb0c08159c",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "virtual node ErpItem ← erp.item (3 properties)"
+    ]
+   ],
+   "effect": {}
+  },
+  {
+   "id": "studio-28e224969c",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "datasource erp: credentials now inline; its tables and virtual nodes are unchanged"
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "password": "",
+    "user": "og"
+   }
+  },
+  {
+   "id": "studio-db32913b5d",
+   "error": {
+    "code": "Neo.ClientError.Statement.ArgumentError",
+    "message": "a credentials reference needs ontological.fabric_credentials_dir: the directory where the application that keeps the secrets writes them for the connectors"
+   },
+   "params": {
+    "credentials": "keychain:erp",
+    "user": "og"
+   }
+  },
+  {
+   "id": "studio-e27f71030f",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "datasource erp: 0 new tables, 4 in all"
+    ]
+   ],
+   "effect": {}
+  },
+  {
+   "id": "studio-8a5a579837",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "datasource erp_old dropped"
+    ]
+   ],
+   "effect": {}
+  },
+  {
+   "id": "studio-cfa5dcc9df",
+   "error": {
+    "code": "Neo.ClientError.Database.DatabaseNotFound",
+    "message": "'ITEM_OF' does not exist in graph 'ontology'"
+   }
+  }
+ ]
+}

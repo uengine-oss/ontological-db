@@ -1,0 +1,34 @@
+{
+ "id": "robo-cf8ec0a6e5",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "cmd"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "actor": "Command actor 1",
+    "aggregate_id": "Aggregate-1",
+    "category": "Command category 1",
+    "createdAt": "2026-01-11T09:00:00Z",
+    "description": "Command description 1",
+    "displayName": "Command 1",
+    "id": "Command-1",
+    "inputSchema": "Command inputSchema 1",
+    "key": "command-1",
+    "name": "Command 1",
+    "postconditions": "Command postconditions 1",
+    "preconditions": "Command preconditions 1",
+    "sequence": 10,
+    "session_id": "sess-1",
+    "updatedAt": "2026-01-11T09:00:00Z"
+   }
+  ]
+ ],
+ "params": {
+  "id": "Command-1"
+ }
+}

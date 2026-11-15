@@ -1,0 +1,18 @@
+{
+ "id": "robo-4002f63268",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "bc_ids"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   []
+  ]
+ ],
+ "params": {
+  "session_id": "compat-session_id"
+ }
+}

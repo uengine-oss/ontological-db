@@ -1,0 +1,41 @@
+{
+ "id": "robo-6b2ed287ee",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "tid",
+  "name",
+  "seq",
+  "next_ids",
+  "actors"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "BpmTask-1",
+   "BpmTask 1",
+   "BpmTask sequence_index 1",
+   [
+    "BpmTask-1"
+   ],
+   [
+    "BpmActor 1"
+   ]
+  ],
+  [
+   "BpmTask-2",
+   "BpmTask 2",
+   "BpmTask sequence_index 2",
+   [
+    "BpmTask-2"
+   ],
+   [
+    "BpmActor 2"
+   ]
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

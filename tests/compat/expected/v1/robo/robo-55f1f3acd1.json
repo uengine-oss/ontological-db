@@ -1,0 +1,38 @@
+{
+ "id": "robo-55f1f3acd1",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "swimlane"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "actors": [],
+    "bcDescription": "BoundedContext description 1",
+    "bcDisplayName": "BoundedContext 1",
+    "bcId": "BoundedContext-1",
+    "bcName": "BoundedContext 1",
+    "events": []
+   }
+  ],
+  [
+   {
+    "actors": [],
+    "bcDescription": "BoundedContext description 2",
+    "bcDisplayName": "BoundedContext 2",
+    "bcId": "BoundedContext-2",
+    "bcName": "BoundedContext 2",
+    "events": []
+   }
+  ]
+ ],
+ "params": {
+  "bc_ids": [
+   "BoundedContext-1",
+   "BoundedContext-2"
+  ]
+ }
+}

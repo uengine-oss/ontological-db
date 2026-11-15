@@ -1,0 +1,18 @@
+{
+ "id": "robo-6db500eafb",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "actor"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "ReadModel actor 1"
+  ]
+ ],
+ "params": {
+  "id": "ReadModel-1"
+ }
+}

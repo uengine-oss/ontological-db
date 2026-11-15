@@ -1,0 +1,19 @@
+{
+ "id": "robo-d8c35093df",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "elementId",
+  "files"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "ids": [
+   "<uuid1>",
+   "<uuid2>"
+  ],
+  "pid": "<uuid3>"
+ }
+}

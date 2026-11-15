@@ -1,0 +1,62 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/events.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-c2c6e5ced1",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     {
+      "cmd_id": "Command-1",
+      "evt_id": "Event-1"
+     }
+    ],
+    [
+     {
+      "cmd_id": "Command-2",
+      "evt_id": "Event-2"
+     }
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "rows": [
+     {
+      "cmd_id": "Command-1",
+      "evt_id": "Event-1",
+      "is_guaranteed": true
+     },
+     {
+      "cmd_id": "Command-2",
+      "evt_id": "Event-2",
+      "is_guaranteed": true
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-bd0848a306",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {},
+   "params": {
+    "command_id": "Command-1",
+    "evt_id": "Event-1"
+   }
+  }
+ ]
+}

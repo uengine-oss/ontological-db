@@ -1,0 +1,30 @@
+{
+ "id": "studio-82773beb3e",
+ "graph": "ontology",
+ "kind": "fabric-read",
+ "columns": [
+  "name",
+  "engine",
+  "host",
+  "tables",
+  "credentials"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "erp",
+   "postgres",
+   "127.0.0.1",
+   4,
+   "inline"
+  ],
+  [
+   "erp_old",
+   "postgres",
+   "127.0.0.1",
+   4,
+   "inline"
+  ]
+ ]
+}

@@ -1,0 +1,17 @@
+{
+ "id": "studio-366b4bd9a4",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "key",
+  "name"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "cust-3",
+   "Acme Korea"
+  ]
+ ]
+}

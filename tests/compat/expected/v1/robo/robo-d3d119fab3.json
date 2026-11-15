@@ -1,0 +1,36 @@
+{
+ "id": "robo-d3d119fab3",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "ui",
+  "rid",
+  "role"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "id": "UI-1",
+    "name": "UI 1"
+   },
+   "ReadModel-1",
+   null
+  ],
+  [
+   {
+    "id": "UI-2",
+    "name": "UI 2"
+   },
+   "ReadModel-2",
+   null
+  ]
+ ],
+ "params": {
+  "rids": [
+   "ReadModel-1",
+   "ReadModel-2"
+  ]
+ }
+}

@@ -1,0 +1,56 @@
+{
+ "scenario": "robo-data-analyzer:graph/edges/has_example.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-87446775c2",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 4,
+    "relationships_created": 2
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"EXAMPLE\"],\"props\":{\"given\":\"EXAMPLE given 1\",\"graph_owner\":\"analyzer\",\"id\":\"EXAMPLE-1\",\"name\":\"EXAMPLE 1\",\"then_\":\"EXAMPLE then_ 1\",\"when_\":\"EXAMPLE when_ 1\"}}",
+      "props": {
+       "occurrence_id": "compat-occurrence_id-1",
+       "ordinal": "compat-ordinal-1"
+      },
+      "start": "{\"labels\":[\"RULE\"],\"props\":{\"embedding\":[0.7,1.0,0.2,0.5,0.8,0.0,0.3,0.6],\"graph_owner\":\"analyzer\",\"id\":\"RULE-1\",\"name\":\"RULE 1\",\"statement\":\"RULE statement 1\"}}",
+      "type": "HAS_EXAMPLE"
+     },
+     {
+      "end": "{\"labels\":[\"EXAMPLE\"],\"props\":{\"given\":\"EXAMPLE given 2\",\"graph_owner\":\"analyzer\",\"id\":\"EXAMPLE-2\",\"name\":\"EXAMPLE 2\",\"then_\":\"EXAMPLE then_ 2\",\"when_\":\"EXAMPLE when_ 2\"}}",
+      "props": {
+       "occurrence_id": "compat-occurrence_id-2",
+       "ordinal": "compat-ordinal-2"
+      },
+      "start": "{\"labels\":[\"RULE\"],\"props\":{\"embedding\":[0.3,0.6,0.9,0.1,0.4,0.7,1.0,0.2],\"graph_owner\":\"analyzer\",\"id\":\"RULE-2\",\"name\":\"RULE 2\",\"statement\":\"RULE statement 2\"}}",
+      "type": "HAS_EXAMPLE"
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "occurrence_id": "compat-occurrence_id-1",
+      "ordinal": "compat-ordinal-1",
+      "source_id": "RULE-1",
+      "target_id": "EXAMPLE-1"
+     },
+     {
+      "occurrence_id": "compat-occurrence_id-2",
+      "ordinal": "compat-ordinal-2",
+      "source_id": "RULE-2",
+      "target_id": "EXAMPLE-2"
+     }
+    ]
+   }
+  }
+ ]
+}

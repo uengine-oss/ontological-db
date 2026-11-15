@@ -1,0 +1,28 @@
+{
+ "id": "robo-0b55304588",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "title",
+  "prompt",
+  "strategicDiff",
+  "tacticalDiff",
+  "implementationPlan",
+  "projectRoot"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Proposal 1",
+   "Proposal originalPrompt 1",
+   "Proposal strategicDiff 1",
+   "Proposal tacticalDiff 1",
+   "Proposal implementationPlan 1",
+   "Proposal projectRoot 1"
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

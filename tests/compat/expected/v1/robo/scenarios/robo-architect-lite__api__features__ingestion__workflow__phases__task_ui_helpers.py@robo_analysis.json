@@ -1,0 +1,22 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/workflow/phases/task_ui_helpers.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-857ddb9507",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {},
+   "params": {
+    "rid": "ReadModel-1",
+    "uid": "UI-1"
+   }
+  }
+ ]
+}

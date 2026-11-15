@@ -1,0 +1,20 @@
+{
+ "id": "robo-0264e508df",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "status",
+  "n"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "active",
+   1
+  ]
+ ],
+ "params": {
+  "id": "FigmaBinding-1"
+ }
+}

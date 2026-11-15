@@ -1,0 +1,20 @@
+{
+ "id": "robo-171ad14bfe",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "testResults",
+  "status"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Proposal testResults 1",
+   "DESTROYED"
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

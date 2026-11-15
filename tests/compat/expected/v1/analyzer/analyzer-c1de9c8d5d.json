@@ -1,0 +1,15 @@
+{
+ "id": "analyzer-c1de9c8d5d",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "error": {
+  "code": "Neo.ClientError.Statement.ArgumentError",
+  "message": "cypher error: procedure 'show.indexes' does not yield 'options'. it yields: id, name, state, type, entityType, labelsOrTypes, properties"
+ },
+ "params": {
+  "name": {
+   "description": "compat",
+   "name": "compat"
+  }
+ }
+}

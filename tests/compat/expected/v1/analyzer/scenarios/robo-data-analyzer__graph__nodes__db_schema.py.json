@@ -1,0 +1,65 @@
+{
+ "scenario": "robo-data-analyzer:graph/nodes/db_schema.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-a28cc50e5e",
+   "columns": [
+    "created"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     2
+    ]
+   ],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 10
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "SCHEMA"
+      ],
+      "props": {
+       "db": "compat-db-1",
+       "graph_owner": "analyzer",
+       "id": "compat-new-SCHEMA-1",
+       "name": "compat-name-1"
+      }
+     },
+     {
+      "labels": [
+       "SCHEMA"
+      ],
+      "props": {
+       "db": "compat-db-2",
+       "graph_owner": "analyzer",
+       "id": "compat-new-SCHEMA-2",
+       "name": "compat-name-2"
+      }
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "db": "compat-db-1",
+      "id": "compat-new-SCHEMA-1",
+      "name": "compat-name-1"
+     },
+     {
+      "db": "compat-db-2",
+      "id": "compat-new-SCHEMA-2",
+      "name": "compat-name-2"
+     }
+    ]
+   }
+  }
+ ]
+}

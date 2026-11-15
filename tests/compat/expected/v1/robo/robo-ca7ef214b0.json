@@ -1,0 +1,55 @@
+{
+ "id": "robo-ca7ef214b0",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "g"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "GlossaryTerm"
+    ],
+    "props": {
+     "aliases": [
+      "aliases-1-a",
+      "aliases-1-b"
+     ],
+     "code_candidates": "GlossaryTerm code_candidates 1",
+     "id": "GlossaryTerm-1",
+     "name": "GlossaryTerm 1",
+     "session_id": "sess-1",
+     "source": "GlossaryTerm source 1",
+     "term": "GlossaryTerm term 1"
+    }
+   }
+  ],
+  [
+   {
+    "~node": "@n2",
+    "labels": [
+     "GlossaryTerm"
+    ],
+    "props": {
+     "aliases": [
+      "aliases-2-a",
+      "aliases-2-b"
+     ],
+     "code_candidates": "GlossaryTerm code_candidates 2",
+     "id": "GlossaryTerm-2",
+     "name": "GlossaryTerm 2",
+     "session_id": "sess-1",
+     "source": "GlossaryTerm source 2",
+     "term": "GlossaryTerm term 2"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

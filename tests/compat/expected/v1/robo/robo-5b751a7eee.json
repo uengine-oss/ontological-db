@@ -1,0 +1,27 @@
+{
+ "id": "robo-5b751a7eee",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "n"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "author": "user@example.com",
+    "createdAt": "<now>",
+    "id": "CHG-001",
+    "originalPrompt": "반품 기간을 7일에서 14일로 변경",
+    "sourceType": "PROMPT",
+    "status": "DRAFT",
+    "statusHistory": "[]",
+    "title": "반품 기간 연장"
+   }
+  ]
+ ],
+ "params": {
+  "id": "CHG-001"
+ }
+}

@@ -1,0 +1,15 @@
+{
+ "id": "robo-fddc081ad4",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "name",
+  "type"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "cmd_id": "Command-1"
+ }
+}

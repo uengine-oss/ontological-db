@@ -1,0 +1,31 @@
+{
+ "id": "robo-ed48ce8ed8",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "cs",
+  "changes"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "id": "ChangeSet-1",
+    "name": "ChangeSet 1"
+   },
+   [
+    {
+     "changeSetId": "ChangeSet-1",
+     "id": "RequirementChange-1",
+     "name": "RequirementChange 1",
+     "originalPrompt": "RequirementChange originalPrompt 1",
+     "title": "RequirementChange 1"
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "id": "ChangeSet-1"
+ }
+}

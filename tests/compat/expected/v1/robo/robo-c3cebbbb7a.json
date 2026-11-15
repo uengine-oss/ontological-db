@@ -1,0 +1,18 @@
+{
+ "id": "robo-c3cebbbb7a",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "timestamp",
+  "userName",
+  "userEmail",
+  "changes"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "id": "US-001"
+ }
+}

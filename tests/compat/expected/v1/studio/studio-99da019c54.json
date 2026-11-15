@@ -1,0 +1,66 @@
+{
+ "id": "studio-99da019c54",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "label"
+ ],
+ "row_order": "sorted",
+ "row_count": 18,
+ "rows": [
+  [
+   "Chunk"
+  ],
+  [
+   "Column"
+  ],
+  [
+   "Customer"
+  ],
+  [
+   "Document"
+  ],
+  [
+   "ErpPurchaseOrder"
+  ],
+  [
+   "ErpSupplier"
+  ],
+  [
+   "MfgProcessStep"
+  ],
+  [
+   "MfgProduct"
+  ],
+  [
+   "MfgProductRouting"
+  ],
+  [
+   "PurchaseOrder"
+  ],
+  [
+   "Supplier"
+  ],
+  [
+   "Table"
+  ],
+  [
+   "_Entity"
+  ],
+  [
+   "_OntologyBehavior"
+  ],
+  [
+   "_OntologyBinding"
+  ],
+  [
+   "_OntologyClass"
+  ],
+  [
+   "_OntologyModel"
+  ],
+  [
+   "_OntologyRelationship"
+  ]
+ ]
+}

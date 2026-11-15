@@ -1,0 +1,332 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/ui_wireframes.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-4207d52439",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     {
+      "actor": "compat-actor-1",
+      "attachedToId": "compat-attached_to_id-1",
+      "attachedToName": "compat-attached_to_name-1",
+      "attachedToType": "compat-attached_to_type-1",
+      "description": "compat-description-1",
+      "displayName": "compat-display_name-1",
+      "figmaFileKey": "compat-figma_file_key-1",
+      "figmaNodeId": "compat-figma_node_id-1",
+      "id": "<uuid1>",
+      "key": "compat-new-UI-1",
+      "name": "compat-name-1",
+      "sceneGraph": "compat-scene_graph-1",
+      "template": "compat-template-1",
+      "userStoryId": "compat-user_story_id-1"
+     }
+    ],
+    [
+     {
+      "actor": "compat-actor-2",
+      "attachedToId": "compat-attached_to_id-2",
+      "attachedToName": "compat-attached_to_name-2",
+      "attachedToType": "compat-attached_to_type-2",
+      "description": "compat-description-2",
+      "displayName": "compat-display_name-2",
+      "figmaFileKey": "compat-figma_file_key-2",
+      "figmaNodeId": "compat-figma_node_id-2",
+      "id": "<uuid2>",
+      "key": "compat-new-UI-2",
+      "name": "compat-name-2",
+      "sceneGraph": "compat-scene_graph-2",
+      "template": "compat-template-2",
+      "userStoryId": "compat-user_story_id-2"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 34,
+    "relationships_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "UI"
+      ],
+      "props": {
+       "actor": "compat-actor-1",
+       "attachedToId": "compat-attached_to_id-1",
+       "attachedToName": "compat-attached_to_name-1",
+       "attachedToType": "compat-attached_to_type-1",
+       "createdAt": "<now>",
+       "description": "compat-description-1",
+       "displayName": "compat-display_name-1",
+       "figmaFileKey": "compat-figma_file_key-1",
+       "figmaNodeId": "compat-figma_node_id-1",
+       "id": "<uuid>",
+       "key": "compat-new-UI-1",
+       "name": "compat-name-1",
+       "sceneGraph": "compat-scene_graph-1",
+       "template": "compat-template-1",
+       "updatedAt": "<now>",
+       "userStoryId": "compat-user_story_id-1"
+      }
+     },
+     {
+      "labels": [
+       "UI"
+      ],
+      "props": {
+       "actor": "compat-actor-2",
+       "attachedToId": "compat-attached_to_id-2",
+       "attachedToName": "compat-attached_to_name-2",
+       "attachedToType": "compat-attached_to_type-2",
+       "createdAt": "<now>",
+       "description": "compat-description-2",
+       "displayName": "compat-display_name-2",
+       "figmaFileKey": "compat-figma_file_key-2",
+       "figmaNodeId": "compat-figma_node_id-2",
+       "id": "<uuid>",
+       "key": "compat-new-UI-2",
+       "name": "compat-name-2",
+       "sceneGraph": "compat-scene_graph-2",
+       "template": "compat-template-2",
+       "updatedAt": "<now>",
+       "userStoryId": "compat-user_story_id-2"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"compat-actor-1\",\"attachedToId\":\"compat-attached_to_id-1\",\"attachedToName\":\"compat-attached_to_name-1\",\"attachedToType\":\"compat-attached_to_type-1\",\"createdAt\":\"<now>\",\"description\":\"compat-description-1\",\"displayName\":\"compat-display_name-1\",\"figmaFileKey\":\"compat-figma_file_key-1\",\"figmaNodeId\":\"compat-figma_node_id-1\",\"id\":\"<uuid>\",\"key\":\"compat-new-UI-1\",\"name\":\"compat-name-1\",\"sceneGraph\":\"compat-scene_graph-1\",\"template\":\"compat-template-1\",\"updatedAt\":\"<now>\",\"userStoryId\":\"compat-user_story_id-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_UI"
+     },
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"compat-actor-2\",\"attachedToId\":\"compat-attached_to_id-2\",\"attachedToName\":\"compat-attached_to_name-2\",\"attachedToType\":\"compat-attached_to_type-2\",\"createdAt\":\"<now>\",\"description\":\"compat-description-2\",\"displayName\":\"compat-display_name-2\",\"figmaFileKey\":\"compat-figma_file_key-2\",\"figmaNodeId\":\"compat-figma_node_id-2\",\"id\":\"<uuid>\",\"key\":\"compat-new-UI-2\",\"name\":\"compat-name-2\",\"sceneGraph\":\"compat-scene_graph-2\",\"template\":\"compat-template-2\",\"updatedAt\":\"<now>\",\"userStoryId\":\"compat-user_story_id-2\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 2\",\"businessDecisions\":\"BoundedContext businessDecisions 2\",\"businessModel\":\"BoundedContext businessModel 2\",\"classification\":\"BoundedContext classification 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"BoundedContext description 2\",\"displayName\":\"BoundedContext 2\",\"domainRoles\":\"BoundedContext domainRoles 2\",\"domainType\":\"BoundedContext domainType 2\",\"evolution\":\"BoundedContext evolution 2\",\"id\":\"BoundedContext-2\",\"key\":\"boundedcontext-2\",\"name\":\"BoundedContext 2\",\"owner\":\"BoundedContext owner 2\",\"proposalSource\":\"BoundedContext proposalSource 2\",\"purpose\":\"BoundedContext purpose 2\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":20}}",
+      "type": "HAS_UI"
+     }
+    ]
+   },
+   "params": {
+    "rows": [
+     {
+      "actor": "compat-actor-1",
+      "attached_to_id": "compat-attached_to_id-1",
+      "attached_to_name": "compat-attached_to_name-1",
+      "attached_to_type": "compat-attached_to_type-1",
+      "bc_id": "BoundedContext-1",
+      "description": "compat-description-1",
+      "display_name": "compat-display_name-1",
+      "figma_file_key": "compat-figma_file_key-1",
+      "figma_node_id": "compat-figma_node_id-1",
+      "key": "compat-new-UI-1",
+      "name": "compat-name-1",
+      "scene_graph": "compat-scene_graph-1",
+      "template": "compat-template-1",
+      "user_story_id": "compat-user_story_id-1"
+     },
+     {
+      "actor": "compat-actor-2",
+      "attached_to_id": "compat-attached_to_id-2",
+      "attached_to_name": "compat-attached_to_name-2",
+      "attached_to_type": "compat-attached_to_type-2",
+      "bc_id": "BoundedContext-2",
+      "description": "compat-description-2",
+      "display_name": "compat-display_name-2",
+      "figma_file_key": "compat-figma_file_key-2",
+      "figma_node_id": "compat-figma_node_id-2",
+      "key": "compat-new-UI-2",
+      "name": "compat-name-2",
+      "scene_graph": "compat-scene_graph-2",
+      "template": "compat-template-2",
+      "user_story_id": "compat-user_story_id-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-8c859f307d",
+   "columns": [
+    "ui_id"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     "UI-1"
+    ],
+    [
+     "UI-2"
+    ]
+   ],
+   "counters": {
+    "relationships_created": 2
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+      "type": "ATTACHED_TO"
+     },
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 2\",\"aggregate_id\":\"Aggregate-2\",\"category\":\"Command category 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Command description 2\",\"displayName\":\"Command 2\",\"id\":\"Command-2\",\"inputSchema\":\"Command inputSchema 2\",\"key\":\"command-2\",\"name\":\"Command 2\",\"postconditions\":\"Command postconditions 2\",\"preconditions\":\"Command preconditions 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 2\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 2\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"UI description 2\",\"designSource\":\"html\",\"displayName\":\"UI 2\",\"figmaFileKey\":\"UI figmaFileKey 2\",\"figmaNodeId\":\"figmaNodeId-2\",\"figmaPageId\":\"figmaPageId-2\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 2\",\"figmaSyncLastAttemptAt\":\"2026-01-12T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 2\",\"figmaSyncStatus\":\"failed\",\"id\":\"UI-2\",\"key\":\"ui-2\",\"name\":\"UI 2\",\"proposalSource\":\"UI proposalSource 2\",\"sceneGraph\":\"UI sceneGraph 2\",\"sequence\":20,\"template\":\"UI template 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryId\":\"UserStory-1\"}}",
+      "type": "ATTACHED_TO"
+     }
+    ]
+   },
+   "params": {
+    "rows": [
+     {
+      "target_id": "Command-1",
+      "ui_id": "UI-1"
+     },
+     {
+      "target_id": "Command-2",
+      "ui_id": "UI-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-925b50f5b9",
+   "columns": [
+    "ui_id"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     "UI-1"
+    ],
+    [
+     "UI-2"
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "rows": [
+     {
+      "target_id": "ReadModel-1",
+      "ui_id": "UI-1"
+     },
+     {
+      "target_id": "ReadModel-2",
+      "ui_id": "UI-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-fb85dc5dbf",
+   "columns": [
+    "ui"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "actor": "compat-actor",
+      "attachedToId": "compat-attachedToId",
+      "attachedToName": "compat-attachedToName",
+      "attachedToType": "compat-attachedToType",
+      "description": "compat-description",
+      "displayName": "compat-displayName",
+      "figmaFileKey": "compat-figmaFileKey",
+      "figmaNodeId": "compat-figmaNodeId",
+      "id": "<uuid3>",
+      "key": "compat-new-UI",
+      "name": "compat-name",
+      "sceneGraph": "compat-sceneGraph",
+      "template": "compat-template",
+      "userStoryId": "compat-userStoryId"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 17,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "UI"
+      ],
+      "props": {
+       "actor": "compat-actor",
+       "attachedToId": "compat-attachedToId",
+       "attachedToName": "compat-attachedToName",
+       "attachedToType": "compat-attachedToType",
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "displayName": "compat-displayName",
+       "figmaFileKey": "compat-figmaFileKey",
+       "figmaNodeId": "compat-figmaNodeId",
+       "id": "<uuid>",
+       "key": "compat-new-UI",
+       "name": "compat-name",
+       "sceneGraph": "compat-sceneGraph",
+       "template": "compat-template",
+       "updatedAt": "<now>",
+       "userStoryId": "compat-userStoryId"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"compat-actor\",\"attachedToId\":\"compat-attachedToId\",\"attachedToName\":\"compat-attachedToName\",\"attachedToType\":\"compat-attachedToType\",\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"displayName\":\"compat-displayName\",\"figmaFileKey\":\"compat-figmaFileKey\",\"figmaNodeId\":\"compat-figmaNodeId\",\"id\":\"<uuid>\",\"key\":\"compat-new-UI\",\"name\":\"compat-name\",\"sceneGraph\":\"compat-sceneGraph\",\"template\":\"compat-template\",\"updatedAt\":\"<now>\",\"userStoryId\":\"compat-userStoryId\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_UI"
+     }
+    ]
+   },
+   "params": {
+    "actor": "compat-actor",
+    "attached_to_id": "compat-attachedToId",
+    "attached_to_name": "compat-attachedToName",
+    "attached_to_type": "compat-attachedToType",
+    "bc_id": "BoundedContext-1",
+    "description": "compat-description",
+    "display_name": "compat-displayName",
+    "figma_file_key": "compat-figmaFileKey",
+    "figma_node_id": "compat-figmaNodeId",
+    "key": "compat-new-UI",
+    "name": "compat-name",
+    "scene_graph": "compat-sceneGraph",
+    "template": "compat-template",
+    "user_story_id": "compat-userStoryId"
+   }
+  },
+  {
+   "id": "robo-0b5ab97cf9",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "target_id": "Command-1",
+    "ui_id": "UI-1"
+   }
+  }
+ ]
+}

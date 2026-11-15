@@ -1,0 +1,22 @@
+{
+ "id": "analyzer-4640fb33f1",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "matched"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   2
+  ]
+ ],
+ "params": {
+  "graph_owner": "analyzer",
+  "ids": [
+   "TABLE-1",
+   "TABLE-2"
+  ]
+ }
+}

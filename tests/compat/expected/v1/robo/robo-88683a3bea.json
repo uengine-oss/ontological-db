@@ -1,0 +1,21 @@
+{
+ "id": "robo-88683a3bea",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "function_id",
+  "function_name",
+  "function_summary",
+  "source_container_id",
+  "analyzer_rule_id",
+  "rule_order",
+  "condition",
+  "effects",
+  "condition_description",
+  "effect_descriptions",
+  "raw_writes"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": []
+}

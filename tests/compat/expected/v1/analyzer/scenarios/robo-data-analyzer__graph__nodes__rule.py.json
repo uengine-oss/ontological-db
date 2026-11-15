@@ -1,0 +1,55 @@
+{
+ "scenario": "robo-data-analyzer:graph/nodes/rule.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-8054c7e4b7",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 8
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "RULE"
+      ],
+      "props": {
+       "graph_owner": "analyzer",
+       "id": "compat-new-RULE-1",
+       "statement": "compat-statement-1"
+      }
+     },
+     {
+      "labels": [
+       "RULE"
+      ],
+      "props": {
+       "graph_owner": "analyzer",
+       "id": "compat-new-RULE-2",
+       "statement": "compat-statement-2"
+      }
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "id": "compat-new-RULE-1",
+      "statement": "compat-statement-1"
+     },
+     {
+      "id": "compat-new-RULE-2",
+      "statement": "compat-statement-2"
+     }
+    ]
+   }
+  }
+ ]
+}

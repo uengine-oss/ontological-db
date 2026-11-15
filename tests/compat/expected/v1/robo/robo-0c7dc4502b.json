@@ -1,0 +1,39 @@
+{
+ "id": "robo-0c7dc4502b",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "node_id",
+  "gwt"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "Command-1",
+   {
+    "givenRef": "GWT givenRef 1",
+    "id": "GWT-1",
+    "testCases": "[]",
+    "thenRef": "GWT thenRef 1",
+    "whenRef": "GWT whenRef 1"
+   }
+  ],
+  [
+   "Command-2",
+   {
+    "givenRef": "GWT givenRef 2",
+    "id": "GWT-2",
+    "testCases": "[]",
+    "thenRef": "GWT thenRef 2",
+    "whenRef": "GWT whenRef 2"
+   }
+  ]
+ ],
+ "params": {
+  "node_ids": [
+   "Command-1",
+   "Command-2"
+  ]
+ }
+}

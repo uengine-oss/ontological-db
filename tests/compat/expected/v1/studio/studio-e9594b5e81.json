@@ -1,0 +1,17 @@
+{
+ "id": "studio-e9594b5e81",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "value"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "limit": 10,
+  "lv": "B",
+  "v": "A"
+ }
+}

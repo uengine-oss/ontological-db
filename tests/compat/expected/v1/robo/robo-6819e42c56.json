@@ -1,0 +1,19 @@
+{
+ "id": "robo-6819e42c56",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "description",
+  "preconditions",
+  "postconditions",
+  "events_emitted"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "id": "Aggregate-1"
+ }
+}

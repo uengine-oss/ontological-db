@@ -1,0 +1,30 @@
+{
+ "id": "robo-5c529b1921",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "title",
+  "originalPrompt",
+  "effects"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "RequirementChange 1",
+   "RequirementChange originalPrompt 1",
+   [
+    {
+     "impactLevel": null,
+     "nodeId": "CreationIntent-1",
+     "nodeLabel": "CreationIntent",
+     "nodeTitle": "CreationIntent 1",
+     "reason": null
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "id": "RequirementChange-1"
+ }
+}

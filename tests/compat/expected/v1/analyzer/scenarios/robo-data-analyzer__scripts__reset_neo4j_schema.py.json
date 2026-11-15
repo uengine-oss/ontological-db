@@ -1,0 +1,29 @@
+{
+ "scenario": "robo-data-analyzer:scripts/reset_neo4j_schema.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-4969073e8e",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "constraints_removed": 1
+   },
+   "effect": {}
+  },
+  {
+   "id": "analyzer-e993747eff",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "indexes_removed": 1
+   },
+   "effect": {}
+  }
+ ]
+}

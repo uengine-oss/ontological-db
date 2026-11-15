@@ -1,0 +1,19 @@
+{
+ "id": "analyzer-0c0b8138a8",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "fqn"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "TABLE schema 1.TABLE 1"
+  ]
+ ],
+ "params": {
+  "ds": "TABLE datasource 1",
+  "owner": "analyzer"
+ }
+}

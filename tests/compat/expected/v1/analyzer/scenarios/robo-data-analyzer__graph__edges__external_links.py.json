@@ -1,0 +1,27 @@
+{
+ "scenario": "robo-data-analyzer:graph/edges/external_links.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-0f0f302365",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "items": [
+     {
+      "source_id": null,
+      "target_id": "TABLE-1"
+     },
+     {
+      "source_id": null,
+      "target_id": "TABLE-2"
+     }
+    ]
+   }
+  }
+ ]
+}

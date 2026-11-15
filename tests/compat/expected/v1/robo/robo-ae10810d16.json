@@ -1,0 +1,32 @@
+{
+ "id": "robo-ae10810d16",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "name",
+  "displayName",
+  "description",
+  "attachedToType",
+  "attachedToName",
+  "targetLabel",
+  "targetName",
+  "bcName"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "UI 1",
+   "UI 1",
+   "UI description 1",
+   "",
+   "UI attachedToName 1",
+   "ReadModel",
+   "ReadModel 1",
+   null
+  ]
+ ],
+ "params": {
+  "id": "UI-1"
+ }
+}

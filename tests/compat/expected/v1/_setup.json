@@ -1,0 +1,173 @@
+[
+ {
+  "file": "corpus/_shared/fixture/10_datasource.cypher",
+  "graph": "analyzer_run",
+  "statements": 2,
+  "failed": 0,
+  "errors": []
+ },
+ {
+  "file": "corpus/studio/fixture/20_ontology.cypher",
+  "graph": "ontology",
+  "statements": 35,
+  "failed": 0,
+  "errors": []
+ },
+ {
+  "file": "corpus/studio/fixture/90_derived.cypher",
+  "graph": "ontology",
+  "statements": 20,
+  "failed": 0,
+  "errors": []
+ },
+ {
+  "file": "corpus/robo/fixture/10_client_01_constraints.cypher",
+  "graph": "robo",
+  "statements": 83,
+  "failed": 2,
+  "errors": [
+   {
+    "line": 285,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_status\" does not exist"
+   },
+   {
+    "line": 288,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_bindingfilekey\" does not exist"
+   }
+  ]
+ },
+ {
+  "file": "corpus/robo/fixture/11_client_02_indexes.cypher",
+  "graph": "robo",
+  "statements": 23,
+  "failed": 9,
+  "errors": [
+   {
+    "line": 30,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_priority\" does not exist"
+   },
+   {
+    "line": 34,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_status\" does not exist"
+   },
+   {
+    "line": 46,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_isbreaking\" does not exist"
+   },
+   {
+    "line": 62,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_attachedtoid\" does not exist"
+   },
+   {
+    "line": 74,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_boundedcontextid\" does not exist"
+   },
+   {
+    "line": 78,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_journeyid\" does not exist"
+   },
+   {
+    "line": 82,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_boundedcontextid\" does not exist"
+   },
+   {
+    "line": 86,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_name\" does not exist"
+   },
+   {
+    "line": 90,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_aggregateid\" does not exist"
+   }
+  ]
+ },
+ {
+  "file": "corpus/robo/fixture/12_client_03_node_types.cypher",
+  "graph": "robo",
+  "statements": 26,
+  "failed": 5,
+  "errors": [
+   {
+    "line": 101,
+    "code": "Neo.ClientError.Statement.SyntaxError",
+    "message": "expected ')' at offset 104, near: …r\"}) MERGE (when:When {parentType: \"…"
+   },
+   {
+    "line": 112,
+    "code": "Neo.ClientError.Statement.SyntaxError",
+    "message": "expected ')' at offset 135, near: …0\"}) MERGE (then:Then {parentType: \"…"
+   },
+   {
+    "line": 207,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_status\" does not exist"
+   },
+   {
+    "line": 210,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_author\" does not exist"
+   },
+   {
+    "line": 216,
+    "code": "Neo.DatabaseError.Statement.ExecutionFailed",
+    "message": "column \"p_scope\" does not exist"
+   }
+  ]
+ },
+ {
+  "file": "corpus/robo/fixture/13_client_04_relationships.cypher",
+  "graph": "robo",
+  "statements": 26,
+  "failed": 2,
+  "errors": [
+   {
+    "line": 74,
+    "code": "Neo.ClientError.Statement.SyntaxError",
+    "message": "expected ')' at offset 61, near: …r\"}) MATCH (when:When {parentType: \"…"
+   },
+   {
+    "line": 78,
+    "code": "Neo.ClientError.Statement.SyntaxError",
+    "message": "expected ')' at offset 61, near: …r\"}) MATCH (then:Then {parentType: \"…"
+   }
+  ]
+ },
+ {
+  "file": "corpus/robo/fixture/90_derived.cypher",
+  "graph": "robo",
+  "statements": 222,
+  "failed": 0,
+  "errors": []
+ },
+ {
+  "file": "corpus/robo/fixture/90_derived_robo_analysis.cypher",
+  "graph": "robo_analysis",
+  "statements": 162,
+  "failed": 0,
+  "errors": []
+ },
+ {
+  "file": "corpus/analyzer/fixture/20_fabric.cypher",
+  "graph": "analyzer_run",
+  "statements": 3,
+  "failed": 0,
+  "errors": []
+ },
+ {
+  "file": "corpus/analyzer/fixture/90_derived.cypher",
+  "graph": "analyzer_run",
+  "statements": 36,
+  "failed": 0,
+  "errors": []
+ }
+]

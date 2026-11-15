@@ -1,0 +1,31 @@
+{
+ "id": "robo-fa84e991ba",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "cmdId",
+  "evt"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "<uuid1>",
+   {
+    "description": null,
+    "displayName": null,
+    "id": "<uuid2>",
+    "name": "OrderCancelled"
+   }
+  ],
+  [
+   "<uuid1>",
+   {
+    "description": null,
+    "displayName": null,
+    "id": "<uuid2>",
+    "name": "OrderCancelled"
+   }
+  ]
+ ]
+}

@@ -1,0 +1,30 @@
+{
+ "id": "robo-4d3cb4a463",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "user_stories",
+  "bounded_contexts",
+  "aggregates",
+  "commands",
+  "events",
+  "policies",
+  "readmodels"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

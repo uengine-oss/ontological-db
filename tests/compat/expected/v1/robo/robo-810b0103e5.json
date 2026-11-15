@@ -1,0 +1,18 @@
+{
+ "id": "robo-810b0103e5",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "c"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   1
+  ]
+ ],
+ "params": {
+  "pid": "Aggregate proposalSource 1"
+ }
+}

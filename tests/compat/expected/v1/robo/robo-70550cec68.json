@@ -1,0 +1,26 @@
+{
+ "id": "robo-70550cec68",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "key",
+  "label",
+  "kind",
+  "bounded_context_id",
+  "source",
+  "journey_id",
+  "journey_name",
+  "created_at",
+  "updated_at"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "bc_ids": [
+   "BoundedContext-1",
+   "BoundedContext-2"
+  ]
+ }
+}

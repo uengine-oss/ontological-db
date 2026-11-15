@@ -1,0 +1,19 @@
+{
+ "id": "robo-a4a6a06d78",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "existing_bc"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   null
+  ]
+ ],
+ "params": {
+  "bc_id": "BoundedContext-1",
+  "key": "aggregate-1"
+ }
+}

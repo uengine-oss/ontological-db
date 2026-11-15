@@ -1,0 +1,222 @@
+{
+ "scenario": "robo-architect-lite:api/features/requirements/deletion_archive.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-62e987a2a0",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 10
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "DeletionRecord"
+      ],
+      "props": {
+       "actor": "compat-actor",
+       "batchId": "compat-batchId",
+       "createdAt": "2026-01-15T09:00:00Z",
+       "nodeCount": 7,
+       "relCount": 7,
+       "restored": false,
+       "rootLabel": "compat-rootLabel",
+       "rootName": "compat-rootName",
+       "scope": "compat-scope",
+       "snapshot": "compat-snapshot"
+      }
+     }
+    ]
+   },
+   "params": {
+    "actor": "compat-actor",
+    "batch_id": "compat-batchId",
+    "created_at": "2026-01-15T09:00:00Z",
+    "node_count": 7,
+    "rel_count": 7,
+    "root_label": "compat-rootLabel",
+    "root_name": "compat-rootName",
+    "scope": "compat-scope",
+    "snapshot": "compat-snapshot"
+   }
+  },
+  {
+   "id": "robo-ddb626da80",
+   "error": {
+    "code": "Neo.ClientError.Statement.ArgumentError",
+    "message": "cannot add label 'Aggregate' to this node: a node's type is part of its identifier here, so it cannot gain one after creation. To rename a class, write `REMOVE n:Old SET n:New` — that is applied to the type. To move a node between types, create it under the target type."
+   },
+   "params": {
+    "id": "<uuid1>",
+    "props": {
+     "description": "compat",
+     "name": "compat"
+    }
+   }
+  },
+  {
+   "id": "robo-94d0039dfb",
+   "columns": [
+    "c"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     1
+    ]
+   ],
+   "counters": {
+    "properties_set": 2,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}",
+      "props": {
+       "description": "compat",
+       "name": "compat"
+      },
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_AGGREGATE"
+     }
+    ]
+   },
+   "params": {
+    "e": "Aggregate-1",
+    "props": {
+     "description": "compat",
+     "name": "compat"
+    },
+    "s": "BoundedContext-1"
+   }
+  },
+  {
+   "id": "robo-d36e21b5d3",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"DeletionRecord\"],\"props\":{\"actor\":\"DeletionRecord actor 1\",\"batchId\":\"batchId-1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"id\":\"DeletionRecord-1\",\"name\":\"DeletionRecord 1\",\"nodeCount\":10,\"relCount\":10,\"restored\":true,\"restoredAt\":\"2026-01-15T09:00:00Z\",\"rootLabel\":\"DeletionRecord rootLabel 1\",\"rootName\":\"DeletionRecord rootName 1\",\"scope\":\"DeletionRecord scope 1\",\"snapshot\":\"DeletionRecord snapshot 1\"}} <- {\"labels\":[\"DeletionRecord\"],\"props\":{\"actor\":\"DeletionRecord actor 1\",\"batchId\":\"batchId-1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"id\":\"DeletionRecord-1\",\"name\":\"DeletionRecord 1\",\"nodeCount\":10,\"relCount\":10,\"restored\":false,\"restoredAt\":\"2026-01-11T09:00:00Z\",\"rootLabel\":\"DeletionRecord rootLabel 1\",\"rootName\":\"DeletionRecord rootName 1\",\"scope\":\"DeletionRecord scope 1\",\"snapshot\":\"DeletionRecord snapshot 1\"}}"
+    ]
+   },
+   "params": {
+    "b": "batchId-1",
+    "ts": "2026-01-15T09:00:00Z"
+   }
+  },
+  {
+   "id": "robo-2e9f093754",
+   "columns": [
+    "c"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     2
+    ]
+   ],
+   "counters": {
+    "nodes_deleted": 2
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "Journey"
+      ],
+      "props": {
+       "boundedContextId": "<bc-uuid>",
+       "createdAt": "<now>",
+       "description": "신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정",
+       "id": "<uuid>",
+       "journeyId": "normal-signup-abc123",
+       "key": "membership.journey.normal-signup-abc123",
+       "name": "정상 회원가입",
+       "source": "llm",
+       "updatedAt": "<now>"
+      }
+     },
+     {
+      "labels": [
+       "JourneyStep"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "id": "<uuid>",
+       "key": "membership.journey.normal-signup-abc123.step.gateway.approve-xyz",
+       "kind": "gateway",
+       "label": "가입 가능 여부?",
+       "sequence": 3,
+       "source": "llm",
+       "updatedAt": "<now>"
+      }
+     }
+    ]
+   },
+   "params": {
+    "ids": [
+     "<uuid1>",
+     "<uuid2>"
+    ]
+   }
+  },
+  {
+   "id": "robo-4a8ad515ef",
+   "columns": [
+    "c"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     1
+    ]
+   ],
+   "counters": {
+    "nodes_deleted": 1
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "DeletionRecord"
+      ],
+      "props": {
+       "actor": "DeletionRecord actor 1",
+       "batchId": "batchId-1",
+       "createdAt": "2026-01-11T09:00:00Z",
+       "id": "DeletionRecord-1",
+       "name": "DeletionRecord 1",
+       "nodeCount": 10,
+       "relCount": 10,
+       "restored": true,
+       "restoredAt": "2026-01-15T09:00:00Z",
+       "rootLabel": "DeletionRecord rootLabel 1",
+       "rootName": "DeletionRecord rootName 1",
+       "scope": "DeletionRecord scope 1",
+       "snapshot": "DeletionRecord snapshot 1"
+      }
+     }
+    ]
+   },
+   "params": {
+    "b": "batchId-1"
+   }
+  }
+ ]
+}

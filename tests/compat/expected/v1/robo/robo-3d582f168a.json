@@ -1,0 +1,28 @@
+{
+ "id": "robo-3d582f168a",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "result"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "excludeIds": [
+   "Command-1",
+   "Command-2"
+  ],
+  "keywords": [
+   "compat-a",
+   "compat-b"
+  ],
+  "limit": 10,
+  "nodeTypes": [
+   "compat-nodeTypes-a",
+   "compat-nodeTypes-b"
+  ],
+  "primary_keyword": "CancelOrder",
+  "query": "Command 1"
+ }
+}

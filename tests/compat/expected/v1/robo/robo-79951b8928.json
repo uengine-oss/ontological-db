@@ -1,0 +1,24 @@
+{
+ "id": "robo-79951b8928",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "role",
+  "action",
+  "src"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "UserStory-1",
+   "UserStory role 1",
+   "UserStory action 1",
+   "UserStory-1"
+  ]
+ ],
+ "params": {
+  "id": "BoundedContext-1"
+ }
+}

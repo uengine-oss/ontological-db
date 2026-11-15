@@ -1,0 +1,54 @@
+{
+ "id": "studio-4c611b6dbd",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "class_name",
+  "description",
+  "datasource",
+  "source_schema",
+  "table_name",
+  "extra_tables",
+  "key_columns",
+  "column_map",
+  "base_conditions",
+  "label_property",
+  "default_limit",
+  "behaviors"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Customer",
+   "a buyer",
+   "erp",
+   "compat_erp",
+   "customer",
+   "[]",
+   "[\"customer_id\"]",
+   "[{\"column\": \"customer_id\", \"property\": \"customer_id\"}]",
+   "[]",
+   "name",
+   100,
+   [
+    {
+     "behavior_type": null,
+     "certified": null,
+     "description": null,
+     "golden_question": null,
+     "max_rows": null,
+     "name": null,
+     "output_columns": null,
+     "parameters": null,
+     "result_kind": null,
+     "sql_template": null
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "class_name": "Customer",
+  "schema_name": "compat"
+ }
+}

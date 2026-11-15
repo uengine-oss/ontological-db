@@ -1,0 +1,41 @@
+{
+ "id": "robo-7721441b85",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "purpose",
+  "classification",
+  "ul",
+  "bd"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "BoundedContext-1",
+   "BoundedContext 1",
+   "BoundedContext purpose 1",
+   "BoundedContext classification 1",
+   "BoundedContext ubiquitousLanguage 1",
+   "BoundedContext businessDecisions 1"
+  ],
+  [
+   "BoundedContext-2",
+   "BoundedContext 2",
+   "BoundedContext purpose 2",
+   "BoundedContext classification 2",
+   "BoundedContext ubiquitousLanguage 2",
+   "BoundedContext businessDecisions 2"
+  ],
+  [
+   "<uuid1>",
+   "Order",
+   null,
+   "core",
+   null,
+   null
+  ]
+ ]
+}

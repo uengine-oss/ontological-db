@@ -1,0 +1,19 @@
+{
+ "id": "studio-27c8406bd2",
+ "graph": "ontology",
+ "kind": "fabric-read",
+ "columns": [
+  "relationship",
+  "from",
+  "to"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "SUPPLIED_BY",
+   "ErpPurchaseOrder.supplier_id",
+   "ErpSupplier.supplier_id"
+  ]
+ ]
+}

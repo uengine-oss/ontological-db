@@ -1,0 +1,31 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/policies.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-d1303afc90",
+   "columns": [
+    "us.id",
+    "pol.id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "UserStory-1",
+     "Policy-1"
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "confidence": 0.9,
+    "policy_id": "Policy-1",
+    "user_story_id": "UserStory-1"
+   }
+  }
+ ]
+}

@@ -1,0 +1,29 @@
+{
+ "id": "studio-f868f035eb",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "schema_name",
+  "name",
+  "description",
+  "behavior_type",
+  "parameters",
+  "cypher_template",
+  "sql_template",
+  "output_columns",
+  "result_kind",
+  "max_rows",
+  "golden_question",
+  "certified",
+  "certified_by",
+  "synonyms"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "behavior_name": "set_grade",
+  "class_name": "Customer",
+  "schema_name": "compat"
+ }
+}

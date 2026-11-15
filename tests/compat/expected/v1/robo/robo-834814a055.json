@@ -1,0 +1,11 @@
+{
+ "id": "robo-834814a055",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "chain"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": []
+}

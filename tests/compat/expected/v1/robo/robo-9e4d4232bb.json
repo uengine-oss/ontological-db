@@ -1,0 +1,46 @@
+{
+ "id": "robo-9e4d4232bb",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "labels",
+  "id",
+  "name",
+  "description",
+  "type",
+  "isKey",
+  "isForeignKey",
+  "isRequired",
+  "parentType",
+  "parentId",
+  "template",
+  "attachedToId",
+  "attachedToType",
+  "attachedToName"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   [
+    "Journey"
+   ],
+   "<uuid1>",
+   "정상 회원가입",
+   "신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정",
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "id": "<uuid1>"
+ }
+}

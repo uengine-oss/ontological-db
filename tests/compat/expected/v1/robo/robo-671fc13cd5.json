@@ -1,0 +1,24 @@
+{
+ "id": "robo-671fc13cd5",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "evt",
+  "cmd",
+  "target_evt",
+  "agg"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   null,
+   null,
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "node_id": "Policy-1"
+ }
+}

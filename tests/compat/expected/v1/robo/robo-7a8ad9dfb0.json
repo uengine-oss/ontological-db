@@ -1,0 +1,21 @@
+{
+ "id": "robo-7a8ad9dfb0",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "error",
+  "lastAttemptAt"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 1,
+ "rows": [
+  [
+   "UI-2",
+   "UI 2",
+   "UI figmaSyncLastError 2",
+   "2026-01-12T09:00:00Z"
+  ]
+ ]
+}

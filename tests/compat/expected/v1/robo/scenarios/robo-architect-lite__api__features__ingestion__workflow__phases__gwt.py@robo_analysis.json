@@ -1,0 +1,68 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/workflow/phases/gwt.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-05e80501aa",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 9,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "GWT"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "givenRef": "compat-givenRef",
+       "id": "<uuid>",
+       "parentId": "Command-1",
+       "parentType": "Command",
+       "testCases": "compat-testCases",
+       "thenRef": "compat-thenRef",
+       "updatedAt": "<now>",
+       "whenRef": "compat-whenRef"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"GWT\"],\"props\":{\"createdAt\":\"<now>\",\"givenRef\":\"compat-givenRef\",\"id\":\"<uuid>\",\"parentId\":\"Command-1\",\"parentType\":\"Command\",\"testCases\":\"compat-testCases\",\"thenRef\":\"compat-thenRef\",\"updatedAt\":\"<now>\",\"whenRef\":\"compat-whenRef\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"category\":\"Command category 1\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"name\":\"Command 1\"}}",
+      "type": "HAS_GWT"
+     }
+    ]
+   },
+   "params": {
+    "given_ref_json": "compat-givenRef",
+    "parent_id": "Command-1",
+    "parent_type": "Command",
+    "refs": [
+     {
+      "id": "ActivityMapping-1",
+      "type": "compat-type-1"
+     },
+     {
+      "id": "ActivityMapping-2",
+      "type": "compat-type-2"
+     }
+    ],
+    "test_cases_json": "compat-testCases",
+    "then_ref_json": "compat-thenRef",
+    "when_ref_json": "compat-whenRef"
+   }
+  }
+ ]
+}

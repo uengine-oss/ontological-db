@@ -1,0 +1,76 @@
+{
+ "id": "studio-110ffd4bb5",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "class_name",
+  "node",
+  "score",
+  "_element_id"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "Customer",
+   {
+    "~node": "@n1",
+    "labels": [
+     "Customer"
+    ],
+    "props": {
+     "content": "Acme corp, spare parts",
+     "credit_limit": 1200,
+     "customer_id": "C002",
+     "email": "ops@acme.example",
+     "embedding": "[0.1,0.8,0.2,0,0,0.1,0.1,0.4]",
+     "grade": "B",
+     "name": "Acme",
+     "number": 2,
+     "title": "Acme"
+    }
+   },
+   0.489815,
+   "@n1"
+  ],
+  [
+   "Customer",
+   {
+    "~node": "@n2",
+    "labels": [
+     "Customer"
+    ],
+    "props": {
+     "content": "cable maker, buys steel wire",
+     "credit_limit": 5000,
+     "customer_id": "C001",
+     "email": "buy@daesung.example",
+     "embedding": "[0.9,0.1,0,0.2,0.1,0,0.3,0.1]",
+     "grade": "A",
+     "name": "Daesung Cable",
+     "number": 1,
+     "title": "Daesung Cable"
+    }
+   },
+   0.281851,
+   "@n2"
+  ]
+ ],
+ "params": {
+  "classes": [
+   "Customer",
+   "PurchaseOrder"
+  ],
+  "k": 3,
+  "vec": [
+   0.0,
+   0.5,
+   1.0,
+   0.4,
+   0.9,
+   0.3,
+   0.8,
+   0.2
+  ]
+ }
+}

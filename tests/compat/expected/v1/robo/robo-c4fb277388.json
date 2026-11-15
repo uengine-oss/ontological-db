@@ -1,0 +1,14 @@
+{
+ "id": "robo-c4fb277388",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "name"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "id": "Command-1"
+ }
+}

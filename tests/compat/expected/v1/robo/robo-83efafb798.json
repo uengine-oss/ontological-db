@@ -1,0 +1,51 @@
+{
+ "id": "robo-83efafb798",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "task_id",
+  "rule_id",
+  "confidence",
+  "method",
+  "reviewed",
+  "rationale",
+  "evidence_refs",
+  "evidence_path",
+  "agent_verdict",
+  "evidence_role",
+  "evidence_role_rationale"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "BpmTask-1",
+   "Rule-1",
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   "primary",
+   null
+  ],
+  [
+   "BpmTask-2",
+   "Rule-2",
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   "primary",
+   null
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

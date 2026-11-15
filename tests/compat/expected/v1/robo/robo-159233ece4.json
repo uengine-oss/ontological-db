@@ -1,0 +1,33 @@
+{
+ "id": "robo-159233ece4",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "seq",
+  "pivotal"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "<uuid1>",
+   "OrderCancelled",
+   0,
+   false
+  ],
+  [
+   "Event-1",
+   "Event 1",
+   10,
+   true
+  ],
+  [
+   "Event-2",
+   "Event 2",
+   20,
+   false
+  ]
+ ]
+}

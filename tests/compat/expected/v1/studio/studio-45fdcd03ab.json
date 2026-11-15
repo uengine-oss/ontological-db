@@ -1,0 +1,15 @@
+{
+ "id": "studio-45fdcd03ab",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "key",
+  "name",
+  "via",
+  "rel",
+  "v"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": []
+}

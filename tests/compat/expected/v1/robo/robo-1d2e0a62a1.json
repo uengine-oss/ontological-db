@@ -1,0 +1,18 @@
+{
+ "id": "robo-1d2e0a62a1",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "exceptions"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Aggregate exceptions 1"
+  ]
+ ],
+ "params": {
+  "id": "Aggregate-1"
+ }
+}

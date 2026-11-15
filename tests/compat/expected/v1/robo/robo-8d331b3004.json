@@ -1,0 +1,53 @@
+{
+ "id": "robo-8d331b3004",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "task_id",
+  "p",
+  "score",
+  "rank",
+  "low_confidence"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "BpmTask-1",
+   {
+    "~node": "@n1",
+    "labels": [
+     "DocumentPassage"
+    ],
+    "props": {
+     "id": "DocumentPassage-1",
+     "name": "DocumentPassage 1",
+     "session_id": "sess-1"
+    }
+   },
+   null,
+   null,
+   null
+  ],
+  [
+   "BpmTask-2",
+   {
+    "~node": "@n2",
+    "labels": [
+     "DocumentPassage"
+    ],
+    "props": {
+     "id": "DocumentPassage-2",
+     "name": "DocumentPassage 2",
+     "session_id": "sess-1"
+    }
+   },
+   null,
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

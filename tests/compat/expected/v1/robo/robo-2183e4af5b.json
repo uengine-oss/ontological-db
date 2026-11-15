@@ -1,0 +1,16 @@
+{
+ "id": "robo-2183e4af5b",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "f.id"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "bc_id": "BoundedContext-1",
+  "name": "Feature 1"
+ }
+}

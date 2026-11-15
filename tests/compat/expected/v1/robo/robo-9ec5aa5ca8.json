@@ -1,0 +1,19 @@
+{
+ "id": "robo-9ec5aa5ca8",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "role",
+  "action",
+  "benefit",
+  "bcId",
+  "featureId"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "scopeId": "BoundedContext-1"
+ }
+}

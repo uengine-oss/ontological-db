@@ -1,0 +1,18 @@
+{
+ "id": "robo-22cd507287",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "v"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Aggregate description 1"
+  ]
+ ],
+ "params": {
+  "id": "Aggregate-1"
+ }
+}

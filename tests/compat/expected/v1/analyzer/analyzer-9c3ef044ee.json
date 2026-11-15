@@ -1,0 +1,24 @@
+{
+ "id": "analyzer-9c3ef044ee",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "rule_id",
+  "occurrence_id",
+  "ordinal",
+  "statement",
+  "example_id",
+  "given",
+  "when_",
+  "then_",
+  "table_name",
+  "op"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "graph_owner": "analyzer",
+  "id": "COLUMN-1"
+ }
+}

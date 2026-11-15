@@ -1,0 +1,16 @@
+{
+ "id": "robo-9ccd487761",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "lbl"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "h": "Command-1",
+  "u": "UI-1"
+ }
+}

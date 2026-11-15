@@ -1,0 +1,19 @@
+{
+ "id": "studio-49c561ae4a",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "c"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   0
+  ]
+ ],
+ "params": {
+  "a": "cust-1",
+  "b": "cust-2"
+ }
+}

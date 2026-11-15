@@ -1,0 +1,30 @@
+{
+ "id": "robo-55015025ed",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "bc"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "classification": "BoundedContext classification 1",
+    "description": "BoundedContext description 1",
+    "displayName": "BoundedContext 1",
+    "domainType": "BoundedContext domainType 1",
+    "id": "BoundedContext-1",
+    "name": "BoundedContext 1",
+    "owner": "BoundedContext owner 1",
+    "userStoryIds": [
+     "US-001",
+     "UserStory-1"
+    ]
+   }
+  ]
+ ],
+ "params": {
+  "context_id": "BoundedContext-1"
+ }
+}

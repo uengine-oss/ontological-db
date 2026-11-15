@@ -1,0 +1,24 @@
+{
+ "id": "analyzer-c82f075526",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "fp",
+  "count"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "EMBED_META fingerprint 1",
+   10
+  ],
+  [
+   "EMBED_META fingerprint 2",
+   20
+  ]
+ ],
+ "params": {
+  "graph_owner": "analyzer"
+ }
+}

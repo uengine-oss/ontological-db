@@ -1,0 +1,134 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/aggregates.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-fa3cf06e14",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     {
+      "agg_id": "Aggregate-1",
+      "us_id": "UserStory-1"
+     }
+    ],
+    [
+     {
+      "agg_id": "Aggregate-2",
+      "us_id": "UserStory-2"
+     }
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "rows": [
+     {
+      "aggregate_id": "Aggregate-1",
+      "confidence": 0.9,
+      "user_story_id": "UserStory-1"
+     },
+     {
+      "aggregate_id": "Aggregate-2",
+      "confidence": 0.9,
+      "user_story_id": "UserStory-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-c7ea057081",
+   "columns": [
+    "id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+   "rows": [],
+   "effect": {},
+   "params": {
+    "aggregate_id": "Aggregate-1",
+    "event_name": "Event 1"
+   }
+  },
+  {
+   "id": "robo-a949c62dda",
+   "columns": [
+    "us.id",
+    "agg.id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "UserStory-1",
+     "Aggregate-1"
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "aggregate_id": "Aggregate-1",
+    "confidence": 0.9,
+    "user_story_id": "UserStory-1"
+   }
+  },
+  {
+   "id": "robo-96f0b87aec",
+   "columns": [
+    "us.id",
+    "cmd.id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "UserStory-1",
+     "Command-1"
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "command_id": "Command-1",
+    "confidence": 0.9,
+    "user_story_id": "UserStory-1"
+   }
+  },
+  {
+   "id": "robo-9b696a3701",
+   "columns": [
+    "us.id",
+    "evt.id"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "UserStory-1",
+     "Event-1"
+    ]
+   ],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "confidence": 0.9,
+    "event_id": "Event-1",
+    "user_story_id": "UserStory-1"
+   }
+  }
+ ]
+}

@@ -1,0 +1,112 @@
+{
+ "id": "robo-9da94d3551",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "user_story"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 3,
+ "rows": [
+  [
+   {
+    "action": "cancel my order",
+    "benefit": "I can get a refund if I change my mind",
+    "displayName": null,
+    "id": "US-001",
+    "implemented_in": [
+     {
+      "id": "<uuid1>",
+      "name": "Order",
+      "type": "BoundedContext"
+     }
+    ],
+    "priority": "high",
+    "role": "customer",
+    "sourceScreenName": null,
+    "status": "approved",
+    "uiDescription": null
+   }
+  ],
+  [
+   {
+    "action": "UserStory action 1",
+    "benefit": "UserStory benefit 1",
+    "displayName": "UserStory 1",
+    "id": "UserStory-1",
+    "implemented_in": [
+     {
+      "id": "Aggregate-1",
+      "name": "Aggregate 1",
+      "type": "Aggregate"
+     },
+     {
+      "id": "Command-1",
+      "name": "Command 1",
+      "type": "Command"
+     },
+     {
+      "id": "Event-1",
+      "name": "Event 1",
+      "type": "Event"
+     },
+     {
+      "id": "Policy-1",
+      "name": "Policy 1",
+      "type": "Policy"
+     },
+     {
+      "id": "ReadModel-1",
+      "name": "ReadModel 1",
+      "type": "ReadModel"
+     }
+    ],
+    "priority": "medium",
+    "role": "UserStory role 1",
+    "sourceScreenName": "UserStory sourceScreenName 1",
+    "status": "draft",
+    "uiDescription": "UserStory uiDescription 1"
+   }
+  ],
+  [
+   {
+    "action": "UserStory action 2",
+    "benefit": "UserStory benefit 2",
+    "displayName": "UserStory 2",
+    "id": "UserStory-2",
+    "implemented_in": [
+     {
+      "id": "Aggregate-2",
+      "name": "Aggregate 2",
+      "type": "Aggregate"
+     },
+     {
+      "id": "Command-2",
+      "name": "Command 2",
+      "type": "Command"
+     },
+     {
+      "id": "Event-2",
+      "name": "Event 2",
+      "type": "Event"
+     },
+     {
+      "id": "Policy-2",
+      "name": "Policy 2",
+      "type": "Policy"
+     },
+     {
+      "id": "ReadModel-2",
+      "name": "ReadModel 2",
+      "type": "ReadModel"
+     }
+    ],
+    "priority": "medium",
+    "role": "UserStory role 2",
+    "sourceScreenName": "UserStory sourceScreenName 2",
+    "status": "new",
+    "uiDescription": "UserStory uiDescription 2"
+   }
+  ]
+ ]
+}

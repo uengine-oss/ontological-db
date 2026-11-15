@@ -1,0 +1,89 @@
+{
+ "scenario": "robo-architect-lite:api/features/requirement_changes/services/effect_analyzer.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-11748790ec",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "change_id": "RequirementChange-1",
+    "node_id": "CreationIntent-1"
+   }
+  },
+  {
+   "id": "robo-f4fb4ecd7a",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {},
+   "params": {
+    "change_id": "RequirementChange-1",
+    "impact_level": "compat-impactLevel",
+    "node_id": "CreationIntent-1",
+    "reason": "compat-reason"
+   }
+  },
+  {
+   "id": "robo-6ee7e178ba",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 9,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "CreationIntent"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "id": "compat-new-CreationIntent",
+       "nodeLabel": "compat-nodeLabel",
+       "reason": "compat-reason",
+       "templateData": "compat-templateData"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"CreationIntent\"],\"props\":{\"createdAt\":\"<now>\",\"id\":\"compat-new-CreationIntent\",\"nodeLabel\":\"compat-nodeLabel\",\"reason\":\"compat-reason\",\"templateData\":\"compat-templateData\"}}",
+      "props": {
+       "changeType": "CREATE",
+       "impactLevel": "compat-impactLevel",
+       "reason": "compat-reason",
+       "templateData": "compat-templateData"
+      },
+      "start": "{\"labels\":[\"RequirementChange\"],\"props\":{\"changeSetId\":\"ChangeSet-1\",\"id\":\"RequirementChange-1\",\"name\":\"RequirementChange 1\",\"originalPrompt\":\"RequirementChange originalPrompt 1\",\"title\":\"RequirementChange 1\"}}",
+      "type": "EFFECT"
+     }
+    ]
+   },
+   "params": {
+    "change_id": "RequirementChange-1",
+    "impact_level": "compat-impactLevel",
+    "node_label": "compat-nodeLabel",
+    "placeholder_id": "compat-new-CreationIntent",
+    "reason": "compat-reason",
+    "template_json": "compat-templateData"
+   }
+  }
+ ]
+}

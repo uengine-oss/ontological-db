@@ -1,0 +1,218 @@
+{
+ "target": "v1",
+ "clients": {
+  "studio": {
+   "reads": 109,
+   "reads_ok": 103,
+   "steps": 61,
+   "steps_ok": 54,
+   "errors": {
+    "Neo.ClientError.Database.DatabaseNotFound": 1,
+    "Neo.ClientError.Statement.ArgumentError": 9,
+    "Neo.ClientError.Statement.SyntaxError": 2,
+    "Neo.ClientError.Statement.TypeError": 1
+   },
+   "failing": [
+    {
+     "id": "studio-128ddefabf",
+     "code": "Neo.ClientError.Statement.SyntaxError"
+    },
+    {
+     "id": "studio-3f1875650d",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "studio-app:backend/src/modules/ontology/from_tables.py"
+    },
+    {
+     "id": "studio-4cbca4cd74",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "studio-app:backend/src/modules/ontology/from_tables.py"
+    },
+    {
+     "id": "studio-4df72d6fbe",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "studio-app:backend/src/modules/ontology/from_tables.py"
+    },
+    {
+     "id": "studio-5f6b13ce1d",
+     "code": "Neo.ClientError.Statement.SyntaxError"
+    },
+    {
+     "id": "studio-688cc61f09",
+     "code": "Neo.ClientError.Statement.ArgumentError"
+    },
+    {
+     "id": "studio-69bc5b83d8",
+     "code": "Neo.ClientError.Statement.ArgumentError"
+    },
+    {
+     "id": "studio-ac655ff0e2",
+     "code": "Neo.ClientError.Statement.ArgumentError"
+    },
+    {
+     "id": "studio-ba9fe7c0a6",
+     "code": "Neo.ClientError.Statement.TypeError"
+    },
+    {
+     "id": "studio-cfa5dcc9df",
+     "code": "Neo.ClientError.Database.DatabaseNotFound",
+     "scenario": "studio-desktop:src/main/fabric-bridge.js"
+    },
+    {
+     "id": "studio-d07cbd376b",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "studio-desktop:src/main/index.js"
+    },
+    {
+     "id": "studio-db32913b5d",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "studio-desktop:src/main/fabric-bridge.js"
+    },
+    {
+     "id": "studio-fae3d57fb9",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "studio-app:backend/src/modules/ontology/from_tables.py"
+    }
+   ]
+  },
+  "robo": {
+   "reads": 482,
+   "reads_ok": 474,
+   "steps": 379,
+   "steps_ok": 369,
+   "errors": {
+    "Neo.ClientError.Statement.ArgumentError": 6,
+    "Neo.ClientError.Statement.SyntaxError": 3,
+    "Neo.ClientError.Statement.TypeError": 8,
+    "Neo.ClientError.Transaction.TransactionTimedOut": 1
+   },
+   "failing": [
+    {
+     "id": "robo-0852ecb31c",
+     "code": "Neo.ClientError.Transaction.TransactionTimedOut"
+    },
+    {
+     "id": "robo-09ee6818c9",
+     "code": "Neo.ClientError.Statement.TypeError"
+    },
+    {
+     "id": "robo-2bd05f6e8e",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "robo-architect-lite:api/features/constitution/services/constitution_store.py"
+    },
+    {
+     "id": "robo-35361b9172",
+     "code": "Neo.ClientError.Statement.TypeError",
+     "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/references.py"
+    },
+    {
+     "id": "robo-4446f3fa85",
+     "code": "Neo.ClientError.Statement.SyntaxError",
+     "scenario": "robo-architect-lite:api/features/model_modifier/model_change_application.py"
+    },
+    {
+     "id": "robo-60c34ec37e",
+     "code": "Neo.ClientError.Statement.TypeError"
+    },
+    {
+     "id": "robo-61eab118b3",
+     "code": "Neo.ClientError.Statement.TypeError"
+    },
+    {
+     "id": "robo-673fe3decf",
+     "code": "Neo.ClientError.Statement.TypeError"
+    },
+    {
+     "id": "robo-8acf564a11",
+     "code": "Neo.ClientError.Statement.SyntaxError",
+     "scenario": "robo-architect-lite:api/features/model_modifier/model_change_application.py"
+    },
+    {
+     "id": "robo-9591e64bde",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "robo-architect-lite:api/features/figma_binding/repository.py"
+    },
+    {
+     "id": "robo-95e12c25b9",
+     "code": "Neo.ClientError.Statement.TypeError"
+    },
+    {
+     "id": "robo-b75608d543",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "robo-architect-lite:api/features/ingestion/hybrid/ontology/neo4j_ops.py"
+    },
+    {
+     "id": "robo-bbcf0e8e6c",
+     "code": "Neo.ClientError.Statement.SyntaxError",
+     "scenario": "robo-architect-lite:api/features/requirement_changes/routes/changes_changeset.py"
+    },
+    {
+     "id": "robo-cffe04543e",
+     "code": "Neo.ClientError.Statement.TypeError",
+     "scenario": "robo-architect-lite:api/features/figma_binding/repository.py"
+    },
+    {
+     "id": "robo-d3dd86ca3d",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "robo-architect-lite:api/features/constitution/services/constitution_store.py"
+    },
+    {
+     "id": "robo-ddb626da80",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "robo-architect-lite:api/features/requirements/deletion_archive.py"
+    },
+    {
+     "id": "robo-ee0c9e847f",
+     "code": "Neo.ClientError.Statement.ArgumentError"
+    },
+    {
+     "id": "robo-f8ca28e0bf",
+     "code": "Neo.ClientError.Statement.TypeError"
+    }
+   ]
+  },
+  "analyzer": {
+   "reads": 61,
+   "reads_ok": 57,
+   "steps": 62,
+   "steps_ok": 59,
+   "errors": {
+    "Neo.ClientError.Statement.ArgumentError": 4,
+    "Neo.ClientError.Statement.SyntaxError": 2,
+    "Neo.ClientError.Statement.TypeError": 1
+   },
+   "failing": [
+    {
+     "id": "analyzer-04f40f550f",
+     "code": "Neo.ClientError.Statement.SyntaxError"
+    },
+    {
+     "id": "analyzer-060316a90f",
+     "code": "Neo.ClientError.Statement.SyntaxError",
+     "scenario": "robo-data-catalog:lineage/sql_extract.py"
+    },
+    {
+     "id": "analyzer-35d48a45d9",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "robo-data-analyzer:graph/nodes/column.py"
+    },
+    {
+     "id": "analyzer-6ea2a0f3b5",
+     "code": "Neo.ClientError.Statement.ArgumentError"
+    },
+    {
+     "id": "analyzer-a9667cec85",
+     "code": "Neo.ClientError.Statement.TypeError"
+    },
+    {
+     "id": "analyzer-bc3dee5fa4",
+     "code": "Neo.ClientError.Statement.ArgumentError",
+     "scenario": "robo-data-analyzer:graph/schema/constraints.py"
+    },
+    {
+     "id": "analyzer-c1de9c8d5d",
+     "code": "Neo.ClientError.Statement.ArgumentError"
+    }
+   ]
+  }
+ }
+}

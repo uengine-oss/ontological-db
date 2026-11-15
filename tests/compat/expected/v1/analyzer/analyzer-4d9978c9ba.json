@@ -1,0 +1,29 @@
+{
+ "id": "analyzer-4d9978c9ba",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "table_name",
+  "schema_name",
+  "columns"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "TABLE 1",
+   "TABLE schema 1",
+   [
+    {
+     "data_type": "COLUMN data_type 1",
+     "description": "",
+     "name": "COLUMN 1"
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "datasource": "TABLE datasource 1",
+  "owner": "analyzer"
+ }
+}

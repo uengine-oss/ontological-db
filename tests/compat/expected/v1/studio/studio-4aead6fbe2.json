@@ -1,0 +1,23 @@
+{
+ "id": "studio-4aead6fbe2",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "key",
+  "name",
+  "v",
+  "src",
+  "mname"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "cust-3",
+   "Acme Korea",
+   "B",
+   "crm",
+   "Acme"
+  ]
+ ]
+}

@@ -1,0 +1,33 @@
+{
+ "id": "robo-1966108281",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "e"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   {
+    "displayName": "Event 1",
+    "id": "Event-1",
+    "name": "Event 1"
+   }
+  ],
+  [
+   {
+    "displayName": "Event 2",
+    "id": "Event-2",
+    "name": "Event 2"
+   }
+  ],
+  [
+   {
+    "displayName": null,
+    "id": "<uuid1>",
+    "name": "OrderCancelled"
+   }
+  ]
+ ]
+}

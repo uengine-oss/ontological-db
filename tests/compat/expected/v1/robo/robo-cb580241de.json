@@ -1,0 +1,19 @@
+{
+ "id": "robo-cb580241de",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "bcId"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "<uuid1>",
+   "주문 취소",
+   "<uuid2>"
+  ]
+ ]
+}

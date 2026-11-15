@@ -1,0 +1,18 @@
+{
+ "id": "robo-a1bda54a39",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "mc"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Proposal memoryConflicts 1"
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

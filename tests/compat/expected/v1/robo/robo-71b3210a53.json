@@ -1,0 +1,20 @@
+{
+ "id": "robo-71b3210a53",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "ids"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   [
+    "Feature-1"
+   ]
+  ]
+ ],
+ "params": {
+  "id": "Feature-1"
+ }
+}

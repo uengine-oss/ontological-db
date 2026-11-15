@@ -1,0 +1,31 @@
+{
+ "id": "studio-850d1f78e1",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "a",
+  "class_name",
+  "schema_id"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "_OntologyBehavior"
+    ],
+    "props": {
+     "behavior_name": "set_grade",
+     "behavior_type": "action",
+     "class_name": "Customer",
+     "description": "change a grade",
+     "parameters": "[{\"name\": \"grade\"}]"
+    }
+   },
+   "Customer",
+   "schema-1"
+  ]
+ ]
+}

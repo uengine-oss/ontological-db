@@ -1,0 +1,34 @@
+{
+ "id": "robo-5005d68e86",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "change",
+  "effects"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "changeSetId": "ChangeSet-1",
+    "id": "RequirementChange-1",
+    "name": "RequirementChange 1",
+    "originalPrompt": "RequirementChange originalPrompt 1",
+    "title": "RequirementChange 1"
+   },
+   [
+    {
+     "impactLevel": null,
+     "nodeId": "CreationIntent-1",
+     "nodeLabel": "CreationIntent",
+     "nodeTitle": "CreationIntent 1",
+     "reason": null
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "id": "RequirementChange-1"
+ }
+}

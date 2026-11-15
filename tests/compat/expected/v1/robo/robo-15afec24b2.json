@@ -1,0 +1,18 @@
+{
+ "id": "robo-15afec24b2",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "cid"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Command-1"
+  ]
+ ],
+ "params": {
+  "tid": "BpmTask-1"
+ }
+}

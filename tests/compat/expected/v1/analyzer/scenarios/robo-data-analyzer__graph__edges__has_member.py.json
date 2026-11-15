@@ -1,0 +1,27 @@
+{
+ "scenario": "robo-data-analyzer:graph/edges/has_member.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-36224ba15a",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "items": [
+     {
+      "child_id": "FUNCTION-1",
+      "parent_id": "MODULE-1"
+     },
+     {
+      "child_id": "FUNCTION-2",
+      "parent_id": "MODULE-2"
+     }
+    ]
+   }
+  }
+ ]
+}

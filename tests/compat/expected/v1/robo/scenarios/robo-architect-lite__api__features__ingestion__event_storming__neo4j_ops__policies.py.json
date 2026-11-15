@@ -1,0 +1,220 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/policies.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-3f8f32e477",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     {
+      "description": "compat-description-1",
+      "displayName": "compat-display_name-1",
+      "id": "<uuid1>",
+      "key": "compat-new-Policy-1",
+      "name": "compat-name-1"
+     }
+    ],
+    [
+     {
+      "description": "compat-description-2",
+      "displayName": "compat-display_name-2",
+      "id": "<uuid2>",
+      "key": "compat-new-Policy-2",
+      "name": "compat-name-2"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 22,
+    "relationships_created": 6
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Policy"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description-1",
+       "displayName": "compat-display_name-1",
+       "id": "<uuid>",
+       "key": "compat-new-Policy-1",
+       "name": "compat-name-1",
+       "updatedAt": "<now>"
+      }
+     },
+     {
+      "labels": [
+       "Policy"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description-2",
+       "displayName": "compat-display_name-2",
+       "id": "<uuid>",
+       "key": "compat-new-Policy-2",
+       "name": "compat-name-2",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {
+       "isAsync": true
+      },
+      "start": "{\"labels\":[\"Policy\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description-1\",\"displayName\":\"compat-display_name-1\",\"id\":\"<uuid>\",\"key\":\"compat-new-Policy-1\",\"name\":\"compat-name-1\",\"updatedAt\":\"<now>\"}}",
+      "type": "INVOKES"
+     },
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 2\",\"aggregate_id\":\"Aggregate-2\",\"category\":\"Command category 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Command description 2\",\"displayName\":\"Command 2\",\"id\":\"Command-2\",\"inputSchema\":\"Command inputSchema 2\",\"key\":\"command-2\",\"name\":\"Command 2\",\"postconditions\":\"Command postconditions 2\",\"preconditions\":\"Command preconditions 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\"}}",
+      "props": {
+       "isAsync": true
+      },
+      "start": "{\"labels\":[\"Policy\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description-2\",\"displayName\":\"compat-display_name-2\",\"id\":\"<uuid>\",\"key\":\"compat-new-Policy-2\",\"name\":\"compat-name-2\",\"updatedAt\":\"<now>\"}}",
+      "type": "INVOKES"
+     },
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description-1\",\"displayName\":\"compat-display_name-1\",\"id\":\"<uuid>\",\"key\":\"compat-new-Policy-1\",\"name\":\"compat-name-1\",\"updatedAt\":\"<now>\"}}",
+      "props": {
+       "isEnabled": true,
+       "priority": 1
+      },
+      "start": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "type": "TRIGGERS"
+     },
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description-1\",\"displayName\":\"compat-display_name-1\",\"id\":\"<uuid>\",\"key\":\"compat-new-Policy-1\",\"name\":\"compat-name-1\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_POLICY"
+     },
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description-2\",\"displayName\":\"compat-display_name-2\",\"id\":\"<uuid>\",\"key\":\"compat-new-Policy-2\",\"name\":\"compat-name-2\",\"updatedAt\":\"<now>\"}}",
+      "props": {
+       "isEnabled": true,
+       "priority": 1
+      },
+      "start": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"Event description 2\",\"displayName\":\"Event 2\",\"hotspot\":false,\"id\":\"Event-2\",\"isBreaking\":false,\"key\":\"event-2\",\"name\":\"Event 2\",\"payload\":\"Event payload 2\",\"pivotal\":false,\"schema\":\"Event schema 2\",\"sequence\":20,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryId\":\"UserStory-1\",\"version\":\"1.0.0\"}}",
+      "type": "TRIGGERS"
+     },
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description-2\",\"displayName\":\"compat-display_name-2\",\"id\":\"<uuid>\",\"key\":\"compat-new-Policy-2\",\"name\":\"compat-name-2\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 2\",\"businessDecisions\":\"BoundedContext businessDecisions 2\",\"businessModel\":\"BoundedContext businessModel 2\",\"classification\":\"BoundedContext classification 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"BoundedContext description 2\",\"displayName\":\"BoundedContext 2\",\"domainRoles\":\"BoundedContext domainRoles 2\",\"domainType\":\"BoundedContext domainType 2\",\"evolution\":\"BoundedContext evolution 2\",\"id\":\"BoundedContext-2\",\"key\":\"boundedcontext-2\",\"name\":\"BoundedContext 2\",\"owner\":\"BoundedContext owner 2\",\"proposalSource\":\"BoundedContext proposalSource 2\",\"purpose\":\"BoundedContext purpose 2\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":20}}",
+      "type": "HAS_POLICY"
+     }
+    ]
+   },
+   "params": {
+    "rows": [
+     {
+      "bc_id": "BoundedContext-1",
+      "description": "compat-description-1",
+      "display_name": "compat-display_name-1",
+      "invoke_command_id": "Command-1",
+      "key": "compat-new-Policy-1",
+      "name": "compat-name-1",
+      "trigger_event_id": "Event-1"
+     },
+     {
+      "bc_id": "BoundedContext-2",
+      "description": "compat-description-2",
+      "display_name": "compat-display_name-2",
+      "invoke_command_id": "Command-2",
+      "key": "compat-new-Policy-2",
+      "name": "compat-name-2",
+      "trigger_event_id": "Event-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-3b4347589e",
+   "columns": [
+    "policy"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "description": "compat-description",
+      "displayName": "compat-displayName",
+      "id": "<uuid3>",
+      "key": "compat-new-Policy",
+      "name": "compat-name"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 11,
+    "relationships_created": 3
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Policy"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "displayName": "compat-displayName",
+       "id": "<uuid>",
+       "key": "compat-new-Policy",
+       "name": "compat-name",
+       "updatedAt": "<now>"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {
+       "isAsync": true
+      },
+      "start": "{\"labels\":[\"Policy\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"displayName\":\"compat-displayName\",\"id\":\"<uuid>\",\"key\":\"compat-new-Policy\",\"name\":\"compat-name\",\"updatedAt\":\"<now>\"}}",
+      "type": "INVOKES"
+     },
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"displayName\":\"compat-displayName\",\"id\":\"<uuid>\",\"key\":\"compat-new-Policy\",\"name\":\"compat-name\",\"updatedAt\":\"<now>\"}}",
+      "props": {
+       "isEnabled": true,
+       "priority": 1
+      },
+      "start": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "type": "TRIGGERS"
+     },
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"displayName\":\"compat-displayName\",\"id\":\"<uuid>\",\"key\":\"compat-new-Policy\",\"name\":\"compat-name\",\"updatedAt\":\"<now>\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_POLICY"
+     }
+    ]
+   },
+   "params": {
+    "bc_id": "BoundedContext-1",
+    "description": "compat-description",
+    "display_name": "compat-displayName",
+    "invoke_command_id": "Command-1",
+    "key": "compat-new-Policy",
+    "name": "compat-name",
+    "trigger_event_id": "Event-1"
+   }
+  }
+ ]
+}

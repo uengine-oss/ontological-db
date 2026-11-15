@@ -1,0 +1,50 @@
+{
+ "id": "robo-7f89697fd4",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "config"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "id": "CQRSConfig-1",
+    "operations": [
+     {
+      "id": "CQRSOperation-1",
+      "mappings": [
+       {
+        "id": "CQRSMapping-1",
+        "sourcePropertyId": "Property-1",
+        "sourcePropertyName": "Property 1",
+        "sourceType": "CQRSMapping sourceType 1",
+        "staticValue": "CQRSMapping staticValue 1",
+        "targetPropertyId": "Property-1",
+        "targetPropertyName": "Property 1"
+       }
+      ],
+      "operationType": "INSERT",
+      "triggerEventId": "Event-1",
+      "triggerEventName": "Event 1",
+      "whereConditions": [
+       {
+        "id": "CQRSWhere-1",
+        "operator": "CQRSWhere operator 1",
+        "sourceEventFieldId": "Property-1",
+        "sourceEventFieldName": "Property 1",
+        "targetPropertyId": "Property-1",
+        "targetPropertyName": "Property 1"
+       }
+      ]
+     }
+    ],
+    "readmodelId": "readmodelId-1"
+   }
+  ]
+ ],
+ "params": {
+  "readmodel_id": "ReadModel-1"
+ }
+}

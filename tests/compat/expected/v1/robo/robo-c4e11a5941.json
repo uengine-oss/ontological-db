@@ -1,0 +1,26 @@
+{
+ "id": "robo-c4e11a5941",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "sd",
+  "td",
+  "jny",
+  "history",
+  "status"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Proposal strategicDiff 1",
+   "Proposal tacticalDiff 1",
+   "Proposal journeys 1",
+   "[]",
+   "DESTROYED"
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

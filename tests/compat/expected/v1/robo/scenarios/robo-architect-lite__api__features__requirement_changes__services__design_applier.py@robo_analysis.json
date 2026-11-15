@@ -1,0 +1,70 @@
+{
+ "scenario": "robo-architect-lite:api/features/requirement_changes/services/design_applier.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-9d5d670bd3",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "cid": "RequirementChange-1",
+    "now": "2026-01-15T09:00:00Z",
+    "pid": "CreationIntent-1",
+    "real_id": "compat-appliedNodeId"
+   }
+  },
+  {
+   "id": "robo-d9bba26c64",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "at": "2026-01-15T09:00:00Z",
+    "cid": "RequirementChange-1",
+    "diff": "compat-diff",
+    "nid": "CreationIntent-1"
+   }
+  },
+  {
+   "id": "robo-27e36d3486",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {},
+   "params": {
+    "cid": "RequirementChange-1",
+    "nid": "CreationIntent-1"
+   }
+  },
+  {
+   "id": "robo-97feefea01",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {},
+   "params": {
+    "pid": "CreationIntent-1"
+   }
+  }
+ ]
+}

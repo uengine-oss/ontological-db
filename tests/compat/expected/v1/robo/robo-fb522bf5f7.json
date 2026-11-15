@@ -1,0 +1,28 @@
+{
+ "id": "robo-fb522bf5f7",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "bcId",
+  "bcKey",
+  "bcName",
+  "stories"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "<uuid1>",
+   "order",
+   "Order",
+   [
+    {
+     "action": "cancel my order",
+     "benefit": "I can get a refund if I change my mind",
+     "id": "US-001",
+     "role": "customer"
+    }
+   ]
+  ]
+ ]
+}

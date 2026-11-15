@@ -1,0 +1,87 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/workflow/phases/events_from_user_stories.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-53a5364bfd",
+   "columns": [
+    "event"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "description": "compat-description",
+      "displayName": "compat-displayName",
+      "id": "<uuid1>",
+      "key": "compat-key",
+      "name": "compat-name",
+      "sequence": 7,
+      "userStoryId": "compat-userStoryId"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 12
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Event"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "displayName": "compat-displayName",
+       "id": "<uuid>",
+       "isBreaking": false,
+       "key": "compat-key",
+       "name": "compat-name",
+       "sequence": 7,
+       "updatedAt": "<now>",
+       "userStoryId": "compat-userStoryId",
+       "version": "1.0.0"
+      }
+     }
+    ]
+   },
+   "params": {
+    "description": "compat-description",
+    "display_name": "compat-displayName",
+    "key": "compat-key",
+    "name": "compat-name",
+    "sequence": 7,
+    "user_story_id": "compat-userStoryId"
+   }
+  },
+  {
+   "id": "robo-24ea9efdc4",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"status\":\"approved\"}}",
+      "type": "HAS_EVENT"
+     }
+    ]
+   },
+   "params": {
+    "evt_id": "Event-1",
+    "us_id": "US-001"
+   }
+  }
+ ]
+}

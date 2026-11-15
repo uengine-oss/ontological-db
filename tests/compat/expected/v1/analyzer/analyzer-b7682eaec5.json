@@ -1,0 +1,39 @@
+{
+ "id": "analyzer-b7682eaec5",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "datasource",
+  "schema",
+  "name",
+  "table_type",
+  "columns"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "TABLE datasource 1",
+   "TABLE schema 1",
+   "TABLE 1",
+   "TABLE table_type 1",
+   [
+    {
+     "data_type": "COLUMN data_type 1",
+     "name": "COLUMN 1",
+     "nullable": true,
+     "primary_key": "COLUMN primary_key 1",
+     "unique": "COLUMN unique 1"
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "datasources": [
+   "TABLE datasource 1",
+   "TABLE datasource 2"
+  ],
+  "owner": "analyzer",
+  "schema": "TABLE schema 1"
+ }
+}

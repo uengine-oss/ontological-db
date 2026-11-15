@@ -1,0 +1,18 @@
+{
+ "id": "robo-5701bb40d4",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "description",
+  "rootEntity",
+  "invariants"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "id": "BoundedContext-1"
+ }
+}

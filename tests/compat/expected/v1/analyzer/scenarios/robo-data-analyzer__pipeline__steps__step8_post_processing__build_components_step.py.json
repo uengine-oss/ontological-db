@@ -1,0 +1,37 @@
+{
+ "scenario": "robo-data-analyzer:pipeline/steps/step8_post_processing/build_components_step.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-c8bc8cef20",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 4
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"EXAMPLE\"],\"props\":{\"component_id\":\"compat-component_id-1\",\"component_name\":\"compat-component_name-1\",\"given\":\"EXAMPLE given 1\",\"graph_owner\":\"analyzer\",\"id\":\"EXAMPLE-1\",\"name\":\"EXAMPLE 1\",\"then_\":\"EXAMPLE then_ 1\",\"when_\":\"EXAMPLE when_ 1\"}} <- {\"labels\":[\"EXAMPLE\"],\"props\":{\"given\":\"EXAMPLE given 1\",\"graph_owner\":\"analyzer\",\"id\":\"EXAMPLE-1\",\"name\":\"EXAMPLE 1\",\"then_\":\"EXAMPLE then_ 1\",\"when_\":\"EXAMPLE when_ 1\"}}",
+     "{\"labels\":[\"EXAMPLE\"],\"props\":{\"component_id\":\"compat-component_id-2\",\"component_name\":\"compat-component_name-2\",\"given\":\"EXAMPLE given 2\",\"graph_owner\":\"analyzer\",\"id\":\"EXAMPLE-2\",\"name\":\"EXAMPLE 2\",\"then_\":\"EXAMPLE then_ 2\",\"when_\":\"EXAMPLE when_ 2\"}} <- {\"labels\":[\"EXAMPLE\"],\"props\":{\"given\":\"EXAMPLE given 2\",\"graph_owner\":\"analyzer\",\"id\":\"EXAMPLE-2\",\"name\":\"EXAMPLE 2\",\"then_\":\"EXAMPLE then_ 2\",\"when_\":\"EXAMPLE when_ 2\"}}"
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "component_id": "compat-component_id-1",
+      "component_name": "compat-component_name-1",
+      "id": "EXAMPLE-1"
+     },
+     {
+      "component_id": "compat-component_id-2",
+      "component_name": "compat-component_name-2",
+      "id": "EXAMPLE-2"
+     }
+    ]
+   }
+  }
+ ]
+}

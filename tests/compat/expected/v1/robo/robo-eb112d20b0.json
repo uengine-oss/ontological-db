@@ -1,0 +1,22 @@
+{
+ "id": "robo-eb112d20b0",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "key",
+  "name"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Aggregate-1",
+   "aggregate-1",
+   "Aggregate 1"
+  ]
+ ],
+ "params": {
+  "id": "Aggregate-1"
+ }
+}

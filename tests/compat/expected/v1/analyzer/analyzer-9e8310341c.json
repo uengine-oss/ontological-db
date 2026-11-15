@@ -1,0 +1,29 @@
+{
+ "id": "analyzer-9e8310341c",
+ "graph": "analyzer_run",
+ "kind": "fabric-read",
+ "columns": [
+  "sampled",
+  "matched",
+  "ratio",
+  "parent_sampled",
+  "parent_distinct",
+  "parent_unique",
+  "parent_key",
+  "compare"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   2,
+   2,
+   1,
+   3,
+   3,
+   true,
+   true,
+   "typed"
+  ]
+ ]
+}

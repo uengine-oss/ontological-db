@@ -1,0 +1,94 @@
+{
+ "id": "robo-1d067a11e6",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "results"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   [
+    {
+     "bcId": "<uuid1>",
+     "bcName": "Order",
+     "nodeId": null,
+     "nodeType": "Aggregate"
+    },
+    {
+     "bcId": "<uuid1>",
+     "bcName": "Order",
+     "nodeId": null,
+     "nodeType": "Aggregate"
+    },
+    {
+     "bcId": "<uuid1>",
+     "bcName": "Order",
+     "nodeId": null,
+     "nodeType": "Aggregate"
+    },
+    {
+     "bcId": "<uuid1>",
+     "bcName": "Order",
+     "nodeId": null,
+     "nodeType": "Aggregate"
+    },
+    {
+     "bcId": "BoundedContext-1",
+     "bcName": "BoundedContext 1",
+     "nodeId": null,
+     "nodeType": "Aggregate"
+    },
+    {
+     "bcId": "BoundedContext-1",
+     "bcName": "BoundedContext 1",
+     "nodeId": null,
+     "nodeType": "Aggregate"
+    },
+    {
+     "bcId": "BoundedContext-1",
+     "bcName": "BoundedContext 1",
+     "nodeId": null,
+     "nodeType": "Aggregate"
+    },
+    {
+     "bcId": "BoundedContext-1",
+     "bcName": "BoundedContext 1",
+     "nodeId": null,
+     "nodeType": "Aggregate"
+    },
+    {
+     "bcId": "BoundedContext-2",
+     "bcName": "BoundedContext 2",
+     "nodeId": null,
+     "nodeType": "Aggregate"
+    },
+    {
+     "bcId": "BoundedContext-2",
+     "bcName": "BoundedContext 2",
+     "nodeId": null,
+     "nodeType": "Aggregate"
+    },
+    {
+     "bcId": "BoundedContext-2",
+     "bcName": "BoundedContext 2",
+     "nodeId": null,
+     "nodeType": "Aggregate"
+    },
+    {
+     "bcId": "BoundedContext-2",
+     "bcName": "BoundedContext 2",
+     "nodeId": null,
+     "nodeType": "Aggregate"
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "node_ids": [
+   "Aggregate-1",
+   "Aggregate-2"
+  ]
+ }
+}

@@ -1,0 +1,12 @@
+{
+ "id": "robo-f0bd5352d9",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "condition",
+  "effects"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": []
+}

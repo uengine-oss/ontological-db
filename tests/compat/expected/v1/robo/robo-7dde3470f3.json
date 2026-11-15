@@ -1,0 +1,20 @@
+{
+ "id": "robo-7dde3470f3",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "snapshot",
+  "restored"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "DeletionRecord snapshot 1",
+   false
+  ]
+ ],
+ "params": {
+  "b": "batchId-1"
+ }
+}

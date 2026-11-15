@@ -1,0 +1,30 @@
+{
+ "id": "studio-ef5a2d77ac",
+ "graph": "ontology",
+ "kind": "fabric-read",
+ "columns": [
+  "node",
+  "source",
+  "key",
+  "properties",
+  "storage"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "ErpPurchaseOrder",
+   "erp.purchase_order",
+   "po_id",
+   5,
+   "virtual"
+  ],
+  [
+   "ErpSupplier",
+   "erp.supplier",
+   "supplier_id",
+   4,
+   "virtual"
+  ]
+ ]
+}

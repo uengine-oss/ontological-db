@@ -1,0 +1,16 @@
+{
+ "id": "robo-1d3ee8021e",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "role",
+  "action",
+  "benefit"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "id": "Feature-1"
+ }
+}

@@ -1,0 +1,39 @@
+{
+ "id": "studio-9d15052460",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "schema_id",
+  "name",
+  "description",
+  "intent",
+  "golden_questions",
+  "golden_commands",
+  "format_version",
+  "published_at"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "schema-1",
+   "compat",
+   "compat corpus model",
+   "orders",
+   "[]",
+   null,
+   null,
+   null
+  ],
+  [
+   "schema-2",
+   "other",
+   "another model",
+   null,
+   null,
+   null,
+   null,
+   null
+  ]
+ ]
+}

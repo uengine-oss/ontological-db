@@ -1,0 +1,14 @@
+{
+ "id": "robo-dec0d174b7",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "evt"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "agg_id": "Aggregate-1"
+ }
+}

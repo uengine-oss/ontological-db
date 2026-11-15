@@ -1,0 +1,27 @@
+{
+ "id": "analyzer-0d01666842",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "from_datasource",
+  "from_schema",
+  "from_table",
+  "from_column",
+  "to_datasource",
+  "to_schema",
+  "to_table",
+  "to_column"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "catalog_owner": "analyzer",
+  "datasources": [
+   "TABLE datasource 1",
+   "TABLE datasource 2"
+  ],
+  "inferred": "",
+  "owner": "analyzer"
+ }
+}

@@ -1,0 +1,26 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/workflow/phases/user_story_sequencing.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-821856e125",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"sequence\":7,\"status\":\"approved\",\"updatedAt\":\"<now>\"}} <- {\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"status\":\"approved\"}}"
+    ]
+   },
+   "params": {
+    "id": "US-001",
+    "seq": 7
+   }
+  }
+ ]
+}

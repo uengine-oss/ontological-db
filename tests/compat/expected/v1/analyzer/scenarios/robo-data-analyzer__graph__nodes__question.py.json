@@ -1,0 +1,59 @@
+{
+ "scenario": "robo-data-analyzer:graph/nodes/question.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-9da393810f",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 10
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "QUESTION"
+      ],
+      "props": {
+       "graph_owner": "analyzer",
+       "id": "compat-new-QUESTION-1",
+       "reason": "compat-reason-1",
+       "text": "compat-text-1"
+      }
+     },
+     {
+      "labels": [
+       "QUESTION"
+      ],
+      "props": {
+       "graph_owner": "analyzer",
+       "id": "compat-new-QUESTION-2",
+       "reason": "compat-reason-2",
+       "text": "compat-text-2"
+      }
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "id": "compat-new-QUESTION-1",
+      "reason": "compat-reason-1",
+      "text": "compat-text-1"
+     },
+     {
+      "id": "compat-new-QUESTION-2",
+      "reason": "compat-reason-2",
+      "text": "compat-text-2"
+     }
+    ]
+   }
+  }
+ ]
+}

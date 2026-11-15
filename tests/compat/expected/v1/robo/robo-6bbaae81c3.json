@@ -1,0 +1,18 @@
+{
+ "id": "robo-6bbaae81c3",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "description"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Policy description 1"
+  ]
+ ],
+ "params": {
+  "policy_id": "Policy-1"
+ }
+}

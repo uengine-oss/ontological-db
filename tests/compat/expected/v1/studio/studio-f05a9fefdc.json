@@ -1,0 +1,14 @@
+{
+ "id": "studio-f05a9fefdc",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "n"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "t0": "Busan Parts"
+ }
+}

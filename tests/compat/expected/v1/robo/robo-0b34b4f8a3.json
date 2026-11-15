@@ -1,0 +1,20 @@
+{
+ "id": "robo-0b34b4f8a3",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "rid",
+  "holder"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "currentRunId-1",
+   "FigmaBinding currentRunHolder 1"
+  ]
+ ],
+ "params": {
+  "id": "FigmaBinding-1"
+ }
+}

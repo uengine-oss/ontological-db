@@ -1,0 +1,32 @@
+{
+ "id": "robo-eec79cd809",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "rule_id",
+  "title",
+  "source_function",
+  "source_rule_id",
+  "given",
+  "when",
+  "then",
+  "evidence_role"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Rule-1",
+   "Rule 1",
+   "Rule source_function 1",
+   "source_rule_id-1",
+   "Rule given 1",
+   "",
+   "",
+   "primary"
+  ]
+ ],
+ "params": {
+  "usid": "UserStory-1"
+ }
+}

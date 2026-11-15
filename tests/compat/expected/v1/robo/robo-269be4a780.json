@@ -1,0 +1,30 @@
+{
+ "id": "robo-269be4a780",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "bcName",
+  "evtId",
+  "evtName",
+  "evtDisplayName",
+  "evtDesc"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "BoundedContext 1",
+   "Event-1",
+   "Event 1",
+   "Event 1",
+   "Event description 1"
+  ],
+  [
+   "BoundedContext 2",
+   "Event-2",
+   "Event 2",
+   "Event 2",
+   "Event description 2"
+  ]
+ ]
+}

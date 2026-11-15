@@ -1,0 +1,21 @@
+{
+ "id": "analyzer-4843073e79",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "tj"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "GLOSSARY terms_json 1"
+  ],
+  [
+   "GLOSSARY terms_json 2"
+  ]
+ ],
+ "params": {
+  "graph_owner": "analyzer"
+ }
+}

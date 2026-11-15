@@ -1,0 +1,12 @@
+{
+ "id": "robo-ee0c9e847f",
+ "graph": "robo",
+ "kind": "read",
+ "error": {
+  "code": "Neo.ClientError.Statement.ArgumentError",
+  "message": "non-integer constant in GROUP BY"
+ },
+ "params": {
+  "bc_id": "BoundedContext-1"
+ }
+}

@@ -1,0 +1,22 @@
+{
+ "id": "robo-72aad92dce",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "key",
+  "invariants",
+  "migratedAt"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "aggregate-1",
+   "Aggregate invariants 1",
+   "2026-01-11T09:00:00Z"
+  ]
+ ],
+ "params": {
+  "id": "Aggregate-1"
+ }
+}

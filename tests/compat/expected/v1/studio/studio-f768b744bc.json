@@ -1,0 +1,27 @@
+{
+ "id": "studio-f768b744bc",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "name",
+  "f",
+  "t",
+  "d"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "ORDERED_FROM",
+   "PurchaseOrder",
+   "Supplier",
+   "vendor"
+  ],
+  [
+   "PLACED",
+   "Customer",
+   "PurchaseOrder",
+   "who ordered"
+  ]
+ ]
+}

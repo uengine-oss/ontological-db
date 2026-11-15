@@ -1,0 +1,59 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/hybrid/event_storming_bridge/promote_to_es.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-61304537c0",
+   "columns": [
+    "c"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "sid": "sess-1"
+   }
+  },
+  {
+   "id": "robo-759a7788aa",
+   "columns": [
+    "c"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "bid": "BoundedContext-1",
+    "sid": "sess-1"
+   }
+  },
+  {
+   "id": "robo-711325e339",
+   "columns": [
+    "c"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "sid": "sess-1"
+   }
+  }
+ ]
+}

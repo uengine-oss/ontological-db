@@ -1,0 +1,29 @@
+{
+ "id": "robo-caa3cc4136",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "elementId",
+  "kind",
+  "name",
+  "files"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "ReadModel-1",
+   null,
+   "ReadModel 1",
+   []
+  ]
+ ],
+ "params": {
+  "bc_id": "BoundedContext-1",
+  "element_labels": [
+   "compat-element_labels-a",
+   "compat-element_labels-b"
+  ],
+  "project_id": "<uuid1>"
+ }
+}

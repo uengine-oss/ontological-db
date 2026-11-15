@@ -1,0 +1,26 @@
+{
+ "id": "robo-cf300666b3",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "nodeId",
+  "labels",
+  "diff",
+  "ct"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Aggregate-1",
+   [
+    "Aggregate"
+   ],
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "pid": "Proposal-1"
+ }
+}

@@ -1,0 +1,144 @@
+{
+ "scenario": "robo-architect-lite:api/features/change_management/planning_agent/plan_apply.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-4d564748bd",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"bc_id\":\"BoundedContext-1\",\"condition\":\"Policy condition 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Policy description 1\",\"displayName\":\"Policy 1\",\"id\":\"Policy-1\",\"key\":\"policy-1\",\"kind\":\"cross_bc\",\"name\":\"Policy 1\",\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {
+       "isEnabled": true,
+       "priority": 1
+      },
+      "start": "{\"labels\":[\"Event\"],\"props\":{\"actor\":\"Event actor 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"hotspot\":true,\"id\":\"Event-1\",\"isBreaking\":false,\"key\":\"event-1\",\"name\":\"Event 1\",\"payload\":\"Event payload 1\",\"pivotal\":true,\"schema\":\"Event schema 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\",\"version\":\"1\"}}",
+      "type": "TRIGGERS"
+     }
+    ]
+   },
+   "params": {
+    "source_id": "Event-1",
+    "target_id": "Policy-1"
+   }
+  },
+  {
+   "id": "robo-42e7039ab4",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"aggregate_id\":\"Aggregate-1\",\"category\":\"Command category 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"key\":\"command-1\",\"name\":\"Command 1\",\"postconditions\":\"Command postconditions 1\",\"preconditions\":\"Command preconditions 1\",\"sequence\":10,\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "props": {
+       "isAsync": true
+      },
+      "start": "{\"labels\":[\"Policy\"],\"props\":{\"bc_id\":\"BoundedContext-1\",\"condition\":\"Policy condition 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Policy description 1\",\"displayName\":\"Policy 1\",\"id\":\"Policy-1\",\"key\":\"policy-1\",\"kind\":\"cross_bc\",\"name\":\"Policy 1\",\"session_id\":\"sess-1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}",
+      "type": "INVOKES"
+     }
+    ]
+   },
+   "params": {
+    "source_id": "Policy-1",
+    "target_id": "Command-1"
+   }
+  },
+  {
+   "id": "robo-1b503cd1c8",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 4,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Policy"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "description": "compat-description",
+       "id": "compat-new-Policy",
+       "name": "compat-name"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"createdAt\":\"<now>\",\"description\":\"compat-description\",\"id\":\"compat-new-Policy\",\"name\":\"compat-name\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_POLICY"
+     }
+    ]
+   },
+   "params": {
+    "bc_id": "BoundedContext-1",
+    "description": "compat-description",
+    "name": "compat-name",
+    "pol_id": "compat-new-Policy"
+   }
+  },
+  {
+   "id": "robo-23733f1d3c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 4
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"compat-action\",\"benefit\":\"compat-benefit\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"compat-role\",\"status\":\"approved\",\"updatedAt\":\"<now>\"}} <- {\"labels\":[\"UserStory\"],\"props\":{\"action\":\"cancel my order\",\"benefit\":\"I can get a refund if I change my mind\",\"id\":\"US-001\",\"priority\":\"high\",\"role\":\"customer\",\"status\":\"approved\"}}"
+    ]
+   },
+   "params": {
+    "action": "compat-action",
+    "benefit": "compat-benefit",
+    "role": "compat-role",
+    "us_id": "US-001"
+   }
+  },
+  {
+   "id": "robo-4dbf8b1afa",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"compat-name\",\"source\":\"llm\",\"updatedAt\":\"<now>\"}} <- {\"labels\":[\"Journey\"],\"props\":{\"boundedContextId\":\"<bc-uuid>\",\"createdAt\":\"<now>\",\"description\":\"신규 사용자가 약관 동의부터 가입 완료까지 진행하는 여정\",\"id\":\"<uuid>\",\"journeyId\":\"normal-signup-abc123\",\"key\":\"membership.journey.normal-signup-abc123\",\"name\":\"정상 회원가입\",\"source\":\"llm\",\"updatedAt\":\"<now>\"}}"
+    ]
+   },
+   "params": {
+    "name": "compat-name",
+    "node_id": "<uuid1>"
+   }
+  }
+ ]
+}

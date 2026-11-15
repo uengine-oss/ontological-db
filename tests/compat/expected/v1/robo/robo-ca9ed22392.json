@@ -1,0 +1,28 @@
+{
+ "id": "robo-ca9ed22392",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "ids"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   [
+    "<uuid1>",
+    "Aggregate-1",
+    "Command-1",
+    "Event-1",
+    "Policy-1",
+    "ReadModel-1"
+   ]
+  ]
+ ],
+ "params": {
+  "ids": [
+   "US-001",
+   "UserStory-1"
+  ]
+ }
+}

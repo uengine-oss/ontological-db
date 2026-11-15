@@ -1,0 +1,15 @@
+{
+ "id": "robo-c396d71cde",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "trigger_event_id",
+  "trigger_event_name"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "cmd_id": "Command-1"
+ }
+}

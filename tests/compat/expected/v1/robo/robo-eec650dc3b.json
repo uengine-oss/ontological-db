@@ -1,0 +1,29 @@
+{
+ "id": "robo-eec650dc3b",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "d"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "<uuid1>",
+   "Order",
+   "주문 생성, 수정, 취소 및 주문 상태 관리"
+  ],
+  [
+   "BoundedContext-1",
+   "BoundedContext 1",
+   "BoundedContext description 1"
+  ],
+  [
+   "BoundedContext-2",
+   "BoundedContext 2",
+   "BoundedContext description 2"
+  ]
+ ]
+}

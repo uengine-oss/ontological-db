@@ -1,0 +1,33 @@
+{
+ "id": "studio-f219e22cb2",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "class_name",
+  "datasource",
+  "source_schema",
+  "table_name",
+  "extra_tables",
+  "column_map"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "Customer",
+   "erp",
+   "compat_erp",
+   "customer",
+   "[]",
+   "[{\"column\": \"customer_id\", \"property\": \"customer_id\"}]"
+  ],
+  [
+   "Supplier",
+   "erp",
+   "compat_erp",
+   "supplier",
+   "[]",
+   "[{\"column\": \"supplier_id\", \"property\": \"supplier_id\"}, {\"column\": \"name\", \"property\": \"name\"}]"
+  ]
+ ]
+}

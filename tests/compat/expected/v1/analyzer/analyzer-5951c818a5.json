@@ -1,0 +1,30 @@
+{
+ "id": "analyzer-5951c818a5",
+ "graph": "analyzer_run",
+ "kind": "fabric-read",
+ "columns": [
+  "node",
+  "source",
+  "key",
+  "properties",
+  "storage"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "AnPurchaseOrder",
+   "erp.purchase_order",
+   "po_id",
+   5,
+   "virtual"
+  ],
+  [
+   "AnSupplier",
+   "erp.supplier",
+   "supplier_id",
+   4,
+   "virtual"
+  ]
+ ]
+}

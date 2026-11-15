@@ -1,0 +1,15 @@
+{
+ "id": "robo-95e12c25b9",
+ "graph": "robo",
+ "kind": "read",
+ "error": {
+  "code": "Neo.ClientError.Statement.TypeError",
+  "message": "COALESCE types text and boolean cannot be matched"
+ },
+ "params": {
+  "ids": [
+   "<uuid1>",
+   "parentId-1"
+  ]
+ }
+}

@@ -1,0 +1,20 @@
+{
+ "id": "robo-af3f58c8d0",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "name",
+  "sceneGraph"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "UI 1",
+   "UI sceneGraph 1"
+  ]
+ ],
+ "params": {
+  "uid": "UI-1"
+ }
+}

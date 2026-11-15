@@ -1,0 +1,55 @@
+{
+ "scenario": "robo-architect-lite:api/features/robo_spec/implementation_files.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-2ac252867a",
+   "columns": [
+    "filesNow"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "element_id": "ActivityMapping-1",
+    "element_labels": [
+     "compat-element_labels-a",
+     "compat-element_labels-b"
+    ],
+    "files": [
+     {
+      "path": "compat-path",
+      "role": "compat-role-1"
+     },
+     {
+      "path": "compat-path",
+      "role": "compat-role-2"
+     }
+    ],
+    "now": "2026-01-15T09:00:00Z",
+    "project_id": "compat-projectId"
+   }
+  },
+  {
+   "id": "robo-c8fd2f605e",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "element_id": "ActivityMapping-1",
+    "element_labels": [
+     "compat-element_labels-a",
+     "compat-element_labels-b"
+    ]
+   }
+  }
+ ]
+}

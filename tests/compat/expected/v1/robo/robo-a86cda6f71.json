@@ -1,0 +1,20 @@
+{
+ "id": "robo-a86cda6f71",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "summary",
+  "start_line",
+  "end_line",
+  "file_path",
+  "code_text"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "fid": "@n1"
+ }
+}

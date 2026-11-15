@@ -1,0 +1,19 @@
+{
+ "id": "studio-9b0f7a3e1d",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "name",
+  "description",
+  "behavior_type",
+  "parameters",
+  "certified"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "class_name": "Customer",
+  "schema_name": "compat"
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "id": "robo-0af256cc10",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "root"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "Proposal projectRoot 1"
+  ],
+  [
+   "Proposal projectRoot 2"
+  ]
+ ]
+}

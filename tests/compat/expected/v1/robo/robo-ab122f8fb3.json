@@ -1,0 +1,14 @@
+{
+ "id": "robo-ab122f8fb3",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "step"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "cmd_id": "Command-1"
+ }
+}

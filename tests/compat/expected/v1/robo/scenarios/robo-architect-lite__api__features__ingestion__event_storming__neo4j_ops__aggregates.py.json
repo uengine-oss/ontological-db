@@ -1,0 +1,207 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/event_storming/neo4j_ops/aggregates.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-b6d0c63b5b",
+   "columns": [
+    "result"
+   ],
+   "row_order": "sorted",
+   "row_count": 2,
+   "rows": [
+    [
+     {
+      "displayName": "compat-display_name-1",
+      "enumerations": "compat-enumerations_json-1",
+      "id": "<uuid1>",
+      "invariants": "compat-invariants-1",
+      "key": "compat-new-Aggregate-1",
+      "name": "compat-name-1",
+      "rootEntity": "compat-root_entity-1",
+      "valueObjects": "compat-value_objects_json-1"
+     }
+    ],
+    [
+     {
+      "displayName": "compat-display_name-2",
+      "enumerations": "compat-enumerations_json-2",
+      "id": "<uuid2>",
+      "invariants": "compat-invariants-2",
+      "key": "compat-new-Aggregate-2",
+      "name": "compat-name-2",
+      "rootEntity": "compat-root_entity-2",
+      "valueObjects": "compat-value_objects_json-2"
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 24,
+    "relationships_created": 2
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Aggregate"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "displayName": "compat-display_name-1",
+       "enumerations": "compat-enumerations_json-1",
+       "id": "<uuid>",
+       "invariants": "compat-invariants-1",
+       "key": "compat-new-Aggregate-1",
+       "name": "compat-name-1",
+       "rootEntity": "compat-root_entity-1",
+       "updatedAt": "<now>",
+       "valueObjects": "compat-value_objects_json-1"
+      }
+     },
+     {
+      "labels": [
+       "Aggregate"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "displayName": "compat-display_name-2",
+       "enumerations": "compat-enumerations_json-2",
+       "id": "<uuid>",
+       "invariants": "compat-invariants-2",
+       "key": "compat-new-Aggregate-2",
+       "name": "compat-name-2",
+       "rootEntity": "compat-root_entity-2",
+       "updatedAt": "<now>",
+       "valueObjects": "compat-value_objects_json-2"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Aggregate\"],\"props\":{\"createdAt\":\"<now>\",\"displayName\":\"compat-display_name-1\",\"enumerations\":\"compat-enumerations_json-1\",\"id\":\"<uuid>\",\"invariants\":\"compat-invariants-1\",\"key\":\"compat-new-Aggregate-1\",\"name\":\"compat-name-1\",\"rootEntity\":\"compat-root_entity-1\",\"updatedAt\":\"<now>\",\"valueObjects\":\"compat-value_objects_json-1\"}}",
+      "props": {
+       "isPrimary": false
+      },
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_AGGREGATE"
+     },
+     {
+      "end": "{\"labels\":[\"Aggregate\"],\"props\":{\"createdAt\":\"<now>\",\"displayName\":\"compat-display_name-2\",\"enumerations\":\"compat-enumerations_json-2\",\"id\":\"<uuid>\",\"invariants\":\"compat-invariants-2\",\"key\":\"compat-new-Aggregate-2\",\"name\":\"compat-name-2\",\"rootEntity\":\"compat-root_entity-2\",\"updatedAt\":\"<now>\",\"valueObjects\":\"compat-value_objects_json-2\"}}",
+      "props": {
+       "isPrimary": false
+      },
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 2\",\"businessDecisions\":\"BoundedContext businessDecisions 2\",\"businessModel\":\"BoundedContext businessModel 2\",\"classification\":\"BoundedContext classification 2\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"BoundedContext description 2\",\"displayName\":\"BoundedContext 2\",\"domainRoles\":\"BoundedContext domainRoles 2\",\"domainType\":\"BoundedContext domainType 2\",\"evolution\":\"BoundedContext evolution 2\",\"id\":\"BoundedContext-2\",\"key\":\"boundedcontext-2\",\"name\":\"BoundedContext 2\",\"owner\":\"BoundedContext owner 2\",\"proposalSource\":\"BoundedContext proposalSource 2\",\"purpose\":\"BoundedContext purpose 2\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":20}}",
+      "type": "HAS_AGGREGATE"
+     }
+    ]
+   },
+   "params": {
+    "rows": [
+     {
+      "bc_id": "BoundedContext-1",
+      "display_name": "compat-display_name-1",
+      "enumerations_json": "compat-enumerations_json-1",
+      "invariants": "compat-invariants-1",
+      "key": "compat-new-Aggregate-1",
+      "name": "compat-name-1",
+      "root_entity": "compat-root_entity-1",
+      "value_objects_json": "compat-value_objects_json-1"
+     },
+     {
+      "bc_id": "BoundedContext-2",
+      "display_name": "compat-display_name-2",
+      "enumerations_json": "compat-enumerations_json-2",
+      "invariants": "compat-invariants-2",
+      "key": "compat-new-Aggregate-2",
+      "name": "compat-name-2",
+      "root_entity": "compat-root_entity-2",
+      "value_objects_json": "compat-value_objects_json-2"
+     }
+    ]
+   }
+  },
+  {
+   "id": "robo-10235a81d6",
+   "columns": [
+    "aggregate"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 12,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Aggregate"
+      ],
+      "props": {
+       "createdAt": "<now>",
+       "displayName": "compat-displayName",
+       "enumerations": "compat-enumerations",
+       "id": "<uuid>",
+       "invariants": "compat-invariants",
+       "key": "compat-new-Aggregate",
+       "name": "compat-name",
+       "rootEntity": "compat-rootEntity",
+       "updatedAt": "<now>",
+       "valueObjects": "compat-valueObjects"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Aggregate\"],\"props\":{\"createdAt\":\"<now>\",\"displayName\":\"compat-displayName\",\"enumerations\":\"compat-enumerations\",\"id\":\"<uuid>\",\"invariants\":\"compat-invariants\",\"key\":\"compat-new-Aggregate\",\"name\":\"compat-name\",\"rootEntity\":\"compat-rootEntity\",\"updatedAt\":\"<now>\",\"valueObjects\":\"compat-valueObjects\"}}",
+      "props": {
+       "isPrimary": false
+      },
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"assumptions\":\"BoundedContext assumptions 1\",\"businessDecisions\":\"BoundedContext businessDecisions 1\",\"businessModel\":\"BoundedContext businessModel 1\",\"classification\":\"BoundedContext classification 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"domainRoles\":\"BoundedContext domainRoles 1\",\"domainType\":\"BoundedContext domainType 1\",\"evolution\":\"BoundedContext evolution 1\",\"id\":\"BoundedContext-1\",\"key\":\"boundedcontext-1\",\"name\":\"BoundedContext 1\",\"owner\":\"BoundedContext owner 1\",\"proposalSource\":\"BoundedContext proposalSource 1\",\"purpose\":\"BoundedContext purpose 1\",\"session_id\":\"sess-1\",\"ubiquitousLanguage\":\"BoundedContext ubiquitousLanguage 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryIds\":[\"US-001\",\"UserStory-1\"],\"version\":10}}",
+      "type": "HAS_AGGREGATE"
+     }
+    ]
+   },
+   "params": {
+    "bc_id": "BoundedContext-1",
+    "display_name": "compat-displayName",
+    "enumerations_json": "compat-enumerations",
+    "invariants": "compat-invariants",
+    "key": "compat-new-Aggregate",
+    "name": "compat-name",
+    "root_entity": "compat-rootEntity",
+    "value_objects_json": "compat-valueObjects"
+   }
+  },
+  {
+   "id": "robo-f09e813c12",
+   "columns": [
+    "aggregate"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"compat-enumerations\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"<now>\",\"valueObjects\":\"compat-valueObjects\",\"version\":10}} <- {\"labels\":[\"Aggregate\"],\"props\":{\"correctivePolicies\":\"Aggregate correctivePolicies 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"Aggregate description 1\",\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"exceptions\":\"Aggregate exceptions 1\",\"fieldDescriptors\":\"Aggregate fieldDescriptors 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"invariantsMigratedAt\":\"2026-01-11T09:00:00Z\",\"key\":\"aggregate-1\",\"name\":\"Aggregate 1\",\"proposalSource\":\"Aggregate proposalSource 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"session_id\":\"sess-1\",\"stateTransitions\":\"Aggregate stateTransitions 1\",\"throughput\":\"Aggregate throughput 1\",\"title\":\"Aggregate 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"valueObjects\":\"Aggregate valueObjects 1\",\"version\":10}}"
+    ]
+   },
+   "params": {
+    "aggregate_id": "Aggregate-1",
+    "enumerations_json": "compat-enumerations",
+    "value_objects_json": "compat-valueObjects"
+   }
+  }
+ ]
+}

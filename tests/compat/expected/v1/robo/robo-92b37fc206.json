@@ -1,0 +1,16 @@
+{
+ "id": "robo-92b37fc206",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "tkey": "Aggregate 1",
+  "tprop": "Property 1"
+ }
+}

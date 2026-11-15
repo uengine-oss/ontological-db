@@ -1,0 +1,33 @@
+{
+ "id": "robo-730c43fadf",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "displayName",
+  "sceneGraph",
+  "figmaSyncStatus"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 3,
+ "rows": [
+  [
+   "<uuid1>",
+   "CancelOrder UI",
+   null,
+   null
+  ],
+  [
+   "UI-1",
+   "UI 1",
+   "UI sceneGraph 1",
+   "ok"
+  ],
+  [
+   "UI-2",
+   "UI 2",
+   "UI sceneGraph 2",
+   "failed"
+  ]
+ ]
+}

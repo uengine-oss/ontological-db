@@ -1,0 +1,104 @@
+{
+ "scenario": "robo-architect-lite:api/features/invariants/neo4j_ops.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-e247117740",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "cid": "Command-1",
+    "iid": "Invariant-1"
+   }
+  },
+  {
+   "id": "robo-59f8f1765b",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 1,
+    "relationships_deleted": 3
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "GWT"
+      ],
+      "props": {
+       "createdAt": "2026-01-11T09:00:00Z",
+       "givenRef": "GWT givenRef 1",
+       "id": "GWT-1",
+       "name": "GWT 1",
+       "parentId": "parentId-1",
+       "parentType": "GWT parentType 1",
+       "testCases": "[]",
+       "thenRef": "GWT thenRef 1",
+       "updatedAt": "2026-01-11T09:00:00Z",
+       "whenRef": "GWT whenRef 1"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"GWT\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"givenRef\":\"GWT givenRef 1\",\"id\":\"GWT-1\",\"name\":\"GWT 1\",\"parentId\":\"parentId-1\",\"parentType\":\"GWT parentType 1\",\"testCases\":\"[]\",\"thenRef\":\"GWT thenRef 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"whenRef\":\"GWT whenRef 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"category\":\"Command category 1\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"name\":\"Command 1\"}}",
+      "type": "HAS_GWT"
+     },
+     {
+      "end": "{\"labels\":[\"GWT\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"givenRef\":\"GWT givenRef 1\",\"id\":\"GWT-1\",\"name\":\"GWT 1\",\"parentId\":\"parentId-1\",\"parentType\":\"GWT parentType 1\",\"testCases\":\"[]\",\"thenRef\":\"GWT thenRef 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"whenRef\":\"GWT whenRef 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Invariant\"],\"props\":{\"declaration\":\"Invariant declaration 1\",\"id\":\"Invariant-1\",\"name\":\"Invariant 1\",\"seq\":10}}",
+      "type": "HAS_GWT"
+     },
+     {
+      "end": "{\"labels\":[\"GWT\"],\"props\":{\"createdAt\":\"2026-01-11T09:00:00Z\",\"givenRef\":\"GWT givenRef 1\",\"id\":\"GWT-1\",\"name\":\"GWT 1\",\"parentId\":\"parentId-1\",\"parentType\":\"GWT parentType 1\",\"testCases\":\"[]\",\"thenRef\":\"GWT thenRef 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"whenRef\":\"GWT whenRef 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Policy\"],\"props\":{\"description\":\"Policy description 1\",\"displayName\":\"Policy 1\",\"id\":\"Policy-1\",\"name\":\"Policy 1\"}}",
+      "type": "HAS_GWT"
+     }
+    ]
+   },
+   "params": {
+    "id": "Invariant-1"
+   }
+  },
+  {
+   "id": "robo-6e4cd85a5b",
+   "columns": [
+    "removed"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     1
+    ]
+   ],
+   "counters": {
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"category\":\"Command category 1\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"name\":\"Command 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Invariant\"],\"props\":{\"declaration\":\"Invariant declaration 1\",\"id\":\"Invariant-1\",\"name\":\"Invariant 1\",\"seq\":10}}",
+      "type": "VERIFIED_BY"
+     }
+    ]
+   },
+   "params": {
+    "cid": "Command-1",
+    "iid": "Invariant-1"
+   }
+  }
+ ]
+}

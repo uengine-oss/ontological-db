@@ -1,0 +1,14 @@
+{
+ "id": "robo-aae2999de4",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "aggregate"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "bc_id": "BoundedContext-1"
+ }
+}

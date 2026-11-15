@@ -1,0 +1,52 @@
+{
+ "id": "robo-89d19c2323",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "nodes",
+  "relationships"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   [
+    {
+     "attachedToId": null,
+     "attachedToName": null,
+     "attachedToType": null,
+     "description": "",
+     "id": "ActivityMapping-1",
+     "isForeignKey": null,
+     "isKey": null,
+     "isRequired": null,
+     "name": "ActivityMapping 1",
+     "parentId": null,
+     "parentType": null,
+     "type": "ActivityMapping"
+    },
+    {
+     "attachedToId": null,
+     "attachedToName": null,
+     "attachedToType": null,
+     "description": "",
+     "id": "ActivityMapping-2",
+     "isForeignKey": null,
+     "isKey": null,
+     "isRequired": null,
+     "name": "ActivityMapping 2",
+     "parentId": null,
+     "parentType": null,
+     "type": "ActivityMapping"
+    }
+   ],
+   []
+  ]
+ ],
+ "params": {
+  "seed_ids": [
+   "ActivityMapping-1",
+   "ActivityMapping-2"
+  ]
+ }
+}

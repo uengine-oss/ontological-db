@@ -1,0 +1,15 @@
+{
+ "id": "robo-8a6abad706",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "pol",
+  "cmd"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "node_id": "Event-1"
+ }
+}

@@ -1,0 +1,60 @@
+{
+ "scenario": "robo-architect-lite:api/features/requirements/routes/user_story_crud.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-85cc7d53a7",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_deleted": 6
+   },
+   "effect": {
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Aggregate\"],\"props\":{\"displayName\":\"Aggregate 1\",\"enumerations\":\"Aggregate enumerations 1\",\"id\":\"Aggregate-1\",\"invariants\":\"Aggregate invariants 1\",\"name\":\"Aggregate 1\",\"rootEntity\":\"Aggregate rootEntity 1\",\"valueObjects\":\"Aggregate valueObjects 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"displayName\":\"UserStory 1\",\"id\":\"UserStory-1\",\"name\":\"UserStory 1\",\"role\":\"UserStory role 1\",\"session_id\":\"sess-1\",\"sourceUnitId\":\"sourceUnitId-1\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"BoundedContext\"],\"props\":{\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"id\":\"BoundedContext-1\",\"name\":\"BoundedContext 1\",\"session_id\":\"sess-1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"displayName\":\"UserStory 1\",\"id\":\"UserStory-1\",\"name\":\"UserStory 1\",\"role\":\"UserStory role 1\",\"session_id\":\"sess-1\",\"sourceUnitId\":\"sourceUnitId-1\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"category\":\"Command category 1\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"name\":\"Command 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"displayName\":\"UserStory 1\",\"id\":\"UserStory-1\",\"name\":\"UserStory 1\",\"role\":\"UserStory role 1\",\"session_id\":\"sess-1\",\"sourceUnitId\":\"sourceUnitId-1\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"id\":\"Event-1\",\"name\":\"Event 1\",\"schema\":\"Event schema 1\",\"version\":10}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"displayName\":\"UserStory 1\",\"id\":\"UserStory-1\",\"name\":\"UserStory 1\",\"role\":\"UserStory role 1\",\"session_id\":\"sess-1\",\"sourceUnitId\":\"sourceUnitId-1\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"Policy\"],\"props\":{\"description\":\"Policy description 1\",\"displayName\":\"Policy 1\",\"id\":\"Policy-1\",\"name\":\"Policy 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"displayName\":\"UserStory 1\",\"id\":\"UserStory-1\",\"name\":\"UserStory 1\",\"role\":\"UserStory role 1\",\"session_id\":\"sess-1\",\"sourceUnitId\":\"sourceUnitId-1\"}}",
+      "type": "IMPLEMENTS"
+     },
+     {
+      "end": "{\"labels\":[\"ReadModel\"],\"props\":{\"actor\":\"ReadModel actor 1\",\"description\":\"ReadModel description 1\",\"displayName\":\"ReadModel 1\",\"id\":\"ReadModel-1\",\"isMultipleResult\":true,\"name\":\"ReadModel 1\",\"provisioningType\":\"ReadModel provisioningType 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"UserStory\"],\"props\":{\"action\":\"UserStory action 1\",\"benefit\":\"UserStory benefit 1\",\"displayName\":\"UserStory 1\",\"id\":\"UserStory-1\",\"name\":\"UserStory 1\",\"role\":\"UserStory role 1\",\"session_id\":\"sess-1\",\"sourceUnitId\":\"sourceUnitId-1\"}}",
+      "type": "IMPLEMENTS"
+     }
+    ]
+   },
+   "params": {
+    "usid": "UserStory-1"
+   }
+  }
+ ]
+}

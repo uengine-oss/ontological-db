@@ -1,0 +1,30 @@
+{
+ "id": "analyzer-51fc0500c4",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "eid",
+  "tb"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "@n1",
+   [
+    {
+     "rel": null,
+     "t": null
+    }
+   ]
+  ]
+ ],
+ "params": {
+  "graph_owner": "analyzer",
+  "id": "COLUMN-1",
+  "rels": [
+   "compat-rels-a",
+   "compat-rels-b"
+  ]
+ }
+}

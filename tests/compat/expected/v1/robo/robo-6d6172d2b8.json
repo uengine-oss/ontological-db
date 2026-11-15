@@ -1,0 +1,49 @@
+{
+ "id": "robo-6d6172d2b8",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "description",
+  "st",
+  "inv",
+  "commands",
+  "events"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "<uuid1>",
+   "Order",
+   null,
+   null,
+   "[\"주문 총액은 0보다 커야 함\", \"배송 시작 후에는 취소 불가\"]",
+   [
+    "CancelOrder"
+   ],
+   [
+    "OrderCancelled"
+   ]
+  ],
+  [
+   "Aggregate-1",
+   "Aggregate 1",
+   "Aggregate description 1",
+   "Aggregate stateTransitions 1",
+   "Aggregate invariants 1",
+   [],
+   []
+  ],
+  [
+   "Aggregate-2",
+   "Aggregate 2",
+   "Aggregate description 2",
+   "Aggregate stateTransitions 2",
+   "Aggregate invariants 2",
+   [],
+   []
+  ]
+ ]
+}

@@ -1,0 +1,18 @@
+{
+ "id": "robo-80dd44ea84",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "prompt"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "반품 기간을 7일에서 14일로 변경"
+  ]
+ ],
+ "params": {
+  "id": "CHG-001"
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "id": "robo-eb7ea7a399",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Invariant-1"
+  ]
+ ],
+ "params": {
+  "id": "Invariant-1"
+ }
+}

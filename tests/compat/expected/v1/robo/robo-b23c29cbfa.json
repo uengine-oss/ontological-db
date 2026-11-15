@@ -1,0 +1,15 @@
+{
+ "id": "robo-b23c29cbfa",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "fn",
+  "summary"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "fn_names": []
+ }
+}

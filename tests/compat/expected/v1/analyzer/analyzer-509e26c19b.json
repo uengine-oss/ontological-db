@@ -1,0 +1,12 @@
+{
+ "id": "analyzer-509e26c19b",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "dim",
+  "c"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 0,
+ "rows": []
+}

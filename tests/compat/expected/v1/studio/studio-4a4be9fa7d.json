@@ -1,0 +1,29 @@
+{
+ "id": "studio-4a4be9fa7d",
+ "graph": "ontology",
+ "kind": "fabric-read",
+ "columns": [
+  "graph",
+  "types"
+ ],
+ "row_order": "sorted",
+ "row_count": 4,
+ "rows": [
+  [
+   "analyzer_run",
+   22
+  ],
+  [
+   "ontology",
+   35
+  ],
+  [
+   "robo",
+   97
+  ],
+  [
+   "robo_analysis",
+   66
+  ]
+ ]
+}

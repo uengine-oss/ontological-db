@@ -1,0 +1,24 @@
+{
+ "id": "analyzer-266c7d346b",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "id"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "COLUMN-1"
+  ],
+  [
+   "COLUMN-2"
+  ]
+ ],
+ "params": {
+  "ids": [
+   "COLUMN-1",
+   "COLUMN-2"
+  ]
+ }
+}

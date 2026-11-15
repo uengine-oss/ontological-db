@@ -1,0 +1,41 @@
+{
+ "scenario": "robo-data-analyzer:graph/edges/reads_writes.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-6ffc7ad738",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "items": [
+     {
+      "dml_type": "compat-dml_type-1",
+      "dml_types": "compat-dml_types-1",
+      "evidence_file": "compat-evidence_file-1",
+      "evidence_files": "compat-evidence_files-1",
+      "evidence_line": "compat-evidence_line-1",
+      "evidence_lines": "compat-evidence_lines-1",
+      "evidence_locations": "compat-evidence_locations-1",
+      "source_id": null,
+      "target_id": "TABLE-1"
+     },
+     {
+      "dml_type": "compat-dml_type-2",
+      "dml_types": "compat-dml_types-2",
+      "evidence_file": "compat-evidence_file-2",
+      "evidence_files": "compat-evidence_files-2",
+      "evidence_line": "compat-evidence_line-2",
+      "evidence_lines": "compat-evidence_lines-2",
+      "evidence_locations": "compat-evidence_locations-2",
+      "source_id": null,
+      "target_id": "TABLE-2"
+     }
+    ]
+   }
+  }
+ ]
+}

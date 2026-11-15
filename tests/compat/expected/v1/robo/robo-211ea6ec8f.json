@@ -1,0 +1,27 @@
+{
+ "id": "robo-211ea6ec8f",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "gwt"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   {
+    "givenRef": "GWT givenRef 1",
+    "id": "GWT-1",
+    "parentId": "parentId-1",
+    "parentType": "GWT parentType 1",
+    "testCases": "[]",
+    "thenRef": "GWT thenRef 1",
+    "whenRef": "GWT whenRef 1"
+   }
+  ]
+ ],
+ "params": {
+  "parent_id": "parentId-1",
+  "parent_type": "GWT parentType 1"
+ }
+}

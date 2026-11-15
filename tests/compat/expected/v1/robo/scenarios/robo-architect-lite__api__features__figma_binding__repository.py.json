@@ -1,0 +1,641 @@
+{
+ "scenario": "robo-architect-lite:api/features/figma_binding/repository.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-13ff4f827b",
+   "columns": [
+    "b"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "~node": "@n1",
+      "labels": [
+       "FigmaBinding"
+      ],
+      "props": {
+       "connectedAt": "2026-01-15T09:00:00Z",
+       "connectedBy": "compat-connectedBy",
+       "figmaFileKey": "compat-figmaFileKey",
+       "figmaFileName": "compat-figmaFileName",
+       "id": "compat-new-FigmaBinding",
+       "status": "active"
+      }
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 7
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "FigmaBinding"
+      ],
+      "props": {
+       "connectedAt": "2026-01-15T09:00:00Z",
+       "connectedBy": "compat-connectedBy",
+       "figmaFileKey": "compat-figmaFileKey",
+       "figmaFileName": "compat-figmaFileName",
+       "id": "compat-new-FigmaBinding",
+       "status": "active"
+      }
+     }
+    ]
+   },
+   "params": {
+    "connected_by": "compat-connectedBy",
+    "file_key": "compat-figmaFileKey",
+    "file_name": "compat-figmaFileName",
+    "id": "compat-new-FigmaBinding",
+    "now": "2026-01-15T09:00:00Z"
+   }
+  },
+  {
+   "id": "robo-26512ab7e3",
+   "columns": [
+    "m"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "~node": "@n2",
+      "labels": [
+       "StoryboardPageMapping"
+      ],
+      "props": {
+       "commandId": "compat-commandId",
+       "figmaPageId": "compat-figmaPageId",
+       "figmaPageName": "compat-figmaPageName",
+       "id": "compat-id",
+       "status": "active"
+      }
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 6,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "StoryboardPageMapping"
+      ],
+      "props": {
+       "commandId": "compat-commandId",
+       "figmaPageId": "compat-figmaPageId",
+       "figmaPageName": "compat-figmaPageName",
+       "id": "compat-id",
+       "status": "active"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"StoryboardPageMapping\"],\"props\":{\"commandId\":\"compat-commandId\",\"figmaPageId\":\"compat-figmaPageId\",\"figmaPageName\":\"compat-figmaPageName\",\"id\":\"compat-id\",\"status\":\"active\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"FigmaBinding\"],\"props\":{\"connectedAt\":\"2026-01-11T09:00:00Z\",\"connectedBy\":\"FigmaBinding connectedBy 1\",\"currentRunHolder\":\"FigmaBinding currentRunHolder 1\",\"currentRunId\":\"currentRunId-1\",\"figmaFileKey\":\"FigmaBinding figmaFileKey 1\",\"figmaFileName\":\"FigmaBinding figmaFileName 1\",\"id\":\"FigmaBinding-1\",\"lastSyncAt\":\"2026-01-11T09:00:00Z\",\"name\":\"FigmaBinding 1\",\"status\":\"active\"}}",
+      "type": "MAPS_STORYBOARD"
+     }
+    ]
+   },
+   "params": {
+    "bid": "FigmaBinding-1",
+    "cid": "compat-commandId",
+    "newid": "compat-id",
+    "page_id": "compat-figmaPageId",
+    "page_name": "compat-figmaPageName"
+   }
+  },
+  {
+   "id": "robo-8b773b3468",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 6,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "BindingHistoryEvent"
+      ],
+      "props": {
+       "actor": "compat-actor",
+       "at": "compat-at",
+       "eventType": "compat-eventType",
+       "figmaFileKey": "compat-figmaFileKey",
+       "id": "compat-new-BindingHistoryEvent",
+       "payload": "compat-payload"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"FigmaBinding\"],\"props\":{\"connectedAt\":\"2026-01-11T09:00:00Z\",\"connectedBy\":\"FigmaBinding connectedBy 1\",\"currentRunHolder\":\"FigmaBinding currentRunHolder 1\",\"currentRunId\":\"currentRunId-1\",\"figmaFileKey\":\"FigmaBinding figmaFileKey 1\",\"figmaFileName\":\"FigmaBinding figmaFileName 1\",\"id\":\"FigmaBinding-1\",\"lastSyncAt\":\"2026-01-11T09:00:00Z\",\"name\":\"FigmaBinding 1\",\"status\":\"active\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"BindingHistoryEvent\"],\"props\":{\"actor\":\"compat-actor\",\"at\":\"compat-at\",\"eventType\":\"compat-eventType\",\"figmaFileKey\":\"compat-figmaFileKey\",\"id\":\"compat-new-BindingHistoryEvent\",\"payload\":\"compat-payload\"}}",
+      "type": "LOGGED"
+     }
+    ]
+   },
+   "params": {
+    "actor": "compat-actor",
+    "bid": "FigmaBinding-1",
+    "eid": "compat-new-BindingHistoryEvent",
+    "etype": "compat-eventType",
+    "fk": "compat-figmaFileKey",
+    "now": "compat-at",
+    "payload": "compat-payload"
+   }
+  },
+  {
+   "id": "robo-9591e64bde",
+   "error": {
+    "code": "Neo.ClientError.Statement.ArgumentError",
+    "message": "duplicate key value violates unique constraint \"uq_51_binding_history_event_id_unique\""
+   },
+   "params": {
+    "actor": "compat-actor",
+    "eid": "compat-new-BindingHistoryEvent",
+    "etype": "compat-eventType",
+    "fk": "compat-figmaFileKey",
+    "now": "compat-at",
+    "payload": "compat-payload"
+   }
+  },
+  {
+   "id": "robo-ea72d18c0d",
+   "columns": [
+    "r"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "~node": "@n3",
+      "labels": [
+       "SyncRun"
+      ],
+      "props": {
+       "actor": "compat-actor",
+       "bindingFileKey": "compat-bindingFileKey",
+       "id": "compat-new-SyncRun",
+       "kind": "compat-kind",
+       "startedAt": "2026-01-15T09:00:00Z",
+       "status": "running"
+      }
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 8,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "SyncRun"
+      ],
+      "props": {
+       "actor": "compat-actor",
+       "bindingFileKey": "compat-bindingFileKey",
+       "id": "compat-new-SyncRun",
+       "kind": "compat-kind",
+       "startedAt": "2026-01-15T09:00:00Z",
+       "status": "running"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"FigmaBinding\"],\"props\":{\"connectedAt\":\"2026-01-11T09:00:00Z\",\"connectedBy\":\"FigmaBinding connectedBy 1\",\"currentRunHolder\":\"FigmaBinding currentRunHolder 1\",\"currentRunId\":\"currentRunId-1\",\"figmaFileKey\":\"FigmaBinding figmaFileKey 1\",\"figmaFileName\":\"FigmaBinding figmaFileName 1\",\"id\":\"FigmaBinding-1\",\"lastSyncAt\":\"2026-01-11T09:00:00Z\",\"name\":\"FigmaBinding 1\",\"status\":\"active\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"SyncRun\"],\"props\":{\"actor\":\"compat-actor\",\"bindingFileKey\":\"compat-bindingFileKey\",\"id\":\"compat-new-SyncRun\",\"kind\":\"compat-kind\",\"startedAt\":\"2026-01-15T09:00:00Z\",\"status\":\"running\"}}",
+      "type": "RUN_OF"
+     }
+    ]
+   },
+   "params": {
+    "actor": "compat-actor",
+    "bid": "FigmaBinding-1",
+    "fk": "compat-bindingFileKey",
+    "kind": "compat-kind",
+    "now": "2026-01-15T09:00:00Z",
+    "rid": "compat-new-SyncRun"
+   }
+  },
+  {
+   "id": "robo-23f966d3bf",
+   "columns": [
+    "c"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "~node": "@n4",
+      "labels": [
+       "FigmaComponent"
+      ],
+      "props": {
+       "bindingFileKey": "compat-bindingFileKey",
+       "figmaKey": "compat-figmaKey",
+       "figmaNodeId": "compat-figmaNodeId",
+       "figmaNodeLastModified": "compat-figmaNodeLastModified",
+       "heightPx": "compat-heightPx",
+       "id": "compat-id",
+       "name": "compat-name",
+       "pageName": "compat-pageName",
+       "scannedAt": "2026-01-15T09:00:00Z",
+       "vlmDescription": "compat-vlmDescription",
+       "widthPx": "compat-widthPx"
+      }
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 11,
+    "relationships_created": 1
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "FigmaComponent"
+      ],
+      "props": {
+       "bindingFileKey": "compat-bindingFileKey",
+       "figmaKey": "compat-figmaKey",
+       "figmaNodeId": "compat-figmaNodeId",
+       "figmaNodeLastModified": "compat-figmaNodeLastModified",
+       "heightPx": "compat-heightPx",
+       "id": "compat-id",
+       "name": "compat-name",
+       "pageName": "compat-pageName",
+       "scannedAt": "2026-01-15T09:00:00Z",
+       "vlmDescription": "compat-vlmDescription",
+       "widthPx": "compat-widthPx"
+      }
+     }
+    ],
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"FigmaComponent\"],\"props\":{\"bindingFileKey\":\"compat-bindingFileKey\",\"figmaKey\":\"compat-figmaKey\",\"figmaNodeId\":\"compat-figmaNodeId\",\"figmaNodeLastModified\":\"compat-figmaNodeLastModified\",\"heightPx\":\"compat-heightPx\",\"id\":\"compat-id\",\"name\":\"compat-name\",\"pageName\":\"compat-pageName\",\"scannedAt\":\"2026-01-15T09:00:00Z\",\"vlmDescription\":\"compat-vlmDescription\",\"widthPx\":\"compat-widthPx\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"FigmaBinding\"],\"props\":{\"connectedAt\":\"2026-01-11T09:00:00Z\",\"connectedBy\":\"FigmaBinding connectedBy 1\",\"currentRunHolder\":\"FigmaBinding currentRunHolder 1\",\"currentRunId\":\"currentRunId-1\",\"figmaFileKey\":\"FigmaBinding figmaFileKey 1\",\"figmaFileName\":\"FigmaBinding figmaFileName 1\",\"id\":\"FigmaBinding-1\",\"lastSyncAt\":\"2026-01-11T09:00:00Z\",\"name\":\"FigmaBinding 1\",\"status\":\"active\"}}",
+      "type": "HAS_COMPONENT"
+     }
+    ]
+   },
+   "params": {
+    "bid": "FigmaBinding-1",
+    "desc": "compat-vlmDescription",
+    "fk": "compat-bindingFileKey",
+    "fkey": "compat-figmaKey",
+    "h": "compat-heightPx",
+    "last_mod": "compat-figmaNodeLastModified",
+    "name": "compat-name",
+    "newid": "compat-id",
+    "nid": "compat-figmaNodeId",
+    "now": "2026-01-15T09:00:00Z",
+    "page_name": "compat-pageName",
+    "w": "compat-widthPx"
+   }
+  },
+  {
+   "id": "robo-e0a91f1334",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"FigmaBinding\"],\"props\":{\"connectedAt\":\"2026-01-11T09:00:00Z\",\"connectedBy\":\"FigmaBinding connectedBy 1\",\"currentRunHolder\":\"FigmaBinding currentRunHolder 1\",\"currentRunId\":\"currentRunId-1\",\"figmaFileKey\":\"FigmaBinding figmaFileKey 1\",\"figmaFileName\":\"FigmaBinding figmaFileName 1\",\"id\":\"FigmaBinding-1\",\"lastSyncAt\":\"2026-01-11T09:00:00Z\",\"name\":\"FigmaBinding 1\",\"status\":\"compat-status\"}} <- {\"labels\":[\"FigmaBinding\"],\"props\":{\"connectedAt\":\"2026-01-11T09:00:00Z\",\"connectedBy\":\"FigmaBinding connectedBy 1\",\"currentRunHolder\":\"FigmaBinding currentRunHolder 1\",\"currentRunId\":\"currentRunId-1\",\"figmaFileKey\":\"FigmaBinding figmaFileKey 1\",\"figmaFileName\":\"FigmaBinding figmaFileName 1\",\"id\":\"FigmaBinding-1\",\"lastSyncAt\":\"2026-01-11T09:00:00Z\",\"name\":\"FigmaBinding 1\",\"status\":\"active\"}}"
+    ]
+   },
+   "params": {
+    "id": "FigmaBinding-1",
+    "status": "compat-status"
+   }
+  },
+  {
+   "id": "robo-51825a69a0",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"FigmaBinding\"],\"props\":{\"connectedAt\":\"2026-01-11T09:00:00Z\",\"connectedBy\":\"FigmaBinding connectedBy 1\",\"currentRunHolder\":\"FigmaBinding currentRunHolder 1\",\"currentRunId\":\"currentRunId-1\",\"figmaFileKey\":\"FigmaBinding figmaFileKey 1\",\"figmaFileName\":\"FigmaBinding figmaFileName 1\",\"id\":\"FigmaBinding-1\",\"lastSyncAt\":\"2026-01-15T09:00:00Z\",\"name\":\"FigmaBinding 1\",\"status\":\"compat-status\"}} <- {\"labels\":[\"FigmaBinding\"],\"props\":{\"connectedAt\":\"2026-01-11T09:00:00Z\",\"connectedBy\":\"FigmaBinding connectedBy 1\",\"currentRunHolder\":\"FigmaBinding currentRunHolder 1\",\"currentRunId\":\"currentRunId-1\",\"figmaFileKey\":\"FigmaBinding figmaFileKey 1\",\"figmaFileName\":\"FigmaBinding figmaFileName 1\",\"id\":\"FigmaBinding-1\",\"lastSyncAt\":\"2026-01-11T09:00:00Z\",\"name\":\"FigmaBinding 1\",\"status\":\"compat-status\"}}"
+    ]
+   },
+   "params": {
+    "id": "FigmaBinding-1",
+    "now": "2026-01-15T09:00:00Z"
+   }
+  },
+  {
+   "id": "robo-512810199d",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"StoryboardPageMapping\"],\"props\":{\"commandId\":\"Command-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaPageName\":\"compat-figmaPageName\",\"id\":\"StoryboardPageMapping-1\",\"lastRenameAt\":\"2026-01-15T09:00:00Z\",\"name\":\"StoryboardPageMapping 1\",\"status\":\"active\"}} <- {\"labels\":[\"StoryboardPageMapping\"],\"props\":{\"commandId\":\"Command-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaPageName\":\"StoryboardPageMapping figmaPageName 1\",\"id\":\"StoryboardPageMapping-1\",\"lastRenameAt\":\"2026-01-11T09:00:00Z\",\"name\":\"StoryboardPageMapping 1\",\"status\":\"active\"}}"
+    ]
+   },
+   "params": {
+    "cid": "Command-1",
+    "new_name": "compat-figmaPageName",
+    "now": "2026-01-15T09:00:00Z"
+   }
+  },
+  {
+   "id": "robo-8e61dcfea2",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"StoryboardPageMapping\"],\"props\":{\"commandId\":\"Command-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaPageName\":\"compat-figmaPageName\",\"id\":\"StoryboardPageMapping-1\",\"lastRenameAt\":\"2026-01-15T09:00:00Z\",\"name\":\"StoryboardPageMapping 1\",\"status\":\"archived\"}} <- {\"labels\":[\"StoryboardPageMapping\"],\"props\":{\"commandId\":\"Command-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaPageName\":\"compat-figmaPageName\",\"id\":\"StoryboardPageMapping-1\",\"lastRenameAt\":\"2026-01-15T09:00:00Z\",\"name\":\"StoryboardPageMapping 1\",\"status\":\"active\"}}"
+    ]
+   },
+   "params": {
+    "cid": "Command-1"
+   }
+  },
+  {
+   "id": "robo-43267e1160",
+   "columns": [
+    "n"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     1
+    ]
+   ],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"StoryboardPageMapping\"],\"props\":{\"commandId\":\"compat-commandId\",\"figmaPageId\":\"compat-figmaPageId\",\"figmaPageName\":\"compat-figmaPageName\",\"id\":\"compat-id\",\"status\":\"archived\"}} <- {\"labels\":[\"StoryboardPageMapping\"],\"props\":{\"commandId\":\"compat-commandId\",\"figmaPageId\":\"compat-figmaPageId\",\"figmaPageName\":\"compat-figmaPageName\",\"id\":\"compat-id\",\"status\":\"active\"}}"
+    ]
+   }
+  },
+  {
+   "id": "robo-a6acfb19c2",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 5
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"compat-figmaNodeId\",\"figmaPageId\":\"compat-figmaPageId\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"<now>\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}} <- {\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaPageId\":\"figmaPageId-1\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"2026-01-11T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 1\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}"
+    ]
+   },
+   "params": {
+    "node_id": "compat-figmaNodeId",
+    "page_id": "compat-figmaPageId",
+    "uid": "UI-1"
+   }
+  },
+  {
+   "id": "robo-3566d2ca82",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"compat-figmaNodeId\",\"figmaPageId\":\"compat-figmaPageId\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"<now>\",\"figmaSyncLastError\":\"compat-figmaSyncLastError\",\"figmaSyncStatus\":\"failed\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}} <- {\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"compat-figmaNodeId\",\"figmaPageId\":\"compat-figmaPageId\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"<now>\",\"figmaSyncStatus\":\"ok\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}"
+    ]
+   },
+   "params": {
+    "err": "compat-figmaSyncLastError",
+    "uid": "UI-1"
+   }
+  },
+  {
+   "id": "robo-568b0fafc9",
+   "columns": [
+    "n"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     2
+    ]
+   ],
+   "counters": {
+    "properties_set": 6
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"compat-figmaNodeId\",\"figmaPageId\":\"compat-figmaPageId\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}} <- {\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"compat-figmaNodeId\",\"figmaPageId\":\"compat-figmaPageId\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"figmaSyncLastAttemptAt\":\"<now>\",\"figmaSyncLastError\":\"compat-figmaSyncLastError\",\"figmaSyncStatus\":\"failed\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}",
+     "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 2\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 2\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"UI description 2\",\"designSource\":\"html\",\"displayName\":\"UI 2\",\"figmaFileKey\":\"UI figmaFileKey 2\",\"figmaNodeId\":\"figmaNodeId-2\",\"figmaPageId\":\"figmaPageId-2\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 2\",\"id\":\"UI-2\",\"key\":\"ui-2\",\"name\":\"UI 2\",\"proposalSource\":\"UI proposalSource 2\",\"sceneGraph\":\"UI sceneGraph 2\",\"sequence\":20,\"template\":\"UI template 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryId\":\"UserStory-1\"}} <- {\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 2\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 2\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-12T09:00:00Z\",\"description\":\"UI description 2\",\"designSource\":\"html\",\"displayName\":\"UI 2\",\"figmaFileKey\":\"UI figmaFileKey 2\",\"figmaNodeId\":\"figmaNodeId-2\",\"figmaPageId\":\"figmaPageId-2\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 2\",\"figmaSyncLastAttemptAt\":\"2026-01-12T09:00:00Z\",\"figmaSyncLastError\":\"UI figmaSyncLastError 2\",\"figmaSyncStatus\":\"failed\",\"id\":\"UI-2\",\"key\":\"ui-2\",\"name\":\"UI 2\",\"proposalSource\":\"UI proposalSource 2\",\"sceneGraph\":\"UI sceneGraph 2\",\"sequence\":20,\"template\":\"UI template 2\",\"updatedAt\":\"2026-01-12T09:00:00Z\",\"userStoryId\":\"UserStory-1\"}}"
+    ]
+   }
+  },
+  {
+   "id": "robo-43bfda07d5",
+   "columns": [
+    "rid"
+   ],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "actor": "compat-currentRunHolder",
+    "id": "FigmaBinding-1",
+    "rid": "compat-currentRunId"
+   }
+  },
+  {
+   "id": "robo-e77f5bd890",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"FigmaBinding\"],\"props\":{\"connectedAt\":\"2026-01-11T09:00:00Z\",\"connectedBy\":\"FigmaBinding connectedBy 1\",\"figmaFileKey\":\"FigmaBinding figmaFileKey 1\",\"figmaFileName\":\"FigmaBinding figmaFileName 1\",\"id\":\"FigmaBinding-1\",\"lastSyncAt\":\"2026-01-15T09:00:00Z\",\"name\":\"FigmaBinding 1\",\"status\":\"compat-status\"}} <- {\"labels\":[\"FigmaBinding\"],\"props\":{\"connectedAt\":\"2026-01-11T09:00:00Z\",\"connectedBy\":\"FigmaBinding connectedBy 1\",\"currentRunHolder\":\"FigmaBinding currentRunHolder 1\",\"currentRunId\":\"currentRunId-1\",\"figmaFileKey\":\"FigmaBinding figmaFileKey 1\",\"figmaFileName\":\"FigmaBinding figmaFileName 1\",\"id\":\"FigmaBinding-1\",\"lastSyncAt\":\"2026-01-15T09:00:00Z\",\"name\":\"FigmaBinding 1\",\"status\":\"compat-status\"}}"
+    ]
+   },
+   "params": {
+    "id": "FigmaBinding-1",
+    "rid": "currentRunId-1"
+   }
+  },
+  {
+   "id": "robo-221ebacbac",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"SyncRun\"],\"props\":{\"actor\":\"SyncRun actor 1\",\"bindingFileKey\":\"SyncRun bindingFileKey 1\",\"finishedAt\":\"2026-01-15T09:00:00Z\",\"id\":\"SyncRun-1\",\"kind\":\"SyncRun kind 1\",\"name\":\"SyncRun 1\",\"startedAt\":\"2026-01-11T09:00:00Z\",\"status\":\"compat-status\",\"summary\":\"compat-summary\"}} <- {\"labels\":[\"SyncRun\"],\"props\":{\"actor\":\"SyncRun actor 1\",\"bindingFileKey\":\"SyncRun bindingFileKey 1\",\"finishedAt\":\"2026-01-11T09:00:00Z\",\"id\":\"SyncRun-1\",\"kind\":\"SyncRun kind 1\",\"name\":\"SyncRun 1\",\"startedAt\":\"2026-01-11T09:00:00Z\",\"status\":\"running\",\"summary\":\"SyncRun summary 1\"}}"
+    ]
+   },
+   "params": {
+    "now": "2026-01-15T09:00:00Z",
+    "rid": "SyncRun-1",
+    "status": "compat-status",
+    "summary": "compat-summary"
+   }
+  },
+  {
+   "id": "robo-cffe04543e",
+   "error": {
+    "code": "Neo.ClientError.Statement.TypeError",
+    "message": "invalid input syntax for type double precision: \"compat-m\""
+   },
+   "params": {
+    "m": "compat-m"
+   }
+  },
+  {
+   "id": "robo-de0e41c95d",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"compat-figmaNodeId\",\"figmaPageId\":\"compat-figmaPageId\",\"figmaSyncBindingFileKey\":\"compat-figmaSyncBindingFileKey\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}} <- {\"labels\":[\"UI\"],\"props\":{\"actor\":\"UI actor 1\",\"attachedToId\":\"\",\"attachedToName\":\"UI attachedToName 1\",\"attachedToType\":\"\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"description\":\"UI description 1\",\"designSource\":\"backend\",\"displayName\":\"UI 1\",\"figmaFileKey\":\"UI figmaFileKey 1\",\"figmaNodeId\":\"compat-figmaNodeId\",\"figmaPageId\":\"compat-figmaPageId\",\"figmaSyncBindingFileKey\":\"UI figmaSyncBindingFileKey 1\",\"id\":\"UI-1\",\"key\":\"ui-1\",\"name\":\"UI 1\",\"proposalSource\":\"UI proposalSource 1\",\"sceneGraph\":\"UI sceneGraph 1\",\"sequence\":10,\"template\":\"UI template 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\",\"userStoryId\":\"US-001\"}}"
+    ]
+   },
+   "params": {
+    "fk": "compat-figmaSyncBindingFileKey",
+    "uid": "UI-1"
+   }
+  },
+  {
+   "id": "robo-177d62dc45",
+   "columns": [
+    "n"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     1
+    ]
+   ],
+   "counters": {
+    "nodes_deleted": 1,
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "FigmaComponent"
+      ],
+      "props": {
+       "bindingFileKey": "FigmaComponent bindingFileKey 1",
+       "figmaKey": "FigmaComponent figmaKey 1",
+       "figmaNodeId": "figmaNodeId-1",
+       "figmaNodeLastModified": "FigmaComponent figmaNodeLastModified 1",
+       "heightPx": "FigmaComponent heightPx 1",
+       "id": "FigmaComponent-1",
+       "name": "FigmaComponent 1",
+       "pageName": "FigmaComponent pageName 1",
+       "scannedAt": "2026-01-11T09:00:00Z",
+       "vlmDescription": "FigmaComponent vlmDescription 1",
+       "widthPx": "FigmaComponent widthPx 1"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"FigmaComponent\"],\"props\":{\"bindingFileKey\":\"FigmaComponent bindingFileKey 1\",\"figmaKey\":\"FigmaComponent figmaKey 1\",\"figmaNodeId\":\"figmaNodeId-1\",\"figmaNodeLastModified\":\"FigmaComponent figmaNodeLastModified 1\",\"heightPx\":\"FigmaComponent heightPx 1\",\"id\":\"FigmaComponent-1\",\"name\":\"FigmaComponent 1\",\"pageName\":\"FigmaComponent pageName 1\",\"scannedAt\":\"2026-01-11T09:00:00Z\",\"vlmDescription\":\"FigmaComponent vlmDescription 1\",\"widthPx\":\"FigmaComponent widthPx 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"FigmaBinding\"],\"props\":{\"connectedAt\":\"2026-01-11T09:00:00Z\",\"connectedBy\":\"FigmaBinding connectedBy 1\",\"figmaFileKey\":\"FigmaBinding figmaFileKey 1\",\"figmaFileName\":\"FigmaBinding figmaFileName 1\",\"id\":\"FigmaBinding-1\",\"lastSyncAt\":\"2026-01-15T09:00:00Z\",\"name\":\"FigmaBinding 1\",\"status\":\"compat-status\"}}",
+      "type": "HAS_COMPONENT"
+     }
+    ]
+   },
+   "params": {
+    "fk": "FigmaComponent bindingFileKey 1"
+   }
+  },
+  {
+   "id": "robo-f13810fcfd",
+   "columns": [
+    "n"
+   ],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "effect": {},
+   "params": {
+    "fk": "FigmaComponent bindingFileKey 2",
+    "kept": [
+     "compat-figmaNodeId",
+     "figmaNodeId-2"
+    ]
+   }
+  }
+ ]
+}

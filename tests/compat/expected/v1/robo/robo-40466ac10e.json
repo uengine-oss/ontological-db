@@ -1,0 +1,53 @@
+{
+ "id": "robo-40466ac10e",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "r"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "SyncRun"
+    ],
+    "props": {
+     "actor": "SyncRun actor 2",
+     "bindingFileKey": "SyncRun bindingFileKey 2",
+     "finishedAt": "2026-01-12T09:00:00Z",
+     "id": "SyncRun-2",
+     "kind": "SyncRun kind 2",
+     "name": "SyncRun 2",
+     "startedAt": "2026-01-12T09:00:00Z",
+     "status": "aborted-binding-unreachable",
+     "summary": "SyncRun summary 2"
+    }
+   }
+  ],
+  [
+   {
+    "~node": "@n2",
+    "labels": [
+     "SyncRun"
+    ],
+    "props": {
+     "actor": "SyncRun actor 1",
+     "bindingFileKey": "SyncRun bindingFileKey 1",
+     "finishedAt": "2026-01-11T09:00:00Z",
+     "id": "SyncRun-1",
+     "kind": "SyncRun kind 1",
+     "name": "SyncRun 1",
+     "startedAt": "2026-01-11T09:00:00Z",
+     "status": "running",
+     "summary": "SyncRun summary 1"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "lim": 10
+ }
+}

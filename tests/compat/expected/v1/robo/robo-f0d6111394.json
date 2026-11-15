@@ -1,0 +1,20 @@
+{
+ "id": "robo-f0d6111394",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "mode",
+  "conf"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Proposal decompositionMode 1",
+   "Proposal odaConformance 1"
+  ]
+ ],
+ "params": {
+  "id": "Proposal-1"
+ }
+}

@@ -1,0 +1,32 @@
+{
+ "id": "robo-b773c4f102",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "trigger_event_ids_all",
+  "trigger_event_names_all",
+  "cmd_ids_all",
+  "cmd_names_all",
+  "target_evt_ids_all",
+  "target_evt_names_all",
+  "agg_ids_all",
+  "agg_names_all"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   [],
+   [],
+   [],
+   [],
+   [],
+   [],
+   [],
+   []
+  ]
+ ],
+ "params": {
+  "policy_id": "Policy-1"
+ }
+}

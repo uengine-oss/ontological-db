@@ -1,0 +1,18 @@
+{
+ "id": "robo-ff4e7a38e9",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "isKey"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "true"
+  ]
+ ],
+ "params": {
+  "target_id": "Property-1"
+ }
+}

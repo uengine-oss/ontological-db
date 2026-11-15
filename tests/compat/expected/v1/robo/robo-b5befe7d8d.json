@@ -1,0 +1,22 @@
+{
+ "id": "robo-b5befe7d8d",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "total_tasks",
+  "mapped_tasks",
+  "zero_rule_tasks"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   2,
+   2,
+   0
+  ]
+ ],
+ "params": {
+  "sid": "sess-1"
+ }
+}

@@ -1,0 +1,32 @@
+{
+ "id": "analyzer-25633efcc8",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "name",
+  "table_name",
+  "data_type",
+  "nullable",
+  "logical_name",
+  "description",
+  "summary"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "COLUMN 1",
+   "TABLE 1",
+   "COLUMN data_type 1",
+   true,
+   "COLUMN logical_name 1",
+   "",
+   "COLUMN summary 1"
+  ]
+ ],
+ "params": {
+  "owner": "analyzer",
+  "schema": "TABLE schema 1",
+  "table_name": "TABLE 1"
+ }
+}

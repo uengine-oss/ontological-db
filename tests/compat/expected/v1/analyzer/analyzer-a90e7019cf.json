@@ -1,0 +1,18 @@
+{
+ "id": "analyzer-a90e7019cf",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "relation",
+  "direction"
+ ],
+ "row_order": "sorted",
+ "row_count": 0,
+ "rows": [],
+ "params": {
+  "graph_owner": "analyzer",
+  "id": "COLUMN-1"
+ }
+}

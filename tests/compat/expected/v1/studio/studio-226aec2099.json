@@ -1,0 +1,24 @@
+{
+ "id": "studio-226aec2099",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "key",
+  "name",
+  "source_system"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "cust-3",
+   "Acme Korea",
+   "erp"
+  ]
+ ],
+ "params": {
+  "skip": [
+   "SAME_AS"
+  ]
+ }
+}

@@ -1,0 +1,30 @@
+{
+ "id": "studio-02a757505d",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "document_id",
+  "chunk_ref",
+  "source_page"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   null,
+   null,
+   null
+  ],
+  [
+   null,
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "target_node_ids": [
+   "@n1",
+   "@n2"
+  ]
+ }
+}

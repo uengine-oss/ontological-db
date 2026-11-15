@@ -1,0 +1,47 @@
+{
+ "id": "robo-6718d0e4e7",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "classification",
+  "domainType",
+  "version",
+  "aggregates"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "BoundedContext-1",
+   "BoundedContext 1",
+   "BoundedContext classification 1",
+   "BoundedContext domainType 1",
+   10,
+   []
+  ],
+  [
+   "BoundedContext-2",
+   "BoundedContext 2",
+   "BoundedContext classification 2",
+   "BoundedContext domainType 2",
+   20,
+   []
+  ],
+  [
+   "<uuid1>",
+   "Order",
+   "core",
+   null,
+   0,
+   [
+    {
+     "id": "<uuid2>",
+     "name": "Order",
+     "version": 0
+    }
+   ]
+  ]
+ ]
+}

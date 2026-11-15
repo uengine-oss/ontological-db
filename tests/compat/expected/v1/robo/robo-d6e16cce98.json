@@ -1,0 +1,15 @@
+{
+ "id": "robo-d6e16cce98",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "name": "Aggregate 1"
+ }
+}

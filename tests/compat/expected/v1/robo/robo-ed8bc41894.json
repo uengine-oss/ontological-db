@@ -1,0 +1,24 @@
+{
+ "id": "robo-ed8bc41894",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "valueObjects",
+  "enumerations",
+  "invariants",
+  "fieldDescriptors"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Aggregate valueObjects 1",
+   "Aggregate enumerations 1",
+   "Aggregate invariants 1",
+   "Aggregate fieldDescriptors 1"
+  ]
+ ],
+ "params": {
+  "id": "Aggregate-1"
+ }
+}

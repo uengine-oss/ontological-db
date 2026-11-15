@@ -1,0 +1,130 @@
+{
+ "scenario": "robo-data-catalog:graph/schema_commands.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-7f7689e11f",
+   "columns": [
+    "from_table",
+    "to_table"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "TABLE 1",
+     "TABLE 2"
+    ]
+   ],
+   "counters": {
+    "properties_set": 4,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"TABLE\"],\"props\":{\"analyzed_description\":\"TABLE analyzed_description 2\",\"comment\":\"TABLE comment 2\",\"datasource\":\"TABLE datasource 2\",\"db\":\"TABLE db 2\",\"description\":\"N/A\",\"description_source\":\"TABLE description_source 2\",\"graph_owner\":\"analyzer\",\"id\":\"TABLE-2\",\"logical_name\":\"TABLE logical_name 2\",\"name\":\"TABLE 2\",\"schema\":\"TABLE schema 2\",\"schema_name\":\"TABLE schema_name 2\",\"summary\":\"TABLE summary 2\",\"table_type\":\"TABLE table_type 2\"}}",
+      "props": {
+       "description": "compat-description",
+       "from_column": "compat-from_column",
+       "to_column": "compat-to_column"
+      },
+      "start": "{\"labels\":[\"TABLE\"],\"props\":{\"analyzed_description\":\"TABLE analyzed_description 1\",\"comment\":\"TABLE comment 1\",\"datasource\":\"TABLE datasource 1\",\"db\":\"TABLE db 1\",\"description\":\"\",\"description_source\":\"TABLE description_source 1\",\"graph_owner\":\"analyzer\",\"id\":\"TABLE-1\",\"logical_name\":\"TABLE logical_name 1\",\"name\":\"TABLE 1\",\"schema\":\"TABLE schema 1\",\"schema_name\":\"TABLE schema_name 1\",\"summary\":\"TABLE summary 1\",\"table_type\":\"TABLE table_type 1\"}}",
+      "type": "FK"
+     }
+    ]
+   },
+   "params": {
+    "description": "compat-description",
+    "from_column": "compat-from_column",
+    "from_schema": "TABLE schema 1",
+    "from_table": "TABLE 1",
+    "owner": "analyzer",
+    "relationship_owner": "compat-relationship_owner",
+    "to_column": "compat-to_column",
+    "to_schema": "TABLE schema 2",
+    "to_table": "TABLE 2"
+   }
+  },
+  {
+   "id": "analyzer-417a23a3c1",
+   "columns": [
+    "name"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "TABLE 1"
+    ]
+   ],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"TABLE\"],\"props\":{\"analyzed_description\":\"TABLE analyzed_description 1\",\"comment\":\"TABLE comment 1\",\"datasource\":\"TABLE datasource 1\",\"db\":\"TABLE db 1\",\"description\":\"compat-description\",\"description_source\":\"TABLE description_source 1\",\"graph_owner\":\"analyzer\",\"id\":\"TABLE-1\",\"logical_name\":\"TABLE logical_name 1\",\"name\":\"TABLE 1\",\"schema\":\"TABLE schema 1\",\"schema_name\":\"TABLE schema_name 1\",\"summary\":\"TABLE summary 1\",\"table_type\":\"TABLE table_type 1\"}} <- {\"labels\":[\"TABLE\"],\"props\":{\"analyzed_description\":\"TABLE analyzed_description 1\",\"comment\":\"TABLE comment 1\",\"datasource\":\"TABLE datasource 1\",\"db\":\"TABLE db 1\",\"description\":\"\",\"description_source\":\"TABLE description_source 1\",\"graph_owner\":\"analyzer\",\"id\":\"TABLE-1\",\"logical_name\":\"TABLE logical_name 1\",\"name\":\"TABLE 1\",\"schema\":\"TABLE schema 1\",\"schema_name\":\"TABLE schema_name 1\",\"summary\":\"TABLE summary 1\",\"table_type\":\"TABLE table_type 1\"}}"
+    ]
+   },
+   "params": {
+    "description": "compat-description",
+    "owner": "analyzer",
+    "schema": "TABLE schema 1",
+    "table_name": "TABLE 1"
+   }
+  },
+  {
+   "id": "analyzer-c71db86114",
+   "columns": [
+    "name"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     "COLUMN 1"
+    ]
+   ],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 1\",\"comment\":\"COLUMN comment 1\",\"data_type\":\"COLUMN data_type 1\",\"default_value\":\"COLUMN default_value 1\",\"description\":\"compat-description\",\"description_source\":\"COLUMN description_source 1\",\"dtype\":\"COLUMN dtype 1\",\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-1\",\"is_primary_key\":true,\"is_unique\":true,\"logical_name\":\"COLUMN logical_name 1\",\"name\":\"COLUMN 1\",\"nullable\":true,\"primary_key\":\"COLUMN primary_key 1\",\"summary\":\"COLUMN summary 1\",\"unique\":\"COLUMN unique 1\"}} <- {\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 1\",\"comment\":\"COLUMN comment 1\",\"data_type\":\"COLUMN data_type 1\",\"default_value\":\"COLUMN default_value 1\",\"description\":\"\",\"description_source\":\"COLUMN description_source 1\",\"dtype\":\"COLUMN dtype 1\",\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-1\",\"is_primary_key\":true,\"is_unique\":true,\"logical_name\":\"COLUMN logical_name 1\",\"name\":\"COLUMN 1\",\"nullable\":true,\"primary_key\":\"COLUMN primary_key 1\",\"summary\":\"COLUMN summary 1\",\"unique\":\"COLUMN unique 1\"}}"
+    ]
+   },
+   "params": {
+    "column_name": "COLUMN 1",
+    "description": "compat-description",
+    "owner": "analyzer",
+    "table_name": "TABLE 1",
+    "table_schema": "TABLE schema 1"
+   }
+  },
+  {
+   "id": "analyzer-5412750f5d",
+   "columns": [
+    "deleted"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     0
+    ]
+   ],
+   "effect": {},
+   "params": {
+    "from_column": null,
+    "from_schema": "TABLE schema 1",
+    "from_table": "TABLE 1",
+    "owner": "analyzer",
+    "relationship_owner": "analyzer",
+    "to_column": null,
+    "to_schema": "TABLE schema 2",
+    "to_table": "TABLE 2"
+   }
+  }
+ ]
+}

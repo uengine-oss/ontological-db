@@ -1,0 +1,61 @@
+{
+ "scenario": "robo-data-analyzer:graph/nodes/package.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-ed4cfa65b2",
+   "columns": [
+    "created"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     2
+    ]
+   ],
+   "counters": {
+    "labels_added": 2,
+    "nodes_created": 2,
+    "properties_set": 8
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "PACKAGE"
+      ],
+      "props": {
+       "graph_owner": "analyzer",
+       "id": "compat-new-PACKAGE-1",
+       "name": "compat-name-1"
+      }
+     },
+     {
+      "labels": [
+       "PACKAGE"
+      ],
+      "props": {
+       "graph_owner": "analyzer",
+       "id": "compat-new-PACKAGE-2",
+       "name": "compat-name-2"
+      }
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "id": "compat-new-PACKAGE-1",
+      "name": "compat-name-1"
+     },
+     {
+      "id": "compat-new-PACKAGE-2",
+      "name": "compat-name-2"
+     }
+    ]
+   }
+  }
+ ]
+}

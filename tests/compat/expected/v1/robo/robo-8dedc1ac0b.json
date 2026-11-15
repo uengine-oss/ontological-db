@@ -1,0 +1,15 @@
+{
+ "id": "robo-8dedc1ac0b",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "bc.id"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "name": "BoundedContext 1"
+ }
+}

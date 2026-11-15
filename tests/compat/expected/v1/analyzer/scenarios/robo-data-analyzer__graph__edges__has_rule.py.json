@@ -1,0 +1,60 @@
+{
+ "scenario": "robo-data-analyzer:graph/edges/has_rule.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-76bb38717e",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 8,
+    "relationships_created": 2
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"RULE\"],\"props\":{\"embedding\":[0.3,0.6,0.9,0.1,0.4,0.7,1.0,0.2],\"graph_owner\":\"analyzer\",\"id\":\"RULE-2\",\"name\":\"RULE 2\",\"statement\":\"RULE statement 2\"}}",
+      "props": {
+       "anchor_line": "compat-anchor_line-2",
+       "occurrence_id": "compat-occurrence_id-2",
+       "ordinal": "compat-ordinal-2"
+      },
+      "start": "{\"labels\":[\"FUNCTION\"],\"props\":{\"external\":true,\"graph_owner\":\"analyzer\",\"id\":\"FUNCTION-2\",\"name\":\"FUNCTION 2\",\"type\":\"FUNCTION type 2\"}}",
+      "type": "HAS_RULE"
+     },
+     {
+      "end": "{\"labels\":[\"RULE\"],\"props\":{\"embedding\":[0.7,1.0,0.2,0.5,0.8,0.0,0.3,0.6],\"graph_owner\":\"analyzer\",\"id\":\"RULE-1\",\"name\":\"RULE 1\",\"statement\":\"RULE statement 1\"}}",
+      "props": {
+       "anchor_line": "compat-anchor_line-1",
+       "occurrence_id": "compat-occurrence_id-1",
+       "ordinal": "compat-ordinal-1"
+      },
+      "start": "{\"labels\":[\"FUNCTION\"],\"props\":{\"external\":true,\"graph_owner\":\"analyzer\",\"id\":\"FUNCTION-1\",\"name\":\"FUNCTION 1\",\"type\":\"FUNCTION type 1\"}}",
+      "type": "HAS_RULE"
+     }
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "anchor_line": "compat-anchor_line-1",
+      "occurrence_id": "compat-occurrence_id-1",
+      "ordinal": "compat-ordinal-1",
+      "source_id": "FUNCTION-1",
+      "target_id": "RULE-1"
+     },
+     {
+      "anchor_line": "compat-anchor_line-2",
+      "occurrence_id": "compat-occurrence_id-2",
+      "ordinal": "compat-ordinal-2",
+      "source_id": "FUNCTION-2",
+      "target_id": "RULE-2"
+     }
+    ]
+   }
+  }
+ ]
+}

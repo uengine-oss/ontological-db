@@ -1,0 +1,390 @@
+{
+ "scenario": "studio-app:backend/src/modules/ontology/tools.py",
+ "graph": "ontology",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "studio-090250434c",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "indexes_added": 1
+   },
+   "effect": {}
+  },
+  {
+   "id": "studio-6849d64c03",
+   "columns": [
+    "n"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "~node": "@n1",
+      "labels": [
+       "Customer"
+      ],
+      "props": {
+       "created_at": "<now>",
+       "customer_id": "compat-customer_id",
+       "grade": "compat-grade",
+       "name": "compat-name",
+       "updated_at": "<now>"
+      }
+     }
+    ]
+   ],
+   "counters": {
+    "labels_added": 1,
+    "nodes_created": 1,
+    "properties_set": 6
+   },
+   "effect": {
+    "nodes_added": [
+     {
+      "labels": [
+       "Customer"
+      ],
+      "props": {
+       "created_at": "<now>",
+       "customer_id": "compat-customer_id",
+       "grade": "compat-grade",
+       "name": "compat-name",
+       "updated_at": "<now>"
+      }
+     }
+    ]
+   },
+   "params": {
+    "customer_id": "compat-customer_id",
+    "grade": "compat-grade",
+    "merge_customer_id": "compat-customer_id",
+    "name": "compat-name"
+   }
+  },
+  {
+   "id": "studio-ef9d1c4d7c",
+   "columns": [
+    "from_n",
+    "r",
+    "to_n"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "~node": "@n2",
+      "labels": [
+       "MfgProcessStep"
+      ],
+      "props": {
+       "id": "MfgProcessStep-1",
+       "name": "MfgProcessStep 1",
+       "step_id": "step_id-1",
+       "step_name": "MfgProcessStep step_name 1"
+      }
+     },
+     {
+      "~rel": "@r1",
+      "type": "PLACED",
+      "start": "@n2",
+      "end": "@n3",
+      "props": {
+       "channel": "compat-channel",
+       "created_at": "<now>",
+       "updated_at": "<now>"
+      }
+     },
+     {
+      "~node": "@n3",
+      "labels": [
+       "MfgProcessStep"
+      ],
+      "props": {
+       "id": "MfgProcessStep-2",
+       "name": "MfgProcessStep 2",
+       "step_id": "step_id-2",
+       "step_name": "MfgProcessStep step_name 2"
+      }
+     }
+    ]
+   ],
+   "counters": {
+    "properties_set": 3,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"MfgProcessStep\"],\"props\":{\"id\":\"MfgProcessStep-2\",\"name\":\"MfgProcessStep 2\",\"step_id\":\"step_id-2\",\"step_name\":\"MfgProcessStep step_name 2\"}}",
+      "props": {
+       "channel": "compat-channel",
+       "created_at": "<now>",
+       "updated_at": "<now>"
+      },
+      "start": "{\"labels\":[\"MfgProcessStep\"],\"props\":{\"id\":\"MfgProcessStep-1\",\"name\":\"MfgProcessStep 1\",\"step_id\":\"step_id-1\",\"step_name\":\"MfgProcessStep step_name 1\"}}",
+      "type": "PLACED"
+     }
+    ]
+   },
+   "params": {
+    "channel": "compat-channel",
+    "from_entity_id": "@n2",
+    "to_entity_id": "@n3"
+   }
+  },
+  {
+   "id": "studio-0f037208e5",
+   "columns": [
+    "n"
+   ],
+   "row_order": "sorted",
+   "row_count": 1,
+   "rows": [
+    [
+     {
+      "~node": "@n1",
+      "labels": [
+       "Customer"
+      ],
+      "props": {
+       "created_at": "<now>",
+       "customer_id": "compat-customer_id",
+       "grade": "compat-grade",
+       "name": "compat-name",
+       "updated_at": "<now>"
+      }
+     }
+    ]
+   ],
+   "counters": {
+    "properties_set": 5
+   },
+   "effect": {},
+   "params": {
+    "_parent_source_id": "compat-_parent_source_id",
+    "_source_id": "compat-_source_id",
+    "grade": "compat-grade",
+    "merge_customer_id": "compat-customer_id",
+    "name": "compat-name"
+   }
+  },
+  {
+   "id": "studio-7c14c092fa",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Customer\"],\"props\":{\"content\":\"cable maker, buys steel wire\",\"credit_limit\":5000,\"customer_id\":\"C001\",\"email\":\"buy@daesung.example\",\"embedding\":\"[0.9,0.1,0,0.2,0.1,0,0.3,0.1]\",\"grade\":\"A\",\"name\":\"Daesung Cable\",\"number\":1,\"title\":\"Daesung Cable\"}}",
+      "props": {
+       "created_at": "<now>",
+       "updated_at": "<now>"
+      },
+      "start": "{\"labels\":[\"Customer\"],\"props\":{\"created_at\":\"<now>\",\"customer_id\":\"compat-customer_id\",\"grade\":\"compat-grade\",\"name\":\"compat-name\",\"updated_at\":\"<now>\"}}",
+      "type": "CONTAINS"
+     }
+    ]
+   },
+   "params": {
+    "child_id": "cust-1",
+    "parent_id": "compat-_source_id"
+   }
+  },
+  {
+   "id": "studio-c38bff51ff",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3,
+    "relationships_created": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Customer\"],\"props\":{\"content\":\"cable maker, buys steel wire\",\"credit_limit\":5000,\"customer_id\":\"C001\",\"email\":\"buy@daesung.example\",\"embedding\":\"[0.9,0.1,0,0.2,0.1,0,0.3,0.1]\",\"grade\":\"A\",\"name\":\"Daesung Cable\",\"number\":1,\"title\":\"Daesung Cable\"}}",
+      "props": {
+       "channel": "compat-channel",
+       "created_at": "<now>",
+       "updated_at": "<now>"
+      },
+      "start": "{\"labels\":[\"Customer\"],\"props\":{\"created_at\":\"<now>\",\"customer_id\":\"compat-customer_id\",\"grade\":\"compat-grade\",\"name\":\"compat-name\",\"updated_at\":\"<now>\"}}",
+      "type": "PLACED"
+     }
+    ]
+   },
+   "params": {
+    "channel": "compat-channel",
+    "from_id": "compat-_source_id",
+    "to_id": "cust-1"
+   }
+  },
+  {
+   "id": "studio-1474091414",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"MfgProcessStep\"],\"props\":{\"embedding\":\"[0,0.5,1,0.4,0.9,0.3,0.8,0.2]\",\"id\":\"MfgProcessStep-1\",\"name\":\"MfgProcessStep 1\",\"step_id\":\"step_id-1\",\"step_name\":\"MfgProcessStep step_name 1\"}} <- {\"labels\":[\"MfgProcessStep\"],\"props\":{\"id\":\"MfgProcessStep-1\",\"name\":\"MfgProcessStep 1\",\"step_id\":\"step_id-1\",\"step_name\":\"MfgProcessStep step_name 1\"}}"
+    ]
+   },
+   "params": {
+    "eid": "@n2",
+    "vec": [
+     0.0,
+     0.5,
+     1.0,
+     0.4,
+     0.9,
+     0.3,
+     0.8,
+     0.2
+    ]
+   }
+  },
+  {
+   "id": "studio-7f92e14b0d",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 4,
+    "relationships_deleted": 6
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "Customer"
+      ],
+      "props": {
+       "content": "Acme branch",
+       "credit_limit": 300,
+       "customer_id": "C003",
+       "email": "kr@acme.example",
+       "name": "Acme Korea",
+       "number": 3,
+       "title": "Acme Korea"
+      }
+     },
+     {
+      "labels": [
+       "Customer"
+      ],
+      "props": {
+       "content": "Acme corp, spare parts",
+       "credit_limit": 1200,
+       "customer_id": "C002",
+       "email": "ops@acme.example",
+       "embedding": "[0.1,0.8,0.2,0,0,0.1,0.1,0.4]",
+       "grade": "B",
+       "name": "Acme",
+       "number": 2,
+       "title": "Acme"
+      }
+     },
+     {
+      "labels": [
+       "Customer"
+      ],
+      "props": {
+       "content": "cable maker, buys steel wire",
+       "credit_limit": 5000,
+       "customer_id": "C001",
+       "email": "buy@daesung.example",
+       "embedding": "[0.9,0.1,0,0.2,0.1,0,0.3,0.1]",
+       "grade": "A",
+       "name": "Daesung Cable",
+       "number": 1,
+       "title": "Daesung Cable"
+      }
+     },
+     {
+      "labels": [
+       "Customer"
+      ],
+      "props": {
+       "created_at": "<now>",
+       "customer_id": "compat-customer_id",
+       "grade": "compat-grade",
+       "name": "compat-name",
+       "updated_at": "<now>"
+      }
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Customer\"],\"props\":{\"content\":\"Acme branch\",\"credit_limit\":300,\"customer_id\":\"C003\",\"email\":\"kr@acme.example\",\"name\":\"Acme Korea\",\"number\":3,\"title\":\"Acme Korea\"}}",
+      "props": {
+       "method": "name"
+      },
+      "start": "{\"labels\":[\"Customer\"],\"props\":{\"content\":\"Acme corp, spare parts\",\"credit_limit\":1200,\"customer_id\":\"C002\",\"email\":\"ops@acme.example\",\"embedding\":\"[0.1,0.8,0.2,0,0,0.1,0.1,0.4]\",\"grade\":\"B\",\"name\":\"Acme\",\"number\":2,\"title\":\"Acme\"}}",
+      "type": "SAME_AS"
+     },
+     {
+      "end": "{\"labels\":[\"Customer\"],\"props\":{\"content\":\"cable maker, buys steel wire\",\"credit_limit\":5000,\"customer_id\":\"C001\",\"email\":\"buy@daesung.example\",\"embedding\":\"[0.9,0.1,0,0.2,0.1,0,0.3,0.1]\",\"grade\":\"A\",\"name\":\"Daesung Cable\",\"number\":1,\"title\":\"Daesung Cable\"}}",
+      "props": {
+       "channel": "compat-channel",
+       "created_at": "<now>",
+       "updated_at": "<now>"
+      },
+      "start": "{\"labels\":[\"Customer\"],\"props\":{\"created_at\":\"<now>\",\"customer_id\":\"compat-customer_id\",\"grade\":\"compat-grade\",\"name\":\"compat-name\",\"updated_at\":\"<now>\"}}",
+      "type": "PLACED"
+     },
+     {
+      "end": "{\"labels\":[\"Customer\"],\"props\":{\"content\":\"cable maker, buys steel wire\",\"credit_limit\":5000,\"customer_id\":\"C001\",\"email\":\"buy@daesung.example\",\"embedding\":\"[0.9,0.1,0,0.2,0.1,0,0.3,0.1]\",\"grade\":\"A\",\"name\":\"Daesung Cable\",\"number\":1,\"title\":\"Daesung Cable\"}}",
+      "props": {
+       "created_at": "<now>",
+       "updated_at": "<now>"
+      },
+      "start": "{\"labels\":[\"Customer\"],\"props\":{\"created_at\":\"<now>\",\"customer_id\":\"compat-customer_id\",\"grade\":\"compat-grade\",\"name\":\"compat-name\",\"updated_at\":\"<now>\"}}",
+      "type": "CONTAINS"
+     },
+     {
+      "end": "{\"labels\":[\"PurchaseOrder\"],\"props\":{\"amount\":1500,\"name\":\"PO-1\",\"number\":21,\"po_id\":\"PO-1\",\"status\":\"open\"}}",
+      "props": {
+       "channel": "web"
+      },
+      "start": "{\"labels\":[\"Customer\"],\"props\":{\"content\":\"cable maker, buys steel wire\",\"credit_limit\":5000,\"customer_id\":\"C001\",\"email\":\"buy@daesung.example\",\"embedding\":\"[0.9,0.1,0,0.2,0.1,0,0.3,0.1]\",\"grade\":\"A\",\"name\":\"Daesung Cable\",\"number\":1,\"title\":\"Daesung Cable\"}}",
+      "type": "PLACED"
+     },
+     {
+      "end": "{\"labels\":[\"PurchaseOrder\"],\"props\":{\"amount\":700,\"name\":\"PO-2\",\"number\":22,\"po_id\":\"PO-2\",\"status\":\"closed\"}}",
+      "props": {
+       "channel": "web"
+      },
+      "start": "{\"labels\":[\"Customer\"],\"props\":{\"content\":\"Acme corp, spare parts\",\"credit_limit\":1200,\"customer_id\":\"C002\",\"email\":\"ops@acme.example\",\"embedding\":\"[0.1,0.8,0.2,0,0,0.1,0.1,0.4]\",\"grade\":\"B\",\"name\":\"Acme\",\"number\":2,\"title\":\"Acme\"}}",
+      "type": "PLACED"
+     },
+     {
+      "end": "{\"labels\":[\"PurchaseOrder\"],\"props\":{\"amount\":90,\"name\":\"PO-3\",\"number\":23,\"po_id\":\"PO-3\",\"status\":\"open\"}}",
+      "props": {
+       "channel": "phone"
+      },
+      "start": "{\"labels\":[\"Customer\"],\"props\":{\"content\":\"cable maker, buys steel wire\",\"credit_limit\":5000,\"customer_id\":\"C001\",\"email\":\"buy@daesung.example\",\"embedding\":\"[0.9,0.1,0,0.2,0.1,0,0.3,0.1]\",\"grade\":\"A\",\"name\":\"Daesung Cable\",\"number\":1,\"title\":\"Daesung Cable\"}}",
+      "type": "PLACED"
+     }
+    ]
+   }
+  }
+ ]
+}

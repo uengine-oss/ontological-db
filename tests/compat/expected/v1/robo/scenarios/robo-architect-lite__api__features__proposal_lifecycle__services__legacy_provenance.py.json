@@ -1,0 +1,26 @@
+{
+ "scenario": "robo-architect-lite:api/features/proposal_lifecycle/services/legacy_provenance.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-4919b6cbcc",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 1
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"Proposal\"],\"props\":{\"acceptedAt\":\"2026-01-11T09:00:00Z\",\"author\":\"Proposal author 1\",\"clarificationLog\":\"[]\",\"constitutionHash\":\"Proposal constitutionHash 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"currentStage\":\"SCOPE\",\"decompositionMode\":\"Proposal decompositionMode 1\",\"destroyedAt\":\"2026-01-11T09:00:00Z\",\"id\":\"Proposal-1\",\"impactMap\":\"Proposal impactMap 1\",\"implementationPlan\":\"Proposal implementationPlan 1\",\"intent\":\"Proposal intent 1\",\"intentFeedbackLog\":\"Proposal intentFeedbackLog 1\",\"journeys\":\"Proposal journeys 1\",\"legacyReferences\":\"compat-legacyReferences\",\"memoryConflicts\":\"Proposal memoryConflicts 1\",\"name\":\"Proposal 1\",\"oda\":\"Proposal oda 1\",\"odaArtifacts\":\"Proposal odaArtifacts 1\",\"odaConformance\":\"Proposal odaConformance 1\",\"originalPrompt\":\"Proposal originalPrompt 1\",\"plan\":\"Proposal plan 1\",\"planDraft\":\"Proposal planDraft 1\",\"projectRoot\":\"Proposal projectRoot 1\",\"sandboxBranch\":\"Proposal sandboxBranch 1\",\"sandboxStatus\":\"DESTROYED\",\"sandboxWorktreePath\":\"Proposal sandboxWorktreePath 1\",\"stageArtifacts\":\"Proposal stageArtifacts 1\",\"stageDraftArtifacts\":\"Proposal stageDraftArtifacts 1\",\"stagePlan\":\"Proposal stagePlan 1\",\"status\":\"DESTROYED\",\"statusHistory\":\"[]\",\"strategicDiff\":\"Proposal strategicDiff 1\",\"tacticalDiff\":\"Proposal tacticalDiff 1\",\"tasksJson\":\"Proposal tasksJson 1\",\"testResults\":\"Proposal testResults 1\",\"title\":\"Proposal 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}} <- {\"labels\":[\"Proposal\"],\"props\":{\"acceptedAt\":\"2026-01-11T09:00:00Z\",\"author\":\"Proposal author 1\",\"clarificationLog\":\"[]\",\"constitutionHash\":\"Proposal constitutionHash 1\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"currentStage\":\"SCOPE\",\"decompositionMode\":\"Proposal decompositionMode 1\",\"destroyedAt\":\"2026-01-11T09:00:00Z\",\"id\":\"Proposal-1\",\"impactMap\":\"Proposal impactMap 1\",\"implementationPlan\":\"Proposal implementationPlan 1\",\"intent\":\"Proposal intent 1\",\"intentFeedbackLog\":\"Proposal intentFeedbackLog 1\",\"journeys\":\"Proposal journeys 1\",\"legacyReferences\":\"Proposal legacyReferences 1\",\"memoryConflicts\":\"Proposal memoryConflicts 1\",\"name\":\"Proposal 1\",\"oda\":\"Proposal oda 1\",\"odaArtifacts\":\"Proposal odaArtifacts 1\",\"odaConformance\":\"Proposal odaConformance 1\",\"originalPrompt\":\"Proposal originalPrompt 1\",\"plan\":\"Proposal plan 1\",\"planDraft\":\"Proposal planDraft 1\",\"projectRoot\":\"Proposal projectRoot 1\",\"sandboxBranch\":\"Proposal sandboxBranch 1\",\"sandboxStatus\":\"DESTROYED\",\"sandboxWorktreePath\":\"Proposal sandboxWorktreePath 1\",\"stageArtifacts\":\"Proposal stageArtifacts 1\",\"stageDraftArtifacts\":\"Proposal stageDraftArtifacts 1\",\"stagePlan\":\"Proposal stagePlan 1\",\"status\":\"DESTROYED\",\"statusHistory\":\"[]\",\"strategicDiff\":\"Proposal strategicDiff 1\",\"tacticalDiff\":\"Proposal tacticalDiff 1\",\"tasksJson\":\"Proposal tasksJson 1\",\"testResults\":\"Proposal testResults 1\",\"title\":\"Proposal 1\",\"updatedAt\":\"2026-01-11T09:00:00Z\"}}"
+    ]
+   },
+   "params": {
+    "id": "Proposal-1",
+    "refs": "compat-legacyReferences"
+   }
+  }
+ ]
+}

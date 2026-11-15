@@ -1,0 +1,42 @@
+{
+ "scenario": "robo-architect-lite:api/features/ingestion/hybrid/explore_service.py",
+ "graph": "robo",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-ed70dd9cea",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "nodes_deleted": 1
+   },
+   "effect": {
+    "nodes_removed": [
+     {
+      "labels": [
+       "ActivityMapping"
+      ],
+      "props": {
+       "evidence_role": "primary",
+       "id": "ActivityMapping-1",
+       "method": "manual",
+       "name": "ActivityMapping 1",
+       "rationale": "ActivityMapping rationale 1",
+       "reviewed": false,
+       "rule_id": "Rule-1",
+       "score": 0.6,
+       "session_id": "sess-1",
+       "task_id": "BpmTask-1"
+      }
+     }
+    ]
+   },
+   "params": {
+    "sid": "sess-1",
+    "tid": "BpmTask-1"
+   }
+  }
+ ]
+}

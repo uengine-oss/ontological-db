@@ -1,0 +1,88 @@
+{
+ "scenario": "robo-architect-lite:api/features/canvas_graph/routes/event_modeling.py@robo_analysis",
+ "graph": "robo_analysis",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "robo-6efdd3e005",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_created": 1,
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "rels_added": [
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"id\":\"Event-1\",\"name\":\"Event 1\",\"schema\":\"Event schema 1\",\"version\":10}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"id\":\"BoundedContext-1\",\"name\":\"BoundedContext 1\",\"session_id\":\"sess-1\"}}",
+      "type": "HAS_EVENT"
+     }
+    ],
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"id\":\"Event-1\",\"name\":\"Event 1\",\"schema\":\"Event schema 1\",\"version\":10}}",
+      "props": {},
+      "start": "{\"labels\":[\"BoundedContext\"],\"props\":{\"description\":\"BoundedContext description 1\",\"displayName\":\"BoundedContext 1\",\"id\":\"BoundedContext-1\",\"name\":\"BoundedContext 1\",\"session_id\":\"sess-1\"}}",
+      "type": "HAS_EVENT"
+     }
+    ]
+   },
+   "params": {
+    "eventId": "Event-1",
+    "targetBcId": "BoundedContext-1"
+   }
+  },
+  {
+   "id": "robo-5104c01b47",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"category\":\"Command category 1\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"name\":\"Command 1\"}}",
+      "props": {},
+      "start": "{\"labels\":[\"Event\"],\"props\":{\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"id\":\"Event-1\",\"name\":\"Event 1\",\"schema\":\"Event schema 1\",\"version\":10}}",
+      "type": "EMITS"
+     }
+    ]
+   },
+   "params": {
+    "srcId": "Command-1",
+    "tgtId": "Event-1"
+   }
+  },
+  {
+   "id": "robo-f273b0bb74",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "relationships_deleted": 1
+   },
+   "effect": {
+    "rels_removed": [
+     {
+      "end": "{\"labels\":[\"Event\"],\"props\":{\"description\":\"Event description 1\",\"displayName\":\"Event 1\",\"id\":\"Event-1\",\"name\":\"Event 1\",\"schema\":\"Event schema 1\",\"version\":10}}",
+      "props": {},
+      "start": "{\"labels\":[\"Command\"],\"props\":{\"actor\":\"Command actor 1\",\"category\":\"Command category 1\",\"description\":\"Command description 1\",\"displayName\":\"Command 1\",\"id\":\"Command-1\",\"inputSchema\":\"Command inputSchema 1\",\"name\":\"Command 1\"}}",
+      "type": "EMITS"
+     }
+    ]
+   },
+   "params": {
+    "srcId": "Command-1",
+    "tgtId": "Event-1"
+   }
+  }
+ ]
+}

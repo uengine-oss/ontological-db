@@ -1,0 +1,84 @@
+{
+ "id": "robo-944341d178",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "nodeId",
+  "nodeLabel",
+  "designId",
+  "designLabel",
+  "testId",
+  "testType",
+  "testDesc"
+ ],
+ "row_order": "sorted",
+ "row_count": 7,
+ "rows": [
+  [
+   "US-001",
+   "UserStory",
+   "<uuid1>",
+   "Aggregate",
+   null,
+   null,
+   null
+  ],
+  [
+   "US-001",
+   "UserStory",
+   "<uuid1>",
+   "Aggregate",
+   null,
+   null,
+   null
+  ],
+  [
+   "US-001",
+   "UserStory",
+   "<uuid2>",
+   "BoundedContext",
+   null,
+   null,
+   null
+  ],
+  [
+   "US-001",
+   "UserStory",
+   "<uuid3>",
+   "Command",
+   null,
+   null,
+   null
+  ],
+  [
+   "US-001",
+   "UserStory",
+   "<uuid3>",
+   "Command",
+   null,
+   null,
+   null
+  ],
+  [
+   "US-001",
+   "UserStory",
+   "<uuid3>",
+   "Command",
+   null,
+   null,
+   null
+  ],
+  [
+   "US-001",
+   "UserStory",
+   "<uuid3>",
+   "Command",
+   null,
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "id": "CHG-001"
+ }
+}

@@ -1,0 +1,17 @@
+{
+ "id": "robo-aa834a9e44",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "bcName",
+  "bcId"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "Order",
+   "<uuid1>"
+  ]
+ ]
+}

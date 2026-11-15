@@ -1,0 +1,30 @@
+{
+ "id": "analyzer-6148f3bc6e",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "id",
+  "file_path",
+  "start_line",
+  "end_line",
+  "summary"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "MODULE-1",
+   "MODULE file_path 1",
+   10,
+   10,
+   "MODULE summary 1"
+  ],
+  [
+   "MODULE-2",
+   "MODULE file_path 2",
+   20,
+   20,
+   "MODULE summary 2"
+  ]
+ ]
+}

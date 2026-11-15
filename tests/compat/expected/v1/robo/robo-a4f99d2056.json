@@ -1,0 +1,29 @@
+{
+ "id": "robo-a4f99d2056",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "id",
+  "name",
+  "description"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "BoundedContext-1",
+   "BoundedContext 1",
+   "BoundedContext description 1"
+  ],
+  [
+   "BoundedContext-2",
+   "BoundedContext 2",
+   "BoundedContext description 2"
+  ],
+  [
+   "<uuid1>",
+   "Order",
+   "주문 생성, 수정, 취소 및 주문 상태 관리"
+  ]
+ ]
+}

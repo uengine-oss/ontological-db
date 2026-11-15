@@ -1,0 +1,18 @@
+{
+ "id": "robo-a68e382ce6",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "name"
+ ],
+ "row_order": "sorted",
+ "row_count": 1,
+ "rows": [
+  [
+   "cancel my order"
+  ]
+ ],
+ "params": {
+  "id": "US-001"
+ }
+}

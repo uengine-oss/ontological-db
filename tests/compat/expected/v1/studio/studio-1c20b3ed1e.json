@@ -1,0 +1,24 @@
+{
+ "id": "studio-1c20b3ed1e",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "class_name"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "Customer"
+  ],
+  [
+   "PurchaseOrder"
+  ],
+  [
+   "Supplier"
+  ]
+ ],
+ "params": {
+  "schema_id": "schema-1"
+ }
+}

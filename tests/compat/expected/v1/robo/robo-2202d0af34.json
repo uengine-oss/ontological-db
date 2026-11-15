@@ -1,0 +1,57 @@
+{
+ "id": "robo-2202d0af34",
+ "graph": "robo",
+ "kind": "read",
+ "columns": [
+  "context"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 3,
+ "rows": [
+  [
+   {
+    "aggregateCount": 0,
+    "description": "BoundedContext description 1",
+    "displayName": "BoundedContext 1",
+    "domainType": "BoundedContext domainType 1",
+    "id": "BoundedContext-1",
+    "name": "BoundedContext 1",
+    "owner": "BoundedContext owner 1",
+    "userStoryCount": 0,
+    "userStoryIds": [
+     "US-001",
+     "UserStory-1"
+    ]
+   }
+  ],
+  [
+   {
+    "aggregateCount": 0,
+    "description": "BoundedContext description 2",
+    "displayName": "BoundedContext 2",
+    "domainType": "BoundedContext domainType 2",
+    "id": "BoundedContext-2",
+    "name": "BoundedContext 2",
+    "owner": "BoundedContext owner 2",
+    "userStoryCount": 0,
+    "userStoryIds": [
+     "US-001",
+     "UserStory-1"
+    ]
+   }
+  ],
+  [
+   {
+    "aggregateCount": 1,
+    "description": "주문 생성, 수정, 취소 및 주문 상태 관리",
+    "displayName": null,
+    "domainType": null,
+    "id": "<uuid1>",
+    "name": "Order",
+    "owner": "Order Team",
+    "userStoryCount": 1,
+    "userStoryIds": null
+   }
+  ]
+ ]
+}

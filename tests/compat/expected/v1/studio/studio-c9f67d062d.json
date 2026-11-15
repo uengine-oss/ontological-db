@@ -1,0 +1,21 @@
+{
+ "id": "studio-c9f67d062d",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "id",
+  "labels",
+  "properties"
+ ],
+ "row_order": "sorted",
+ "row_count": 6,
+ "subset": "LIMIT without ORDER BY cut the result; only columns and row_count are kept",
+ "rows": [],
+ "params": {
+  "classes": [
+   "Customer",
+   "PurchaseOrder"
+  ],
+  "limit": 10
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "id": "studio-fa4c069fc0",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "v"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   "A"
+  ],
+  [
+   "B"
+  ]
+ ]
+}

@@ -1,0 +1,9 @@
+{
+ "id": "robo-673fe3decf",
+ "graph": "robo",
+ "kind": "read",
+ "error": {
+  "code": "Neo.ClientError.Statement.TypeError",
+  "message": "COALESCE types text and boolean cannot be matched"
+ }
+}

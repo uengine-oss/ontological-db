@@ -1,0 +1,40 @@
+{
+ "id": "studio-ff125964df",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "eid",
+  "key",
+  "name",
+  "source_system",
+  "observed"
+ ],
+ "row_order": "sorted",
+ "row_count": 3,
+ "rows": [
+  [
+   "@n1",
+   "cust-1",
+   "Daesung Cable",
+   "erp",
+   2
+  ],
+  [
+   "@n2",
+   "cust-2",
+   "Acme",
+   "crm",
+   1
+  ],
+  [
+   "@n3",
+   "cust-3",
+   "Acme Korea",
+   "erp",
+   0
+  ]
+ ],
+ "params": {
+  "limit": 7
+ }
+}

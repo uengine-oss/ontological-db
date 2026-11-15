@@ -1,0 +1,51 @@
+{
+ "id": "studio-e402a019ff",
+ "graph": "ontology",
+ "kind": "read",
+ "columns": [
+  "n"
+ ],
+ "row_order": "sorted",
+ "row_count": 2,
+ "rows": [
+  [
+   {
+    "~node": "@n1",
+    "labels": [
+     "Customer"
+    ],
+    "props": {
+     "content": "Acme branch",
+     "credit_limit": 300,
+     "customer_id": "C003",
+     "email": "kr@acme.example",
+     "name": "Acme Korea",
+     "number": 3,
+     "title": "Acme Korea"
+    }
+   }
+  ],
+  [
+   {
+    "~node": "@n2",
+    "labels": [
+     "Customer"
+    ],
+    "props": {
+     "content": "Acme corp, spare parts",
+     "credit_limit": 1200,
+     "customer_id": "C002",
+     "email": "ops@acme.example",
+     "embedding": "[0.1,0.8,0.2,0,0,0.1,0.1,0.4]",
+     "grade": "B",
+     "name": "Acme",
+     "number": 2,
+     "title": "Acme"
+    }
+   }
+  ]
+ ],
+ "params": {
+  "name": "Acme"
+ }
+}

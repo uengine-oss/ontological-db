@@ -1,0 +1,63 @@
+{
+ "id": "robo-158b486975",
+ "graph": "robo_analysis",
+ "kind": "read",
+ "columns": [
+  "id",
+  "s1_kind",
+  "s1_id",
+  "u1_id",
+  "s2_kind",
+  "s2_id",
+  "u2_id",
+  "condition",
+  "source",
+  "document_excerpt",
+  "journey_id",
+  "journey_name",
+  "created_at",
+  "updated_at"
+ ],
+ "row_order": "server, ties server",
+ "row_count": 2,
+ "rows": [
+  [
+   null,
+   "JourneyStep kind 1",
+   "JourneyStep-1",
+   "UI-1",
+   "JourneyStep kind 1",
+   "JourneyStep-1",
+   "UI-1",
+   "",
+   "llm",
+   "",
+   "Journey-1",
+   "Journey 1",
+   null,
+   null
+  ],
+  [
+   null,
+   "JourneyStep kind 2",
+   "JourneyStep-2",
+   "UI-2",
+   "JourneyStep kind 2",
+   "JourneyStep-2",
+   "UI-2",
+   "",
+   "llm",
+   "",
+   "Journey-2",
+   "Journey 2",
+   null,
+   null
+  ]
+ ],
+ "params": {
+  "bc_ids": [
+   "BoundedContext-1",
+   "BoundedContext-2"
+  ]
+ }
+}

@@ -1,0 +1,130 @@
+{
+ "scenario": "robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py",
+ "graph": "analyzer_run",
+ "isolation": "rollback",
+ "steps": [
+  {
+   "id": "analyzer-87b4a7bf2f",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "indexes_added": 1
+   },
+   "effect": {}
+  },
+  {
+   "id": "analyzer-bcf75bf8a6",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 3
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"EMBED_META\"],\"props\":{\"dim\":\"compat-dim\",\"embedded_count\":7,\"fingerprint\":\"compat-fingerprint\",\"graph_owner\":\"analyzer\",\"id\":\"EMBED_META-1\",\"name\":\"EMBED_META 1\"}} <- {\"labels\":[\"EMBED_META\"],\"props\":{\"dim\":\"EMBED_META dim 1\",\"embedded_count\":10,\"fingerprint\":\"EMBED_META fingerprint 1\",\"graph_owner\":\"analyzer\",\"id\":\"EMBED_META-1\",\"name\":\"EMBED_META 1\"}}"
+    ]
+   },
+   "params": {
+    "count": 7,
+    "dim": "compat-dim",
+    "fp": "compat-fingerprint"
+   }
+  },
+  {
+   "id": "analyzer-353f6d2010",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 4
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 1\",\"comment\":\"COLUMN comment 1\",\"data_type\":\"COLUMN data_type 1\",\"default_value\":\"COLUMN default_value 1\",\"description\":\"\",\"description_source\":\"COLUMN description_source 1\",\"dtype\":\"COLUMN dtype 1\",\"embedded\":true,\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-1\",\"is_primary_key\":true,\"is_unique\":true,\"logical_name\":\"COLUMN logical_name 1\",\"name\":\"COLUMN 1\",\"nullable\":true,\"primary_key\":\"COLUMN primary_key 1\",\"search_embedding\":\"[0,0.5,1,0.4,0.9,0.3,0.8,0.2]\",\"summary\":\"COLUMN summary 1\",\"unique\":\"COLUMN unique 1\"}} <- {\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 1\",\"comment\":\"COLUMN comment 1\",\"data_type\":\"COLUMN data_type 1\",\"default_value\":\"COLUMN default_value 1\",\"description\":\"\",\"description_source\":\"COLUMN description_source 1\",\"dtype\":\"COLUMN dtype 1\",\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-1\",\"is_primary_key\":true,\"is_unique\":true,\"logical_name\":\"COLUMN logical_name 1\",\"name\":\"COLUMN 1\",\"nullable\":true,\"primary_key\":\"COLUMN primary_key 1\",\"summary\":\"COLUMN summary 1\",\"unique\":\"COLUMN unique 1\"}}",
+     "{\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 2\",\"comment\":\"COLUMN comment 2\",\"data_type\":\"COLUMN data_type 2\",\"default_value\":\"COLUMN default_value 2\",\"description\":\"N/A\",\"description_source\":\"COLUMN description_source 2\",\"dtype\":\"COLUMN dtype 2\",\"embedded\":true,\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-2\",\"is_primary_key\":false,\"is_unique\":false,\"logical_name\":\"COLUMN logical_name 2\",\"name\":\"COLUMN 2\",\"nullable\":false,\"primary_key\":\"COLUMN primary_key 2\",\"search_embedding\":\"[0,0.5,1,0.4,0.9,0.3,0.8,0.2]\",\"summary\":\"COLUMN summary 2\",\"unique\":\"COLUMN unique 2\"}} <- {\"labels\":[\"COLUMN\"],\"props\":{\"analyzed_description\":\"COLUMN analyzed_description 2\",\"comment\":\"COLUMN comment 2\",\"data_type\":\"COLUMN data_type 2\",\"default_value\":\"COLUMN default_value 2\",\"description\":\"N/A\",\"description_source\":\"COLUMN description_source 2\",\"dtype\":\"COLUMN dtype 2\",\"graph_owner\":\"analyzer\",\"id\":\"COLUMN-2\",\"is_primary_key\":false,\"is_unique\":false,\"logical_name\":\"COLUMN logical_name 2\",\"name\":\"COLUMN 2\",\"nullable\":false,\"primary_key\":\"COLUMN primary_key 2\",\"summary\":\"COLUMN summary 2\",\"unique\":\"COLUMN unique 2\"}}"
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "id": "COLUMN-1",
+      "vector": [
+       0.0,
+       0.5,
+       1.0,
+       0.4,
+       0.9,
+       0.3,
+       0.8,
+       0.2
+      ]
+     },
+     {
+      "id": "COLUMN-2",
+      "vector": [
+       0.0,
+       0.5,
+       1.0,
+       0.4,
+       0.9,
+       0.3,
+       0.8,
+       0.2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "id": "analyzer-075a526699",
+   "columns": [],
+   "row_order": "sorted",
+   "row_count": 0,
+   "rows": [],
+   "counters": {
+    "properties_set": 2
+   },
+   "effect": {
+    "nodes_changed": [
+     "{\"labels\":[\"RULE\"],\"props\":{\"embedding\":[0.0,0.5,1.0,0.4,0.9,0.3,0.8,0.2],\"graph_owner\":\"analyzer\",\"id\":\"RULE-1\",\"name\":\"RULE 1\",\"statement\":\"RULE statement 1\"}} <- {\"labels\":[\"RULE\"],\"props\":{\"embedding\":[0.7,1.0,0.2,0.5,0.8,0.0,0.3,0.6],\"graph_owner\":\"analyzer\",\"id\":\"RULE-1\",\"name\":\"RULE 1\",\"statement\":\"RULE statement 1\"}}",
+     "{\"labels\":[\"RULE\"],\"props\":{\"embedding\":[0.0,0.5,1.0,0.4,0.9,0.3,0.8,0.2],\"graph_owner\":\"analyzer\",\"id\":\"RULE-2\",\"name\":\"RULE 2\",\"statement\":\"RULE statement 2\"}} <- {\"labels\":[\"RULE\"],\"props\":{\"embedding\":[0.3,0.6,0.9,0.1,0.4,0.7,1.0,0.2],\"graph_owner\":\"analyzer\",\"id\":\"RULE-2\",\"name\":\"RULE 2\",\"statement\":\"RULE statement 2\"}}"
+    ]
+   },
+   "params": {
+    "items": [
+     {
+      "id": "RULE-1",
+      "vector": [
+       0.0,
+       0.5,
+       1.0,
+       0.4,
+       0.9,
+       0.3,
+       0.8,
+       0.2
+      ]
+     },
+     {
+      "id": "RULE-2",
+      "vector": [
+       0.0,
+       0.5,
+       1.0,
+       0.4,
+       0.9,
+       0.3,
+       0.8,
+       0.2
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}

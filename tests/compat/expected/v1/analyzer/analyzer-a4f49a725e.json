@@ -1,0 +1,59 @@
+{
+ "id": "analyzer-a4f49a725e",
+ "graph": "analyzer_run",
+ "kind": "read",
+ "columns": [
+  "id",
+  "label",
+  "name",
+  "stereotype",
+  "summary",
+  "search_text",
+  "rel_type",
+  "table_name"
+ ],
+ "row_order": "server, ties sorted",
+ "row_count": 4,
+ "rows": [
+  [
+   "COLUMN-1",
+   "COLUMN",
+   "COLUMN 1",
+   "",
+   "COLUMN summary 1",
+   "",
+   null,
+   null
+  ],
+  [
+   "COLUMN-2",
+   "COLUMN",
+   "COLUMN 2",
+   "",
+   "COLUMN summary 2",
+   "",
+   null,
+   null
+  ],
+  [
+   "TABLE-1",
+   "TABLE",
+   "TABLE 1",
+   "",
+   "TABLE summary 1",
+   "",
+   null,
+   null
+  ],
+  [
+   "TABLE-2",
+   "TABLE",
+   "TABLE 2",
+   "",
+   "TABLE summary 2",
+   "",
+   null,
+   null
+  ]
+ ]
+}
