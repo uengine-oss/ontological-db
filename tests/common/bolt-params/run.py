@@ -7,7 +7,7 @@ silent wrong answer. Now it is the ISO 8601 text Neo4j prints it as, which the
 engine reads back as a date; a point (no form here) is refused by name. A path
 returned to a driver is a Path, with its nodes and relationships.
 
-    python3 tests/bolt-params/run.py   # needs psql, cargo, the neo4j driver
+    python3 tests/common/bolt-params/run.py   # needs psql, cargo, the neo4j driver
 
 OG_BOLT_BIN runs a gateway binary that is already built instead of `cargo run`.
 Exit status is non-zero on the first failed check.
@@ -30,7 +30,7 @@ PORT = os.environ.get("PGPORT", "28816")
 USER = os.environ.get("PGUSER")
 DB = "og_bolt_params"
 LISTEN = os.environ.get("OG_BOLT_TEST_LISTEN", "127.0.0.1:27694")
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 def psql(sql, db=DB):

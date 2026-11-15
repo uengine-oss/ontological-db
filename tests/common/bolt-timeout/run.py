@@ -12,7 +12,7 @@ that such a query
   * stops — here and at the source — when the client goes away, when the
     gateway itself dies, and when the client sends RESET.
 
-    python3 tests/bolt-timeout/run.py      # needs psql, cargo, the neo4j driver
+    python3 tests/common/bolt-timeout/run.py      # needs psql, cargo, the neo4j driver
 
 OG_BOLT_BIN runs a gateway binary that is already built instead of `cargo run`.
 Exit status is non-zero on the first failed check.
@@ -34,7 +34,7 @@ PORT = os.environ.get("PGPORT", "28816")
 USER = os.environ.get("PGUSER")
 DB = "og_bolt_timeout"
 LISTEN = os.environ.get("OG_BOLT_TEST_LISTEN", "127.0.0.1:27689")
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 ENDLESS = "MATCH (a:Item), (b:Line), (c:Line) RETURN count(*) AS n"

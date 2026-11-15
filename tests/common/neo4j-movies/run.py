@@ -19,8 +19,8 @@ Four questions, answered in order:
      two. Plus the things only a driver can check: Node hydration, parameters,
      explicit transactions, failure and RESET.
 
-    python3 tests/neo4j-movies/run.py
-    python3 tests/neo4j-movies/run.py --neo4j bolt://localhost:27687
+    python3 tests/common/neo4j-movies/run.py
+    python3 tests/common/neo4j-movies/run.py --neo4j bolt://localhost:27687
 
 Exit status is 0 when the dataset loads and every read query returns the same
 row count on every available path.

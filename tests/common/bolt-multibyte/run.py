@@ -8,7 +8,7 @@ a query opening with a Korean comment (`// 소스 …`), a Korean key or an emoj
 panicked the session thread and the client saw the connection drop. This
 sends such queries and expects ordinary answers, on the same session.
 
-    python3 tests/bolt-multibyte/run.py   # needs psql, cargo, the neo4j driver
+    python3 tests/common/bolt-multibyte/run.py   # needs psql, cargo, the neo4j driver
 
 OG_BOLT_BIN runs a gateway binary that is already built instead of `cargo run`.
 Exit status is non-zero on the first failed check.
@@ -27,7 +27,7 @@ PORT = os.environ.get("PGPORT", "28816")
 USER = os.environ.get("PGUSER")
 DB = "og_bolt_multibyte"
 LISTEN = os.environ.get("OG_BOLT_TEST_LISTEN", "127.0.0.1:27693")
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 def psql(sql, db=DB):

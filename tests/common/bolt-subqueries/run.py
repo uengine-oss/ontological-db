@@ -15,7 +15,7 @@ sends them.
   * Temporal parameters the params suite does not send: a datetime in a named
     zone, a time with an offset, a negative duration, a date before 1970.
 
-    python3 tests/bolt-subqueries/run.py   # needs psql, cargo, the neo4j driver
+    python3 tests/common/bolt-subqueries/run.py   # needs psql, cargo, the neo4j driver
 
 OG_BOLT_BIN runs a gateway binary that is already built instead of `cargo run`.
 Exit status is non-zero on the first failed check.
@@ -36,7 +36,7 @@ PORT = os.environ.get("PGPORT", "28816")
 USER = os.environ.get("PGUSER")
 DB = "og_bolt_subqueries"
 LISTEN = os.environ.get("OG_BOLT_TEST_LISTEN", "127.0.0.1:27697")
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 def psql(sql, db=DB):

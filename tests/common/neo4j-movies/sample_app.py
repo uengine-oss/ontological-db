@@ -11,7 +11,7 @@ which is what changing servers always costs. Nothing below it is ours:
 +     "bolt://localhost:28687",
 +     auth=basic_auth("dev", ""))
 
-    python3 tests/neo4j-movies/sample_app.py [bolt://host:port] [user] [password]
+    python3 tests/common/neo4j-movies/sample_app.py [bolt://host:port] [user] [password]
 
 Run `run.py` first — it loads the dataset this queries.
 """

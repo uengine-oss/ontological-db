@@ -2,7 +2,7 @@
 """Relationship patterns without a type over virtual relationships, through the
 Bolt gateway, as a driver sees them.
 
-The engine's SQL regression (engine/tests/sql/30_cypher_untyped_virtual_relationships.sql)
+The engine's SQL regression (tests/common/sql/30_cypher_untyped_virtual_relationships.sql)
 checks the answers; this checks they arrive through a real Neo4j driver:
 
   * `(c:Crate)-[r]->(d:Depot)` returns the rows of every typed hop between the
@@ -16,7 +16,7 @@ checks the answers; this checks they arrive through a real Neo4j driver:
   * a hop that cannot be joined (no type, an unlabelled end at a virtual node)
     is a client error that says why, and the session goes on.
 
-    python3 tests/bolt-untyped-virtual/run.py   # needs psql, cargo, the neo4j driver
+    python3 tests/common/bolt-untyped-virtual/run.py   # needs psql, cargo, the neo4j driver
 
 OG_BOLT_BIN runs a gateway binary that is already built instead of `cargo run`.
 Exit status is non-zero on the first failed check.
@@ -37,7 +37,7 @@ PORT = os.environ.get("PGPORT", "28816")
 USER = os.environ.get("PGUSER")
 DB = "og_bolt_untyped_virtual"
 LISTEN = os.environ.get("OG_BOLT_TEST_LISTEN", "127.0.0.1:27699")
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 def psql(sql, db=DB):

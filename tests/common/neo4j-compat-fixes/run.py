@@ -9,7 +9,10 @@ application failing, not by reading the code.
 Run against a scratch graph:
 
     psql -c "SELECT og_create_graph('fix_probe')"
-    uv run --with neo4j python engine/tests/neo4j_compat_fixes.py
+    uv run --with neo4j python tests/common/neo4j-compat-fixes/run.py
+
+OG_BOLT_URI (default bolt://localhost:7687) and OG_BOLT_USER / OG_BOLT_PASSWORD
+(default dev, empty) say where the gateway is and who to log in as.
 
 Covers:
   1. SHOW CONSTRAINTS / SHOW INDEXES — administration commands the parser
@@ -24,12 +27,13 @@ Covers:
 
 from __future__ import annotations
 
+import os
 import sys
 
 from neo4j import GraphDatabase
 
-URI = "bolt://localhost:7687"
-AUTH = ("dev", "")
+URI = os.environ.get("OG_BOLT_URI", "bolt://localhost:7687")
+AUTH = (os.environ.get("OG_BOLT_USER", "dev"), os.environ.get("OG_BOLT_PASSWORD", ""))
 GRAPH = "fix_probe"
 
 failures: list[str] = []

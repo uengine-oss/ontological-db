@@ -19,7 +19,7 @@ that sessions racing to build the same generated view all get an answer.
 still fail once with `relation "og_data.v_N" does not exist` — the change
 drops the generated views; that is not covered here.)
 
-    python3 tests/bolt-concurrency/run.py   # needs psql, cargo, the neo4j driver
+    python3 tests/common/bolt-concurrency/run.py   # needs psql, cargo, the neo4j driver
 
 OG_BOLT_BIN runs a gateway binary that is already built instead of `cargo run`.
 Exit status is non-zero on the first failed check.
@@ -40,7 +40,7 @@ PORT = os.environ.get("PGPORT", "28816")
 USER = os.environ.get("PGUSER")
 DB = "og_bolt_concurrency"
 LISTEN = os.environ.get("OG_BOLT_TEST_LISTEN", "127.0.0.1:27691")
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 WORKERS = 8
 # table -> (parent table its fk column points at, or None). Twelve generic tables.
 TABLES = {

@@ -7,7 +7,10 @@ metadata. This starts the gateway against a scratch database, drives it with the
 official driver, and checks what landed in the rows, the audit log and the
 answers.
 
-    python3 tests/bolt-context/run.py            # needs psql, cargo, the neo4j driver
+    python3 tests/v1/bolt-context/run.py         # needs psql, cargo, the neo4j driver
+
+OG_BOLT_BIN runs a gateway binary that is already built instead of `cargo run`;
+OG_BOLT_TEST_LISTEN moves the gateway off 127.0.0.1:27688.
 
 Exit status is non-zero on the first failed check.
 """
@@ -23,8 +26,8 @@ from neo4j import GraphDatabase, Query
 HOST = os.environ.get("PGHOST", "localhost")
 PORT = os.environ.get("PGPORT", "28816")
 DB = "og_bolt_ctx"
-LISTEN = "127.0.0.1:27688"
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+LISTEN = os.environ.get("OG_BOLT_TEST_LISTEN", "127.0.0.1:27688")
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 def psql(sql, db=DB):
@@ -59,8 +62,9 @@ def main():
 
     env = dict(os.environ, OG_BOLT_LISTEN=LISTEN, OG_BOLT_PGHOST=HOST, OG_BOLT_PGPORT=PORT,
                OG_BOLT_PGDATABASE=DB, OG_BOLT_GRAPH="ctx")
-    gw = subprocess.Popen(["cargo", "run", "-q", "--manifest-path", os.path.join(ROOT, "bolt", "Cargo.toml")],
-                          env=env)
+    cmd = [os.environ["OG_BOLT_BIN"]] if os.environ.get("OG_BOLT_BIN") else \
+        ["cargo", "run", "-q", "--manifest-path", os.path.join(ROOT, "bolt", "Cargo.toml")]
+    gw = subprocess.Popen(cmd, env=env)
     try:
         host, port = LISTEN.split(":")
         for _ in range(600):

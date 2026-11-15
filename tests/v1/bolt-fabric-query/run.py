@@ -15,7 +15,7 @@ checks that the statement
   * ends at the driver's transaction timeout, here and at the source, and
     stops on RESET — and the session goes on as itself after all of it.
 
-    python3 tests/bolt-fabric-query/run.py   # needs psql, cargo, the neo4j driver
+    python3 tests/v1/bolt-fabric-query/run.py   # needs psql, cargo, the neo4j driver
 
 The source account logs in with a password (og_fabric_pw, as in the SQL suite's
 15 and 23): the statement runs as og_source_reader, which is not a superuser.
@@ -39,7 +39,7 @@ PORT = os.environ.get("PGPORT", "28816")
 USER = os.environ.get("PGUSER")
 DB = "og_bolt_fabric_query"
 LISTEN = os.environ.get("OG_BOLT_TEST_LISTEN", "127.0.0.1:27692")
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 ENDLESS = "QUERY FABRIC SELECT count(*) FROM fq.big a, fq.big b, fq.big c"
 FIELDS = ["columns", "types", "rows", "row_count", "truncated", "bytes", "elapsed_ms"]

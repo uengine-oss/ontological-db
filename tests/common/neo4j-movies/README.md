@@ -31,15 +31,15 @@ client we wrote would not be evidence.
 
 ```bash
 # both Ontological paths
-python3 tests/neo4j-movies/run.py
+python3 tests/common/neo4j-movies/run.py
 
 # add the Neo4j comparison
 docker run -d --name bench-neo4j -p 27687:7687 \
   -e NEO4J_AUTH=neo4j/benchpass123 neo4j:5
-python3 tests/neo4j-movies/run.py --neo4j bolt://localhost:27687
+python3 tests/common/neo4j-movies/run.py --neo4j bolt://localhost:27687
 
 # the official sample application, URI changed and nothing else
-python3 tests/neo4j-movies/sample_app.py
+python3 tests/common/neo4j-movies/sample_app.py
 ```
 
 Requires `psycopg2`; `neo4j` for the Bolt and Neo4j phases. `--no-bolt` and

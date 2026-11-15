@@ -17,7 +17,7 @@ Needs a MySQL (or MariaDB) server this test may change one database of:
 Without OG_TEST_MYSQL_HOST it prints why and exits 0. The account's password is
 read from the environment and never printed.
 
-    python3 tests/fabric-mysql-catalog/run.py   # needs psql, cargo, the neo4j driver
+    python3 tests/common/fabric-mysql-catalog/run.py   # needs psql, cargo, the neo4j driver
 
 OG_BOLT_BIN runs a gateway binary that is already built instead of `cargo run`.
 Exit status is non-zero on the first failed check.
@@ -37,7 +37,7 @@ PORT = os.environ.get("PGPORT", "28816")
 USER = os.environ.get("PGUSER")
 DB = "og_fabric_mysql_catalog"
 LISTEN = os.environ.get("OG_BOLT_TEST_LISTEN", "127.0.0.1:27698")
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 SEED = """
 DROP VIEW IF EXISTS pricey;

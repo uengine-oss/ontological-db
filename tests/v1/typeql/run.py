@@ -7,7 +7,7 @@ the data and the queries are the upstream TypeDB files in
 printed in that example's own README. If this passes, a TypeDB user's files ran
 here and produced what TypeDB's documentation says they produce.
 
-Usage:  python3 tests/typeql/run.py [--db NAME]
+Usage:  python3 tests/v1/typeql/run.py [--db NAME]
 Env:    PGHOST PGPORT PGUSER  (defaults match tests/run.sh)
 """
 
@@ -18,7 +18,7 @@ import pathlib
 import subprocess
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
+ROOT = pathlib.Path(__file__).resolve().parents[3]
 EXAMPLE = ROOT / "examples" / "typedb" / "bookstore"
 HERE = pathlib.Path(__file__).resolve().parent
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cypher over virtual nodes, through the Bolt gateway, as a driver sees it.
 
-The engine's SQL regression (engine/tests/sql/21_cypher_virtual_gaps.sql)
+The engine's SQL regression (tests/v1/sql/21_cypher_virtual_gaps.sql)
 checks the answers; this checks the same six forms arrive through a real Neo4j
 driver — records, types and, where a query is wrong, the status code:
 
@@ -13,7 +13,7 @@ driver — records, types and, where a query is wrong, the status code:
   6. a boolean compared with 0 / 1 — and a type error is a TypeError,
      not `DatabaseNotFound` (which is kept for a graph that does not exist).
 
-    python3 tests/bolt-cypher-gaps/run.py   # needs psql, cargo, the neo4j driver
+    python3 tests/common/bolt-cypher-gaps/run.py   # needs psql, cargo, the neo4j driver
 
 OG_BOLT_BIN runs a gateway binary that is already built instead of `cargo run`.
 Exit status is non-zero on the first failed check.
@@ -33,7 +33,7 @@ PORT = os.environ.get("PGPORT", "28816")
 USER = os.environ.get("PGUSER")
 DB = "og_bolt_gaps"
 LISTEN = os.environ.get("OG_BOLT_TEST_LISTEN", "127.0.0.1:27690")
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 def psql(sql, db=DB):
