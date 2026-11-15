@@ -476,6 +476,15 @@ def compare(got_dir, want_dir, known_path=None):
         for k in json.load(open(known_path, encoding="utf-8")):
             known[k["id"]] = k
     diffs = []
+
+    def setup_codes(d):
+        p = os.path.join(d, "_setup.json")
+        if not os.path.exists(p):
+            return None
+        return [(s["file"], s["statements"], s["failed"], [(e["line"], e["code"]) for e in s["errors"]])
+                for s in json.load(open(p, encoding="utf-8"))]
+    if setup_codes(got_dir) != setup_codes(want_dir):
+        diffs.append({"file": "_setup.json", "why": "the fixture loaded differently (statements failing / error codes)"})
     for want in sorted(glob.glob(os.path.join(want_dir, "*", "*.json")) + glob.glob(os.path.join(want_dir, "*", "scenarios", "*.json"))):
         rel = os.path.relpath(want, want_dir)
         got = os.path.join(got_dir, rel)
