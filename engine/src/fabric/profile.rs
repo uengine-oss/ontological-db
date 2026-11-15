@@ -74,6 +74,24 @@ fn columns(rel: &str) -> Vec<Col> {
     })
 }
 
+/// The columns of the table's primary key at its source, `None` where the datasource
+/// does not know (see `probe_source_catalog`).
+fn source_primary_key(ds: &str, table: &str) -> Option<Vec<String>> {
+    let sql = format!(
+        "SELECT {entry}->'pk'
+           FROM pg_foreign_table ft JOIN pg_foreign_server s ON s.oid = ft.ftserver
+           JOIN og_catalog.datasource d ON d.server_name = s.srvname
+           JOIN pg_class c ON c.oid = ft.ftrelid JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE d.name = $1 AND c.relname = $2
+          ORDER BY (n.nspname = $1) DESC LIMIT 1",
+        entry = super::SOURCE_ENTRY_SQL
+    );
+    match one::<JsonB>(&sql, &[ds.into(), table.into()]).ok().flatten()?.0 {
+        Value::Array(a) => Some(a.iter().filter_map(|v| v.as_str().map(str::to_string)).collect()),
+        _ => None,
+    }
+}
+
 fn column<'a>(cols: &'a [Col], name: &str, ds: &str, table: &str) -> &'a Col {
     cols.iter()
         .find(|c| c.name == name)
@@ -95,6 +113,7 @@ fn og_fabric_column_stats(datasource: &str, table: &str, sample: default!(i64, 1
     let n = sample.clamp(1, MAX_ROWS);
     let rel = relation(datasource, table);
     let cols = columns(&rel);
+    let pk = source_primary_key(datasource, table);
     let rows: Vec<Map<String, Value>> = Spi::connect(|c| {
         c.select(&format!("SELECT to_jsonb(s) FROM (SELECT * FROM {rel} LIMIT {n}) s"), None, &[])
             .unwrap_or_else(|e| error!("could not read {datasource}.{table}: {e}"))
@@ -132,6 +151,7 @@ fn og_fabric_column_stats(datasource: &str, table: &str, sample: default!(i64, 1
                 first_seen.iter().filter(|v| v.chars().count() <= 40).take(10).map(|v| json!(v)).collect();
             json!({
                 "column": col.name, "type": col.ty, "nullable": col.nullable, "key": col.key,
+                "primary_key": pk.as_ref().map(|k| k.contains(&col.name)),
                 "sampled": rows.len(), "nulls": nulls, "distinct": distinct,
                 "unique": non_null > 0 && distinct == non_null,
                 "max_length": longest, "top_values": top_values, "samples": samples,

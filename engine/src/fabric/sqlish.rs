@@ -384,10 +384,11 @@ pub fn columns(stmt: &str) -> Vec<String> {
         ["SHOW", "GRAPHS", ..] => &["graph", "types"],
         ["SHOW", "DATASOURCES", ..] => &["name", "engine", "host", "tables", "credentials"],
         ["SHOW", "CREDENTIALS", ..] => &["name", "engine", "credentials", "user", "host", "port", "database", "file"],
-        ["SHOW", "TABLES", ..] => &["table", "columns", "virtual_node"],
-        ["SHOW", "COLUMNS", ..] => &["column", "type", "nullable", "key"],
+        ["SHOW", "TABLES", ..] => &["table", "columns", "virtual_node", "kind", "primary_key"],
+        ["SHOW", "COLUMNS", ..] => &["column", "type", "nullable", "key", "primary_key"],
         ["SHOW", "COLUMN", ..] => &[
             "column", "type", "nullable", "key", "sampled", "nulls", "distinct", "unique", "top_values", "samples",
+            "primary_key",
         ],
         ["SHOW", "VALUE", ..] => &[
             "sampled", "matched", "ratio", "parent_sampled", "parent_distinct", "parent_unique", "parent_key", "compare",
@@ -755,12 +756,14 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
                             AND NOT a.attisdropped) AS columns, \
                         (SELECT string_agg(t.name, ', ' ORDER BY t.name) FROM og_catalog.mapping m \
                            JOIN og_catalog.type t USING (type_id) \
-                          WHERE to_regclass(m.source_table) = c.oid) AS virtual_node \
+                          WHERE to_regclass(m.source_table) = c.oid) AS virtual_node, \
+                        {entry}->>'kind' AS kind, {entry}->'pk' AS primary_key \
                    FROM pg_foreign_table ft JOIN pg_foreign_server s ON s.oid = ft.ftserver \
                    JOIN og_catalog.datasource d ON d.server_name = s.srvname \
                    JOIN pg_class c ON c.oid = ft.ftrelid JOIN pg_namespace n ON n.oid = c.relnamespace \
                   WHERE d.name = {} ORDER BY 1",
-                lit(&ds)
+                lit(&ds),
+                entry = super::SOURCE_ENTRY_SQL
             )
         } else if p.kw("COLUMNS") {
             if !(p.kw("FROM") || p.kw("IN")) {
@@ -784,14 +787,16 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
                 "SELECT a.attname AS \"column\", format_type(a.atttypid, a.atttypmod) AS type, \
                         NOT a.attnotnull AS nullable, \
                         EXISTS (SELECT 1 FROM og_catalog.mapping m \
-                                 WHERE to_regclass(m.source_table) = c.oid AND m.id_column = a.attname) AS key \
+                                 WHERE to_regclass(m.source_table) = c.oid AND m.id_column = a.attname) AS key, \
+                        CASE WHEN {entry} IS NULL THEN NULL ELSE coalesce({entry}->'pk', '[]'::jsonb) ? a.attname::text END AS primary_key \
                    FROM pg_foreign_table ft JOIN pg_foreign_server s ON s.oid = ft.ftserver \
                    JOIN og_catalog.datasource d ON d.server_name = s.srvname \
                    JOIN pg_class c ON c.oid = ft.ftrelid JOIN pg_namespace n ON n.oid = c.relnamespace \
                    JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped \
                   WHERE d.name = {} AND c.relname = {} ORDER BY a.attnum",
                 lit(ds),
-                lit(rel)
+                lit(rel),
+                entry = super::SOURCE_ENTRY_SQL
             )
         } else if p.kw("COLUMN") {
             p.expect_kw("STATS")?;
@@ -804,7 +809,8 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
                 "SELECT x->>'column' AS \"column\", x->>'type' AS type, (x->>'nullable')::boolean AS nullable, \
                         (x->>'key')::boolean AS key, (x->>'sampled')::bigint AS sampled, (x->>'nulls')::bigint AS nulls, \
                         (x->>'distinct')::bigint AS \"distinct\", (x->>'unique')::boolean AS \"unique\", \
-                        x->'top_values' AS top_values, x->'samples' AS samples \
+                        x->'top_values' AS top_values, x->'samples' AS samples, \
+                        (x->>'primary_key')::boolean AS primary_key \
                    FROM jsonb_array_elements(og_fabric_column_stats({}, {}, {n})) x",
                 lit(&ds),
                 lit(&rel)

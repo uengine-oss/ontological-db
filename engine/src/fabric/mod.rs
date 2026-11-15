@@ -242,6 +242,109 @@ fn disconnect(engine: &str) {
     }
 }
 
+/// What the source itself says about the tables a datasource imported: whether
+/// each is a table, a view, a materialized view or a foreign table, and its
+/// primary key. The connector's `IMPORT FOREIGN SCHEMA` keeps neither (a view
+/// and a table import alike, and no key comes across), so it is read here, from
+/// the source's own catalog, when the datasource is created or refreshed, and
+/// kept in the datasource's options as
+/// `source_catalog = {"schema": …, "relations": {"item": {"kind": "table", "pk": ["id"]}}}`.
+///
+/// PostgreSQL sources only; any other engine, a source whose catalog cannot be
+/// read, and a datasource made before this existed have none, and
+/// `SHOW TABLES` / `SHOW COLUMNS` answer null for what they do not know
+/// (`REFRESH DATASOURCE` reads it again).
+fn probe_source_catalog(srv: &str, engine: &str, remote_schema: &str) -> Option<Value> {
+    if !matches!(engine, "postgres" | "postgresql") {
+        return None;
+    }
+    // Four foreign tables over the source's catalogs, in a throwaway schema inside a
+    // subtransaction that is always rolled back: nothing of the probe outlives it, and
+    // a source that refuses a catalog read costs the answer, not the datasource.
+    let probe = || -> Option<Value> {
+        let s = ident(srv);
+        let ddl = [
+            "CREATE SCHEMA og_probe".to_string(),
+            format!("CREATE FOREIGN TABLE og_probe.cls (oid oid, relname name, relnamespace oid, relkind \"char\") SERVER {s} OPTIONS (schema_name 'pg_catalog', table_name 'pg_class')"),
+            format!("CREATE FOREIGN TABLE og_probe.ns (oid oid, nspname name) SERVER {s} OPTIONS (schema_name 'pg_catalog', table_name 'pg_namespace')"),
+            format!("CREATE FOREIGN TABLE og_probe.tc (constraint_schema text, constraint_name text, table_schema text, table_name text, constraint_type text) SERVER {s} OPTIONS (schema_name 'information_schema', table_name 'table_constraints')"),
+            format!("CREATE FOREIGN TABLE og_probe.kcu (constraint_schema text, constraint_name text, table_schema text, table_name text, column_name text, ordinal_position int) SERVER {s} OPTIONS (schema_name 'information_schema', table_name 'key_column_usage')"),
+        ];
+        for d in &ddl {
+            Spi::run(d).ok()?;
+        }
+        let q = format!(
+            "WITH pks AS (
+                 SELECT tc.table_name::text AS t, jsonb_agg(k.column_name::text ORDER BY k.ordinal_position) AS pk
+                   FROM og_probe.tc tc JOIN og_probe.kcu k
+                     ON k.constraint_schema = tc.constraint_schema AND k.constraint_name = tc.constraint_name
+                    AND k.table_schema = tc.table_schema AND k.table_name = tc.table_name
+                  WHERE tc.constraint_type = 'PRIMARY KEY' AND tc.table_schema = {rs}
+                  GROUP BY 1)
+             SELECT jsonb_build_object('schema', {rs}, 'relations', coalesce(jsonb_object_agg(c.relname::text,
+                        jsonb_build_object('kind', CASE c.relkind WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized'
+                                                                  WHEN 'f' THEN 'foreign' ELSE 'table' END,
+                                                  'pk', coalesce(p.pk, '[]'::jsonb))), '{{}}'::jsonb))
+               FROM og_probe.cls c JOIN og_probe.ns n ON n.oid = c.relnamespace
+               LEFT JOIN pks p ON p.t = c.relname::text
+              WHERE n.nspname = {rs} AND c.relkind IN ('r', 'p', 'v', 'm', 'f')",
+            rs = lit(remote_schema)
+        );
+        one::<JsonB>(&q, &[]).ok().flatten().map(|j| j.0)
+    };
+    in_rolled_back_subtransaction(probe).flatten()
+}
+
+/// Run `f` in a subtransaction that is rolled back whatever happens; an error
+/// inside it is `None` instead of a failed statement.
+fn in_rolled_back_subtransaction<T>(f: impl FnOnce() -> T) -> Option<T> {
+    use pgrx::pg_sys;
+    let (memory, owner) = unsafe { (pg_sys::CurrentMemoryContext, pg_sys::CurrentResourceOwner) };
+    unsafe {
+        pg_sys::BeginInternalSubTransaction(std::ptr::null());
+        pg_sys::MemoryContextSwitchTo(memory);
+    }
+    let out = PgTryBuilder::new(std::panic::AssertUnwindSafe(|| Some(f())))
+        .catch_others(|_| {
+            unsafe { pg_sys::FlushErrorState() };
+            None
+        })
+        .execute();
+    unsafe {
+        pg_sys::RollbackAndReleaseCurrentSubTransaction();
+        pg_sys::MemoryContextSwitchTo(memory);
+        pg_sys::CurrentResourceOwner = owner;
+    }
+    out
+}
+
+/// Keep what `probe_source_catalog` found (or drop the stale answer when it found nothing).
+fn store_source_catalog(name: &str, catalog: Option<Value>) {
+    match catalog {
+        Some(c) => Spi::run_with_args(
+            "UPDATE og_catalog.datasource SET options = options || jsonb_build_object('source_catalog', $2::jsonb) WHERE name = $1",
+            &[name.into(), JsonB(c).into()],
+        ),
+        None => Spi::run_with_args(
+            "UPDATE og_catalog.datasource SET options = options - 'source_catalog' WHERE name = $1",
+            &[name.into()],
+        ),
+    }
+    .ok();
+}
+
+/// The SQL that reads a source table's entry of `source_catalog` (`d` the
+/// datasource row, `ft` its foreign table, `c` the relation): `{"kind":…, "pk":[…]}`,
+/// or null where nothing is known. One place for SHOW TABLES, SHOW COLUMNS and
+/// the column statistics.
+pub(crate) const SOURCE_ENTRY_SQL: &str = "d.options->'source_catalog'->'relations'->\
+    coalesce((SELECT o.option_value FROM pg_options_to_table(ft.ftoptions) o WHERE o.option_name = 'table_name'), c.relname::text)";
+
+/// What the inline-password warning says.
+const INLINE_PASSWORD_WARNING: &str = "WARNING: the password is stored inline: in the user mapping, so in the catalog, \
+    backups and the write-ahead log, in clear. Prefer credentials: '<reference>' (keychain:…, vault:…), where the \
+    application that keeps the secrets writes the file and the database never holds the password";
+
 /// Register an external database. `engine` is `postgres`, `mysql` (or `mariadb`),
 /// `mindsdb` (MindsDB's MySQL wire endpoint, so that MindsDB itself can be the
 /// thing a virtual type points at), `oracle` (oracle_fdw + Oracle Instant Client)
@@ -314,6 +417,7 @@ fn og_create_datasource(name: &str, engine: &str, params: JsonB) -> String {
             .unwrap_or_else(|e| error!("failed to import '{remote}' from '{name}': {e}"));
             protect_server(&srv);
             query::after_import();
+            store_source_catalog(name, probe_source_catalog(&srv, &engine, &remote));
             one::<i64>(
                 "SELECT count(*) FROM pg_foreign_table ft JOIN pg_foreign_server s ON s.oid = ft.ftserver
                   WHERE s.srvname = $1",
@@ -324,10 +428,15 @@ fn og_create_datasource(name: &str, engine: &str, params: JsonB) -> String {
         }
         None => None,
     };
-    match imported {
+    let mut result = match imported {
         Some(n) => format!("datasource {name} ({engine}): {n} tables as {name}.*"),
         None => format!("datasource {name} ({engine}): no schema named, import tables with og_import_foreign"),
+    };
+    if matches!(&login, Login::Inline(pw) if !pw.is_empty()) {
+        warning!("datasource '{name}': {}", INLINE_PASSWORD_WARNING.trim_start_matches("WARNING: "));
+        result.push_str(&format!(" — {INLINE_PASSWORD_WARNING}"));
     }
+    result
 }
 
 /// Change how a datasource logs in, without touching what it backs: the server
@@ -387,7 +496,12 @@ fn og_alter_datasource_credentials(name: &str, params: JsonB) -> String {
     .expect("datasource update failed");
     disconnect(&engine);
     let how = shown.get("credentials").and_then(Value::as_str).unwrap_or("inline").to_string();
-    format!("datasource {name}: credentials now {how}; its tables and virtual nodes are unchanged")
+    let mut result = format!("datasource {name}: credentials now {how}; its tables and virtual nodes are unchanged");
+    if matches!(&login, Login::Inline(pw) if !pw.is_empty()) {
+        warning!("datasource '{name}': {}", INLINE_PASSWORD_WARNING.trim_start_matches("WARNING: "));
+        result.push_str(&format!(" — {INLINE_PASSWORD_WARNING}"));
+    }
+    result
 }
 
 /// Give every foreign table of a server the trigger that refuses writes, where
@@ -529,6 +643,7 @@ fn og_refresh_datasource(name: &str) -> String {
     .unwrap_or_else(|e| error!("failed to refresh '{name}': {e}"));
     protect_server(&srv);
     query::after_import();
+    store_source_catalog(name, probe_source_catalog(&srv, &engine, &remote));
     let now = one::<i64>(
         "SELECT count(*) FROM pg_foreign_table ft JOIN pg_foreign_server s ON s.oid = ft.ftserver WHERE s.srvname = $1",
         &[srv.as_str().into()],

@@ -176,17 +176,29 @@ SHOW TABLES FROM erp
 ```
 
 ```text
- table              | columns | virtual_node
---------------------+---------+--------------
- erp.item           | 3       | null
- erp.po_line        | 4       | null
- erp.purchase_order | 5       | null
- erp.supplier       | 4       | null
+ table              | columns | virtual_node | kind  | primary_key
+--------------------+---------+--------------+-------+---------------
+ erp.item           | 3       | null         | table | ["item_id"]
+ erp.po_line        | 4       | null         | table | ["po_id", "line_no"]
+ erp.purchase_order | 5       | null         | table | ["po_id"]
+ erp.supplier       | 4       | null         | table | ["supplier_id"]
 (4 rows)
 ```
 
+`kind` (`table`, `view`, `materialized`, `foreign`) and `primary_key` (the columns of the primary
+key **at the source**, `[]` for none) are read from the source's own catalog when the datasource
+is created or refreshed. They are known for `postgres` sources; for any other engine, or a
+datasource made before this was kept, they are `null` until `REFRESH DATASOURCE`. `SHOW COLUMNS`
+and `SHOW COLUMN STATS` carry `primary_key` per column, separate from `key`, which marks the
+column a virtual node uses as its id.
+
 비밀번호는 어디에도 보이지 않습니다. 서버에서는 superuser만 읽을 수 있는 곳에 저장되고, 감사 기록에는
-설정 블록이 `{…}` 로 가려져 남습니다. 원천 계정은 **읽기 전용**으로 만드는 것을 권합니다. 이 튜토리얼의
+설정 블록이 `{…}` 로 가려져 남습니다. 다만 `password:` 로 직접 넘긴 비밀번호는 데이터베이스(사용자 매핑 — 카탈로그·백업·WAL)에
+평문으로 남으므로, 결과에 `WARNING: the password is stored inline …` 이 붙습니다. 운영에서는 비밀번호 대신
+`credentials: 'keychain:erp'`(또는 `vault:kv/ontological/erp#password`) 같은 **참조**를 주세요. 이 경우
+`ontological.fabric_credentials_dir` 가 가리키는 폴더에 비밀을 관리하는 쪽(앱)이 `<서버>.pgpass` · `.cnf` · `.pw`
+파일을 쓰고, 커넥터가 그 파일에서 읽습니다. 데이터베이스에는 참조와 파일 경로만 남습니다
+(`SHOW CREDENTIALS` 로 어떤 파일을 써야 하는지 볼 수 있고, `ALTER DATASOURCE … SET CREDENTIALS` 로 바꿉니다). 원천 계정은 **읽기 전용**으로 만드는 것을 권합니다. 이 튜토리얼의
 `fabric_ro` 에는 `SELECT` 권한만 있습니다. 지원 엔진은 `postgres`, `mysql` 입니다.
 
 ## 2단계. 첫 가상 노드 — 테이블이 라벨이 된다
