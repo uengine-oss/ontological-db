@@ -59,6 +59,9 @@ def psql(args, sql=None, file=None, db=None, variables=None):
 def bootstrap(args, graphs):
     psql(args, f"DROP DATABASE IF EXISTS {args.pg_database}", db="postgres")
     psql(args, f"CREATE DATABASE {args.pg_database}", db="postgres")
+    # every session (the gateway's too) on UTC, whatever the cluster's own timezone: datetime() and
+    # times read back are then written the same on every machine
+    psql(args, f"ALTER DATABASE {args.pg_database} SET TimeZone TO 'UTC'", db="postgres")
     psql(args, file=os.path.join(HERE, "targets", args.target, "bootstrap.sql"), variables={"graphs": ",".join(graphs)})
 
 
@@ -322,6 +325,9 @@ def load_unstable():
 
 
 def one_pass(args, out_dir):
+    nz.set_connection(pg_host=args.pg_host, pg_port=args.pg_port, pg_database=args.pg_database,
+                      bolt_port=int(re.search(r":(\d+)$", args.bolt_uri.rstrip("/")).group(1))
+                      if re.search(r":(\d+)$", args.bolt_uri.rstrip("/")) else None)
     clients = args.clients
     corpus = load_corpus(clients)
     unstable = load_unstable()
@@ -357,6 +363,8 @@ def one_pass(args, out_dir):
                 setup.append({"file": os.path.relpath(f, HERE), "graph": graph, "statements": ok + failed,
                               "failed": failed, "errors": errors})
         dump(os.path.join(out_dir, "_setup.json"), setup)
+        # statistics once, then held (targets/stats.sql)
+        psql(args, file=os.path.join(HERE, "targets", "stats.sql"))
 
         for c, (d, man) in corpus.items():
             cdir = os.path.join(out_dir, c)
