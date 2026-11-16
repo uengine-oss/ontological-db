@@ -32,6 +32,7 @@ OG_BOLT_PGPORT=28816 OG_BOLT_PGDATABASE=og \
 | `OG_BOLT_GRAPH` | `default` | graph used when a session names no database |
 | `OG_BOLT_ADVERTISED` | same as `OG_BOLT_LISTEN` | address returned in the routing table |
 | `OG_BOLT_STATEMENT_TIMEOUT` | unset: the engine's `og.statement_timeout` (2 min) | every session's statement limit: `300s`, `2min`, `120000` (ms), `0` for none |
+| `OG_BOLT_ENGINE_SCHEMA` | unset: engine functions are called unqualified (resolved by `search_path`, which is `public` for the `ontological` extension) | schema to call the engine functions in, e.g. `oga_catalog` for `ontological_age`. Set it explicitly (`public`) when both editions are installed in one database |
 
 ## Time limits and cancellation
 

@@ -48,6 +48,7 @@ psql -h localhost -p 5433 -d mydb
 | `OG_SQL_LISTEN` | `127.0.0.1:5433` | where to accept PostgreSQL clients |
 | `OG_SQL_PGHOST` | `localhost` | the server to relay to |
 | `OG_SQL_PGPORT` | `5432` | |
+| `OG_SQL_ENGINE_SCHEMA` | unset: engine functions are called unqualified | schema to call `og_fabric_translate`/`og_fabric` in, e.g. `oga_catalog` for `ontological_age` |
 
 ## What to know
 
