@@ -1220,7 +1220,8 @@ impl Compiler {
                         self.constrain("false".into());
                     } else if let Some(w) = want {
                         self.constrain(format!(
-                            "og_is_subtype({}, {w})",
+                            "{}({}, {w})",
+                            crate::spiu::fnq("og_is_subtype"),
                             self.layout.element_type(&alias)
                         ));
                     }
@@ -1728,9 +1729,7 @@ impl Compiler {
             };
             if !temporal.is_empty() && rel.var.is_some() {
                 // As for any hop without one type: rendered from the registry.
-                self.constrain(
-                    "og_require_current('a relationship variable without a single type')".into(),
-                );
+                self.constrain(require_current("a relationship variable without a single type"));
             }
             let sn = self.fresh("sn");
             near.push(format!("SELECT 0, to_jsonb({sn}.nbr), {sn}.eid FROM ({rows}) {sn}"));
@@ -1911,7 +1910,7 @@ impl Compiler {
     /// a point-in-time query, so it refuses to (spec 013 FR-010).
     fn guard_untyped_nodes(&mut self) {
         if !self.layout.temporal_types(self.gid, Kind::Node, None).is_empty() {
-            self.constrain("og_require_current('an unlabelled node pattern')".into());
+            self.constrain(require_current("an unlabelled node pattern"));
         }
     }
 
@@ -1944,10 +1943,7 @@ impl Compiler {
 
         if let Some((min, max)) = rel.range {
             if !temporal_rels.is_empty() {
-                self.constrain(
-                    "og_require_current('variable-length traversal over a temporal relationship type')"
-                        .into(),
-                );
+                self.constrain(require_current("variable-length traversal over a temporal relationship type"));
             }
             let w = self.fresh("vl");
             let joiner = if optional { "LEFT JOIN LATERAL" } else { "CROSS JOIN LATERAL" };
@@ -2010,9 +2006,7 @@ impl Compiler {
         // A relationship variable without one known type is rendered from
         // the edge registry, which has no history.
         if !temporal_rels.is_empty() && rel.var.is_some() && rel.types.len() != 1 {
-            self.constrain(
-                "og_require_current('a relationship variable without a single type')".into(),
-            );
+            self.constrain(require_current("a relationship variable without a single type"));
         }
         self.note_optional_join(&u);
         self.constrain(format!("{} = {u}.nbr", self.layout.element_id(to_alias)));
@@ -3602,7 +3596,9 @@ impl Compiler {
                 };
                 let tid = self.type_id_sql(v, "labels")?;
                 format!(
-                    "to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes({tid})) AS t))"
+                    "to_jsonb(ARRAY(SELECT {}(t) FROM unnest({}({tid})) AS t))",
+                    crate::spiu::fnq("og_type_name"),
+                    crate::spiu::fnq("og_supertypes")
                 )
             }
             "type" => {
@@ -3610,7 +3606,7 @@ impl Compiler {
                     return Err("type() expects a pattern variable".into());
                 };
                 let tid = self.type_id_sql(v, "type")?;
-                format!("og_type_name({tid})")
+                format!("{}({tid})", crate::spiu::fnq("og_type_name"))
             }
             // `size(list)`, `size(string)`; `length(path)` (and, leniently,
             // `length` of a list or string). Decided by the type where it is
@@ -3847,7 +3843,8 @@ impl Compiler {
                 let provider = a.get(1).cloned().unwrap_or_else(|| "NULL".into());
                 let config = a.get(2).cloned().unwrap_or_else(|| "'{}'".into());
                 format!(
-                    "og_genai_encode(({})::text, ({provider})::text, ({config})::jsonb)",
+                    "{}(({})::text, ({provider})::text, ({config})::jsonb)",
+                    crate::spiu::fnq("og_genai_encode"),
                     a[0]
                 )
             }
@@ -4086,6 +4083,13 @@ fn split_join(entry: &str) -> (&'static str, &str, &'static str) {
 /// A string toInteger()/toFloat() reads as a number: optional sign, digits with
 /// an optional fraction, optional exponent, surrounding blanks.
 const NUMERIC_TEXT: &str = r"^\s*[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?\s*$";
+
+/// The guard a pattern that can only read the present puts in its WHERE:
+/// `og_require_current('<what>')` raises when the session asks for a past
+/// instant (spec 013 FR-010). `what` is the compiler's own text, without quotes.
+fn require_current(what: &str) -> String {
+    format!("{}('{what}')", crate::spiu::fnq("og_require_current"))
+}
 
 /// The Cypher temporal field `p` names, lower-cased, if it names one.
 fn temporal_unit(p: &str) -> Option<&'static str> {

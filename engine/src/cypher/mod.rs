@@ -406,8 +406,8 @@ fn run_subquery(
         for k in &imported_all {
             let fresh = env.get(k).and_then(|v| {
                 let id = v.get("_id").and_then(Value::as_i64)?;
-                let sql = if v.get("_src").is_some() { "SELECT og_edge_json($1)" } else { "SELECT og_node_json($1)" };
-                crate::spiu::one::<JsonB>(sql, &[id.into()]).ok().flatten().map(|j| j.0)
+                let sql = element_json_sql(if v.get("_src").is_some() { crate::layout::Kind::Rel } else { crate::layout::Kind::Node });
+                crate::spiu::one::<JsonB>(&sql, &[id.into()]).ok().flatten().map(|j| j.0)
             });
             if let Some(f) = fresh {
                 env.insert(k.clone(), f);
@@ -994,8 +994,14 @@ fn props_json(props: &[(String, Expr)], env: &eval::Env, params: &Value) -> Valu
     Value::Object(m)
 }
 
+/// `SELECT <an element as JSON>($1)`: what the writer reads an element back
+/// with — the layout says how (v1: `og_node_json($1)` / `og_edge_json($1)`).
+pub(crate) fn element_json_sql(kind: crate::layout::Kind) -> String {
+    format!("SELECT {}", crate::layout::active().element_json_of_id(&crate::layout::SqlExpr::new("$1"), kind))
+}
+
 fn node_json(id: i64) -> Value {
-    crate::spiu::one::<JsonB>("SELECT og_node_json($1)", &[id.into()])
+    crate::spiu::one::<JsonB>(&element_json_sql(crate::layout::Kind::Node), &[id.into()])
         .ok()
         .flatten()
         .map(|j| j.0)
@@ -1003,7 +1009,7 @@ fn node_json(id: i64) -> Value {
 }
 
 fn edge_json(id: i64) -> Value {
-    crate::spiu::one::<JsonB>("SELECT og_edge_json($1)", &[id.into()])
+    crate::spiu::one::<JsonB>(&element_json_sql(crate::layout::Kind::Rel), &[id.into()])
         .ok()
         .flatten()
         .map(|j| j.0)

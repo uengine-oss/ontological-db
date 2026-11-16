@@ -21,7 +21,7 @@ fn og_cypher_json(graph: &str, query: &str, params: default!(JsonB, "'{}'")) -> 
     let rows: Vec<Value> = Spi::connect(|client| {
         client
             .select(
-                "SELECT coalesce(jsonb_agg(r), '[]'::jsonb) FROM og_cypher($1,$2,$3) r",
+                &format!("SELECT coalesce(jsonb_agg(r), '[]'::jsonb) FROM {}($1,$2,$3) r", crate::spiu::fnq("og_cypher")),
                 None,
                 &[graph.into(), query.into(), params.into()],
             )

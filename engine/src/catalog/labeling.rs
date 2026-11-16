@@ -211,8 +211,11 @@ pub fn bump_schema_version(graph_id: i32, description: &str) {
     // The whole catalog of the graph as it stands after this change, so "what
     // structure was this written under?" has an answer (spec 012 FR-009).
     Spi::run_with_args(
-        "INSERT INTO og_catalog.schema_version (version, graph_id, description, snapshot)
-         VALUES (nextval('og_catalog.schema_version_seq'), $1, $2, og__schema_snapshot($1))",
+        &format!(
+            "INSERT INTO og_catalog.schema_version (version, graph_id, description, snapshot)
+         VALUES (nextval('og_catalog.schema_version_seq'), $1, $2, {}($1))",
+            crate::spiu::fnq("og__schema_snapshot")
+        ),
         &[graph_id.into(), description.into()],
     )
     .expect("failed to bump schema version");

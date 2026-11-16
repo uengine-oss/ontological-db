@@ -340,7 +340,7 @@ fn func(name: &str, a: &[Value]) -> Result<Value, String> {
         "startnode" | "endnode" => {
             let end = if name.eq_ignore_ascii_case("startnode") { "_src" } else { "_dst" };
             match a[0].get(end).and_then(Value::as_i64) {
-                Some(id) => crate::spiu::one::<pgrx::JsonB>("SELECT og_node_json($1)", &[id.into()])
+                Some(id) => crate::spiu::one::<pgrx::JsonB>(&super::element_json_sql(crate::layout::Kind::Node), &[id.into()])
                     .ok()
                     .flatten()
                     .map(|j| j.0)

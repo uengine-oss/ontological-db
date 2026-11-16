@@ -150,13 +150,13 @@ fn observed_endpoints(tid: i32, sample: i32) -> Vec<(i32, i32)> {
 /// would claim a reach the sample never showed.
 fn label_names(tid: i32, expand: bool) -> Vec<String> {
     let sql = if expand {
-        "SELECT name FROM og_catalog.type WHERE type_id = ANY (og_subtypes($1))"
+        format!("SELECT name FROM og_catalog.type WHERE type_id = ANY ({}($1))", crate::spiu::fnq("og_subtypes"))
     } else {
-        "SELECT name FROM og_catalog.type WHERE type_id = $1"
+        "SELECT name FROM og_catalog.type WHERE type_id = $1".to_string()
     };
     Spi::connect(|client| {
         client
-            .select(sql, None, &[tid.into()])
+            .select(&sql, None, &[tid.into()])
             .map(|rows| rows.filter_map(|r| r.get::<String>(1).ok().flatten()).collect())
             .unwrap_or_default()
     })

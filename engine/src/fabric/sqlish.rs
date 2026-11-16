@@ -36,7 +36,7 @@
 //! without it the graph is the one `USE GRAPH` chose, or the only one there is.
 
 use crate::catalog::types;
-use crate::spiu::{lit, one};
+use crate::spiu::{fnq, lit, one};
 use pgrx::prelude::*;
 use pgrx::JsonB;
 use serde_json::{Map, Value};
@@ -439,10 +439,10 @@ fn is_cypher(s: &str) -> bool {
 
 /// A Cypher query as SQL with one column per `RETURN` item.
 fn cypher_sql(graph: &str, q: &str) -> R<String> {
-    let cols = one::<Vec<String>>("SELECT og_cypher_columns($1)", &[q.into()])
+    let cols = one::<Vec<String>>(&format!("SELECT {}($1)", fnq("og_cypher_columns")), &[q.into()])
         .map_err(|e| e.to_string())?
         .unwrap_or_default();
-    let call = format!("og_cypher({}, {})", lit(graph), dq(q));
+    let call = format!("{}({}, {})", fnq("og_cypher"), lit(graph), dq(q));
     if cols.is_empty() {
         return Ok(format!("SELECT r AS result FROM {call} r"));
     }
@@ -546,7 +546,7 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
         let key = p.word("the key column")?;
         p.end()?;
         return Ok((
-            format!("SELECT og_create_view_node({}, {}, {}, {}) AS result", lit(&g), lit(&ty), lit(&key), dq(query)),
+            format!("SELECT {}({}, {}, {}, {}) AS result", fnq("og_create_view_node"), lit(&g), lit(&ty), lit(&key), dq(query)),
             vec![],
         ));
     }
@@ -556,11 +556,13 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
         // the query itself without it.
         let (sql, options) = query_fabric_parts(s, params)?;
         return Ok((
-            "SELECT x->'columns' AS columns, x->'types' AS types, x->'rows' AS rows, \
+            format!(
+                "SELECT x->'columns' AS columns, x->'types' AS types, x->'rows' AS rows, \
                     (x->>'row_count')::bigint AS row_count, (x->>'truncated')::boolean AS truncated, \
                     (x->>'bytes')::bigint AS bytes, (x->>'elapsed_ms')::float8 AS elapsed_ms \
-               FROM (SELECT og_fabric_query($1, $2::jsonb) AS x) s"
-                .to_string(),
+               FROM (SELECT {}($1, $2::jsonb) AS x) s",
+                fnq("og_fabric_query")
+            ),
             vec![sql, options],
         ));
     }
@@ -569,7 +571,8 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
         let q = s[at..].trim();
         return Ok((
             format!(
-                "SELECT step, place, operation, rows, detail FROM og_fabric_explain({}, {}, true, {}::jsonb)",
+                "SELECT step, place, operation, rows, detail FROM {}({}, {}, true, {}::jsonb)",
+                fnq("og_fabric_explain"),
                 lit(&default_graph(graph)?),
                 dq(q),
                 lit(&Value::Object(params.clone()).to_string())
@@ -586,8 +589,9 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
             // Created, and chosen for the rest of a SQL session.
             format!(
                 "SELECT format('graph %s created', {n}) AS result \
-                 FROM og_create_graph({n}), set_config('og.graph', {n}, false)",
-                n = lit(&name)
+                 FROM {f}({n}), set_config('og.graph', {n}, false)",
+                n = lit(&name),
+                f = fnq("og_create_graph")
             )
         } else if p.kw("DATASOURCE") || p.kw("DATABASE") {
             let name = p.word("a datasource name")?;
@@ -610,7 +614,7 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
             };
             p.i += 1;
             args.push(json);
-            format!("SELECT og_create_datasource({}, {}, $1::jsonb) AS result", lit(&name), lit(&engine))
+            format!("SELECT {}({}, {}, $1::jsonb) AS result", fnq("og_create_datasource"), lit(&name), lit(&engine))
         } else if p.kw("VIRTUAL") {
             if p.kw("NODE") {
                 let ty = p.word("a node type name")?;
@@ -640,8 +644,8 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
                 format!(
                     "SELECT format('virtual node %s ← %s (%s properties)', j->>'type', {src}, \
                      (SELECT count(*) FROM jsonb_object_keys(j->'properties'))) AS result \
-                     FROM og_map_relation({g}, {t}, {src}, {k}, {pmap}) j",
-                    g = lit(&graph), t = lit(&ty), src = lit(&rel), k = lit(&key)
+                     FROM {f}({g}, {t}, {src}, {k}, {pmap}) j",
+                    g = lit(&graph), t = lit(&ty), src = lit(&rel), k = lit(&key), f = fnq("og_map_relation")
                 )
             } else if p.kw("RELATIONSHIP") || p.kw("REL") {
                 let name = p.word("a relationship name")?;
@@ -653,8 +657,9 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
                 format!(
                     "SELECT format('virtual relationship (:%s)-[:%s]->(:%s) on %s.%s = %s.%s', \
                      {a}, {n}, {b}, {a}, {ap}, {b}, {bp}) AS result \
-                     FROM og_create_virtual_rel({g}, {n}, {a}, {ap}, {b}, {bp})",
-                    g = lit(&graph), n = lit(&name), a = lit(&a), ap = lit(&ap), b = lit(&b), bp = lit(&bp)
+                     FROM {f}({g}, {n}, {a}, {ap}, {b}, {bp})",
+                    g = lit(&graph), n = lit(&name), a = lit(&a), ap = lit(&ap), b = lit(&b), bp = lit(&bp),
+                    f = fnq("og_create_virtual_rel")
                 )
             } else {
                 return Err(format!("expected NODE or RELATIONSHIP after CREATE VIRTUAL{}", p.near()));
@@ -665,16 +670,16 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
     } else if p.kw("DROP") {
         if p.kw("DATASOURCE") {
             let name = p.word("a datasource name")?;
-            format!("SELECT og_drop_datasource({}) AS result", lit(&name))
+            format!("SELECT {}({}) AS result", fnq("og_drop_datasource"), lit(&name))
         } else if p.kw("VIRTUAL") {
             if p.kw("NODE") {
                 let ty = p.word("a node type name")?;
                 let graph = p.graph()?;
-                format!("SELECT og_drop_virtual({}, {}, false) AS result", lit(&graph), lit(&ty))
+                format!("SELECT {}({}, {}, false) AS result", fnq("og_drop_virtual"), lit(&graph), lit(&ty))
             } else if p.kw("RELATIONSHIP") || p.kw("REL") {
                 let name = p.word("a relationship name")?;
                 let graph = p.graph()?;
-                format!("SELECT og_drop_virtual({}, {}, true) AS result", lit(&graph), lit(&name))
+                format!("SELECT {}({}, {}, true) AS result", fnq("og_drop_virtual"), lit(&graph), lit(&name))
             } else {
                 return Err(format!("expected NODE or RELATIONSHIP after DROP VIRTUAL{}", p.near()));
             }
@@ -693,11 +698,11 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
         };
         p.i += 1;
         args.push(json);
-        format!("SELECT og_alter_datasource_credentials({}, $1::jsonb) AS result", lit(&name))
+        format!("SELECT {}({}, $1::jsonb) AS result", fnq("og_alter_datasource_credentials"), lit(&name))
     } else if p.kw("REFRESH") {
         p.expect_kw("DATASOURCE")?;
         let name = p.word("a datasource name")?;
-        format!("SELECT og_refresh_datasource({}) AS result", lit(&name))
+        format!("SELECT {}({}) AS result", fnq("og_refresh_datasource"), lit(&name))
     } else if p.kw("MATERIALIZE") {
         p.kw("VIRTUAL");
         p.expect_kw("NODE")?;
@@ -705,8 +710,8 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
         let graph = p.graph()?;
         format!(
             "SELECT format('node %s materialized: %s rows copied, now stored and writable', {t}, n) AS result \
-             FROM og_materialize_mapping({g}, {t}) n",
-            g = lit(&graph), t = lit(&ty)
+             FROM {f}({g}, {t}) n",
+            g = lit(&graph), t = lit(&ty), f = fnq("og_materialize_mapping")
         )
     } else if p.kw("USE") {
         p.kw("GRAPH");
@@ -811,7 +816,8 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
                         (x->>'distinct')::bigint AS \"distinct\", (x->>'unique')::boolean AS \"unique\", \
                         x->'top_values' AS top_values, x->'samples' AS samples, \
                         (x->>'primary_key')::boolean AS primary_key \
-                   FROM jsonb_array_elements(og_fabric_column_stats({}, {}, {n})) x",
+                   FROM jsonb_array_elements({}({}, {}, {n})) x",
+                fnq("og_fabric_column_stats"),
                 lit(&ds),
                 lit(&rel)
             )
@@ -833,7 +839,8 @@ fn translate_args(stmt: &str, graph: Option<&str>, params: &Map<String, Value>) 
                         (x->>'ratio')::float8 AS ratio, (x->>'parent_sampled')::bigint AS parent_sampled, \
                         (x->>'parent_distinct')::bigint AS parent_distinct, (x->>'parent_unique')::boolean AS parent_unique, \
                         (x->>'parent_key')::boolean AS parent_key, x->>'compare' AS compare \
-                   FROM (SELECT og_fabric_value_overlap({}, {}, {}, {}, {}, {}, {n}) AS x) s",
+                   FROM (SELECT {}({}, {}, {}, {}, {}, {}, {n}) AS x) s",
+                fnq("og_fabric_value_overlap"),
                 lit(&cds), lit(&ct), lit(&cc), lit(&pds), lit(&pt), lit(&pcn)
             )
         } else if p.kw("VIRTUAL") {
@@ -1038,7 +1045,7 @@ fn og_drop_virtual(graph: &str, name: &str, relationship: bool) -> String {
         if n == 0 {
             error!("'{name}' is not a virtual relationship");
         }
-        Spi::run_with_args("SELECT og_drop_type($1, $2, false)", &[graph.into(), name.into()])
+        Spi::run_with_args(&format!("SELECT {}($1, $2, false)", fnq("og_drop_type")), &[graph.into(), name.into()])
             .unwrap_or_else(|e| error!("{e}"));
         return format!("virtual relationship {name} dropped");
     }
@@ -1057,7 +1064,7 @@ fn og_drop_virtual(graph: &str, name: &str, relationship: bool) -> String {
     }
     let table = types::storage_table(tid).unwrap_or_default();
     Spi::run(&format!("DROP VIEW IF EXISTS {table} CASCADE")).unwrap_or_else(|e| error!("{e}"));
-    Spi::run_with_args("SELECT og_drop_type($1, $2, false)", &[graph.into(), name.into()])
+    Spi::run_with_args(&format!("SELECT {}($1, $2, false)", fnq("og_drop_type")), &[graph.into(), name.into()])
         .unwrap_or_else(|e| error!("{e}"));
     // A node defined by a query owned its view; nothing else should read it.
     Spi::run(&format!(

@@ -67,6 +67,14 @@ fn scalar(name: &'static str, sql: String) -> Yielded {
     Yielded { name, sql, is_element: false }
 }
 
+/// The node whose id is `id` as the JSON a yielded element is (the layout's,
+/// v1 `og_node_json(<id>)`).
+fn node_json(id: &str) -> String {
+    crate::layout::active()
+        .element_json_of_id(&crate::layout::SqlExpr::new(id), crate::layout::Kind::Node)
+        .into_string()
+}
+
 /// Procedures that exist only so a driver's startup sequence succeeds. They
 /// have nothing to wait for — indexes here are built synchronously.
 const NO_OPS: &[&str] = &[
@@ -107,7 +115,8 @@ pub fn plan(
             };
             Ok(Plan {
                 from: format!(
-                    "(SELECT og_apoc_meta_schema({}, {sample})) AS {alias}(value)",
+                    "(SELECT {}({}, {sample})) AS {alias}(value)",
+                    crate::spiu::fnq("og_apoc_meta_schema"),
                     crate::cypher::compile::sql_str(graph)
                 ),
                 lateral: false,
@@ -233,7 +242,8 @@ fn vector_query(graph: &str, gid: i32, args: &[Arg], alias: &str) -> Result<Plan
     let vec = format!("translate(({})::text, '{{}}', '[]')", args[2].sql());
     Ok(Plan {
         from: format!(
-            "og_vector_search({}, {}, {}, {vec}, ({k})::int4) AS {alias}(id, score, entity)",
+            "{}({}, {}, {}, {vec}, ({k})::int4) AS {alias}(id, score, entity)",
+            crate::spiu::fnq("og_vector_search"),
             crate::cypher::compile::sql_str(graph),
             crate::cypher::compile::sql_str(&entry.type_name),
             crate::cypher::compile::sql_str(prop),
@@ -279,7 +289,7 @@ fn fulltext_query(gid: i32, args: &[Arg], alias: &str) -> Result<Plan, String> {
         ),
         lateral: false,
         columns: vec![
-            elem("node", format!("og_node_json({alias}.id)")),
+            elem("node", node_json(&format!("{alias}.id"))),
             scalar("score", format!("{alias}.score")),
         ],
     })
@@ -307,12 +317,13 @@ fn neighbors(args: &[Arg], alias: &str) -> Result<Plan, String> {
     let hops = args.get(2).map(Arg::sql).unwrap_or_else(|| "1".to_string());
     Ok(Plan {
         from: format!(
-            "og_vlp({src}, NULL::int4[], '{dir}'::\"char\", 1, ({hops})::int) \
-             AS {alias}(node, depth, path)"
+            "{vlp}({src}, NULL::int4[], '{dir}'::\"char\", 1, ({hops})::int) \
+             AS {alias}(node, depth, path)",
+            vlp = crate::spiu::fnq("og_vlp")
         ),
         lateral: true,
         columns: vec![
-            elem("node", format!("og_node_json({alias}.node)")),
+            elem("node", node_json(&format!("{alias}.node"))),
             scalar("depth", format!("{alias}.depth")),
         ],
     })

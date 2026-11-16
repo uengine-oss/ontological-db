@@ -8,6 +8,7 @@
 use pgrx::datum::DatumWithOid;
 use pgrx::prelude::*;
 use pgrx::spi;
+use std::cell::RefCell;
 
 type R<T> = Result<Option<T>, spi::Error>;
 
@@ -108,5 +109,115 @@ pub fn qname(s: &str) -> String {
     match s.split_once('.') {
         Some((schema, rel)) => format!("{}.{}", ident(schema), ident(rel)),
         None => ident(s),
+    }
+}
+
+// --------------------------------------------------------------------------
+// Engine function names — the edition seam (P1 K6, `DESIGN.md` 5.3 (1))
+// --------------------------------------------------------------------------
+//
+// Two editions can be installed in one database: `ontological` (v1, no
+// `schema` in its control file, so its functions land in the schema it was
+// created in, usually `public`) and `ontological_age` (v2, `schema =
+// 'oga_catalog'`). Their SQL functions have the same names. A statement the
+// engine runs or generates that calls one of them unqualified resolves it
+// through `search_path` — and would reach the other edition's function. So
+// every engine function name the editions' shared code writes into SQL comes
+// from `fnq`.
+//
+// v1 never calls `set_edition`, and then `fnq` returns the name as it is: v1's
+// SQL stays byte for byte what it was (the generated-SQL mold checks it). An
+// edition that does call it (its `_PG_init`, K7) gets every name qualified
+// with the schema its extension was installed in.
+
+thread_local! {
+    /// The extension this backend's edition is, if it said (`set_edition`).
+    static EDITION: RefCell<Option<&'static str>> = const { RefCell::new(None) };
+    /// That extension's schema, found once per backend (`relocatable = false`,
+    /// so it cannot move), already quoted.
+    static EDITION_SCHEMA: RefCell<Option<String>> = const { RefCell::new(None) };
+}
+
+/// Say which extension this library is running as: `set_edition("ontological_age")`.
+/// Called once, from the edition's `_PG_init`; v1 does not call it.
+pub fn set_edition(ext_name: &'static str) {
+    EDITION.with(|e| *e.borrow_mut() = Some(ext_name));
+    EDITION_SCHEMA.with(|s| *s.borrow_mut() = None);
+}
+
+/// The extension name `set_edition` was given, if it was called.
+pub fn edition() -> Option<&'static str> {
+    EDITION.with(|e| *e.borrow())
+}
+
+/// The name of an engine SQL function as the shared code is to write it into a
+/// statement: as given when no edition was set (v1), `"<schema>".<name>` when
+/// one was, `<schema>` being the schema the edition's extension is installed in.
+pub fn fnq(name: &str) -> String {
+    let Some(ext) = edition() else {
+        return name.to_string();
+    };
+    let schema = EDITION_SCHEMA.with(|s| s.borrow().clone()).unwrap_or_else(|| {
+        let found = ident(&edition_schema(ext));
+        EDITION_SCHEMA.with(|s| *s.borrow_mut() = Some(found.clone()));
+        found
+    });
+    format!("{schema}.{name}")
+}
+
+/// Where the extension `ext` is installed (`pg_extension.extnamespace`).
+#[cfg(not(test))]
+fn edition_schema(ext: &str) -> String {
+    one::<String>(
+        "SELECT n.nspname::text FROM pg_catalog.pg_extension e
+           JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+          WHERE e.extname = $1",
+        &[ext.into()],
+    )
+    .unwrap_or_else(|e| error!("finding the schema of extension {ext} failed: {e}"))
+    .unwrap_or_else(|| error!("extension {ext} is not installed in this database"))
+}
+
+/// The unit tests have no database: the schema lookup answers from what the
+/// test says the catalog holds.
+#[cfg(test)]
+fn edition_schema(ext: &str) -> String {
+    tests::CATALOG.with(|c| c.borrow().iter().find(|(e, _)| *e == ext).map(|(_, s)| s.to_string()))
+        .unwrap_or_else(|| panic!("extension {ext} is not installed in this database"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    thread_local! {
+        /// `pg_extension` as the test has it: (extension, schema).
+        pub(super) static CATALOG: RefCell<Vec<(&'static str, &'static str)>> = const { RefCell::new(Vec::new()) };
+    }
+
+    #[test]
+    fn without_an_edition_a_name_is_left_as_it_is() {
+        // v1 never sets an edition; the lookup must not even be consulted.
+        assert_eq!(edition(), None);
+        assert_eq!(fnq("og_node_json"), "og_node_json");
+        assert_eq!(fnq("og_cypher"), "og_cypher");
+    }
+
+    #[test]
+    fn an_edition_qualifies_with_its_extensions_schema() {
+        CATALOG.with(|c| c.borrow_mut().extend([("ontological", "public"), ("ontological_age", "oga_catalog")]));
+        set_edition("ontological_age");
+        assert_eq!(edition(), Some("ontological_age"));
+        assert_eq!(fnq("og_cypher"), "\"oga_catalog\".og_cypher");
+        // found once per backend: a later change to the catalog is not seen
+        CATALOG.with(|c| c.borrow_mut().clear());
+        assert_eq!(fnq("og_node_json"), "\"oga_catalog\".og_node_json");
+    }
+
+    #[test]
+    fn a_schema_name_is_quoted() {
+        CATALOG.with(|c| c.borrow_mut().push(("ext_b", "Odd \"Schema\"")));
+        set_edition("ext_b");
+        assert_eq!(fnq("og_vlp"), "\"Odd \"\"Schema\"\"\".og_vlp");
     }
 }

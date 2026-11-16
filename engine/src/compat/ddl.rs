@@ -140,7 +140,7 @@ fn ensure_property(graph: &str, tid: i32, label: &str, prop: &str) {
 
     if !declared {
         Spi::run_with_args(
-            "SELECT og_add_property($1, $2, $3, 'string', false, false)",
+            &format!("SELECT {}($1, $2, $3, 'string', false, false)", crate::spiu::fnq("og_add_property")),
             &[graph.into(), label.into(), prop.into()],
         )
         .unwrap_or_else(|e| error!("failed to declare '{label}.{prop}': {e}"));
@@ -223,7 +223,7 @@ fn create_index(
                 .to_ascii_lowercase();
             let prop = props.first().unwrap_or_else(|| error!("a vector index needs one property"));
             Spi::run_with_args(
-                "SELECT og_add_embedding($1, $2, $3, $4, $5)",
+                &format!("SELECT {}($1, $2, $3, $4, $5)", crate::spiu::fnq("og_add_embedding")),
                 &[graph.into(), label.into(), prop.as_str().into(), dims.into(), metric.into()],
             )
             .unwrap_or_else(|e| error!("failed to create vector index '{name}': {e}"));
@@ -240,7 +240,7 @@ fn create_index(
         IndexKind::Btree => {
             for p in props {
                 Spi::run_with_args(
-                    "SELECT og_create_index($1, $2, $3)",
+                    &format!("SELECT {}($1, $2, $3)", crate::spiu::fnq("og_create_index")),
                     &[graph.into(), label.into(), p.as_str().into()],
                 )
                 .unwrap_or_else(|e| error!("failed to create index '{name}': {e}"));

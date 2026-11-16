@@ -949,7 +949,7 @@ pub(crate) fn map_relation(
         .flatten();
         if declared.is_none() {
             Spi::run_with_args(
-                "SELECT og_add_property($1, $2, $3, $4)",
+                &format!("SELECT {}($1, $2, $3, $4)", crate::spiu::fnq("og_add_property")),
                 &[graph.into(), type_name.into(), prop.as_str().into(), og_type_of(rtype).into()],
             )
             .unwrap_or_else(|e| error!("failed to declare {type_name}.{prop}: {e}"));

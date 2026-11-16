@@ -640,7 +640,7 @@ fn ensure_type(gid: i32, iri: &str, kind: char) {
     .unwrap_or_default();
     let kind_s = if kind == 'r' { "relation" } else { "entity" };
     Spi::run_with_args(
-        "SELECT og_create_type($1,$2,$3,'{}'::text[],false)",
+        &format!("SELECT {}($1,$2,$3,'{{}}'::text[],false)", crate::spiu::fnq("og_create_type")),
         &[graph.into(), name.clone().into(), kind_s.into()],
     )
     .ok();
@@ -665,7 +665,7 @@ fn ensure_property(graph: &str, type_name: &str, prop: &str, ptype: &str) {
         return;
     }
     Spi::run_with_args(
-        "SELECT og_add_property($1,$2,$3,$4,false,false)",
+        &format!("SELECT {}($1,$2,$3,$4,false,false)", crate::spiu::fnq("og_add_property")),
         &[graph.into(), type_name.into(), prop.into(), ptype.into()],
     )
     .ok();
