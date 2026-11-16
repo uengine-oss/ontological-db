@@ -20,6 +20,54 @@ use serde_json::Value;
 #[derive(Clone, Copy, Debug, Default)]
 pub struct LayoutV1;
 
+/// The TypeQL methods (K4) spell what `typeql/compile.rs` wrote before, byte for byte.
+#[cfg(test)]
+mod k4_typeql {
+    use super::super::{Kind, Layout, SqlExpr, SqlFrag};
+    use super::LayoutV1;
+
+    #[test]
+    fn registry_and_role_players() {
+        assert_eq!(LayoutV1.registry(Kind::Node).as_str(), "og_data.og_node");
+        assert_eq!(LayoutV1.registry(Kind::Rel).as_str(), "og_data.og_edge");
+        assert_eq!(LayoutV1.role_players().as_str(), "og_data.og_role_player");
+    }
+
+    #[test]
+    fn the_type_of_an_id_is_a_shift_and_mask() {
+        assert_eq!(
+            LayoutV1.label_of_inline(&SqlExpr::new("n1.id")).as_str(),
+            "(((n1.id) >> 36) & 262143)::int4"
+        );
+    }
+
+    #[test]
+    fn the_has_join_is_the_adjacency_segments() {
+        let j = LayoutV1.ownership_join(
+            &SqlExpr::new("n1.id"),
+            7,
+            &[12, 13],
+            &SqlFrag::new("(SELECT id, val FROM og_data.a_12)"),
+            "h2",
+        );
+        assert_eq!(
+            j.from.as_str(),
+            "og_data.og_adj h2a CROSS JOIN LATERAL unnest(h2a.nbr) AS h2u(nbr) \
+             JOIN (SELECT id, val FROM og_data.a_12) h2v ON h2v.id = h2u.nbr"
+        );
+        let conds: Vec<&str> = j.conds.iter().map(|c| c.as_str()).collect();
+        assert_eq!(
+            conds,
+            [
+                "h2a.src = n1.id",
+                "h2a.dir = 'o'::\"char\"",
+                "h2a.etype = 7",
+                "(((h2u.nbr) >> 36) & 262143)::int4 = ANY(ARRAY[12,13]::int4[])",
+            ]
+        );
+    }
+}
+
 impl Layout for LayoutV1 {
     fn node_scan(&self, g: GraphId, labels: &LabelSet, _at: TimeScope) -> SqlFrag {
         match labels {
