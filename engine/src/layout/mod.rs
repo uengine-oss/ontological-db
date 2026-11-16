@@ -552,6 +552,191 @@ pub trait Layout {
     /// Refuse to write a virtual type (its rows live in a source system).
     /// v1: `storage::refuse_virtual_write`.
     fn refuse_virtual_write(&self, t: TypeId);
+
+    /// The catalog has just renamed type `t` from `old` to `new` (Cypher's
+    /// `REMOVE n:Old SET n:New`); bring along whatever the layout named after
+    /// the type.
+    ///
+    /// v1 (`cypher::rename_label`): the alias view `og_data."<old>"` is dropped
+    /// (`types::drop_alias_view`) and, when the type has a table, made again as
+    /// `og_data."<new>"` over it (`types::storage_table`, `types::ensure_alias_view`).
+    fn type_renamed(&self, t: TypeId, old: &str, new: &str);
+
+    // ------------------------------------------------------------------ writes: TypeQL
+    //
+    // The storage steps `typeql/write.rs` used to run itself (P1 K3 names them,
+    // K4 moves write.rs onto them; `reports/ontological-v2/P1-K3-api.md`). Each
+    // v1 body is write.rs's statement moved unchanged — text, order, what a
+    // failure does — so that write.rs can keep its catalog checks (type kind,
+    // `owns`, value type, value constraints, roles) and its own error wording
+    // around them. Unlike `create_node`/`create_edge` these do no property
+    // planning, no privilege check and no counting: TypeQL never did.
+
+    /// Where the rows of type `t` are stored, looked up once and handed to the
+    /// methods below; `None` when the type has no storage of its own (abstract).
+    ///
+    /// v1: `types::storage_table(t)` — `SELECT storage_table FROM
+    /// og_catalog.type WHERE type_id = $1`.
+    fn type_store(&self, t: TypeId) -> Option<TypeStore>;
+
+    /// Create a bare instance (no properties) of type `t`, an entity type or a
+    /// relation type stored as a node; returns its id. The caller has checked
+    /// the type and refused a virtual one ([`Layout::refuse_virtual_write`]).
+    ///
+    /// v1 (`typeql/write.rs` `create_instance`): `alloc_id(t)`, then `INSERT
+    /// INTO og_data.og_node (id, type_id) VALUES ($1, $2)` (failure:
+    /// [`WriteError::Register`]), then `INSERT INTO <table> (id) VALUES ($1)`
+    /// ([`WriteError::Store`]).
+    fn create_instance(&self, t: TypeId, store: &TypeStore) -> Result<ElementId, WriteError>;
+
+    /// The attribute instance in `store` holding `value` — a SQL literal of the
+    /// attribute's value type that the caller built (`'fiction'`, `42`,
+    /// `1.5::float8`, `'2024-01-01'::date`).
+    ///
+    /// v1: `SELECT id FROM <table> WHERE val = <value>` (`spiu::one`); `Err`
+    /// is the SPI error's text.
+    fn find_attribute(&self, store: &TypeStore, value: &SqlExpr) -> Result<Option<ElementId>, String>;
+
+    /// Create the attribute instance of type `t` holding `value`; returns its id.
+    ///
+    /// v1 (`intern_attribute`): `alloc_id(t)`, `INSERT INTO og_data.og_node (id,
+    /// type_id) VALUES ($1, $2)` ([`WriteError::Register`]), `INSERT INTO
+    /// <table> (id, val) VALUES ($1, <value>)` ([`WriteError::Store`]).
+    fn create_attribute(&self, t: TypeId, store: &TypeStore, value: &SqlExpr) -> Result<ElementId, WriteError>;
+
+    /// An owner other than `except`, of one of `owner_types`, that owns through
+    /// ownership type `has` an attribute of `store` holding `value` — the
+    /// `@key` / `@unique` check.
+    ///
+    /// v1 (`check_ownership_constraints`): `SELECT e.src FROM og_data.og_edge e
+    /// JOIN <table> a ON a.id = e.dst WHERE e.type_id = $1 AND a.val = <value>
+    /// AND e.src <> $2 AND ((e.src >> 36) & 262143)::int4 = ANY($3) LIMIT 1`
+    /// (the shift and mask are `id::TYPE_SHIFT` / `TYPE_MASK`; line breaks as
+    /// in write.rs).
+    fn other_owner(
+        &self,
+        has: TypeId,
+        store: &TypeStore,
+        value: &SqlExpr,
+        except: ElementId,
+        owner_types: &[TypeId],
+    ) -> Result<Option<ElementId>, String>;
+
+    /// How many attributes of one of `attr_types` `owner` owns through `has` —
+    /// the `@card` check.
+    ///
+    /// v1: `SELECT count(*) FROM og_data.og_edge e WHERE e.type_id = $1 AND
+    /// e.src = $2 AND ((e.dst >> 36) & 262143)::int4 = ANY($3)`; no row reads as 0.
+    fn count_owned(&self, has: TypeId, owner: ElementId, attr_types: &[TypeId]) -> Result<i64, String>;
+
+    /// The attributes of one of `attr_types` that `owner` owns through `has`
+    /// (what `update` replaces). A failed lookup reads as none.
+    ///
+    /// v1 (`run_update`): `SELECT dst FROM og_data.og_edge WHERE type_id = $1
+    /// AND src = $2 AND ((dst >> 36) & 262143)::int4 = ANY($3)`.
+    fn owned_attributes(&self, has: TypeId, owner: ElementId, attr_types: &[TypeId]) -> Vec<ElementId>;
+
+    /// The ownerships through `has` that touch `id`, as owner or as attribute:
+    /// `(relationship, owner, attribute)`. A failed lookup reads as none.
+    ///
+    /// v1 (`delete_instance`): `SELECT id, src, dst FROM og_data.og_edge WHERE
+    /// type_id = $1 AND (src = $2 OR dst = $2)`.
+    fn ownerships_of(&self, has: TypeId, id: ElementId) -> Vec<(ElementId, ElementId, ElementId)>;
+
+    /// Make `owner` own `attr` through `has`, unless it already does.
+    ///
+    /// v1 (`link_has`, after `schema::ensure_has_type`): `SELECT id FROM
+    /// og_data.og_edge WHERE type_id = $1 AND src = $2 AND dst = $3 LIMIT 1`; if
+    /// none, `types::storage_table(has)` (panics "$has has no table" without
+    /// one), `alloc_id(has)`, `INSERT INTO og_data.og_edge (id, type_id, src,
+    /// dst) VALUES ($1, $2, $3, $4)` ([`WriteError::Register`]), `INSERT INTO
+    /// <table> (id, src, dst) VALUES ($1, $2, $3)` ([`WriteError::Store`]), then
+    /// the adjacency segments out of `owner` and into `attr` (`adjacency::append`).
+    fn link_has(&self, has: TypeId, owner: ElementId, attr: ElementId) -> Result<(), WriteError>;
+
+    /// Remove that ownership, if there is one. Failures are ignored, as
+    /// TypeQL always has.
+    ///
+    /// v1 (`unlink_has`): `SELECT id FROM og_data.og_edge WHERE type_id = $1 AND
+    /// src = $2 AND dst = $3`; if found, `adjacency::remove` out of `owner` and
+    /// into `attr`, `DELETE FROM <table of has> WHERE id = $1`, `DELETE FROM
+    /// og_data.og_edge WHERE id = $1`.
+    fn unlink_has(&self, has: TypeId, owner: ElementId, attr: ElementId);
+
+    /// Whether relation instance `rel` has a player in `role` already (a
+    /// positional player takes the first free role).
+    ///
+    /// v1 (`add_role_player`): `SELECT 1 FROM og_data.og_role_player WHERE
+    /// edge_id = $1 AND role_id = $2`, read as `int8` through `spiu::one`; a
+    /// failed read is "not filled".
+    fn role_filled(&self, rel: ElementId, role: RoleId) -> bool;
+
+    /// Add `player` to relation instance `rel` in `role`; being there already
+    /// is not an error.
+    ///
+    /// v1 (`typeql/write.rs` `add_role_player`): `INSERT INTO
+    /// og_data.og_role_player (edge_id, role_id, player_id)` / `VALUES ($1, $2,
+    /// $3) ON CONFLICT DO NOTHING` — write.rs's text; `og_add_role_player`
+    /// writes the same row with its own text and stays as it is.
+    fn add_role_player(&self, rel: ElementId, role: RoleId, player: ElementId) -> Result<(), String>;
+
+    /// Take `player` out of `rel` in any of `roles`.
+    ///
+    /// v1 (`run_delete`): `DELETE FROM og_data.og_role_player WHERE edge_id = $1
+    /// AND player_id = $2 AND role_id = ANY($3)`.
+    fn remove_role_player(&self, rel: ElementId, player: ElementId, roles: &[RoleId]) -> Result<(), String>;
+
+    /// The relation instances `player` plays a role in. A failed lookup reads
+    /// as none.
+    ///
+    /// v1 (`delete_instance`): `SELECT DISTINCT edge_id FROM
+    /// og_data.og_role_player WHERE player_id = $1`.
+    fn relations_played(&self, player: ElementId) -> Vec<ElementId>;
+
+    /// Remove an instance's own storage once the caller has removed what
+    /// pointed at it (its ownerships, the relations it plays in): the role
+    /// players it has as a relation, its row, its entry. Refuses a virtual type.
+    /// Failures of the deletes are ignored, as TypeQL always has.
+    ///
+    /// v1 (the tail of `delete_instance`, in this order): `DELETE FROM
+    /// og_data.og_role_player WHERE edge_id = $1`, `storage::refuse_virtual_write`,
+    /// `types::storage_table`, `DELETE FROM <table> WHERE id = $1`, `DELETE FROM
+    /// og_data.og_node WHERE id = $1`, `DELETE FROM og_data.og_adj WHERE src = $1`.
+    fn remove_instance(&self, id: ElementId);
+}
+
+// ---------------------------------------------------------------------- write-side types (K3)
+
+/// A role of a relation type, as `og_catalog.role.role_id` numbers it.
+pub type RoleId = i32;
+
+/// Where one type's rows are stored, as [`Layout::type_store`] found it: looked
+/// up once and handed back to the write methods that need it, so a run of
+/// writes on one type does not look it up again. Opaque outside this module —
+/// only a layout makes one and only a layout reads it.
+///
+/// v1: the type's table, `og_catalog.type.storage_table` (`og_data.a_12` …).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TypeStore(String);
+
+/// Which step of a write failed, for callers that word the two failures
+/// differently (TypeQL's "creating 'x' failed" / "creating 'x' = v failed").
+/// The text is the database error's.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum WriteError {
+    /// Recording the element (v1: its registry row in `og_data.og_node` /
+    /// `og_edge`).
+    Register(String),
+    /// Storing the element's own row (v1: the type's table).
+    Store(String),
+}
+
+impl fmt::Display for WriteError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            WriteError::Register(e) | WriteError::Store(e) => f.write_str(e),
+        }
+    }
 }
 
 /// The layout this build stores graphs in: v1. Each extension crate will pick

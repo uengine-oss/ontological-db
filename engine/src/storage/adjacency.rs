@@ -95,3 +95,16 @@ pub fn og_degree_all(src: i64, dir: &str) -> i64 {
     .expect("degree lookup failed")
     .unwrap_or(0)
 }
+
+/// Degree of a node over every relation type, both directions: what Cypher's
+/// DELETE without DETACH checks before removing a node. A failed lookup reads
+/// as 0, as the Cypher writer has always taken it.
+pub fn total_degree(src: i64) -> i64 {
+    crate::spiu::one::<i64>(
+        "SELECT COALESCE(sum(n),0)::int8 FROM og_data.og_adj WHERE src = $1",
+        &[src.into()],
+    )
+    .ok()
+    .flatten()
+    .unwrap_or(0)
+}

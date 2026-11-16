@@ -15,6 +15,7 @@ pub mod traverse;
 
 use crate::catalog::{labeling, types};
 use crate::id;
+use crate::layout::WriteError;
 use pgrx::prelude::*;
 use pgrx::JsonB;
 use serde_json::Value;
@@ -631,4 +632,259 @@ fn og_add_role_player(graph: &str, rel_type: &str, edge_id: i64, role: &str, pla
         &[edge_id.into(), role_id.into(), player.into()],
     )
     .expect("role player insert failed");
+}
+
+/// What a type rename (Cypher's `REMOVE n:Old SET n:New`, `cypher::rename_label`)
+/// asks of storage once the catalog row carries the new name: the type's alias
+/// view is named after the type, so it moves with it.
+pub fn type_renamed(tid: i32, old: &str, new: &str) {
+    types::drop_alias_view(old);
+    if let Some(table) = types::storage_table(tid) {
+        types::ensure_alias_view(tid, new, &table);
+    }
+}
+
+// --------------------------------------------------------------------------
+// TypeQL instances, attributes, ownerships, role players (spec 010)
+//
+// The statements `typeql/write.rs` ran itself, moved here unchanged — text,
+// order, what a failure does — so that TypeQL writes go through the storage
+// API (`Layout`, DESIGN 5.1; P1 K3 names it, K4 moves write.rs onto it). The
+// catalog checks around them (type kind, `owns`, value type and constraints,
+// roles) and the error wording stay in write.rs; a failure comes back as the
+// database's text. `table` is the type's `og_catalog.type.storage_table`, and
+// `lit` a SQL literal of the attribute's value type that write.rs built.
+// --------------------------------------------------------------------------
+
+/// A bare instance — registry row, then the type's own row with only `id`.
+/// `typeql::write::create_instance` after its checks.
+pub fn create_instance(tid: i32, table: &str) -> Result<i64, WriteError> {
+    let id = alloc_id(tid);
+    Spi::run_with_args(
+        "INSERT INTO og_data.og_node (id, type_id) VALUES ($1, $2)",
+        &[id.into(), tid.into()],
+    )
+    .map_err(|e| WriteError::Register(e.to_string()))?;
+    Spi::run_with_args(&format!("INSERT INTO {table} (id) VALUES ($1)"), &[id.into()])
+        .map_err(|e| WriteError::Store(e.to_string()))?;
+    Ok(id)
+}
+
+/// The attribute instance holding `lit`. `typeql::write::intern_attribute`'s lookup.
+pub fn find_attribute(table: &str, lit: &str) -> Result<Option<i64>, String> {
+    crate::spiu::one::<i64>(
+        &format!("SELECT id FROM {table} WHERE val = {lit}"),
+        &[],
+    )
+    .map_err(|e| e.to_string())
+}
+
+/// A new attribute instance holding `lit`. `typeql::write::intern_attribute`'s create.
+pub fn create_attribute(tid: i32, table: &str, lit: &str) -> Result<i64, WriteError> {
+    let id = alloc_id(tid);
+    Spi::run_with_args(
+        "INSERT INTO og_data.og_node (id, type_id) VALUES ($1, $2)",
+        &[id.into(), tid.into()],
+    )
+    .map_err(|e| WriteError::Register(e.to_string()))?;
+    Spi::run_with_args(
+        &format!("INSERT INTO {table} (id, val) VALUES ($1, {lit})"),
+        &[id.into()],
+    )
+    .map_err(|e| WriteError::Store(e.to_string()))?;
+    Ok(id)
+}
+
+/// Another owner (not `except`, of one of `owners`) of an attribute in `table`
+/// holding `lit` through `has_tid` — `check_ownership_constraints`'s @key/@unique query.
+pub fn other_owner(has_tid: i32, table: &str, lit: &str, except: i64, owners: &[i32]) -> Result<Option<i64>, String> {
+    crate::spiu::one::<i64>(
+        &format!(
+            "SELECT e.src FROM og_data.og_edge e
+                   JOIN {table} a ON a.id = e.dst
+                  WHERE e.type_id = $1 AND a.val = {lit} AND e.src <> $2
+                    AND ((e.src >> {}) & {})::int4 = ANY($3)
+                  LIMIT 1",
+            crate::id::TYPE_SHIFT,
+            crate::id::TYPE_MASK
+        ),
+        &[has_tid.into(), except.into(), owners.to_vec().into()],
+    )
+    .map_err(|e| e.to_string())
+}
+
+/// How many attributes of one of `attrs` `owner` owns through `has_tid` —
+/// `check_ownership_constraints`'s @card query.
+pub fn count_owned(has_tid: i32, owner: i64, attrs: &[i32]) -> Result<i64, String> {
+    crate::spiu::one::<i64>(
+        &format!(
+            "SELECT count(*) FROM og_data.og_edge e
+                      WHERE e.type_id = $1 AND e.src = $2
+                        AND ((e.dst >> {}) & {})::int4 = ANY($3)",
+            crate::id::TYPE_SHIFT,
+            crate::id::TYPE_MASK
+        ),
+        &[has_tid.into(), owner.into(), attrs.to_vec().into()],
+    )
+    .map_err(|e| e.to_string())
+    .map(|n| n.unwrap_or(0))
+}
+
+/// The attributes of one of `attrs` that `owner` owns through `has_tid` —
+/// `typeql::write::run_update`'s lookup.
+pub fn owned_attributes(has_tid: i32, owner: i64, attrs: &[i32]) -> Vec<i64> {
+    Spi::connect(|client| {
+        client
+            .select(
+                &format!(
+                    "SELECT dst FROM og_data.og_edge
+                          WHERE type_id = $1 AND src = $2
+                            AND ((dst >> {}) & {})::int4 = ANY($3)",
+                    crate::id::TYPE_SHIFT,
+                    crate::id::TYPE_MASK
+                ),
+                None,
+                &[has_tid.into(), owner.into(), attrs.to_vec().into()],
+            )
+            .map(|rows| rows.filter_map(|r| r.get::<i64>(1).ok().flatten()).collect())
+            .unwrap_or_default()
+    })
+}
+
+/// The ownerships through `has_tid` that touch `id` either way, `(id, src, dst)` —
+/// `typeql::write::delete_instance`'s first lookup.
+pub fn ownerships_of(has_tid: i32, id: i64) -> Vec<(i64, i64, i64)> {
+    Spi::connect(|client| {
+        client
+            .select(
+                "SELECT id, src, dst FROM og_data.og_edge
+                  WHERE type_id = $1 AND (src = $2 OR dst = $2)",
+                None,
+                &[has_tid.into(), id.into()],
+            )
+            .map(|rows| {
+                rows.filter_map(|r| {
+                    Some((
+                        r.get::<i64>(1).ok()??,
+                        r.get::<i64>(2).ok()??,
+                        r.get::<i64>(3).ok()??,
+                    ))
+                })
+                .collect()
+            })
+            .unwrap_or_default()
+    })
+}
+
+/// Ownership edge: registry + typed table + both adjacency directions, in one
+/// transaction (spec 001 FR-012), unless it exists — `typeql::write::link_has`
+/// after `schema::ensure_has_type`.
+pub fn link_has(has_tid: i32, owner: i64, attr: i64) -> Result<(), WriteError> {
+    let exists = crate::spiu::one::<i64>(
+        "SELECT id FROM og_data.og_edge WHERE type_id = $1 AND src = $2 AND dst = $3 LIMIT 1",
+        &[has_tid.into(), owner.into(), attr.into()],
+    )
+    .ok()
+    .flatten();
+    if exists.is_some() {
+        return Ok(());
+    }
+    let table = types::storage_table(has_tid).expect("$has has no table");
+    let eid = alloc_id(has_tid);
+    Spi::run_with_args(
+        "INSERT INTO og_data.og_edge (id, type_id, src, dst) VALUES ($1, $2, $3, $4)",
+        &[eid.into(), has_tid.into(), owner.into(), attr.into()],
+    )
+    .map_err(|e| WriteError::Register(e.to_string()))?;
+    Spi::run_with_args(
+        &format!("INSERT INTO {table} (id, src, dst) VALUES ($1, $2, $3)"),
+        &[eid.into(), owner.into(), attr.into()],
+    )
+    .map_err(|e| WriteError::Store(e.to_string()))?;
+    adjacency::append(owner, has_tid, 'o', attr, eid);
+    adjacency::append(attr, has_tid, 'i', owner, eid);
+    Ok(())
+}
+
+/// Remove that ownership edge if there is one; failures ignored —
+/// `typeql::write::unlink_has` after `schema::ensure_has_type`.
+pub fn unlink_has(has_tid: i32, owner: i64, attr: i64) {
+    let eid = crate::spiu::one::<i64>(
+        "SELECT id FROM og_data.og_edge WHERE type_id = $1 AND src = $2 AND dst = $3",
+        &[has_tid.into(), owner.into(), attr.into()],
+    )
+    .ok()
+    .flatten();
+    let Some(eid) = eid else { return };
+    adjacency::remove(owner, has_tid, 'o', eid);
+    adjacency::remove(attr, has_tid, 'i', eid);
+    if let Some(table) = types::storage_table(has_tid) {
+        Spi::run_with_args(&format!("DELETE FROM {table} WHERE id = $1"), &[eid.into()]).ok();
+    }
+    Spi::run_with_args("DELETE FROM og_data.og_edge WHERE id = $1", &[eid.into()]).ok();
+}
+
+/// Whether relation instance `rel` has a player in `role` —
+/// `typeql::write::add_role_player`'s positional search. The value is read as
+/// `int8` exactly as there.
+pub fn role_filled(rel: i64, role: i32) -> bool {
+    crate::spiu::one::<i64>(
+        "SELECT 1 FROM og_data.og_role_player WHERE edge_id = $1 AND role_id = $2",
+        &[rel.into(), role.into()],
+    )
+    .ok()
+    .flatten()
+    .is_some()
+}
+
+/// Add a role player, idempotently — `typeql::write::add_role_player`'s insert
+/// (its text; `og_add_role_player` above writes the same row with its own).
+pub fn add_role_player(rel: i64, role: i32, player: i64) -> Result<(), String> {
+    Spi::run_with_args(
+        "INSERT INTO og_data.og_role_player (edge_id, role_id, player_id)
+         VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+        &[rel.into(), role.into(), player.into()],
+    )
+    .map_err(|e| e.to_string())
+}
+
+/// Take `player` out of `rel` in any of `roles` — `typeql::write::run_delete`'s
+/// `links` removal.
+pub fn remove_role_player(rel: i64, player: i64, roles: &[i32]) -> Result<(), String> {
+    Spi::run_with_args(
+        "DELETE FROM og_data.og_role_player
+                      WHERE edge_id = $1 AND player_id = $2 AND role_id = ANY($3)",
+        &[rel.into(), player.into(), roles.to_vec().into()],
+    )
+    .map_err(|e| e.to_string())
+}
+
+/// The relation instances `player` plays a role in —
+/// `typeql::write::delete_instance`'s second lookup.
+pub fn relations_played(player: i64) -> Vec<i64> {
+    Spi::connect(|client| {
+        client
+            .select(
+                "SELECT DISTINCT edge_id FROM og_data.og_role_player WHERE player_id = $1",
+                None,
+                &[player.into()],
+            )
+            .map(|rows| rows.filter_map(|r| r.get::<i64>(1).ok().flatten()).collect())
+            .unwrap_or_default()
+    })
+}
+
+/// An instance's own storage, once its ownerships and the relations it plays
+/// in are gone — the tail of `typeql::write::delete_instance`, in its order
+/// (the virtual-type refusal comes after the role players, as there).
+pub fn remove_instance(id: i64) {
+    let tid = id::id_type(id);
+    Spi::run_with_args("DELETE FROM og_data.og_role_player WHERE edge_id = $1", &[id.into()]).ok();
+
+    refuse_virtual_write(tid);
+    if let Some(table) = types::storage_table(tid) {
+        Spi::run_with_args(&format!("DELETE FROM {table} WHERE id = $1"), &[id.into()]).ok();
+    }
+    Spi::run_with_args("DELETE FROM og_data.og_node WHERE id = $1", &[id.into()]).ok();
+    Spi::run_with_args("DELETE FROM og_data.og_adj WHERE src = $1", &[id.into()]).ok();
 }

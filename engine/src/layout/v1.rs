@@ -470,8 +470,8 @@ impl Layout for LayoutV1 {
         SqlExpr::new(format!("og_id_type({id})"))
     }
 
-    fn type_of_element(&self, _id: ElementId) -> TypeId {
-        todo!("K3/K6: id::id_type")
+    fn type_of_element(&self, id: ElementId) -> TypeId {
+        crate::id::id_type(id)
     }
 
     fn synthetic_rel_id(&self, rel_type: TypeId, src: &SqlExpr, dst: &SqlExpr) -> SqlExpr {
@@ -521,47 +521,120 @@ impl Layout for LayoutV1 {
     }
 
     fn take_uncacheable(&self) -> bool {
-        todo!("K2/K3: views::take_created_view")
+        crate::cypher::views::take_created_view()
     }
 
-    fn create_node(&self, _g: GraphId, _t: TypeId, _type_name: &str, _props: Value) -> ElementId {
-        todo!("K3: storage::create_node_inner")
+    fn create_node(&self, g: GraphId, t: TypeId, type_name: &str, props: Value) -> ElementId {
+        crate::storage::create_node_inner(g, t, type_name, props)
     }
 
     fn create_edge(
         &self,
-        _g: GraphId,
-        _t: TypeId,
-        _type_name: &str,
-        _src: ElementId,
-        _dst: ElementId,
-        _props: Value,
+        g: GraphId,
+        t: TypeId,
+        type_name: &str,
+        src: ElementId,
+        dst: ElementId,
+        props: Value,
     ) -> ElementId {
-        todo!("K3: storage::create_edge_inner")
+        crate::storage::create_edge_inner(g, t, type_name, src, dst, props)
     }
 
-    fn set_node_props(&self, _id: ElementId, _props: Value) {
-        todo!("K3: storage::set_node_props_inner")
+    fn set_node_props(&self, id: ElementId, props: Value) {
+        crate::storage::set_node_props_inner(id, props)
     }
 
-    fn set_edge_props(&self, _id: ElementId, _props: Value) {
-        todo!("K3: storage::set_edge_props_inner")
+    fn set_edge_props(&self, id: ElementId, props: Value) {
+        crate::storage::set_edge_props_inner(id, props)
     }
 
-    fn delete_node(&self, _id: ElementId) -> i64 {
-        todo!("K3: storage::delete_node_inner")
+    fn delete_node(&self, id: ElementId) -> i64 {
+        crate::storage::delete_node_inner(id)
     }
 
-    fn delete_edge(&self, _id: ElementId) -> i64 {
-        todo!("K3: storage::delete_edge_inner")
+    fn delete_edge(&self, id: ElementId) -> i64 {
+        crate::storage::delete_edge_inner(id)
     }
 
-    fn degree(&self, _id: ElementId) -> i64 {
-        todo!("K3: the og_adj sum in cypher::run_write's DELETE")
+    fn degree(&self, id: ElementId) -> i64 {
+        crate::storage::adjacency::total_degree(id)
     }
 
-    fn refuse_virtual_write(&self, _t: TypeId) {
-        todo!("K3: storage::refuse_virtual_write")
+    fn refuse_virtual_write(&self, t: TypeId) {
+        crate::storage::refuse_virtual_write(t)
+    }
+
+    fn type_renamed(&self, t: TypeId, old: &str, new: &str) {
+        crate::storage::type_renamed(t, old, new)
+    }
+
+    // ---------------------------------------------------------------- TypeQL (K3 → K4)
+
+    fn type_store(&self, t: TypeId) -> Option<super::TypeStore> {
+        crate::catalog::types::storage_table(t).map(super::TypeStore)
+    }
+
+    fn create_instance(&self, t: TypeId, store: &super::TypeStore) -> Result<ElementId, super::WriteError> {
+        crate::storage::create_instance(t, &store.0)
+    }
+
+    fn find_attribute(&self, store: &super::TypeStore, value: &SqlExpr) -> Result<Option<ElementId>, String> {
+        crate::storage::find_attribute(&store.0, value.as_str())
+    }
+
+    fn create_attribute(&self, t: TypeId, store: &super::TypeStore, value: &SqlExpr) -> Result<ElementId, super::WriteError> {
+        crate::storage::create_attribute(t, &store.0, value.as_str())
+    }
+
+    fn other_owner(
+        &self,
+        has: TypeId,
+        store: &super::TypeStore,
+        value: &SqlExpr,
+        except: ElementId,
+        owner_types: &[TypeId],
+    ) -> Result<Option<ElementId>, String> {
+        crate::storage::other_owner(has, &store.0, value.as_str(), except, owner_types)
+    }
+
+    fn count_owned(&self, has: TypeId, owner: ElementId, attr_types: &[TypeId]) -> Result<i64, String> {
+        crate::storage::count_owned(has, owner, attr_types)
+    }
+
+    fn owned_attributes(&self, has: TypeId, owner: ElementId, attr_types: &[TypeId]) -> Vec<ElementId> {
+        crate::storage::owned_attributes(has, owner, attr_types)
+    }
+
+    fn ownerships_of(&self, has: TypeId, id: ElementId) -> Vec<(ElementId, ElementId, ElementId)> {
+        crate::storage::ownerships_of(has, id)
+    }
+
+    fn link_has(&self, has: TypeId, owner: ElementId, attr: ElementId) -> Result<(), super::WriteError> {
+        crate::storage::link_has(has, owner, attr)
+    }
+
+    fn unlink_has(&self, has: TypeId, owner: ElementId, attr: ElementId) {
+        crate::storage::unlink_has(has, owner, attr)
+    }
+
+    fn role_filled(&self, rel: ElementId, role: super::RoleId) -> bool {
+        crate::storage::role_filled(rel, role)
+    }
+
+    fn add_role_player(&self, rel: ElementId, role: super::RoleId, player: ElementId) -> Result<(), String> {
+        crate::storage::add_role_player(rel, role, player)
+    }
+
+    fn remove_role_player(&self, rel: ElementId, player: ElementId, roles: &[super::RoleId]) -> Result<(), String> {
+        crate::storage::remove_role_player(rel, player, roles)
+    }
+
+    fn relations_played(&self, player: ElementId) -> Vec<ElementId> {
+        crate::storage::relations_played(player)
+    }
+
+    fn remove_instance(&self, id: ElementId) {
+        crate::storage::remove_instance(id)
     }
 }
 
