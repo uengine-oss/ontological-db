@@ -25,6 +25,11 @@
 //!     OG_SQL_LISTEN   default 127.0.0.1:5433
 //!     OG_SQL_PGHOST   default localhost
 //!     OG_SQL_PGPORT   default 5432
+//!     OG_SQL_ENGINE_SCHEMA  unset — the engine's functions are called
+//!                     unqualified and found on the session's search_path
+//!                     (`public`, for `ontological`). A schema name — e.g.
+//!                     `oga_catalog` for `ontological_age` — makes every call
+//!                     name it. See [`Engine`].
 //!
 //! The server sees every client as coming from this process's address. Where
 //! `pg_hba.conf` trusts that address, the gateway must not be reachable by
@@ -47,16 +52,24 @@ fn env_or(key: &str, default: &str) -> String {
 fn main() {
     let listen = env_or("OG_SQL_LISTEN", "127.0.0.1:5433");
     let backend = format!("{}:{}", env_or("OG_SQL_PGHOST", "localhost"), env_or("OG_SQL_PGPORT", "5432"));
+    let engine = Arc::new(Engine::from_setting(env::var("OG_SQL_ENGINE_SCHEMA").ok().as_deref()));
     let listener = TcpListener::bind(&listen).unwrap_or_else(|e| {
         eprintln!("ontological-sql: cannot bind {listen}: {e}");
         std::process::exit(1);
     });
-    eprintln!("ontological-sql: listening on {listen}, relaying to postgres://{backend}");
+    match engine.schema() {
+        None => eprintln!("ontological-sql: listening on {listen}, relaying to postgres://{backend}"),
+        Some(s) => eprintln!(
+            "ontological-sql: listening on {listen}, relaying to postgres://{backend} \
+             (engine functions in schema '{s}')"
+        ),
+    }
     for stream in listener.incoming() {
         let Ok(client) = stream else { continue };
         let backend = backend.clone();
+        let engine = engine.clone();
         thread::spawn(move || {
-            if let Err(e) = session(client, &backend) {
+            if let Err(e) = session(client, &backend, &engine) {
                 if e.kind() != io::ErrorKind::UnexpectedEof {
                     eprintln!("ontological-sql: session ended: {e}");
                 }
@@ -108,6 +121,51 @@ fn is_fabric(sql: &str) -> bool {
         "REFRESH" => w1 == "DATASOURCE",
         "EXPLAIN" => w1 == "FABRIC",
         _ => false,
+    }
+}
+
+/// The engine's functions, as this gateway calls them: the one place their
+/// names are written.
+///
+/// With no schema (`OG_SQL_ENGINE_SCHEMA` unset or blank) each name goes out
+/// unqualified, the text it always was, and PostgreSQL finds it on the
+/// session's `search_path` — `public`, where `CREATE EXTENSION ontological`
+/// puts v1's functions. With a schema, every call names it, so the gateway
+/// reaches an engine installed there (`ontological_age` in `oga_catalog`) even
+/// when another one is on the path. The gateway does not work out which engine
+/// a database has; it is told.
+///
+/// Only the gateway's own calls are named here. The SQL a translation returns
+/// is the engine's, and calls whatever the engine wrote into it.
+struct Engine {
+    schema: Option<String>,
+    /// `""`, or the quoted schema and a dot.
+    prefix: String,
+}
+
+impl Engine {
+    /// From the setting's raw value. Blank is the same as unset; the name is
+    /// taken as it is stored (`pg_namespace.nspname`) and quoted, so case and
+    /// any other character survive.
+    fn from_setting(raw: Option<&str>) -> Engine {
+        let schema = raw.map(str::trim).filter(|s| !s.is_empty()).map(str::to_string);
+        let prefix = schema.as_ref().map_or(String::new(), |s| format!("\"{}\".", s.replace('"', "\"\"")));
+        Engine { schema, prefix }
+    }
+
+    fn schema(&self) -> Option<&str> {
+        self.schema.as_deref()
+    }
+
+    /// What a statement translates to: asked before the statement is sent, and
+    /// sent in its place when the refusal has to come back in step.
+    fn translate(&self, statement: &str) -> String {
+        format!("SELECT {}og_fabric_translate({})", self.prefix, dq(statement))
+    }
+
+    /// Translate and run in one step, as jsonb rows: where asking is impossible.
+    fn run(&self, statement: &str) -> String {
+        format!("SELECT * FROM {}og_fabric({})", self.prefix, dq(statement))
     }
 }
 
@@ -184,7 +242,7 @@ struct Shared {
     changed: Condvar,
 }
 
-fn session(mut client: TcpStream, backend_addr: &str) -> io::Result<()> {
+fn session(mut client: TcpStream, backend_addr: &str, engine: &Engine) -> io::Result<()> {
     // Startup: untyped packets until the real StartupMessage.
     let mut backend = loop {
         let mut len = [0u8; 4];
@@ -262,7 +320,7 @@ fn session(mut client: TcpStream, backend_addr: &str) -> io::Result<()> {
     };
 
     // Client → server.
-    let result = up(&mut client, &mut backend, &shared, &to_client);
+    let result = up(&mut client, &mut backend, &shared, &to_client, engine);
     backend.shutdown(Shutdown::Both).ok();
     client.shutdown(Shutdown::Both).ok();
     down.join().ok();
@@ -277,7 +335,7 @@ enum Translation {
 
 /// Put the statement to the server and wait for what it translates to. Only
 /// called with the server idle.
-fn ask(backend: &mut TcpStream, shared: &Shared, statement: &str) -> io::Result<Translation> {
+fn ask(backend: &mut TcpStream, shared: &Shared, engine: &Engine, statement: &str) -> io::Result<Translation> {
     {
         let mut st = shared.state.lock().unwrap();
         while st.awaiting > 0 && !st.closed {
@@ -289,7 +347,7 @@ fn ask(backend: &mut TcpStream, shared: &Shared, statement: &str) -> io::Result<
         st.asking = true;
         st.answer = None;
     }
-    write_msg(backend, b'Q', &query_body(&format!("SELECT og_fabric_translate({})", dq(statement))))?;
+    write_msg(backend, b'Q', &query_body(&engine.translate(statement)))?;
     let answer = {
         let mut st = shared.state.lock().unwrap();
         while st.answer.is_none() && !st.closed {
@@ -308,14 +366,20 @@ fn ask(backend: &mut TcpStream, shared: &Shared, statement: &str) -> io::Result<
     Ok(Translation::Sql(sql))
 }
 
-fn up(client: &mut TcpStream, backend: &mut TcpStream, shared: &Shared, to_client: &Mutex<TcpStream>) -> io::Result<()> {
+fn up(
+    client: &mut TcpStream,
+    backend: &mut TcpStream,
+    shared: &Shared,
+    to_client: &Mutex<TcpStream>,
+    engine: &Engine,
+) -> io::Result<()> {
     // Extended-protocol messages sent since the last Sync. In the middle of
     // such a batch the server cannot be asked anything without disturbing it.
     let mut unsynced = false;
     let sent = |n: usize| shared.state.lock().unwrap().awaiting += n;
     // Where asking is impossible, the statement still runs — through the
     // function that translates and executes in one step, as jsonb rows.
-    let fallback = |sql: &str| format!("SELECT * FROM og_fabric({})", dq(sql));
+    let fallback = |sql: &str| engine.run(sql);
 
     loop {
         let m = read_msg(client)?;
@@ -328,7 +392,7 @@ fn up(client: &mut TcpStream, backend: &mut TcpStream, shared: &Shared, to_clien
                         write_msg(backend, b'Q', &query_body(&fallback(sql)))?;
                         continue;
                     }
-                    match ask(backend, shared, sql)? {
+                    match ask(backend, shared, engine, sql)? {
                         Translation::Sql(t) => {
                             sent(1);
                             write_msg(backend, b'Q', &query_body(&t))?;
@@ -351,12 +415,12 @@ fn up(client: &mut TcpStream, backend: &mut TcpStream, shared: &Shared, to_clien
                     let translated = if unsynced {
                         fallback(sql)
                     } else {
-                        match ask(backend, shared, sql)? {
+                        match ask(backend, shared, engine, sql)? {
                             Translation::Sql(t) => t,
                             // A refusal has to reach the client in step with
                             // its own Bind/Execute, so let the server raise it
                             // again when the statement is run.
-                            Translation::Refused(..) => format!("SELECT og_fabric_translate({})", dq(sql)),
+                            Translation::Refused(..) => engine.translate(sql),
                         }
                     };
                     let mut body = name.as_bytes().to_vec();
@@ -391,6 +455,36 @@ fn up(client: &mut TcpStream, backend: &mut TcpStream, shared: &Shared, to_clien
             // Passwords, SASL, COPY data: none of the gateway's business.
             _ => write_msg(backend, m.tag, &m.body)?,
         }
+    }
+}
+
+#[cfg(test)]
+mod engine_tests {
+    use super::Engine;
+
+    #[test]
+    fn unset_or_blank_calls_the_functions_unqualified() {
+        // The texts the gateway sent before there was a setting.
+        for raw in [None, Some(""), Some("  ")] {
+            let e = Engine::from_setting(raw);
+            assert_eq!(e.schema(), None);
+            assert_eq!(e.translate("SHOW GRAPHS"), "SELECT og_fabric_translate($ogq$SHOW GRAPHS$ogq$)");
+            assert_eq!(e.run("SHOW GRAPHS"), "SELECT * FROM og_fabric($ogq$SHOW GRAPHS$ogq$)");
+        }
+    }
+
+    #[test]
+    fn a_schema_names_every_call() {
+        let e = Engine::from_setting(Some(" oga_catalog "));
+        assert_eq!(e.schema(), Some("oga_catalog"));
+        assert_eq!(
+            e.translate("MATCH (n) RETURN n"),
+            "SELECT \"oga_catalog\".og_fabric_translate($ogq$MATCH (n) RETURN n$ogq$)"
+        );
+        assert_eq!(e.run("SHOW GRAPHS"), "SELECT * FROM \"oga_catalog\".og_fabric($ogq$SHOW GRAPHS$ogq$)");
+        // Quoted as an identifier: case kept, a quote doubled.
+        let odd = Engine::from_setting(Some("Edition \"2\""));
+        assert_eq!(odd.translate("SHOW GRAPHS"), "SELECT \"Edition \"\"2\"\"\".og_fabric_translate($ogq$SHOW GRAPHS$ogq$)");
     }
 }
 
