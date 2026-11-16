@@ -987,7 +987,7 @@ impl Compiler {
         Ok(Compiled {
             sql: format!(
                 "{with}SELECT {} AS row FROM (\n{inner}\n) t{tail}",
-                views::json_object(&json_pairs)
+                json_object(&json_pairs)
             ),
             columns: names,
         })
@@ -2294,7 +2294,7 @@ impl Compiler {
                 format!(
                     "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE \
                      jsonb_strip_nulls({}) || COALESCE({alias}.__ext,'{{}}'::jsonb) END)",
-                    views::json_object(&pairs)
+                    json_object(&pairs)
                 )
             }
             None => format!("og_node_json({alias}.id)"),
@@ -2321,7 +2321,7 @@ impl Compiler {
         format!(
             "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE \
              jsonb_strip_nulls({}) || COALESCE({alias}.__ext,'{{}}'::jsonb) END)",
-            views::json_object(&pairs)
+            json_object(&pairs)
         )
     }
 
@@ -2453,14 +2453,14 @@ impl Compiler {
             Expr::List(xs) => {
                 let items: Vec<String> =
                     xs.iter().map(|x| self.jsonb_arg(x)).collect::<CResult<_>>()?;
-                views::json_array(&items)
+                json_array(&items)
             }
             Expr::Map(kv) => {
                 let mut pairs = Vec::new();
                 for (k, v) in kv {
                     pairs.push(format!("{}, {}", sql_str(k), self.jsonb_arg(v)?));
                 }
-                views::json_object(&pairs)
+                json_object(&pairs)
             }
             // `[x IN xs WHERE p | e]` — a scalar subquery over the unnested
             // list. The binder is an ordinary scalar binding while the body
@@ -2544,7 +2544,7 @@ impl Compiler {
                 let built = if pairs.is_empty() {
                     "'{}'::jsonb".to_string()
                 } else {
-                    views::json_object(&pairs)
+                    json_object(&pairs)
                 };
                 match base {
                     // Explicit entries win over `.*`, as in Cypher.
@@ -4246,6 +4246,29 @@ pub fn quote_ident(s: &str) -> String {
 /// SQL string literal with proper escaping.
 pub fn sql_str(s: &str) -> String {
     format!("'{}'", s.replace('\'', "''"))
+}
+
+/// `jsonb_build_object` over `pairs` ("'key', value" each), in pieces joined
+/// with `||` — PostgreSQL passes a function at most 100 arguments, so one call
+/// holds at most 50 pairs. Keys are distinct per piece; a later piece wins a
+/// repeated key, as a later argument does.
+pub fn json_object(pairs: &[String]) -> String {
+    if pairs.len() <= 50 {
+        return format!("jsonb_build_object({})", pairs.join(", "));
+    }
+    let parts: Vec<String> =
+        pairs.chunks(50).map(|c| format!("jsonb_build_object({})", c.join(", "))).collect();
+    format!("({})", parts.join(" || "))
+}
+
+/// `jsonb_build_array` over `items`, in pieces of at most 100 joined with `||`.
+pub fn json_array(items: &[String]) -> String {
+    if items.len() <= 100 {
+        return format!("jsonb_build_array({})", items.join(", "));
+    }
+    let parts: Vec<String> =
+        items.chunks(100).map(|c| format!("jsonb_build_array({})", c.join(", "))).collect();
+    format!("({})", parts.join(" || "))
 }
 
 /// The same pattern read from the other end: elements reversed, every

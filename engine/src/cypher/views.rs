@@ -17,6 +17,7 @@
 //! real tables the planner can cost individually.
 
 use crate::catalog::labeling;
+use crate::cypher::compile::json_object;
 use pgrx::prelude::*;
 use std::cell::Cell;
 use std::collections::BTreeMap;
@@ -191,29 +192,6 @@ pub fn view_layout(tid: i32) -> Layout {
         }
     }
     layout
-}
-
-/// `jsonb_build_object` over `pairs` ("'key', value" each), in pieces joined
-/// with `||` — PostgreSQL passes a function at most 100 arguments, so one call
-/// holds at most 50 pairs. Keys are distinct per piece; a later piece wins a
-/// repeated key, as a later argument does.
-pub fn json_object(pairs: &[String]) -> String {
-    if pairs.len() <= 50 {
-        return format!("jsonb_build_object({})", pairs.join(", "));
-    }
-    let parts: Vec<String> =
-        pairs.chunks(50).map(|c| format!("jsonb_build_object({})", c.join(", "))).collect();
-    format!("({})", parts.join(" || "))
-}
-
-/// `jsonb_build_array` over `items`, in pieces of at most 100 joined with `||`.
-pub fn json_array(items: &[String]) -> String {
-    if items.len() <= 100 {
-        return format!("jsonb_build_array({})", items.join(", "));
-    }
-    let parts: Vec<String> =
-        items.chunks(100).map(|c| format!("jsonb_build_array({})", c.join(", "))).collect();
-    format!("({})", parts.join(" || "))
 }
 
 /// One SQL type both columns convert to: the wider integer, numeric for mixed
