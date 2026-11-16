@@ -320,7 +320,80 @@ pub trait Layout {
     ///
     /// v1 (`storage/traverse.rs` `og_reach`): `SELECT a.nbr FROM og_data.og_adj a
     /// WHERE a.src = ANY(<frontier>::int8[]) AND <adj_where(dir, "a", types)>`.
+    ///
+    /// Spelled out (K5 moved it here): `<dir>` as [`Layout::expand`] writes it
+    /// (`a.dir = 'o'::"char"`, `a.dir = 'i'::"char"`, `a.dir IN ('o','i')`),
+    /// then ` AND (<types>::int4[] IS NULL OR a.etype = ANY(<types>::int4[]))`.
+    ///
+    /// The column is `int8[]`: v1 hands back whole adjacency segments and the
+    /// walk flattens them, skipping NULL elements. A layout with a row per
+    /// relationship answers `ARRAY[<other end>]` per row, or aggregates. A
+    /// neighbour may come back more than once and in any order; the walk keeps
+    /// its own visited set. `og_reach` prepares the statement once per walk
+    /// (`frontier` = `$1`, `types` = `$2`) and runs it once per level.
     fn frontier_step(&self, dir: Dir, frontier: &str, types: &str) -> String;
+
+    // ------------------------------------------------------------------ traversal and storage upkeep (K5)
+    //
+    // `storage/traverse.rs` walks in Rust (`og_reach`, the backend-local CSR)
+    // and `storage/stats.rs` reports on the storage (`og_graph_stats`,
+    // `og_degree_distribution`, `og_reorganize`, `og_check_integrity`). The
+    // walks, and those SQL functions' names, arguments and result shapes, are
+    // the same for every layout; what is read, and what the storage can say
+    // about itself, is the layout's. The statistics methods run SPI.
+
+    /// The SQL that reads the whole topology once, for a walk compiled into
+    /// memory (`og_csr_build`): with the relationship types bound to `types`
+    /// (`int4[]`, NULL for any), rows `(src int8, dir text, nbr int8[])` —
+    /// `dir` `'o'` for relationships out of `src`, `'i'` for those into it,
+    /// `nbr` the nodes at their other ends. Both directions must be present:
+    /// the reverse index (`og_csr_hops`) is compiled from the `'i'` rows.
+    /// `og_csr_build` binds `types` as `$1`.
+    ///
+    /// v1: `SELECT a.src, a.dir::text, a.nbr FROM og_data.og_adj a WHERE a.dir
+    /// IN ('o','i') AND (<types>::int4[] IS NULL OR a.etype =
+    /// ANY(<types>::int4[]))` — every adjacency segment; v1 already stores an
+    /// `'i'` segment for each `'o'` one.
+    fn topology_scan(&self, types: &str) -> String;
+
+    /// The document `og_graph_stats(<graph>)` returns for graph `g`, whose name
+    /// is `graph`: at least `graph`, `nodes`, `edges` and `types` (`[{name,
+    /// kind, abstract, instances}]` ordered by name), plus what the layout can
+    /// say about its own storage.
+    ///
+    /// v1: `nodes` / `edges` count the registries (`og_data.og_node` /
+    /// `og_edge`) joined to `g`'s types; `instances` is a type's nodes plus its
+    /// relationships; `adjacency` is `{segments, avg_fill, chunk_size,
+    /// packing_ratio, chunked_supernodes}` over all of `og_data.og_adj` —
+    /// every graph's segments, not only `g`'s.
+    fn graph_stats(&self, g: GraphId, graph: &str) -> Value;
+
+    /// The out-degree histogram of graph `g` for `og_degree_distribution`:
+    /// one `{bucket, nodes, max_degree}` per bucket, in bucket order.
+    ///
+    /// v1: `width_bucket(<degree>, 0, 1024, 8)`, the degree being the sum of a
+    /// node's `'o'` segment counts, over the nodes of `g` that have any.
+    fn degree_distribution(&self, g: GraphId) -> Vec<Value>;
+
+    /// Compact graph `g`'s storage (`og_reorganize`); returns how many units
+    /// were rewritten. A layout with nothing to compact returns 0.
+    ///
+    /// v1: each `(src, etype, dir)` of `g` whose segments would fit in fewer
+    /// chunks of `storage::adjacency::CHUNK` is rewritten densely, one
+    /// statement per group; the count is of groups.
+    fn reorganize(&self, g: GraphId) -> i64;
+
+    /// Structural inconsistencies in the storage, every graph
+    /// (`og_check_integrity`): rows `(kind, entity_id, detail)`, none being the
+    /// pass condition.
+    ///
+    /// v1: four checks, in this order and at most 100 rows each —
+    /// `dangling_adjacency` (a segment names a relationship the registry does
+    /// not have), `missing_adjacency` (a relationship missing from its
+    /// source's `'o'` or its target's `'i'` segments),
+    /// `segment_length_mismatch` (`n` against the array lengths),
+    /// `orphan_node` (a registry row whose type the catalog does not have).
+    fn check_integrity(&self) -> Vec<(String, Option<ElementId>, String)>;
 
     // ------------------------------------------------------------------ values
 

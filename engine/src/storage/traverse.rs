@@ -13,9 +13,9 @@
 //! node at most once, so the work is bounded by `|V| + |E|` however deep the
 //! question goes. Two implementations of that idea live here:
 //!
-//! * [`og_reach`] — level-synchronous BFS that reads the adjacency segments
-//!   through SPI, one query per level. Ordinary heap reads: MVCC, row-level
-//!   security and this transaction's own uncommitted writes all still apply.
+//! * [`og_reach`] — level-synchronous BFS that reads the stored hops through
+//!   SPI, one query per level. Ordinary heap reads: MVCC, row-level security
+//!   and this transaction's own uncommitted writes all still apply.
 //! * [`og_csr_build`] / [`og_csr_reach`] — the pgGraph bet. Compile the
 //!   topology once into a backend-local CSR of dense `u32` indices and walk it
 //!   with no SPI, no heap and no planner in the loop. Faster, and it gives up
@@ -23,7 +23,16 @@
 //!   time and RLS is never consulted.
 //!
 //! Both are measured against `og_vlp` by `bench/csr/`.
+//!
+//! The walks are the storage layout's only through the SQL they read: the
+//! per-level query is [`Layout::frontier_step`] and the topology scan
+//! [`Layout::topology_scan`] (`crate::layout`; v1's text, the adjacency
+//! segments, is in `layout/v1.rs`). Nothing else here names a table.
+//!
+//! [`Layout::frontier_step`]: crate::layout::Layout::frontier_step
+//! [`Layout::topology_scan`]: crate::layout::Layout::topology_scan
 
+use crate::layout::{self, Dir};
 use pgrx::prelude::*;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -32,7 +41,8 @@ use std::collections::HashSet;
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-/// Direction letters the adjacency table stores, plus `b` for either.
+/// Direction letters the SQL functions take and the topology scan reports,
+/// plus `b` for either.
 fn check_dir(dir: &str) -> &str {
     match dir {
         "o" | "i" | "b" => dir,
@@ -49,20 +59,6 @@ fn flip(dir: &str) -> &'static str {
     }
 }
 
-/// Predicate over `og_adj` for a direction and an optional relation-type list.
-///
-/// The direction is validated against a three-element set before it reaches
-/// here, so the format is not an injection path; the type ids still go in as a
-/// bound parameter, because a thousand-element list rewritten per call would be
-/// its own cost.
-fn adj_where(dir: &str, alias: &str, types_param: &str) -> String {
-    let d = match check_dir(dir) {
-        "b" => format!("{alias}.dir IN ('o','i')"),
-        other => format!("{alias}.dir = '{other}'::\"char\""),
-    };
-    format!("{d} AND ({types_param}::int4[] IS NULL OR {alias}.etype = ANY({types_param}::int4[]))")
-}
-
 // ---------------------------------------------------------------------------
 // og_reach — BFS over the heap
 // ---------------------------------------------------------------------------
@@ -70,7 +66,7 @@ fn adj_where(dir: &str, alias: &str, types_param: &str) -> String {
 /// Nodes reachable from `src` in `minhop`..`maxhop` hops, each reported once at
 /// the depth it was first reached.
 ///
-/// This is `og_vlp` minus the paths: same segments, same visibility rules, but
+/// This is `og_vlp` minus the paths: same stored hops, same visibility rules, but
 /// a visited set instead of a trail, so the row count is bounded by the number
 /// of reachable nodes rather than by the number of walks.
 ///
@@ -86,15 +82,12 @@ fn og_reach(
     maxhop: i32,
 ) -> TableIterator<'static, (name!(node, i64), name!(depth, i32))> {
     let dir = match dir as u8 {
-        b'o' => "o",
-        b'i' => "i",
-        b'b' => "b",
+        b'o' => Dir::Out,
+        b'i' => Dir::In,
+        b'b' => Dir::Both,
         other => error!("direction must be 'o', 'i' or 'b', not '{}'", other as char),
     };
-    let sql = format!(
-        "SELECT a.nbr FROM og_data.og_adj a WHERE a.src = ANY($1::int8[]) AND {}",
-        adj_where(dir, "a", "$2")
-    );
+    let sql = layout::active().frontier_step(dir, "$1", "$2");
 
     // One SPI connection and one plan for the whole walk, not one per level.
     //
@@ -184,7 +177,7 @@ impl Adj {
 /// Node ids are 64-bit and sparse; the CSR stores `u32` positions into a sorted
 /// id vector instead, which halves the arrays and keeps a frontier scan inside
 /// cache. `ids` is the only thing that turns a position back into an id. The
-/// reverse direction is compiled too — `og_adj` already stores it, and a
+/// reverse direction is compiled too — the topology scan reports it, and a
 /// bidirectional shortest path is not correct without it.
 struct Csr {
     key: String,
@@ -239,12 +232,10 @@ fn pack(n: usize, edges: &[(u32, u32)]) -> Adj {
 }
 
 fn compile(etypes: Option<Vec<i32>>, dir: &str) -> Csr {
-    // One scan covers both directions: `og_adj` stores an 'i' segment for every
-    // 'o' segment, so the reverse CSR costs no extra I/O.
-    let sql = format!(
-        "SELECT a.src, a.dir::text, a.nbr FROM og_data.og_adj a WHERE {}",
-        adj_where("b", "a", "$1")
-    );
+    // One scan covers both directions: the layout reports every stored hop
+    // both ways ('o' rows and 'i' rows), and the reverse CSR is compiled from
+    // the 'i' rows.
+    let sql = layout::active().topology_scan("$1");
     let rows: Vec<(i64, String, Vec<Option<i64>>)> = Spi::connect(|client| {
         client
             .select(&sql, None, &[etypes.clone().into()])
@@ -473,4 +464,36 @@ fn og_csr_hops(src: i64, dst: i64, maxhop: default!(i32, 32)) -> Option<i32> {
         }
         None
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::layout::{v1::LayoutV1, Dir, Layout};
+
+    // What `og_reach` and `og_csr_build` sent before the walks asked the layout
+    // (P1 K5) — the v1 layout must keep sending exactly this.
+    #[test]
+    fn v1_frontier_step_is_the_old_per_level_scan() {
+        let l = LayoutV1;
+        assert_eq!(
+            l.frontier_step(Dir::Out, "$1", "$2"),
+            "SELECT a.nbr FROM og_data.og_adj a WHERE a.src = ANY($1::int8[]) AND a.dir = 'o'::\"char\" AND ($2::int4[] IS NULL OR a.etype = ANY($2::int4[]))"
+        );
+        assert_eq!(
+            l.frontier_step(Dir::In, "$1", "$2"),
+            "SELECT a.nbr FROM og_data.og_adj a WHERE a.src = ANY($1::int8[]) AND a.dir = 'i'::\"char\" AND ($2::int4[] IS NULL OR a.etype = ANY($2::int4[]))"
+        );
+        assert_eq!(
+            l.frontier_step(Dir::Both, "$1", "$2"),
+            "SELECT a.nbr FROM og_data.og_adj a WHERE a.src = ANY($1::int8[]) AND a.dir IN ('o','i') AND ($2::int4[] IS NULL OR a.etype = ANY($2::int4[]))"
+        );
+    }
+
+    #[test]
+    fn v1_topology_scan_is_the_old_csr_scan() {
+        assert_eq!(
+            LayoutV1.topology_scan("$1"),
+            "SELECT a.src, a.dir::text, a.nbr FROM og_data.og_adj a WHERE a.dir IN ('o','i') AND ($1::int4[] IS NULL OR a.etype = ANY($1::int4[]))"
+        );
+    }
 }
