@@ -10,16 +10,22 @@
 --                  inherits MVCC / WAL / vacuum / pg_dump for free.
 -- ============================================================================
 
+-- [store-v1]
 CREATE SCHEMA og_catalog;
+-- [store-v1]
 CREATE SCHEMA og_data;
+-- [store-v1]
 -- One SECURITY DEFINER function per Action (spec 014), owned by the role the
 -- action runs as. Kept apart so granting an action's owner CREATE here grants
 -- it nothing anywhere else.
 CREATE SCHEMA og_action;
 
+-- [store-v1]
 COMMENT ON SCHEMA og_catalog IS 'Ontological type system catalog (spec 002)';
+-- [store-v1]
 COMMENT ON SCHEMA og_data    IS 'Ontological graph storage (spec 001)';
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Graphs — a database may hold several independent graphs (FR-022 / 001)
 -- ---------------------------------------------------------------------------
@@ -28,8 +34,10 @@ CREATE TABLE og_catalog.graph (
     name        text        NOT NULL UNIQUE,
     created_at  timestamptz NOT NULL DEFAULT now()
 );
+-- [store-v1]
 CREATE SEQUENCE og_catalog.graph_id_seq START 1;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Types — entity / relation / attribute (FR-001 / 002)
 --
@@ -48,18 +56,24 @@ CREATE TABLE og_catalog.type (
     UNIQUE (graph_id, name),
     CHECK (kind IN ('e', 'r', 'a'))
 );
+-- [store-v1]
 CREATE SEQUENCE og_catalog.type_id_seq START 1 MAXVALUE 262143;  -- 18 bits
+-- [store-v1]
 CREATE INDEX type_graph_kind_idx ON og_catalog.type (graph_id, kind);
+-- [store-v1]
 CREATE INDEX type_iri_idx        ON og_catalog.type (iri) WHERE iri IS NOT NULL;
 
+-- [store-v1]
 -- Inheritance DAG. Multiple inheritance => several rows per type. (FR-003)
 CREATE TABLE og_catalog.type_parent (
     type_id   int4 NOT NULL REFERENCES og_catalog.type(type_id) ON DELETE CASCADE,
     parent_id int4 NOT NULL REFERENCES og_catalog.type(type_id) ON DELETE CASCADE,
     PRIMARY KEY (type_id, parent_id)
 );
+-- [store-v1]
 CREATE INDEX type_parent_parent_idx ON og_catalog.type_parent (parent_id);
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Interval (nested-set) labels — THE core of constant-time subtype resolution
 --
@@ -79,10 +93,13 @@ CREATE TABLE og_catalog.type_label (
     PRIMARY KEY (type_id, path_id),
     CHECK (lft < rgt)
 );
+-- [store-v1]
 -- The index that makes `MATCH (v:Vehicle)` constant-time.
 CREATE INDEX type_label_range_idx ON og_catalog.type_label (graph_id, lft, rgt);
+-- [store-v1]
 CREATE INDEX type_label_lft_idx   ON og_catalog.type_label (graph_id, lft);
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Properties — declared properties become REAL COLUMNS on the type table.
 -- Only undeclared (ad-hoc) properties fall through to the __ext jsonb column.
@@ -102,8 +119,10 @@ CREATE TABLE og_catalog.property (
     iri          text,
     UNIQUE (type_id, name)
 );
+-- [store-v1]
 CREATE SEQUENCE og_catalog.property_id_seq START 1;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Roles — named participant slots of a relation type (TypeDB-inspired).
 -- This is what Neo4j's string-typed relationships cannot express. (FR-004..006)
@@ -123,8 +142,10 @@ CREATE TABLE og_catalog.role (
     parent_role_id int4 REFERENCES og_catalog.role(role_id),
     UNIQUE (rel_type_id, name)
 );
+-- [store-v1]
 CREATE SEQUENCE og_catalog.role_id_seq START 1;
 
+-- [store-v1]
 -- n-ary role players beyond (src, dst)
 CREATE TABLE og_data.og_role_player (
     edge_id   int8 NOT NULL,
@@ -132,8 +153,10 @@ CREATE TABLE og_data.og_role_player (
     player_id int8 NOT NULL,
     PRIMARY KEY (edge_id, role_id, player_id)
 );
+-- [store-v1]
 CREATE INDEX og_role_player_player_idx ON og_data.og_role_player (player_id);
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Constraints not expressible as native PostgreSQL constraints (FR-015..020)
 -- ---------------------------------------------------------------------------
@@ -144,8 +167,10 @@ CREATE TABLE og_catalog.og_constraint (
     target  text,            -- property or role name
     params  jsonb NOT NULL DEFAULT '{}'::jsonb
 );
+-- [store-v1]
 CREATE SEQUENCE og_catalog.constraint_id_seq START 1;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Relation characteristics driving inference (FR-027..030 / 002, spec 006 OWL)
 -- ---------------------------------------------------------------------------
@@ -157,8 +182,10 @@ CREATE TABLE og_catalog.rule (
     enabled        bool NOT NULL DEFAULT true,
     UNIQUE (rel_type_id, characteristic, target_type_id)
 );
+-- [store-v1]
 CREATE SEQUENCE og_catalog.rule_id_seq START 1;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- TypeQL function declarations (spec 010 FR-044).
 --
@@ -174,6 +201,7 @@ CREATE TABLE og_catalog.typeql_function (
     PRIMARY KEY (graph_id, name)
 );
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Schema version — agents cache the schema; this is their invalidation key
 -- (FR-026 / 002, FR-005 / 008)
@@ -184,8 +212,10 @@ CREATE TABLE og_catalog.schema_version (
     changed_at  timestamptz NOT NULL DEFAULT now(),
     description text
 );
+-- [store-v1]
 CREATE SEQUENCE og_catalog.schema_version_seq START 1;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- ADJACENCY SEGMENTS — the reason this database is not Apache AGE.
 --
@@ -209,14 +239,18 @@ CREATE TABLE og_data.og_adj (
     PRIMARY KEY (src, etype, dir, seq)
 ) WITH (fillfactor = 80);
 
+-- [store-v1]
 -- Keep the arrays inline: TOASTing them would destroy the locality we just
 -- bought.  4KB payload stays under the 2KB*4 toast threshold per column.
 ALTER TABLE og_data.og_adj ALTER COLUMN nbr SET STORAGE MAIN;
+-- [store-v1]
 ALTER TABLE og_data.og_adj ALTER COLUMN eid SET STORAGE MAIN;
 
+-- [store-v1]
 COMMENT ON TABLE og_data.og_adj IS
   'CSR-style adjacency segments (spec 001 FR-002/003). One row = up to 256 neighbours of one node for one relation type and direction.';
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Node & edge registries.
 --
@@ -232,24 +266,31 @@ CREATE TABLE og_data.og_node (
     id      int8 PRIMARY KEY,
     type_id int4 NOT NULL
 );
+-- [store-v1]
 CREATE INDEX og_node_type_idx ON og_data.og_node (type_id, id);
 
+-- [store-v1]
 CREATE TABLE og_data.og_edge (
     id      int8 PRIMARY KEY,
     type_id int4 NOT NULL,
     src     int8 NOT NULL,
     dst     int8 NOT NULL
 );
+-- [store-v1]
 CREATE INDEX og_edge_type_idx ON og_data.og_edge (type_id, id);
+-- [store-v1]
 CREATE INDEX og_edge_src_idx  ON og_data.og_edge (src);
+-- [store-v1]
 CREATE INDEX og_edge_dst_idx  ON og_data.og_edge (dst);
 
+-- [store-v1]
 -- Per-type local id allocation (the 36-bit local space of spec 001 FR-004)
 CREATE TABLE og_data.og_id_alloc (
     type_id int4 PRIMARY KEY,
     next_id int8 NOT NULL DEFAULT 1
 );
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Graph-level settings & runtime configuration
 -- ---------------------------------------------------------------------------
@@ -258,6 +299,7 @@ CREATE TABLE og_catalog.setting (
     value text NOT NULL
 );
 
+-- [store-v1]
 -- Who has been handed standing privileges, and at which level.
 --
 -- Storage tables are created at runtime, one per concrete type, so a GRANT
@@ -269,12 +311,14 @@ CREATE TABLE og_catalog.grantee (
     role  text PRIMARY KEY,
     level text NOT NULL CHECK (level IN ('read', 'write', 'admin'))
 );
+-- [store-v1]
 INSERT INTO og_catalog.setting (key, value) VALUES
     ('chunk_size',        '256'),
     ('supernode_threshold','4096'),
     ('inference_max_depth','16'),
     ('schema_version',    '1');
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Embeddings (spec 004). An embedding is a declared property with a vector
 -- type; this table only records the metadata the search API needs.
@@ -288,8 +332,10 @@ CREATE TABLE og_catalog.embedding (
     source_prop text,
     UNIQUE (type_id, prop)
 );
+-- [store-v1]
 CREATE SEQUENCE og_catalog.embedding_id_seq START 1;
 
+-- [store-v1]
 -- Tracks what an embedding was computed from, so a changed source shows up as
 -- stale instead of silently serving an outdated vector (spec 004 FR-022).
 CREATE TABLE og_data.og_embedding_state (
@@ -300,6 +346,7 @@ CREATE TABLE og_data.og_embedding_state (
     PRIMARY KEY (entity_id, prop)
 );
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Neo4j compatibility: named indexes and constraints.
 --
@@ -320,6 +367,7 @@ CREATE TABLE og_catalog.compat_index (
     PRIMARY KEY (graph_id, name)
 );
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Provenance & temporal support (spec 008)
 -- ---------------------------------------------------------------------------
@@ -334,9 +382,12 @@ CREATE TABLE og_data.og_history (
     txid       int8        NOT NULL DEFAULT txid_current(),
     payload    jsonb
 );
+-- [store-v1]
 CREATE INDEX og_history_entity_idx ON og_data.og_history (entity_id, recorded_at DESC);
+-- [store-v1]
 CREATE INDEX og_history_valid_idx  ON og_data.og_history (valid_from, valid_to);
 
+-- [store-v1]
 CREATE TABLE og_data.og_source (
     entity_id  int8 PRIMARY KEY,
     source     text,
@@ -345,6 +396,7 @@ CREATE TABLE og_data.og_source (
     author     text
 );
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Semantic-web adapter support (spec 006)
 -- ---------------------------------------------------------------------------
@@ -353,12 +405,15 @@ CREATE TABLE og_catalog.prefix (
     iri    text NOT NULL
 );
 
+-- [store-v1]
 CREATE TABLE og_data.og_iri (
     entity_id int8 NOT NULL,
     iri       text PRIMARY KEY
 );
+-- [store-v1]
 CREATE INDEX og_iri_entity_idx ON og_data.og_iri (entity_id);
 
+-- [store-v1]
 -- Triples that do not map losslessly onto the property-graph model are kept
 -- verbatim so an export can reproduce the input (spec 006 FR-010).  This is a
 -- fidelity record, NOT a second query path — nothing reads it except the
@@ -371,8 +426,10 @@ CREATE TABLE og_data.og_triple_overflow (
     object    text NOT NULL,
     reason    text NOT NULL
 );
+-- [store-v1]
 CREATE INDEX og_triple_overflow_graph_idx ON og_data.og_triple_overflow (graph_id);
 
+-- [store-v1]
 -- Relational table -> graph type mappings (spec 005 FR-006..FR-010)
 CREATE TABLE og_catalog.mapping (
     type_id      int4 PRIMARY KEY REFERENCES og_catalog.type(type_id) ON DELETE CASCADE,
@@ -382,6 +439,7 @@ CREATE TABLE og_catalog.mapping (
     writable     bool NOT NULL DEFAULT false
 );
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Virtual fabric (experiment): external data sources and key-join relationships.
 --
@@ -396,6 +454,7 @@ CREATE TABLE og_catalog.datasource (
     created_at  timestamptz NOT NULL DEFAULT now()
 );
 
+-- [store-v1]
 -- The fabric reads sources; it does not write to them. A foreign table would
 -- pass an INSERT, UPDATE, DELETE or TRUNCATE on to its source if the source
 -- account allowed it, so every table a datasource brings in carries a trigger
@@ -408,6 +467,7 @@ BEGIN
         USING HINT = 'Write through the source system itself, or MATERIALIZE the node type and write to the copy.';
 END $$;
 
+-- [store-v1]
 -- A virtual relationship is a join predicate, not stored adjacency:
 -- (a:src_type)-[:R]->(b:dst_type) holds when a.src_prop = b.dst_prop.
 CREATE TABLE og_catalog.virtual_rel (
@@ -418,6 +478,7 @@ CREATE TABLE og_catalog.virtual_rel (
     dst_prop  text NOT NULL
 );
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Agent roles & resource limits (spec 008 FR-024..FR-029)
 -- ---------------------------------------------------------------------------
@@ -426,6 +487,7 @@ CREATE TABLE og_catalog.agent_role (
     limits jsonb NOT NULL DEFAULT '{}'::jsonb
 );
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Audit log for agent access (spec 008 FR-027)
 -- ---------------------------------------------------------------------------
@@ -439,8 +501,10 @@ CREATE TABLE og_data.og_audit (
     duration_ms double precision,
     error_code  text
 );
+-- [store-v1]
 CREATE INDEX og_audit_at_idx ON og_data.og_audit (at DESC);
 
+-- [store-v1]
 -- Who wrote the row, as the database knows it and as the application claims it
 -- (spec 014 FR-010). `principal` above is `session_user`, which is the pooler's
 -- login under PostgREST or the Studio, not the role the statement ran as.
@@ -453,6 +517,7 @@ ALTER TABLE og_data.og_audit
     ADD COLUMN schema_version int8,
     ADD COLUMN action         text;   -- the Action a write came through, if any
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Fine-grained write grants — spec 014 FR-001..FR-006.
 --
@@ -471,6 +536,7 @@ CREATE TABLE og_catalog.write_grant (
     PRIMARY KEY (role, type_id, op)
 );
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Actions — spec 014 FR-011..FR-016.
 --
@@ -494,6 +560,7 @@ CREATE TABLE og_catalog.action (
     UNIQUE (graph_id, name)
 );
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Schema changes as first-class, versioned objects — spec 012.
 --
@@ -516,12 +583,15 @@ CREATE TABLE og_catalog.schema_change (
     updated_at   timestamptz NOT NULL DEFAULT now(),
     report       jsonb NOT NULL DEFAULT '{}'::jsonb
 );
+-- [store-v1]
 CREATE INDEX schema_change_graph_idx ON og_catalog.schema_change (graph_id, change_id DESC);
 
+-- [store-v1]
 -- What the schema looked like at each version — "what structure was this
 -- written under?" (spec 012 FR-009).
 ALTER TABLE og_catalog.schema_version ADD COLUMN snapshot jsonb;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Bitemporal types — spec 013.
 --
@@ -534,11 +604,13 @@ CREATE TABLE og_catalog.temporal (
     enabled_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- [store-v1]
 -- Types whose rows carry system-managed stamps (spec 014 FR-007..FR-009).
 CREATE TABLE og_catalog.stamped (
     type_id    int4 PRIMARY KEY REFERENCES og_catalog.type(type_id) ON DELETE CASCADE
 );
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Backup registration — spec 001 FR-010, spec 005 FR-024.
 --
@@ -551,58 +623,105 @@ CREATE TABLE og_catalog.stamped (
 -- this script, so they are ordinary user tables and pg_dump already covers them.
 -- ---------------------------------------------------------------------------
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.graph', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.type', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.type_parent', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.type_label', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.property', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.role', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.og_constraint', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.rule', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.schema_version', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.embedding', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.compat_index', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.prefix', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.mapping', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.datasource', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.virtual_rel', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.agent_role', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.typeql_function', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.write_grant', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.action', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.schema_change', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.temporal', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.stamped', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.action_action_id_seq', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.schema_change_change_id_seq', '');
 
+-- [store-v1]
 -- The extension script seeds these keys, so restoring them again would collide.
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.setting',
     'WHERE key NOT IN (''chunk_size'', ''supernode_threshold'',
                        ''inference_max_depth'', ''schema_version'')');
 
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_node', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_edge', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_adj', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_id_alloc', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_role_player', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_history', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_source', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.grantee', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_audit', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_embedding_state', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_iri', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_triple_overflow', '');
 
+-- [store-v1]
 -- Sequences carry the allocation watermarks; losing them would hand out
 -- identifiers that already exist.
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.graph_id_seq', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.type_id_seq', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.property_id_seq', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.role_id_seq', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.constraint_id_seq', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.rule_id_seq', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.schema_version_seq', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.embedding_id_seq', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_history_hist_id_seq', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_audit_audit_id_seq', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_data.og_triple_overflow_id_seq', '');

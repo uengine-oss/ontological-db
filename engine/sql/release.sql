@@ -22,6 +22,7 @@
 --                    true at t"; this answers "how did it change between a and b".
 -- ============================================================================
 
+-- [store-v1]
 CREATE TABLE og_catalog.release (
     release_id   serial PRIMARY KEY,
     graph_id     int4 NOT NULL REFERENCES og_catalog.graph(graph_id) ON DELETE CASCADE,
@@ -40,10 +41,14 @@ CREATE TABLE og_catalog.release (
     started_at   timestamptz NOT NULL DEFAULT now(),
     finished_at  timestamptz
 );
+-- [store-v1]
 CREATE INDEX release_graph_idx ON og_catalog.release (graph_id, release_id DESC);
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.release', '');
+-- [store-v1]
 SELECT pg_catalog.pg_extension_config_dump('og_catalog.release_release_id_seq', '');
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Schema diff
 --
@@ -207,6 +212,7 @@ BEGIN
           FROM jsonb_array_elements(out) WITH ORDINALITY AS e(c, o)), '[]'::jsonb);
 END $$;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Releases
 -- ---------------------------------------------------------------------------
@@ -235,6 +241,7 @@ BEGIN
     RETURN rid;
 END $$;
 
+-- [store-v1]
 CREATE FUNCTION og_release_commit(release_id int4, change_ids int4[] DEFAULT '{}',
                                   instances int8 DEFAULT 0, summary jsonb DEFAULT '{}'::jsonb,
                                   failed bool DEFAULT false)
@@ -257,6 +264,7 @@ BEGIN
     RETURN to_jsonb(r);
 END $$;
 
+-- [store-v1]
 CREATE FUNCTION og_releases(graph text)
 RETURNS SETOF jsonb LANGUAGE sql STABLE AS $$
     SELECT to_jsonb(r) - 'graph_id'
@@ -265,6 +273,7 @@ RETURNS SETOF jsonb LANGUAGE sql STABLE AS $$
      ORDER BY r.release_id DESC
 $$;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Timeline
 --

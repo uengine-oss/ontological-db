@@ -8,6 +8,7 @@
 -- is precisely the mistake Constitution principle II forbids.
 -- ============================================================================
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Neighbour expansion. One heap tuple per 256 neighbours.
 -- ---------------------------------------------------------------------------
@@ -21,9 +22,11 @@ LANGUAGE sql STABLE PARALLEL SAFE ROWS 50 AS $$
        AND (og_expand.etypes IS NULL OR a.etype = ANY (og_expand.etypes))
 $$;
 
+-- [store-v1]
 COMMENT ON FUNCTION og_expand IS
   'Expand one node''s neighbours (spec 001 FR-002). Sequential array read, not degree index probes.';
 
+-- [store-v1]
 -- Batched expansion: one call for many start points, so a multi-hop plan does
 -- not degenerate into a round trip per row (spec 007 FR-012 uses the same shape).
 CREATE FUNCTION og_expand_batch(srcs int8[], etypes int4[], dir "char")
@@ -36,6 +39,7 @@ LANGUAGE sql STABLE PARALLEL SAFE ROWS 500 AS $$
        AND (og_expand_batch.etypes IS NULL OR a.etype = ANY (og_expand_batch.etypes))
 $$;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Subtype-aware scans. The label join below is THE constant-time inheritance
 -- test (spec 002 FR-009/010) — note the complete absence of recursion.
@@ -50,6 +54,7 @@ LANGUAGE sql STABLE PARALLEL SAFE ROWS 8 AS $$
      WHERE a.type_id = og_subtype_ids.root
 $$;
 
+-- [store-v1]
 CREATE FUNCTION og_nodes(root int4)
 RETURNS TABLE (id int8, type_id int4)
 LANGUAGE sql STABLE PARALLEL SAFE ROWS 1000 AS $$
@@ -57,6 +62,7 @@ LANGUAGE sql STABLE PARALLEL SAFE ROWS 1000 AS $$
      WHERE n.type_id IN (SELECT og_subtype_ids(og_nodes.root))
 $$;
 
+-- [store-v1]
 CREATE FUNCTION og_edges(root int4)
 RETURNS TABLE (id int8, type_id int4, src int8, dst int8)
 LANGUAGE sql STABLE PARALLEL SAFE ROWS 1000 AS $$
@@ -64,6 +70,7 @@ LANGUAGE sql STABLE PARALLEL SAFE ROWS 1000 AS $$
      WHERE e.type_id IN (SELECT og_subtype_ids(og_edges.root))
 $$;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Name resolution
 -- ---------------------------------------------------------------------------
@@ -75,6 +82,7 @@ LANGUAGE sql STABLE PARALLEL SAFE AS $$
      WHERE g.name = og_type_id.graph AND t.name = og_type_id.type_name
 $$;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Introspection views — spec 002 FR-031, consumed by spec 008 and the portal.
 -- ---------------------------------------------------------------------------
@@ -96,6 +104,7 @@ SELECT g.name  AS graph,
   JOIN og_catalog.graph g ON g.graph_id = t.graph_id
   LEFT JOIN og_catalog.type_label l ON l.type_id = t.type_id AND l.path_id = 0;
 
+-- [store-v1]
 CREATE VIEW og_property_view AS
 SELECT g.name AS graph, t.name AS type_name, p.name AS property,
        p.data_type, p.column_name, p.required, p.is_key
@@ -103,6 +112,7 @@ SELECT g.name AS graph, t.name AS type_name, p.name AS property,
   JOIN og_catalog.type t  ON t.type_id = p.type_id
   JOIN og_catalog.graph g ON g.graph_id = t.graph_id;
 
+-- [store-v1]
 CREATE VIEW og_role_view AS
 SELECT g.name AS graph, t.name AS relation, r.name AS role,
        pt.name AS player_type, r.ordinal, r.card_min, r.card_max
@@ -111,6 +121,7 @@ SELECT g.name AS graph, t.name AS relation, r.name AS role,
   JOIN og_catalog.graph g  ON g.graph_id = t.graph_id
   LEFT JOIN og_catalog.type pt ON pt.type_id = r.player_type_id;
 
+-- [store-v1]
 -- Relational view of the graph so BI/ETL tooling can read it as plain SQL
 -- (spec 005 FR-011).
 CREATE VIEW og_node_view AS
@@ -119,12 +130,14 @@ SELECT n.id, t.name AS type_name, g.name AS graph
   JOIN og_catalog.type t  ON t.type_id = n.type_id
   JOIN og_catalog.graph g ON g.graph_id = t.graph_id;
 
+-- [store-v1]
 CREATE VIEW og_edge_view AS
 SELECT e.id, t.name AS type_name, g.name AS graph, e.src, e.dst
   FROM og_data.og_edge e
   JOIN og_catalog.type t  ON t.type_id = e.type_id
   JOIN og_catalog.graph g ON g.graph_id = t.graph_id;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Variable-length traversal — spec 003 FR-004.
 --
@@ -155,6 +168,7 @@ LANGUAGE sql STABLE PARALLEL SAFE ROWS 100 AS $$
      WHERE depth >= og_vlp.minhop AND depth <= og_vlp.maxhop
 $$;
 
+-- [store-v1]
 -- Reachability, in plain SQL — the same question `og_vlp` answers when nobody
 -- asked for the path.
 --
@@ -186,9 +200,11 @@ LANGUAGE sql STABLE PARALLEL SAFE ROWS 1000 AS $$
      GROUP BY node
 $$;
 
+-- [store-v1]
 COMMENT ON FUNCTION og_reach_sql IS
   'Reachability without paths, in SQL. See og_reach() for the visited-set version.';
 
+-- [common]
 -- `og_reach` is written in Rust, and pgrx gives every set-returning function
 -- PostgreSQL's default guess of 1000 rows. `og_vlp` declares 100. Two functions
 -- that answer the same question must not be costed an order of magnitude apart
@@ -196,6 +212,7 @@ COMMENT ON FUNCTION og_reach_sql IS
 -- different join orders for the two and the comparison would measure the guess.
 ALTER FUNCTION og_reach(int8, int4[], "char", int4, int4) ROWS 100;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- Row → JSON helpers used when a query returns a whole node/relationship whose
 -- concrete type is not known at compile time.
@@ -205,6 +222,7 @@ RETURNS text LANGUAGE sql STABLE PARALLEL SAFE AS $$
     SELECT name FROM og_catalog.type WHERE type_id = og_type_name.type_id
 $$;
 
+-- [store-v1]
 CREATE FUNCTION og_node_json(id int8)
 RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
 DECLARE
@@ -234,6 +252,7 @@ BEGIN
                      THEN raw -> '__ext' ELSE '{}'::jsonb END);
 END $$;
 
+-- [store-v1]
 CREATE FUNCTION og_edge_json(id int8)
 RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
 DECLARE
@@ -263,12 +282,14 @@ BEGIN
                      THEN raw -> '__ext' ELSE '{}'::jsonb END);
 END $$;
 
+-- [store-v1]
 -- Property lookup for a node whose concrete type is unknown at compile time.
 CREATE FUNCTION og_prop(id int8, prop text)
 RETURNS text LANGUAGE sql STABLE AS $$
     SELECT og_node_json(og_prop.id) ->> og_prop.prop
 $$;
 
+-- [store-v1]
 -- History capture trigger — spec 008 FR-018..FR-023. Attached per type only
 -- when og_enable_history() is called, because retaining history costs writes.
 --
@@ -299,6 +320,7 @@ BEGIN
     RETURN NULL;
 END $$;
 
+-- [store-v1]
 -- ---------------------------------------------------------------------------
 -- TypeQL ↔ storage mapping — spec 010 FR-043.
 --
@@ -322,9 +344,11 @@ CREATE VIEW og_typeql_attribute AS
       JOIN og_data.og_node  a  ON a.id  = e.dst
       JOIN og_catalog.type  at ON at.type_id = a.type_id;
 
+-- [store-v1]
 COMMENT ON VIEW og_typeql_attribute IS
   'Spec 010 FR-043: TypeQL attribute ownership. An attribute instance is shared by value, so one row here per (owner, attribute) pair.';
 
+-- [store-v1]
 -- One row per role assignment of a reified relation instance.
 CREATE VIEW og_typeql_role AS
     SELECT rp.edge_id     AS relation_id,
@@ -339,10 +363,12 @@ CREATE VIEW og_typeql_role AS
       JOIN og_data.og_node  p  ON p.id  = rp.player_id
       JOIN og_catalog.type  pt ON pt.type_id = p.type_id;
 
+-- [store-v1]
 COMMENT ON VIEW og_typeql_role IS
   'Spec 010 FR-043: TypeQL role assignments. Relations are reified as nodes, so relation_id is a node id and a relation may carry three or more roles.';
 
 
+-- [common]
 -- ============================================================================
 -- Schema evolution helpers — spec 012.
 -- ============================================================================
@@ -370,6 +396,7 @@ BEGIN
     END;
 END $$;
 
+-- [store-v1]
 -- Dual write during a type change (spec 012): between expand and contract the
 -- new column follows the old one on every write, including raw SQL. The value
 -- goes through text, so what the new type cannot hold is refused here, now.
@@ -389,6 +416,7 @@ BEGIN
     RETURN NEW;
 END $$;
 
+-- [store-v1]
 -- The catalog of one graph as a document: types, parents, properties, roles,
 -- and which settings apply. Stored with every schema version.
 CREATE FUNCTION og__schema_snapshot(gid int4) RETURNS jsonb
@@ -416,6 +444,7 @@ LANGUAGE sql STABLE AS $$
      WHERE t.graph_id = gid
 $$;
 
+-- [store-v1]
 -- The schema as it stood at a version, or at an instant. With neither, the
 -- current one. "What structure was this written under?"
 CREATE FUNCTION og_schema_snapshot(graph text, version int8 DEFAULT NULL, at timestamptz DEFAULT NULL)
@@ -432,6 +461,7 @@ RETURNS jsonb LANGUAGE sql STABLE AS $$
      LIMIT 1
 $$;
 
+-- [common]
 -- ============================================================================
 -- Point-in-time context — spec 013 FR-006..FR-010.
 --
@@ -450,17 +480,20 @@ LANGUAGE sql STABLE PARALLEL SAFE AS $$
     SELECT COALESCE(NULLIF(current_setting('og.valid_at', true), '')::timestamptz, now())
 $$;
 
+-- [common]
 CREATE FUNCTION og_system_at() RETURNS timestamptz
 LANGUAGE sql STABLE PARALLEL SAFE AS $$
     SELECT COALESCE(NULLIF(current_setting('og.system_at', true), '')::timestamptz, now())
 $$;
 
+-- [common]
 CREATE FUNCTION og_asof_active() RETURNS bool
 LANGUAGE sql STABLE PARALLEL SAFE AS $$
     SELECT COALESCE(current_setting('og.valid_at', true), '') <> ''
         OR COALESCE(current_setting('og.system_at', true), '') <> ''
 $$;
 
+-- [common]
 -- Placed in a query that can only see the current state (adjacency-only
 -- traversal, untyped scans, TypeQL). Answering a point-in-time question with
 -- today's data would be a wrong answer that looks right, so it is an error.
@@ -475,6 +508,7 @@ BEGIN
     RETURN true;
 END $$;
 
+-- [store-v1]
 -- ============================================================================
 -- Write-time security — spec 014.
 --
@@ -506,37 +540,58 @@ LANGUAGE sql STABLE AS $$
     ), false)
 $$;
 
+-- [store-v1]
 ALTER TABLE og_data.og_node ENABLE ROW LEVEL SECURITY;
+-- [store-v1]
 CREATE POLICY og_read   ON og_data.og_node FOR SELECT USING (true);
+-- [store-v1]
 CREATE POLICY og_insert ON og_data.og_node FOR INSERT WITH CHECK (og_type_priv(type_id, 'INSERT'));
+-- [store-v1]
 CREATE POLICY og_update ON og_data.og_node FOR UPDATE USING (og_type_priv(type_id, 'UPDATE'));
+-- [store-v1]
 CREATE POLICY og_delete ON og_data.og_node FOR DELETE USING (og_type_priv(type_id, 'DELETE'));
 
+-- [store-v1]
 ALTER TABLE og_data.og_edge ENABLE ROW LEVEL SECURITY;
+-- [store-v1]
 CREATE POLICY og_read   ON og_data.og_edge FOR SELECT USING (true);
+-- [store-v1]
 CREATE POLICY og_insert ON og_data.og_edge FOR INSERT WITH CHECK (og_type_priv(type_id, 'INSERT'));
+-- [store-v1]
 CREATE POLICY og_update ON og_data.og_edge FOR UPDATE USING (og_type_priv(type_id, 'UPDATE'));
+-- [store-v1]
 CREATE POLICY og_delete ON og_data.og_edge FOR DELETE USING (og_type_priv(type_id, 'DELETE'));
 
+-- [store-v1]
 -- Adjacency segments change when an edge of their type is created or deleted.
 ALTER TABLE og_data.og_adj ENABLE ROW LEVEL SECURITY;
+-- [store-v1]
 CREATE POLICY og_read   ON og_data.og_adj FOR SELECT USING (true);
+-- [store-v1]
 CREATE POLICY og_insert ON og_data.og_adj FOR INSERT WITH CHECK (og_type_priv(etype, 'INSERT'));
+-- [store-v1]
 CREATE POLICY og_update ON og_data.og_adj FOR UPDATE
     USING (og_type_priv(etype, 'INSERT') OR og_type_priv(etype, 'DELETE'));
+-- [store-v1]
 CREATE POLICY og_delete ON og_data.og_adj FOR DELETE
     USING (og_type_priv(etype, 'INSERT') OR og_type_priv(etype, 'DELETE'));
 
+-- [store-v1]
 -- A role player belongs to the relation instance whose id carries its type.
 ALTER TABLE og_data.og_role_player ENABLE ROW LEVEL SECURITY;
+-- [store-v1]
 CREATE POLICY og_read   ON og_data.og_role_player FOR SELECT USING (true);
+-- [store-v1]
 CREATE POLICY og_insert ON og_data.og_role_player FOR INSERT
     WITH CHECK (og_type_priv(og_id_type(edge_id), 'INSERT'));
+-- [store-v1]
 CREATE POLICY og_update ON og_data.og_role_player FOR UPDATE
     USING (og_type_priv(og_id_type(edge_id), 'UPDATE'));
+-- [store-v1]
 CREATE POLICY og_delete ON og_data.og_role_player FOR DELETE
     USING (og_type_priv(og_id_type(edge_id), 'DELETE'));
 
+-- [store-v1]
 -- Did anything a reader can see change? System columns (`__x`, except the
 -- `__ext` payload) and schema-migration shadow columns (`p_x__s<change>`) do
 -- not count. A write that changes nothing else — `SET n.x = n.x`, or a
@@ -549,6 +604,7 @@ LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$
        AND k !~ '__s[0-9]+$'
 $$;
 
+-- [store-v1]
 -- System-managed stamps — spec 014 FR-007..FR-009.
 --
 -- SECURITY INVOKER on purpose: `current_user` has to be the role that ran the
@@ -576,6 +632,7 @@ BEGIN
     RETURN NEW;
 END $$;
 
+-- [store-v1]
 -- Bitemporal capture — spec 013 FR-001..FR-005.
 --
 -- Every row of a temporal type carries `__valid` (when it is true in the world)
@@ -639,6 +696,7 @@ BEGIN
     RETURN NEW;
 END $$;
 
+-- [store-v1]
 -- System columns of one element: stamps and validity, without the leading
 -- underscores. Nothing here can be written through Cypher.
 CREATE FUNCTION og_meta(id int8) RETURNS jsonb
@@ -656,6 +714,7 @@ BEGIN
              WHERE k LIKE '\_\_%' AND k <> '__ext');
 END $$;
 
+-- [store-v1]
 -- Audit writer — spec 014 FR-010.
 --
 -- Readers must leave an audit row and must not be able to edit one, so nobody
@@ -687,6 +746,7 @@ BEGIN
          act);
 END $$;
 
+-- [common]
 -- ============================================================================
 -- Privileges
 --
@@ -725,8 +785,10 @@ BEGIN
 END
 $$;
 
+-- [store-v1]
 COMMENT ON FUNCTION og_grant(text, text) IS
   'Grant a role standing privileges on og_catalog and og_data. Levels nest: write includes read, admin includes both. The role must already exist — roles are cluster-wide and outlive DROP EXTENSION, so this does not create one. The grant is recorded in og_catalog.grantee and replayed onto storage tables created later.';
 
+-- [store-v1]
 COMMENT ON FUNCTION og_revoke(text) IS
   'Take back everything og_grant handed out, and forget the record. The role itself is left alone.';
