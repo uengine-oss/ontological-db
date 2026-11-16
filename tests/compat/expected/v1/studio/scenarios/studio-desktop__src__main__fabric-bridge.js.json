@@ -17,10 +17,10 @@
    ],
    "effect": {},
    "params": {
-    "database": "og_compat",
+    "database": "<pg-database>",
     "host": "127.0.0.1",
     "password": "",
-    "port": 28830,
+    "port": "<pg-port>",
     "schema": "compat_erp",
     "user": "og"
    }

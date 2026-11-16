@@ -23,7 +23,7 @@
       "props": {
        "author": "compat-author",
        "clarificationLog": "[]",
-       "createdAt": "2026-01-15T18:00:00+09:00",
+       "createdAt": "2026-01-15T09:00:00+00:00",
        "decompositionMode": "compat-decompositionMode",
        "id": "compat-new-Proposal",
        "originalPrompt": "compat-originalPrompt",

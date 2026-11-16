@@ -14,7 +14,7 @@
     [
      {
       "author": "compat-author",
-      "createdAt": "2026-01-15T18:00:00+09:00",
+      "createdAt": "2026-01-15T09:00:00+00:00",
       "id": "compat-new-RequirementChange",
       "originalPrompt": "compat-originalPrompt",
       "sourceType": "compat-sourceType",
@@ -37,7 +37,7 @@
       ],
       "props": {
        "author": "compat-author",
-       "createdAt": "2026-01-15T18:00:00+09:00",
+       "createdAt": "2026-01-15T09:00:00+00:00",
        "id": "compat-new-RequirementChange",
        "originalPrompt": "compat-originalPrompt",
        "sourceType": "compat-sourceType",

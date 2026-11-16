@@ -14,7 +14,7 @@
     [
      {
       "author": "compat-author",
-      "createdAt": "2026-01-15T18:00:00+09:00",
+      "createdAt": "2026-01-15T09:00:00+00:00",
       "id": "compat-new-ChangeSet",
       "status": "DRAFT",
       "title": "compat-title"
@@ -23,7 +23,7 @@
     [
      {
       "author": "compat-author",
-      "createdAt": "2026-01-15T18:00:00+09:00",
+      "createdAt": "2026-01-15T09:00:00+00:00",
       "id": "compat-new-ChangeSet",
       "status": "DRAFT",
       "title": "compat-title"
@@ -44,7 +44,7 @@
       ],
       "props": {
        "author": "compat-author",
-       "createdAt": "2026-01-15T18:00:00+09:00",
+       "createdAt": "2026-01-15T09:00:00+00:00",
        "id": "compat-new-ChangeSet",
        "status": "DRAFT",
        "title": "compat-title"
@@ -59,13 +59,13 @@
      {
       "end": "{\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"RequirementChange author 1\",\"changeSetId\":\"compat-new-ChangeSet\",\"createdAt\":\"2026-01-11T09:00:00Z\",\"id\":\"RequirementChange-1\",\"name\":\"RequirementChange 1\",\"originalPrompt\":\"RequirementChange originalPrompt 1\",\"sourceType\":\"RequirementChange sourceType 1\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"RequirementChange 1\"}}",
       "props": {},
-      "start": "{\"labels\":[\"ChangeSet\"],\"props\":{\"author\":\"compat-author\",\"createdAt\":\"2026-01-15T18:00:00+09:00\",\"id\":\"compat-new-ChangeSet\",\"status\":\"DRAFT\",\"title\":\"compat-title\"}}",
+      "start": "{\"labels\":[\"ChangeSet\"],\"props\":{\"author\":\"compat-author\",\"createdAt\":\"2026-01-15T09:00:00+00:00\",\"id\":\"compat-new-ChangeSet\",\"status\":\"DRAFT\",\"title\":\"compat-title\"}}",
       "type": "CONTAINS"
      },
      {
       "end": "{\"labels\":[\"RequirementChange\"],\"props\":{\"author\":\"user@example.com\",\"changeSetId\":\"compat-new-ChangeSet\",\"createdAt\":\"<now>\",\"id\":\"CHG-001\",\"originalPrompt\":\"반품 기간을 7일에서 14일로 변경\",\"sourceType\":\"PROMPT\",\"status\":\"DRAFT\",\"statusHistory\":\"[]\",\"title\":\"반품 기간 연장\"}}",
       "props": {},
-      "start": "{\"labels\":[\"ChangeSet\"],\"props\":{\"author\":\"compat-author\",\"createdAt\":\"2026-01-15T18:00:00+09:00\",\"id\":\"compat-new-ChangeSet\",\"status\":\"DRAFT\",\"title\":\"compat-title\"}}",
+      "start": "{\"labels\":[\"ChangeSet\"],\"props\":{\"author\":\"compat-author\",\"createdAt\":\"2026-01-15T09:00:00+00:00\",\"id\":\"compat-new-ChangeSet\",\"status\":\"DRAFT\",\"title\":\"compat-title\"}}",
       "type": "CONTAINS"
      }
     ]
