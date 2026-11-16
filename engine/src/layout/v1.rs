@@ -13,6 +13,7 @@
 //! so none of these panics can be reached.
 
 use super::{Aliases, Dir, ElementId, GraphId, Kind, LabelSet, Layout, PathSem, PropRead, SqlExpr, SqlFrag, TimeScope, TypeId};
+use super::OwnershipJoin;
 use serde_json::Value;
 
 /// The v1 layout. A unit struct: everything it needs is in the catalog.
@@ -44,12 +45,47 @@ impl Layout for LayoutV1 {
         }
     }
 
-    fn registry(&self, _kind: Kind) -> SqlFrag {
-        todo!("K4: og_data.og_node / og_data.og_edge")
+    fn registry(&self, kind: Kind) -> SqlFrag {
+        SqlFrag::new(match kind {
+            Kind::Node => "og_data.og_node",
+            Kind::Rel => "og_data.og_edge",
+        })
     }
 
     fn role_players(&self) -> SqlFrag {
-        todo!("K4: og_data.og_role_player")
+        SqlFrag::new("og_data.og_role_player")
+    }
+
+    fn attr_values(&self, t: TypeId) -> Option<SqlFrag> {
+        crate::catalog::types::storage_table(t).map(|tbl| SqlFrag::new(format!("SELECT id, val FROM {tbl}")))
+    }
+
+    fn ownership_join(
+        &self,
+        owner: &SqlExpr,
+        has_type: TypeId,
+        attr_types: &[TypeId],
+        values: &SqlFrag,
+        h: &str,
+    ) -> OwnershipJoin {
+        let ids = attr_types.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(",");
+        let nbr = SqlExpr::new(format!("{h}u.nbr"));
+        OwnershipJoin {
+            from: SqlFrag::new(format!(
+                "og_data.og_adj {h}a CROSS JOIN LATERAL unnest({h}a.nbr) AS {h}u(nbr) \
+                 JOIN {values} {h}v ON {h}v.id = {h}u.nbr"
+            )),
+            conds: vec![
+                SqlExpr::new(format!("{h}a.src = {owner}")),
+                SqlExpr::new(format!("{h}a.dir = 'o'::\"char\"")),
+                SqlExpr::new(format!("{h}a.etype = {has_type}")),
+                SqlExpr::new(format!("{} = ANY(ARRAY[{ids}]::int4[])", self.label_of_inline(&nbr))),
+            ],
+        }
+    }
+
+    fn label_of_inline(&self, id: &SqlExpr) -> SqlExpr {
+        SqlExpr::new(format!("((({id}) >> {}) & {})::int4", crate::id::TYPE_SHIFT, crate::id::TYPE_MASK))
     }
 
     fn expand(

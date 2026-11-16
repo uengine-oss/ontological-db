@@ -3,18 +3,23 @@
 //! One SQL statement per read query, so the PostgreSQL planner owns join order
 //! and scan selection. The three joins that matter:
 //!
-//! * **isa** — `og_data.og_node` filtered by the subtype set that spec 002's
+//! * **isa** — the node registry filtered by the subtype set that spec 002's
 //!   interval labels hand back in one indexed range scan. Never a recursive walk.
-//! * **has** — the `$has` adjacency segments, plus an attribute-type filter that
+//! * **has** — the `$has` ownerships, plus an attribute-type filter that in v1
 //!   is a *shift and mask on the neighbour id*: spec 001 puts the type in the
 //!   identifier, so this costs no join at all.
-//! * **role** — `og_data.og_role_player`, the table spec 002 created for exactly
-//!   this, expanded over role specialisations so a supertype role reaches them.
+//! * **role** — the role-player relation spec 002 created for exactly this,
+//!   expanded over role specialisations so a supertype role reaches them.
+//!
+//! Where those rows are stored is the storage layout's business
+//! ([`crate::layout::Layout`]: `registry`, `role_players`, `attr_values`,
+//! `ownership_join`, `label_of_inline`); this file decides what a pattern
+//! asks for.
 
 use super::ast::*;
 use super::schema;
 use crate::catalog::{labeling, types};
-use crate::id;
+use crate::layout::{self, Layout, SqlExpr};
 use pgrx::prelude::*;
 use std::collections::{HashMap, HashSet};
 
@@ -38,6 +43,8 @@ pub enum Bind {
 
 pub struct Compiler {
     pub gid: i32,
+    /// Where the graph's rows are stored (v1: `layout::v1::LayoutV1`).
+    lay: &'static dyn Layout,
     has_tid: i32,
     pub binds: HashMap<String, Bind>,
     /// Variables that come from an enclosing query; referencing them is a
@@ -58,6 +65,7 @@ impl Compiler {
     pub fn new(gid: i32) -> Self {
         Compiler {
             gid,
+            lay: layout::active(),
             has_tid: schema::ensure_has_type(gid),
             binds: HashMap::new(),
             external: HashSet::new(),
@@ -139,8 +147,8 @@ impl Compiler {
             if types::type_kind(*t) != 'a' {
                 continue;
             }
-            if let Some(tbl) = types::storage_table(*t) {
-                parts.push(format!("SELECT id, val FROM {tbl}"));
+            if let Some(scan) = self.lay.attr_values(*t) {
+                parts.push(scan.into_string());
             }
         }
         if parts.is_empty() {
@@ -156,10 +164,10 @@ impl Compiler {
         )
     }
 
-    /// `((id >> 36) & 262143)::int4` — the type of a node, straight from its
-    /// identifier (spec 001 FR-004). No catalog lookup, no join.
-    fn type_of_id(expr: &str) -> String {
-        format!("((({expr}) >> {}) & {})::int4", id::TYPE_SHIFT, id::TYPE_MASK)
+    /// The type of a node, straight from its identifier — in v1
+    /// `(((id) >> 36) & 262143)::int4` (spec 001 FR-004). No catalog lookup, no join.
+    fn type_of_id(&self, expr: &str) -> String {
+        self.lay.label_of_inline(&SqlExpr::new(expr)).into_string()
     }
 
     // ----------------------------------------------------------------------
@@ -275,7 +283,7 @@ impl Compiler {
                 }
             };
             self.wheres
-                .push(format!("{} = ANY({})", Self::type_of_id(&id_expr), Self::int_array(&ids)));
+                .push(format!("{} = ANY({})", self.type_of_id(&id_expr), Self::int_array(&ids)));
             return Ok(());
         }
 
@@ -286,7 +294,8 @@ impl Compiler {
             self.binds.insert(var.to_string(), Bind::Attr { alias: a, tids: ids });
         } else {
             let a = self.fresh("n");
-            self.push_from(format!("og_data.og_node {a}"));
+            let nodes = self.lay.registry(layout::Kind::Node);
+            self.push_from(format!("{nodes} {a}"));
             self.wheres.push(format!("{a}.type_id = ANY({})", Self::int_array(&ids)));
             self.binds.insert(var.to_string(), Bind::Instance { alias: a });
         }
@@ -305,7 +314,8 @@ impl Compiler {
             Some(Bind::Column { val, id }) => Ok(id.clone().unwrap_or_else(|| val.clone())),
             None => {
                 let a = self.fresh("n");
-                self.push_from(format!("og_data.og_node {a}"));
+                let nodes = self.lay.registry(layout::Kind::Node);
+                self.push_from(format!("{nodes} {a}"));
                 self.binds.insert(var.to_string(), Bind::Instance { alias: a.clone() });
                 Ok(format!("{a}.id"))
             }
@@ -331,18 +341,9 @@ impl Compiler {
         // `match` over several independent variables never has to form their
         // cross product first.
         let h = self.fresh("h");
-        let has_tid = self.has_tid;
         let src = self.concrete_attr_tables(&attr_tids)?;
-        let mut inner = vec![
-            format!("{h}a.src = {owner_id}"),
-            format!("{h}a.dir = 'o'::\"char\""),
-            format!("{h}a.etype = {has_tid}"),
-            format!(
-                "{} = ANY({})",
-                Self::type_of_id(&format!("{h}u.nbr")),
-                Self::int_array(&attr_tids)
-            ),
-        ];
+        let owned = self.owned(&owner_id, &attr_tids, src, &h);
+        let mut inner: Vec<String> = owned.conds.into_iter().map(SqlExpr::into_string).collect();
 
         let mut bind_var: Option<String> = None;
         match val {
@@ -366,11 +367,8 @@ impl Compiler {
         }
 
         self.from.push(format!(
-            "CROSS JOIN LATERAL (SELECT {h}v.id AS id, {h}v.val AS val \
-             FROM og_data.og_adj {h}a \
-             CROSS JOIN LATERAL unnest({h}a.nbr) AS {h}u(nbr) \
-             JOIN {src} {h}v ON {h}v.id = {h}u.nbr \
-             WHERE {}) {h}",
+            "CROSS JOIN LATERAL (SELECT {h}v.id AS id, {h}v.val AS val FROM {} WHERE {}) {h}",
+            owned.from,
             inner.join(" AND ")
         ));
         if let Some(v) = bind_var {
@@ -414,7 +412,8 @@ impl Compiler {
         }
 
         let rp = self.fresh("rp");
-        self.push_from(format!("og_data.og_role_player {rp}"));
+        let players = self.lay.role_players();
+        self.push_from(format!("{players} {rp}"));
         self.wheres.push(format!("{rp}.edge_id = {rel_id}"));
         self.wheres.push(format!("{rp}.player_id = {player_id}"));
         self.wheres.push(format!("{rp}.role_id = ANY({})", Self::int_array(&role_ids)));
@@ -499,17 +498,8 @@ impl Compiler {
         let tids = self.type_set(attr, false)?;
         let src = self.concrete_attr_tables(&tids)?;
         let h = self.fresh("p");
-        let has_tid = self.has_tid;
-        Ok(format!(
-            "(SELECT {h}v.val FROM og_data.og_adj {h}a \
-              CROSS JOIN LATERAL unnest({h}a.nbr) AS {h}u(nbr) \
-              JOIN {src} {h}v ON {h}v.id = {h}u.nbr \
-              WHERE {h}a.src = {owner_id} AND {h}a.dir = 'o'::\"char\" \
-              AND {h}a.etype = {has_tid} \
-              AND {} = ANY({}) LIMIT 1)",
-            Self::type_of_id(&format!("{h}u.nbr")),
-            Self::int_array(&tids)
-        ))
+        let owned = self.owned(&owner_id, &tids, src, &h);
+        Ok(format!("(SELECT {h}v.val FROM {} WHERE {} LIMIT 1)", owned.from, Self::and(owned.conds)))
     }
 
     /// `[$book.genre]` — every value of a multi-valued attribute.
@@ -518,17 +508,22 @@ impl Compiler {
         let tids = self.type_set(attr, false)?;
         let src = self.concrete_attr_tables(&tids)?;
         let h = self.fresh("p");
-        let has_tid = self.has_tid;
+        let owned = self.owned(&owner_id, &tids, src, &h);
         Ok(format!(
-            "COALESCE((SELECT jsonb_agg(to_jsonb({h}v.val)) FROM og_data.og_adj {h}a \
-              CROSS JOIN LATERAL unnest({h}a.nbr) AS {h}u(nbr) \
-              JOIN {src} {h}v ON {h}v.id = {h}u.nbr \
-              WHERE {h}a.src = {owner_id} AND {h}a.dir = 'o'::\"char\" \
-              AND {h}a.etype = {has_tid} \
-              AND {} = ANY({})), '[]'::jsonb)",
-            Self::type_of_id(&format!("{h}u.nbr")),
-            Self::int_array(&tids)
+            "COALESCE((SELECT jsonb_agg(to_jsonb({h}v.val)) FROM {} WHERE {}), '[]'::jsonb)",
+            owned.from,
+            Self::and(owned.conds)
         ))
+    }
+
+    /// The `$has` ownerships of `owner_id` among `attr_tids`, joined to their
+    /// values `src` aliased `<h>v` ([`Layout::ownership_join`]).
+    fn owned(&self, owner_id: &str, attr_tids: &[i32], src: String, h: &str) -> layout::OwnershipJoin {
+        self.lay.ownership_join(&SqlExpr::new(owner_id), self.has_tid, attr_tids, &src.into(), h)
+    }
+
+    fn and(conds: Vec<SqlExpr>) -> String {
+        conds.into_iter().map(SqlExpr::into_string).collect::<Vec<_>>().join(" AND ")
     }
 
     fn cmp_sql(lhs: &str, op: CmpOp, rhs: &str) -> String {

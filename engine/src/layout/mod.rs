@@ -163,6 +163,14 @@ pub struct PropRead {
     pub sql_type: Option<String>,
 }
 
+/// An attribute-ownership join ([`Layout::ownership_join`]): the text to put
+/// after `FROM`, and the conditions, in order, that make it the join meant.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct OwnershipJoin {
+    pub from: SqlFrag,
+    pub conds: Vec<SqlExpr>,
+}
+
 /// Mints aliases. The compiler implements this with its own counter, so that
 /// SQL moved behind the seam numbers its aliases exactly as it did before.
 pub trait Aliases {
@@ -223,6 +231,53 @@ pub trait Layout {
     ///
     /// v1: `og_data.og_role_player` (TypeQL role patterns; ADR-016).
     fn role_players(&self) -> SqlFrag;
+
+    // ------------------------------------------------------------------ TypeQL attributes (K4)
+    //
+    // TypeQL keeps an attribute as an instance of its own, identified by type and
+    // value (spec 010 FR-016), owned through the internal `$has` relationship type
+    // (`typeql::schema::HAS_TYPE`). Which attribute types a pattern means — subtypes,
+    // abstract ones — is the compiler's; these say where the instances and the
+    // ownerships are.
+
+    /// The instances of attribute type `t` itself (not its subtypes) as a
+    /// `SELECT` of rows `(id, val)`, for the caller to glue with `UNION ALL`;
+    /// `None` when `t` keeps no instances (abstract).
+    ///
+    /// v1 (`typeql/compile.rs` `concrete_attr_tables`): `SELECT id, val FROM
+    /// <storage_table>` — the table `og_catalog.type.storage_table` names,
+    /// `og_data.a_<t>`; one catalog lookup (SPI).
+    fn attr_values(&self, t: TypeId) -> Option<SqlFrag>;
+
+    /// The attributes the element whose id is `owner` owns, among the attribute
+    /// types `attr_types` (subtypes already expanded by the caller), joined to
+    /// `values` — rows `(id, val)`, from [`Layout::attr_values`] — aliased
+    /// `<h>v`. The caller puts [`OwnershipJoin::from`] after `FROM`, the
+    /// conditions in its `WHERE` (joined with ` AND `, its own conditions on
+    /// `<h>v` after them) and selects from `<h>v`. `h` is a fresh alias prefix:
+    /// the layout's own scans are `<h>` followed by a letter other than `v`.
+    ///
+    /// v1 (`pat_has`, `attr_scalar`, `attr_list`): the `$has` adjacency
+    /// segments — from `og_data.og_adj <h>a CROSS JOIN LATERAL unnest(<h>a.nbr)
+    /// AS <h>u(nbr) JOIN <values> <h>v ON <h>v.id = <h>u.nbr`, conditions
+    /// `<h>a.src = <owner>`, `<h>a.dir = 'o'::"char"`, `<h>a.etype = <has_type>`,
+    /// `<label_of_inline(<h>u.nbr)> = ANY(ARRAY[<attr_types>]::int4[])`.
+    fn ownership_join(
+        &self,
+        owner: &SqlExpr,
+        has_type: TypeId,
+        attr_types: &[TypeId],
+        values: &SqlFrag,
+        h: &str,
+    ) -> OwnershipJoin;
+
+    /// The type id of the element whose id is `id`, as an expression the
+    /// planner can see through (no function call) — the same value as
+    /// [`Layout::label_of`]; TypeQL's type filters use it.
+    ///
+    /// v1 (`typeql/compile.rs` `type_of_id`): `(((<id>) >> 36) & 262143)::int4`
+    /// (`id::TYPE_SHIFT`, `id::TYPE_MASK`).
+    fn label_of_inline(&self, id: &SqlExpr) -> SqlExpr;
 
     // ------------------------------------------------------------------ hops
 
