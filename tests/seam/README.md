@@ -18,7 +18,7 @@ scripts/mold.sh    한 명령: check | capture | compare | bless
 
 ## 쓰는 법
 
-필요한 것: PostgreSQL **16** 의 `pg_config`(견본이 16 으로 떠졌다. 17 로 떠도 같은지는 아래 「한계」), cargo-pgrx
+필요한 것: PostgreSQL **16** 의 `pg_config`(견본이 16 으로 떠졌다. 17 은 아래 「한계」), cargo-pgrx
 0.19.2(엔진을 빌드할 때), C 컴파일러(추적기, PGXS), psycopg2 와 neo4j 드라이버가 있는 Python
 (`tests/compat/run.py` 를 모듈로 불러 쓴다). Docker 는 쓰지 않는다.
 
@@ -124,7 +124,9 @@ id·타입 id·OID 는 지우지 않는다. 빈 클러스터에서 같은 순서
 
 ## 한계
 
-- 견본은 PostgreSQL 16 으로 떴다. 관문은 16 으로 돈다(17 로 떠도 같은지는 K1 보고서에 적었다).
+- 견본은 PostgreSQL 16 으로 떴다. 관문은 16 으로 돈다. 17 로 뜨면 sql 층은 2,951 사례가 모두 같고, trace 층은
+  28 사례가 다르다(2026-11-16, PostgreSQL 17.12): 행마다 불리는 SQL 함수(`og_node_json`, `og_type_name` …) 안의
+  문장이 나오는 순서가 실행 계획을 따라 달라진다. 17 에서는 `--layer sql` 로 본다.
 - Bolt 를 거치지 않는다. Python 스위트(`tests/common/bolt-*` 등)의 문장은 들어 있지 않다. Bolt 가 부르는 엔진
   함수(`og_cypher_check`·`og_cypher_columns`·`og_cypher`·`og_cypher_stats`)는 정답집 사례마다 부른다.
 - trace 층은 SQL 함수 본문(`engine/sql/*.sql`)의 문장 텍스트도 담는다. 함수 본문 **안**에 주석을 넣으면 그 함수가
