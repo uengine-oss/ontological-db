@@ -10,8 +10,8 @@
 //! (spec 002), so a `MATCH (v:Vehicle)` never pays a per-row hierarchy walk.
 
 use super::ast::*;
-use super::views;
 use crate::catalog::types;
+use crate::layout::{self, Kind, LabelSet, Layout, PathSem, SqlExpr, TimeScope};
 use std::collections::HashMap;
 
 /// The bound jsonb parameter holding user `$params`.
@@ -19,20 +19,21 @@ pub const PARAM: &str = "$1";
 
 /// Is enumerating trails to `max` hops more work than the answer is big?
 ///
-/// Reachability is not free: `og_reach` is a Rust set-returning function, so
-/// unlike `og_vlp` it does not inline into the surrounding plan and it pays SPI
-/// setup per level — measured at a few tenths of a millisecond. Below the point
+/// Reachability is not free: the reachability walk (`PathSem::Reach`) is, in
+/// v1, a Rust set-returning function, so unlike trail enumeration it does not
+/// inline into the surrounding plan and it pays SPI setup per level —
+/// measured at a few tenths of a millisecond. Below the point
 /// where trail enumeration explodes, that overhead is the whole query, and
 /// rewriting makes it slower. Above it, the same overhead is invisible next to
 /// a factor of a thousand.
 ///
 /// The crossover is where the number of walks passes the number of nodes there
 /// are to find: `Σ degreeⁱ > |V|`. Both terms come from the planner's own
-/// statistics — a catalog lookup, not a scan — so this costs nothing to ask.
-/// An unanalysed database has no statistics to answer with, and falls back to
-/// depth alone.
-fn prefer_reachability(max: u32) -> bool {
-    /// Estimated walks past which `og_reach`'s fixed cost is repaid.
+/// statistics — a catalog lookup, not a scan — so this costs nothing to ask
+/// (`Layout::size_estimate`). An unanalysed database has no statistics to
+/// answer with, and falls back to depth alone.
+fn prefer_reachability(layout: &dyn Layout, gid: i32, max: u32) -> bool {
+    /// Estimated walks past which the reachability walk's fixed cost is repaid.
     ///
     /// Fitted to measurement rather than derived, and deliberately low. The two
     /// failure modes are not symmetric: enumerating when we should not have
@@ -43,14 +44,8 @@ fn prefer_reachability(max: u32) -> bool {
     /// Degree cannot be estimated on an unanalysed table, so depth alone decides.
     const DEEP: u32 = 4;
 
-    let est = crate::spiu::two::<f32, f32>(
-        "SELECT (SELECT reltuples FROM pg_class WHERE oid = 'og_data.og_node'::regclass),
-                (SELECT reltuples FROM pg_class WHERE oid = 'og_data.og_edge'::regclass)",
-        &[],
-    );
-    let (nodes, edges) = match est {
-        Ok((Some(n), Some(e))) if n > 0.0 && e > 0.0 => (n as f64, e as f64),
-        _ => return max >= DEEP,
+    let Some((nodes, edges)) = layout.size_estimate(gid) else {
+        return max >= DEEP;
     };
     // Average out-degree over the whole graph. A per-relation-type figure would
     // be sharper, but this decision only has to be right about an order of
@@ -116,6 +111,10 @@ pub enum Bind {
 pub struct Compiler {
     pub graph: String,
     pub gid: i32,
+    /// Where the graph is stored: every physical name in the SQL comes from
+    /// here (`DESIGN.md` 5.1). The compiler decides what a pattern means; the
+    /// layout, where its rows are.
+    layout: &'static dyn Layout,
     binds: HashMap<String, Bind>,
     from: Vec<String>,
     wheres: Vec<String>,
@@ -142,7 +141,7 @@ pub struct Compiler {
     /// numbers and `WITH c MATCH (c)<-[:R]-(o)` still knows what `c` is.
     carried_tid: HashMap<String, i32>,
     scalar_types: HashMap<String, String>,
-    /// The `og_vlp` alias of the variable-length hop `join_rel` just joined —
+    /// The alias of the variable-length hop (trails) `join_rel` just joined —
     /// a path over it needs the nodes along the way, not only its ends.
     last_var_hop: Option<String>,
     /// Names carried through WITH whose value is a list (`collect(x) AS xs`),
@@ -179,6 +178,7 @@ impl Compiler {
         Compiler {
             graph: graph.to_string(),
             gid: types::graph_id(graph),
+            layout: layout::active(),
             binds: HashMap::new(),
             from: Vec::new(),
             wheres: Vec::new(),
@@ -363,7 +363,7 @@ impl Compiler {
     /// traverse the same relationship twice, which is what stops
     /// `(a)-[:ACTED_IN]->(m)<-[:ACTED_IN]-(b)` from returning `a` as their own
     /// co-actor. The rule is scoped to the clause, so the set of hops resets
-    /// here. Variable-length hops are excluded: `og_vlp` already walks trails.
+    /// here. Variable-length hops are excluded: they already walk trails.
     pub fn begin_match_clause(&mut self) {
         self.rel_ids.clear();
     }
@@ -741,6 +741,7 @@ impl Compiler {
         Ok(Compiler {
             graph: self.graph.clone(),
             gid: self.gid,
+            layout: self.layout,
             binds,
             from: vec![format!("(SELECT 1) AS {one}")],
             wheres: Vec::new(),
@@ -785,7 +786,7 @@ impl Compiler {
                 // A procedure that walks from a node wants the node's id, not
                 // its jsonb — pass the column so the walk stays a join.
                 Expr::Var(v) => match self.binds.get(v) {
-                    Some(Bind::Node { alias, .. }) => procs::Arg::NodeId(format!("{alias}.id")),
+                    Some(Bind::Node { alias, .. }) => procs::Arg::NodeId(self.layout.element_id(alias).into_string()),
                     _ => procs::Arg::Sql(self.expr(a, None)?),
                 },
                 _ => procs::Arg::Sql(self.expr(a, None)?),
@@ -1074,7 +1075,7 @@ impl Compiler {
                         if p.path_var.is_some() {
                             path_rels.push(hop);
                             path_nodes.push(match self.last_var_hop.take() {
-                                Some(w) => var_hop_nodes(&prev, &w),
+                                Some(w) => self.layout.walk_nodes(&self.layout.element_id(&prev), &w).into_string(),
                                 None => format!("jsonb_build_array({})", self.alias_json(&alias)),
                             });
                         }
@@ -1099,8 +1100,9 @@ impl Compiler {
         if let (Some(pv), Some(last)) = (&p.path_var, &prev_node) {
             let rels = if path_rels.is_empty() { "'[]'::jsonb".to_string() } else { path_rels.join(" || ") };
             let expr = format!(
-                "(CASE WHEN {last}.id IS NULL THEN NULL ELSE jsonb_build_object('_path', true, \
+                "(CASE WHEN {} IS NULL THEN NULL ELSE jsonb_build_object('_path', true, \
                  'nodes', {}, 'relationships', {rels}) END)",
+                self.layout.element_id(last),
                 path_nodes.join(" || ")
             );
             self.binds.insert(pv.clone(), Bind::Path { hops_expr: expr });
@@ -1209,7 +1211,7 @@ impl Compiler {
                 // parameter with an `_id` must not reach another graph's node.
                 self.from.push(format!("{joiner}{} {alias}{on}", self.graph_nodes()));
                 self.note_optional_join(&alias);
-                self.constrain(format!("{alias}.id = (({sql}) ->> '_id')::int8"));
+                self.constrain(format!("{} = (({sql}) ->> '_id')::int8", self.layout.element_id(&alias)));
                 self.guard_untyped_nodes();
                 self.binds.insert(v.clone(), Bind::Node { alias: alias.clone(), tid: None });
                 if !np.labels.is_empty() {
@@ -1218,7 +1220,8 @@ impl Compiler {
                         self.constrain("false".into());
                     } else if let Some(w) = want {
                         self.constrain(format!(
-                            "og_is_subtype({alias}.type_id, {w})"
+                            "og_is_subtype({}, {w})",
+                            self.layout.element_type(&alias)
                         ));
                     }
                 }
@@ -1246,7 +1249,7 @@ impl Compiler {
         let (tid, matchable) = self.resolve_label_match(&np.labels)?;
         let alias = self.fresh("n");
         let rel = match tid {
-            Some(t) => views::ensure_view(t, false),
+            Some(t) => self.node_scan(t),
             None => {
                 self.guard_untyped_nodes();
                 self.graph_nodes()
@@ -1300,7 +1303,7 @@ impl Compiler {
         };
         let (Some(t), true) = (tid, matchable) else { return Ok(None) };
         let alias = self.fresh("n");
-        let rel = views::ensure_view(t, false);
+        let rel = self.node_scan(t);
         let (joiner, on) = if self.from.is_empty() {
             ("", "")
         } else if self.optional.is_some() {
@@ -1310,7 +1313,7 @@ impl Compiler {
         };
         self.from.push(format!("{joiner}{rel} {alias}{on}"));
         self.note_optional_join(&alias);
-        self.constrain(format!("{alias}.id = (({sql}) ->> '_id')::int8"));
+        self.constrain(format!("{} = (({sql}) ->> '_id')::int8", self.layout.element_id(&alias)));
         // A virtual node is also matched on its key, which a source can be
         // sent; the derived id is computed here and cannot.
         if let Some(key) = virtual_key_property(t).filter(|k| k != "_id") {
@@ -1499,7 +1502,7 @@ impl Compiler {
             // is not the error worth reporting.
             let unmatchable = |a: &str| self.unmatchable.contains(a);
             if (s_tid.is_none() && unmatchable(s_alias)) || (d_tid.is_none() && unmatchable(d_alias)) {
-                self.constrain(never(s_alias, d_alias));
+                self.constrain(self.never(s_alias, d_alias));
                 return Ok("NULL::jsonb".into());
             }
             return Err(format!(
@@ -1515,7 +1518,7 @@ impl Compiler {
             // No join on the keys: those types need not have the columns, and
             // comparing what they do have failed (`text = integer`) where
             // Neo4j simply matches nothing.
-            self.constrain(never(s_alias, d_alias));
+            self.constrain(self.never(s_alias, d_alias));
         } else {
             let (lhs, _) = self.prop_sql(s_alias, s_tid, &v.src_prop);
             let (rhs, _) = self.prop_sql(d_alias, d_tid, &v.dst_prop);
@@ -1525,7 +1528,7 @@ impl Compiler {
             ));
         }
 
-        let rel_json = virtual_rel_json(rtid, rname, s_alias, d_alias);
+        let rel_json = self.virtual_rel_json(rtid, rname, s_alias, d_alias);
         if let Some(var) = &rel.var {
             self.binds.insert(var.clone(), Bind::Scalar { sql: rel_json.clone() });
         }
@@ -1700,7 +1703,7 @@ impl Compiler {
         // against those rows rather than run once for each of them.
         let fresh = fresh_join.filter(|i| *i < self.from.len());
         let rescan = match (fresh, optional, ft) {
-            (Some(_), true, Some(t)) => Some((self.fresh("n"), views::ensure_view(t, false))),
+            (Some(_), true, Some(t)) => Some((self.fresh("n"), self.node_scan(t))),
             _ => None,
         };
         let near_alias = rescan.as_ref().map_or(from_alias, |(a, _)| a.as_str()).to_string();
@@ -1713,15 +1716,16 @@ impl Compiler {
         let mut ids: Vec<String> = Vec::new();
         let mut parts: Vec<String> = Vec::new();
         if let Some((list, exclude)) = &stored {
+            // The segments' alias is minted here, before any the layout mints
+            // inside the hop: the numbering is the compiler's.
             let adj = self.fresh("adj");
-            let arr = format!("ARRAY[{}]::int4[]", list.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(","));
-            let type_pred = if *exclude {
-                format!(" AND {adj}.etype <> ALL({arr})")
-            } else {
-                format!(" AND {adj}.etype = ANY({arr})")
-            };
             let temporal = self.temporal_rel_types(if *exclude { None } else { Some(list) });
-            let rows = self.stored_hop_rows(near_alias, &adj, &rel.dir, &type_pred, &temporal);
+            let (lay, start, dir) = (self.layout, self.layout.element_id(near_alias), layout::Dir::from(&rel.dir));
+            let rows = if *exclude {
+                lay.expand_except(&start, list, dir, &temporal, &adj, self)
+            } else {
+                lay.expand(&start, Some(list.as_slice()), dir, &temporal, &adj, self)
+            };
             if !temporal.is_empty() && rel.var.is_some() {
                 // As for any hop without one type: rendered from the registry.
                 self.constrain(
@@ -1730,8 +1734,11 @@ impl Compiler {
             }
             let sn = self.fresh("sn");
             near.push(format!("SELECT 0, to_jsonb({sn}.nbr), {sn}.eid FROM ({rows}) {sn}"));
-            far.push(format!("(0, to_jsonb({to_alias}.id))"));
-            values.push(format!("WHEN 0 THEN og_edge_json({ka}.eid)"));
+            far.push(format!("(0, to_jsonb({}))", self.layout.element_id(to_alias)));
+            values.push(format!(
+                "WHEN 0 THEN {}",
+                self.layout.element_json_of_id(&SqlExpr::new(format!("{ka}.eid")), Kind::Rel)
+            ));
             ids.push(format!("WHEN 0 THEN {ka}.eid"));
             parts.push("stored edges".into());
         }
@@ -1748,8 +1755,8 @@ impl Compiler {
             let (nk, fk) = if *forward { (&sk, &dk) } else { (&dk, &sk) };
             keyed.push(format!("({n}, to_jsonb({nk}), NULL::int8)"));
             far.push(format!("({n}, to_jsonb({fk}))"));
-            values.push(format!("WHEN {n} THEN {}", virtual_rel_json(*rtid, name, s, d)));
-            ids.push(format!("WHEN {n} THEN {}", virtual_rel_id(*rtid, s, d)));
+            values.push(format!("WHEN {n} THEN {}", self.virtual_rel_json(*rtid, name, s, d)));
+            ids.push(format!("WHEN {n} THEN {}", self.virtual_rel_id(*rtid, s, d)));
             parts.push(format!("'{name}' ({sk} = {dk})"));
         }
         near.push(format!("VALUES {}", keyed.join(", ")));
@@ -1767,7 +1774,11 @@ impl Compiler {
                 for a in [&again, &ka, &kb] {
                     in_scope.push((a.clone(), i));
                 }
-                self.constrain(format!("{again}.id = {from_alias}.id"));
+                self.constrain(format!(
+                    "{} = {}",
+                    self.layout.element_id(&again),
+                    self.layout.element_id(from_alias)
+                ));
             }
             // The far end keeps its keys; the near end's follow the near end,
             // and `compile_pattern` moves the node's join after them, as after
@@ -1818,6 +1829,36 @@ impl Compiler {
         Ok(Some(format!("jsonb_build_array({value})")))
     }
 
+    /// A virtual relationship between the nodes aliased `s` (its source) and
+    /// `d`, as jsonb. It is no row anywhere: its identifier is derived from its
+    /// type and its two ends, so the same pair always names the same relationship.
+    fn virtual_rel_json(&self, rtid: i32, rname: &str, s: &str, d: &str) -> String {
+        format!(
+            "jsonb_build_object('_id', {}, '_type', {}, '_src', {}, '_dst', {})",
+            self.virtual_rel_id(rtid, s, d),
+            sql_str(rname),
+            self.layout.element_id(s),
+            self.layout.element_id(d),
+        )
+    }
+
+    /// The identifier of that relationship (`Layout::synthetic_rel_id`).
+    fn virtual_rel_id(&self, rtid: i32, s: &str, d: &str) -> String {
+        self.layout
+            .synthetic_rel_id(rtid, &self.layout.element_id(s), &self.layout.element_id(d))
+            .into_string()
+    }
+
+    /// A predicate that is always false but names both ends of a hop, so the
+    /// OPTIONAL MATCH machinery places it on the hop's join (see `close_optional`).
+    fn never(&self, a: &str, b: &str) -> String {
+        format!(
+            "({} IS NULL AND {} IS NULL AND false)",
+            self.layout.element_id(a),
+            self.layout.element_id(b)
+        )
+    }
+
     fn push_prop_filters(
         &mut self,
         alias: &str,
@@ -1842,28 +1883,34 @@ impl Compiler {
         Ok(())
     }
 
-    /// The node registry, narrowed to this query's graph.
+    /// Every node of this query's graph, as a relation to alias.
     ///
-    /// `og_node` is shared by every graph in the database — a node's graph is
-    /// its type's — so an unlabelled `MATCH (n)` or `(a)-[r]->(b)` read the
-    /// nodes of every graph (project), and `MATCH (n) DETACH DELETE n` emptied
-    /// all of them. A labelled match was always confined by its label. The
-    /// graph's types are looked up when the query runs, not when it is
-    /// compiled: a compiled plan is cached, and a type another session creates
-    /// meanwhile must not be missed.
+    /// The node registry is shared by every graph in the database — a node's
+    /// graph is its type's — so an unlabelled `MATCH (n)` or `(a)-[r]->(b)`
+    /// read the nodes of every graph (project), and `MATCH (n) DETACH DELETE n`
+    /// emptied all of them. A labelled match was always confined by its label.
+    /// The layout narrows the scan to the graph when the query runs, not when
+    /// it is compiled: a compiled plan is cached, and a type another session
+    /// creates meanwhile must not be missed.
     fn graph_nodes(&self) -> String {
-        format!(
-            "(SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN \
-             (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = {}))",
-            self.gid
-        )
+        self.layout.node_scan(self.gid, &LabelSet::Any, TimeScope::Session).into_string()
     }
 
-    /// An unlabelled node pattern scans the node registry, which holds only
+    /// The nodes of type `t` and of every type under it, as a relation to alias.
+    fn node_scan(&self, t: i32) -> String {
+        self.layout.node_scan(self.gid, &LabelSet::Under(t), TimeScope::Session).into_string()
+    }
+
+    /// The relationships of type `t` and of every type under it.
+    fn edge_scan(&self, t: i32) -> String {
+        self.layout.edge_scan(self.gid, &LabelSet::Under(t), TimeScope::Session).into_string()
+    }
+
+    /// An unlabelled node pattern scans what holds every node, which knows only
     /// what exists now. In a graph with temporal node types that cannot answer
     /// a point-in-time query, so it refuses to (spec 013 FR-010).
     fn guard_untyped_nodes(&mut self) {
-        if !crate::temporal::temporal_tables(self.gid, 'n').is_empty() {
+        if !self.layout.temporal_types(self.gid, Kind::Node, None).is_empty() {
             self.constrain("og_require_current('an unlabelled node pattern')".into());
         }
     }
@@ -1890,18 +1937,8 @@ impl Compiler {
             }
         }
         let etypes = if rel.types.is_empty() { None } else { Some(self.rel_type_ids(&rel.types)) };
-        let etype_pred = match &etypes {
-            Some(ids) => format!(
-                "ARRAY[{}]::int4[]",
-                ids.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(",")
-            ),
-            None => "NULL::int4[]".to_string(),
-        };
-        let dir_lit = match rel.dir {
-            Dir::Out => "'o'",
-            Dir::In => "'i'",
-            Dir::Both => "'b'",
-        };
+        let dir = layout::Dir::from(&rel.dir);
+        let start = self.layout.element_id(from_alias);
 
         let temporal_rels = self.temporal_rel_types(etypes.as_deref());
 
@@ -1915,41 +1952,43 @@ impl Compiler {
             let w = self.fresh("vl");
             let joiner = if optional { "LEFT JOIN LATERAL" } else { "CROSS JOIN LATERAL" };
             let on = if optional { " ON true" } else { "" };
-            // `og_vlp` enumerates trails, so it produces degree^k rows and can
-            // bind a path. When nobody can observe the multiplicity — no path
-            // or relationship variable, and a projection that collapses
+            // Trail enumeration (`PathSem::Trails`) produces degree^k rows and
+            // can bind a path. When nobody can observe the multiplicity — no
+            // path or relationship variable, and a projection that collapses
             // duplicates — the same answer comes out of a BFS that visits each
-            // node once, and the cost stops being exponential in the depth.
-            // `min > 1` is where the two functions stop meaning the same thing.
-            // `og_vlp` enumerates trails, so it answers "is there a walk whose
-            // length falls in [min, max]". `og_reach` visits each node once and
-            // emits it at its *shortest* distance, so a node one hop away that
-            // is also reachable in three is marked visited at depth 1, never
-            // emitted, and never reconsidered — the rewrite silently drops it.
-            // The regression suite only ever writes `*1..k`, which is why this
-            // has never been observed. Reachability is an optimisation, and an
-            // optimisation that changes the answer is not one.
-            let f = if rel.var.is_none()
+            // node once (`PathSem::Reach`), and the cost stops being
+            // exponential in the depth.
+            // `min > 1` is where the two stop meaning the same thing. Trails
+            // answer "is there a walk whose length falls in [min, max]". The
+            // BFS visits each node once and emits it at its *shortest*
+            // distance, so a node one hop away that is also reachable in three
+            // is marked visited at depth 1, never emitted, and never
+            // reconsidered — the rewrite silently drops it. The regression
+            // suite only ever writes `*1..k`, which is why this has never been
+            // observed. Reachability is an optimisation, and an optimisation
+            // that changes the answer is not one.
+            let sem = if rel.var.is_none()
                 && min <= 1
                 && self.reachability_only
-                && prefer_reachability(max)
+                && prefer_reachability(self.layout, self.gid, max)
             {
+                // The note names v1's function: it is what the agent surface
+                // and EXPLAIN have always said (K2 keeps v1's output).
                 self.notes.push(format!(
                     "variable-length hop compiled as reachability (og_reach): \
                      no path is observable, so trails are not enumerated"
                 ));
-                "og_reach"
+                PathSem::Reach
             } else {
-                "og_vlp"
+                PathSem::Trails
             };
-            self.from.push(format!(
-                "{joiner} {f}({from_alias}.id, {etype_pred}, {dir_lit}::\"char\", {min}, {max}) {w}{on}"
-            ));
+            let walk = self.layout.reach(&start, etypes.as_deref(), dir, min, max, sem);
+            self.from.push(format!("{joiner} {walk} {w}{on}"));
             self.note_optional_join(&w);
-            self.constrain(format!("{to_alias}.id = {w}.node"));
+            self.constrain(format!("{} = {w}.node", self.layout.element_id(to_alias)));
             // A relationship variable on a variable-length hop is the list of
             // relationships walked, as in Cypher (it used to be their ids).
-            let rels = var_hop_rels(&w);
+            let rels = self.layout.walk_rels(&w).into_string();
             if let Some(v) = &rel.var {
                 self.forget_carried(v);
                 self.binds.insert(v.clone(), Bind::Scalar { sql: rels.clone() });
@@ -1959,15 +1998,14 @@ impl Compiler {
             return Ok(rels);
         }
 
+        // The hop's own aliases first, then any the layout mints inside it:
+        // the numbering is the compiler's.
         let a = self.fresh("adj");
         let u = self.fresh("u");
         let joiner = if optional { "LEFT JOIN LATERAL" } else { "CROSS JOIN LATERAL" };
         let on = if optional { " ON true" } else { "" };
-        let type_pred = match &etypes {
-            Some(_) => format!(" AND {a}.etype = ANY({etype_pred})"),
-            None => String::new(),
-        };
-        let rows = self.stored_hop_rows(from_alias, &a, &rel.dir, &type_pred, &temporal_rels);
+        let lay = self.layout;
+        let rows = lay.expand(&start, etypes.as_deref(), dir, &temporal_rels, &a, self);
         self.from.push(format!("{joiner} ({rows}) {u}{on}"));
         // A relationship variable without one known type is rendered from
         // the edge registry, which has no history.
@@ -1977,7 +2015,7 @@ impl Compiler {
             );
         }
         self.note_optional_join(&u);
-        self.constrain(format!("{to_alias}.id = {u}.nbr"));
+        self.constrain(format!("{} = {u}.nbr", self.layout.element_id(to_alias)));
 
         if !optional {
             for other in std::mem::take(&mut self.rel_ids) {
@@ -1995,10 +2033,10 @@ impl Compiler {
             };
             if !rel.props.is_empty() || rtid.is_some() {
                 if let Some(t) = rtid {
-                    let ev = views::ensure_view(t, true);
+                    let ev = self.edge_scan(t);
                     let ea = self.fresh("e");
                     let ejoin = if optional { "LEFT JOIN" } else { "JOIN" };
-                    self.from.push(format!("{ejoin} {ev} {ea} ON {ea}.id = {u}.eid"));
+                    self.from.push(format!("{ejoin} {ev} {ea} ON {} = {u}.eid", self.layout.element_id(&ea)));
                     self.note_optional_join(&ea);
                     self.binds.insert(
                         v.clone(),
@@ -2017,15 +2055,18 @@ impl Compiler {
                 None
             };
             if let Some(t) = rtid {
-                let ev = views::ensure_view(t, true);
+                let ev = self.edge_scan(t);
                 let ea = self.fresh("e");
                 let ejoin = if optional { "LEFT JOIN" } else { "JOIN" };
-                    self.from.push(format!("{ejoin} {ev} {ea} ON {ea}.id = {u}.eid"));
-                    self.note_optional_join(&ea);
+                self.from.push(format!("{ejoin} {ev} {ea} ON {} = {u}.eid", self.layout.element_id(&ea)));
+                self.note_optional_join(&ea);
                 self.push_rel_prop_filters(&ea, Some(t), &rel.props)?;
             }
         }
-        Ok(format!("jsonb_build_array(og_edge_json({u}.eid))"))
+        Ok(format!(
+            "jsonb_build_array({})",
+            self.layout.element_json_of_id(&SqlExpr::new(format!("{u}.eid")), Kind::Rel)
+        ))
     }
 
     /// The relation types a list of names stands for, subtypes included.
@@ -2047,66 +2088,11 @@ impl Compiler {
     }
 
     /// Temporal relation types a hop over `etypes` (any type, for `None`) may
-    /// cross. Their adjacency segments know only the present, so a hop reads
-    /// them from the edge tables — current and history, filtered to the
-    /// session's instant (spec 013).
+    /// cross. What a hop normally reads may know only the present, so the
+    /// layout reads these at the session's instant (spec 013), and a hop that
+    /// cannot is refused one.
     fn temporal_rel_types(&self, etypes: Option<&[i32]>) -> Vec<i32> {
-        match etypes {
-            Some(ids) => ids
-                .iter()
-                .copied()
-                .filter(|t| {
-                    types::storage_table(*t).is_some_and(|s| s.starts_with("og_data.e_"))
-                        && crate::temporal::is_temporal(*t)
-                })
-                .collect(),
-            None => crate::temporal::temporal_tables(self.gid, 'e'),
-        }
-    }
-
-    /// The stored edges of one hop out of `from_alias`, as rows `(nbr, eid)`:
-    /// the adjacency segments, narrowed by `type_pred` (which names the
-    /// segments' alias `a`), and the edge table of each temporal relation type
-    /// in `temporal_rels`, read in place of its segments.
-    fn stored_hop_rows(
-        &mut self,
-        from_alias: &str,
-        a: &str,
-        dir: &Dir,
-        type_pred: &str,
-        temporal_rels: &[i32],
-    ) -> String {
-        let dir_pred = match dir {
-            Dir::Both => format!("{a}.dir IN ('o','i')"),
-            Dir::Out => format!("{a}.dir = 'o'::\"char\""),
-            Dir::In => format!("{a}.dir = 'i'::\"char\""),
-        };
-        let segments = format!(
-            "SELECT u.nbr, u.eid FROM og_data.og_adj {a}, \
-             LATERAL unnest({a}.nbr, {a}.eid) AS u(nbr, eid) \
-             WHERE {a}.src = {from_alias}.id AND {dir_pred}{type_pred}"
-        );
-        if temporal_rels.is_empty() {
-            return segments;
-        }
-        let tlist = temporal_rels.iter().map(|t| t.to_string()).collect::<Vec<_>>().join(",");
-        let mut parts = vec![format!("{segments} AND {a}.etype <> ALL(ARRAY[{tlist}]::int4[])")];
-        for t in temporal_rels {
-            let Some(erel) = crate::temporal::edge_relation(*t) else { continue };
-            let te = self.fresh("te");
-            if matches!(dir, Dir::Out | Dir::Both) {
-                parts.push(format!(
-                    "SELECT {te}.dst, {te}.id FROM {erel} {te} WHERE {te}.src = {from_alias}.id"
-                ));
-            }
-            if matches!(dir, Dir::In | Dir::Both) {
-                let te2 = self.fresh("te");
-                parts.push(format!(
-                    "SELECT {te2}.src, {te2}.id FROM {erel} {te2} WHERE {te2}.dst = {from_alias}.id"
-                ));
-            }
-        }
-        parts.join(" UNION ALL ")
+        self.layout.temporal_types(self.gid, Kind::Rel, etypes)
     }
 
     fn push_rel_prop_filters(
@@ -2135,24 +2121,11 @@ impl Compiler {
     /// `{id: 'singleton'}` came back with a number, and `MATCH (n:L {id: $id})`
     /// failed with "invalid input syntax for type bigint". Virtual types already
     /// read it as their source column; now every type does.
+    ///
+    /// Where the value is and how it is read is the layout's (`Layout::prop`).
     pub fn prop_sql(&self, alias: &str, tid: Option<i32>, prop: &str) -> (String, Option<String>) {
-        if prop == "_id" {
-            return (format!("{alias}.id"), Some("int8".into()));
-        }
-        if let Some(t) = tid {
-            // A column of the view, or — over a wide view — a typed read of
-            // the packed value (views::Layout).
-            if let Some((sql, dt)) = views::view_layout(t).read(alias, prop) {
-                return (sql, Some(dt));
-            }
-        }
-        match tid {
-            // Typed view: the property is not declared, so it can only live in
-            // the extension payload.
-            Some(_) => (format!("({alias}.__ext->>{})", sql_str(prop)), None),
-            // Untyped variable: resolve through the catalog at run time.
-            None => (format!("(og_node_json({alias}.id)->>{})", sql_str(prop)), None),
-        }
+        let read = self.layout.prop(alias, tid, prop);
+        (read.sql.into_string(), read.sql_type)
     }
 
     /// SQL for a property access that must keep its JSON type.
@@ -2163,16 +2136,7 @@ impl Compiler {
     /// written. Declared properties are real columns and already carry their
     /// type, so they only need wrapping.
     pub fn prop_sql_json(&self, alias: &str, tid: Option<i32>, prop: &str) -> String {
-        if prop == "_id" {
-            return format!("to_jsonb({alias}.id)");
-        }
-        if let Some(t) = tid {
-            if let Some(sql) = views::view_layout(t).read_json(alias, prop) {
-                return sql;
-            }
-            return format!("({alias}.__ext -> {})", sql_str(prop));
-        }
-        format!("(og_node_json({alias}.id) -> {})", sql_str(prop))
+        self.layout.prop_json(alias, tid, prop).into_string()
     }
 
     /// An expression as it should appear in a result.
@@ -2228,8 +2192,8 @@ impl Compiler {
     /// only the route to the number differs.
     fn element_id_sql(&self, v: &str, fname: &str) -> CResult<String> {
         match self.binds.get(v) {
-            Some(Bind::Node { alias, .. }) => Ok(format!("{alias}.id")),
-            Some(Bind::Rel { alias: Some(al), .. }) => Ok(format!("{al}.id")),
+            Some(Bind::Node { alias, .. }) => Ok(self.layout.element_id(alias).into_string()),
+            Some(Bind::Rel { alias: Some(al), .. }) => Ok(self.layout.element_id(al).into_string()),
             Some(Bind::Rel { id_expr, .. }) => Ok(id_expr.clone()),
             Some(Bind::Scalar { sql }) => Ok(format!("(({sql}) ->> '_id')::int8")),
             _ => Err(format!("{fname}() cannot be applied to '{v}'")),
@@ -2239,11 +2203,11 @@ impl Compiler {
     /// The type id of a bound element, by the same reasoning as `element_id_sql`.
     fn type_id_sql(&self, v: &str, fname: &str) -> CResult<String> {
         match self.binds.get(v) {
-            Some(Bind::Node { alias, .. }) => Ok(format!("{alias}.type_id")),
-            Some(Bind::Rel { alias: Some(al), .. }) => Ok(format!("{al}.type_id")),
-            Some(Bind::Rel { id_expr, .. }) => Ok(format!("og_id_type({id_expr})")),
+            Some(Bind::Node { alias, .. }) => Ok(self.layout.element_type(alias).into_string()),
+            Some(Bind::Rel { alias: Some(al), .. }) => Ok(self.layout.element_type(al).into_string()),
+            Some(Bind::Rel { id_expr, .. }) => Ok(self.layout.label_of(&SqlExpr::new(id_expr.as_str())).into_string()),
             Some(Bind::Scalar { sql }) => {
-                Ok(format!("og_id_type((({sql}) ->> '_id')::int8)"))
+                Ok(self.layout.label_of(&SqlExpr::new(format!("(({sql}) ->> '_id')::int8"))).into_string())
             }
             _ => Err(format!("{fname}() cannot be applied to '{v}'")),
         }
@@ -2268,7 +2232,7 @@ impl Compiler {
             Some(Bind::Rel { alias, tid, id_expr, value }) => Ok(match (alias, tid, value) {
                 (_, _, Some(v)) => v,
                 (Some(a), Some(t), None) => self.rel_json(&a, t),
-                _ => format!("og_edge_json({id_expr})"),
+                _ => self.layout.element_json_of_id(&SqlExpr::new(id_expr), Kind::Rel).into_string(),
             }),
             Some(Bind::Path { hops_expr }) => Ok(hops_expr),
             Some(Bind::Scalar { sql }) => Ok(sql),
@@ -2276,29 +2240,10 @@ impl Compiler {
         }
     }
 
+    /// The node aliased `alias` (scanned as type `tid`) as jsonb — null where
+    /// an OPTIONAL MATCH found none (`Layout::element_json`).
     fn node_json(&self, alias: &str, tid: Option<i32>) -> String {
-        match tid {
-            Some(t) => {
-                // Packed properties of a wide view are already in `__ext`.
-                let props = views::view_layout(t).columns;
-                let mut pairs = vec![
-                    format!("'_id', {alias}.id"),
-                    format!("'_type', og_type_name({alias}.type_id)"),
-                ];
-                for (name, (col, _)) in &props {
-                    pairs.push(format!("{}, to_jsonb({alias}.{col})", sql_str(name)));
-                }
-                // An OPTIONAL MATCH that found nothing leaves the alias all
-                // NULL, and the node is then null — not an empty object, which
-                // `count(n)` would count and a client would take for a node.
-                format!(
-                    "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE \
-                     jsonb_strip_nulls({}) || COALESCE({alias}.__ext,'{{}}'::jsonb) END)",
-                    json_object(&pairs)
-                )
-            }
-            None => format!("og_node_json({alias}.id)"),
-        }
+        self.layout.element_json(alias, tid, Kind::Node).into_string()
     }
 
     /// The node a pattern alias stands for, as jsonb.
@@ -2308,21 +2253,7 @@ impl Compiler {
     }
 
     fn rel_json(&self, alias: &str, tid: i32) -> String {
-        let props = views::view_layout(tid).columns;
-        let mut pairs = vec![
-            format!("'_id', {alias}.id"),
-            format!("'_type', og_type_name({alias}.type_id)"),
-            format!("'_src', {alias}.src"),
-            format!("'_dst', {alias}.dst"),
-        ];
-        for (name, (col, _)) in &props {
-            pairs.push(format!("{}, to_jsonb({alias}.{col})", sql_str(name)));
-        }
-        format!(
-            "(CASE WHEN {alias}.id IS NULL THEN NULL ELSE \
-             jsonb_strip_nulls({}) || COALESCE({alias}.__ext,'{{}}'::jsonb) END)",
-            json_object(&pairs)
-        )
+        self.layout.element_json(alias, Some(tid), Kind::Rel).into_string()
     }
 
     /// An element of a list or map literal, wrapped for `to_jsonb()`.
@@ -2414,7 +2345,8 @@ impl Compiler {
                     }
                     Some(Bind::Rel { value: Some(j), .. }) => cast(format!("({j} ->> {})", sql_str(p)), None),
                     Some(Bind::Rel { id_expr, .. }) => {
-                        cast(format!("(og_edge_json({id_expr}) ->> {})", sql_str(p)), None)
+                        let rel = self.layout.element_json_of_id(&SqlExpr::new(id_expr), Kind::Rel);
+                        cast(format!("({rel} ->> {})", sql_str(p)), None)
                     }
                     Some(Bind::Scalar { sql }) => cast(format!("({sql} ->> {})", sql_str(p)), None),
                     Some(Bind::Path { .. }) => {
@@ -2781,6 +2713,7 @@ impl Compiler {
         let mut child = Compiler {
             graph: self.graph.clone(),
             gid: self.gid,
+            layout: self.layout,
             binds: self.binds.clone(),
             from: Vec::new(),
             wheres: Vec::new(),
@@ -2845,7 +2778,7 @@ impl Compiler {
     /// The declared type of `p` on the node a carried name stands for.
     fn carried_prop_type(&self, v: &str, p: &str) -> Option<String> {
         let t = *self.carried_tid.get(v)?;
-        views::view_properties(t).get(p).map(|(_, dt)| dt.clone())
+        self.layout.prop_type(t, p)
     }
 
     fn binary(&mut self, op: BinOp, l: &Expr, r: &Expr) -> CResult<String> {
@@ -3559,7 +3492,7 @@ impl Compiler {
                 // each node's JSON only to count it.
                 if let Some(Expr::Var(v)) = args.first() {
                     if let Some(Bind::Node { alias, .. }) = self.binds.get(v) {
-                        return Ok(format!("count({d}{alias}.id)"));
+                        return Ok(format!("count({d}{})", self.layout.element_id(alias)));
                     }
                 }
                 return Ok(if matches!(args.first(), Some(Expr::Star)) || args.is_empty() {
@@ -3802,7 +3735,9 @@ impl Compiler {
             "startnode" | "endnode" => {
                 let end = if lname == "startnode" { "_src" } else { "_dst" };
                 let r = self.jsonb_of(&args[0])?;
-                format!("og_node_json((({r}) ->> '{end}')::int8)")
+                self.layout
+                    .element_json_of_id(&SqlExpr::new(format!("(({r}) ->> '{end}')::int8")), Kind::Node)
+                    .into_string()
             }
             // Neo4j's randomUUID(): a version-4 UUID as a string.
             "randomuuid" => "gen_random_uuid()::text".into(),
@@ -3929,6 +3864,14 @@ impl Compiler {
                 ))
             }
         })
+    }
+}
+
+/// The compiler's alias counter, lent to the layout for the aliases it needs
+/// inside what it returns (`Layout::expand`), so they are numbered as before.
+impl layout::Aliases for Compiler {
+    fn fresh(&mut self, prefix: &str) -> String {
+        Compiler::fresh(self, prefix)
     }
 }
 
@@ -4073,31 +4016,6 @@ pub fn subquery_imports<'q>(scope: Option<&[String]>, branch: &'q Query, outer: 
     Ok((names, if shaping { &branch.clauses } else { &branch.clauses[1..] }))
 }
 
-/// The relationships a variable-length hop walked (`og_vlp`'s `path`, edge ids
-/// in order), as a jsonb list of relationships; null where an OPTIONAL MATCH
-/// found no walk.
-fn var_hop_rels(w: &str) -> String {
-    format!(
-        "(CASE WHEN {w}.path IS NULL THEN NULL ELSE (SELECT coalesce(jsonb_agg(og_edge_json(vx.e) \
-         ORDER BY vx.o), '[]'::jsonb) FROM unnest({w}.path) WITH ORDINALITY AS vx(e, o)) END)"
-    )
-}
-
-/// The nodes a variable-length hop from `start` reached, in order and ending at
-/// its far end (the start itself not included): each edge's other end, walked
-/// from the start — the only reading that is right for undirected hops too.
-fn var_hop_nodes(start: &str, w: &str) -> String {
-    format!(
-        "(CASE WHEN {w}.path IS NULL THEN NULL ELSE (WITH RECURSIVE pn(i, node) AS (\
-         SELECT 0, {start}.id UNION ALL \
-         SELECT pn.i + 1, CASE WHEN pe.src = pn.node THEN pe.dst ELSE pe.src END \
-           FROM pn JOIN og_data.og_edge pe ON pe.id = ({w}.path)[pn.i + 1] \
-          WHERE pn.i < cardinality({w}.path)) \
-         SELECT coalesce(jsonb_agg(og_node_json(pn.node) ORDER BY pn.i), '[]'::jsonb) \
-           FROM pn WHERE pn.i > 0) END)"
-    )
-}
-
 /// The key property of a virtual type: the property mapped from its key column.
 fn virtual_key_property(tid: i32) -> Option<String> {
     crate::fabric::virtual_source(tid)?;
@@ -4164,30 +4082,6 @@ fn split_join(entry: &str) -> (&'static str, &str, &'static str) {
     (joiner, node, on)
 }
 
-/// A virtual relationship between the nodes `s` (its source) and `d`, as
-/// jsonb. It is no row anywhere: its identifier is derived from its type and
-/// its two ends, so the same pair always names the same relationship.
-fn virtual_rel_json(rtid: i32, rname: &str, s: &str, d: &str) -> String {
-    format!(
-        "jsonb_build_object('_id', {}, '_type', {}, '_src', {s}.id, '_dst', {d}.id)",
-        virtual_rel_id(rtid, s, d),
-        sql_str(rname),
-    )
-}
-
-/// The identifier of that relationship.
-fn virtual_rel_id(rtid: i32, s: &str, d: &str) -> String {
-    format!(
-        "og_make_id(0, {rtid}, hashtextextended({s}.id::text || ':' || {d}.id::text, 0) & {mask})",
-        mask = (1_i64 << 36) - 1,
-    )
-}
-
-/// A predicate that is always false but names both ends of a hop, so the
-/// OPTIONAL MATCH machinery places it on the hop's join (see `close_optional`).
-fn never(a: &str, b: &str) -> String {
-    format!("({a}.id IS NULL AND {b}.id IS NULL AND false)")
-}
 
 /// A string toInteger()/toFloat() reads as a number: optional sign, digits with
 /// an optional fraction, optional exponent, surrounding blanks.

@@ -258,6 +258,26 @@ pub trait Layout {
         names: &mut dyn Aliases,
     ) -> SqlFrag;
 
+    /// [`Layout::expand`] over every relationship type except `except` (K2):
+    /// the stored half of a hop without one type where the virtual
+    /// relationships (ADR-029) are joined separately — `except` is their types.
+    /// `temporal` is as for `expand` (all of the graph's temporal
+    /// relationship types, the caller having asked for `None`).
+    ///
+    /// v1 (`join_rel_union`): `expand`'s text with ` AND <inner>.etype <>
+    /// ALL(ARRAY[<except>]::int4[])` where `expand` puts its `= ANY(…)`. The
+    /// adjacency segments hold no virtual relationship, so the exclusion
+    /// changes no answer; it is kept so the statement stays what it was.
+    fn expand_except(
+        &self,
+        start: &SqlExpr,
+        except: &[TypeId],
+        dir: Dir,
+        temporal: &[TypeId],
+        inner: &str,
+        names: &mut dyn Aliases,
+    ) -> SqlFrag;
+
     /// A variable-length hop from the node whose id is `start`, as a
     /// set-returning call to join `LATERAL`: rows `(node, path)` for
     /// [`PathSem::Trails`] (`path` the relationship ids in order), `(node,
@@ -323,6 +343,17 @@ pub trait Layout {
     /// keys `(<alias>.__ext -> '<key>')` or `(og_node_json(<alias>.id) -> '<key>')`.
     fn prop_json(&self, alias: &str, scanned: Option<TypeId>, key: &str) -> SqlExpr;
 
+    /// The SQL type property `key` reads as on the rows of type `t` (its
+    /// subtypes included), `None` when no type under `t` declares it (K2). For
+    /// a value carried through `WITH` as jsonb, whose reads the compiler casts
+    /// back to that type — no row alias is involved.
+    ///
+    /// v1 (`carried_prop_type`): the SQL type of `key` in `views::view_properties(t)`
+    /// — the column's type in `t`'s union view, the common type where subtypes
+    /// disagree (`views::common_type`). A lookup by name only: `_id`, which
+    /// [`Layout::prop`] answers for every row, is not declared, so it is `None`.
+    fn prop_type(&self, t: TypeId, key: &str) -> Option<String>;
+
     /// The row aliased `alias` as the JSON Bolt expects: `{_id, _type, …props}`
     /// for a node, `{_id, _type, _src, _dst, …props}` for a relationship; null
     /// for a row an OPTIONAL MATCH left empty.
@@ -332,7 +363,7 @@ pub trait Layout {
     /// '_type', og_type_name(<alias>.type_id), [ '_src', <alias>.src, '_dst',
     /// <alias>.dst, ] '<prop>', to_jsonb(<alias>.<column>) …)) ||
     /// COALESCE(<alias>.__ext,'{}'::jsonb) END)` — `jsonb_build_object` split
-    /// into chunks of 50 pairs joined with `||` (`views::json_object`); a node
+    /// into chunks of 50 pairs joined with `||` (`cypher::compile::json_object`); a node
     /// without a type → `og_node_json(<alias>.id)`.
     fn element_json(&self, alias: &str, scanned: Option<TypeId>, kind: Kind) -> SqlExpr;
 
@@ -478,7 +509,11 @@ mod tests {
 
     #[test]
     fn the_layout_is_object_safe() {
-        fn takes(_: &dyn Layout) {}
-        takes(active());
+        // Naming the type proves it. Taking `active()` would build v1's vtable,
+        // and with it link every SPI call its methods reach into this binary,
+        // which has no PostgreSQL to resolve them against (macOS refuses to
+        // load it: "symbol not found in flat namespace").
+        fn takes(_: Option<&dyn Layout>) {}
+        takes(None);
     }
 }
