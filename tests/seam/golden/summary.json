@@ -1,0 +1,21 @@
+{
+ "corpus": {
+  "fixture": 638,
+  "read": 652,
+  "scenario": 148,
+  "step": 502
+ },
+ "sql": {
+  "compiled": 883,
+  "files": 30,
+  "og_calls": 600,
+  "statements": 1356
+ },
+ "tutorials": {
+  "compiled": 97,
+  "statements": 511
+ },
+ "typeql": {
+  "queries": 28
+ }
+}

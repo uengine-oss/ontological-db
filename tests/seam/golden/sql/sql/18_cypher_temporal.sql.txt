@@ -1,0 +1,32 @@
+=== og_cypher graph=cal MATCH (o:Order) WHERE o.placed >= date('2016-01-01') RETURN o.order_id
+SQL SELECT jsonb_build_object('o.order_id', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_order_id) AS c0 FROM og_data.v_1 n1\n WHERE (n1.p_placed >= '2016-01-01'::date)\n) t
+=== og_cypher graph=cal MATCH (o:Order {order_id: 3})\n        RETURN o.placed.year AS y, o.placed.month AS m, o.placed.day AS d,\n               o.placed.quarter AS q, o.placed.dayOfWeek AS w
+SQL SELECT jsonb_build_object('y', t.c0, 'm', t.c1, 'd', t.c2, 'q', t.c3, 'w', t.c4) AS row FROM (\nSELECT to_jsonb(extract(year FROM n1.p_placed)::int8) AS c0, to_jsonb(extract(month FROM n1.p_placed)::int8) AS c1, to_jsonb(extract(day FROM n1.p_placed)::int8) AS c2, to_jsonb(extract(quarter FROM n1.p_placed)::int8) AS c3, to_jsonb(extract(isodow FROM n1.p_placed)::int8) AS c4 FROM og_data.v_1 n1\n WHERE n1.p_order_id = 3\n) t
+=== og_cypher graph=cal MATCH (o:Order) WHERE o.placed.year = 2016 RETURN o.order_id
+SQL SELECT jsonb_build_object('o.order_id', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_order_id) AS c0 FROM og_data.v_1 n1\n WHERE (extract(year FROM n1.p_placed)::int8 = 2016)\n) t
+=== og_cypher graph=cal RETURN date() AS d, date(datetime()) AS e
+SQL SELECT jsonb_build_object('d', t.c0, 'e', t.c1) AS row FROM (\nSELECT current_date AS c0, (now())::date AS c1\n) t
+=== og_cypher graph=cal MATCH (o:Order) WHERE o.due > datetime('2016-01-03T00:00:00Z') RETURN o.order_id
+SQL SELECT jsonb_build_object('o.order_id', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_order_id) AS c0 FROM og_data.v_1 n1\n WHERE (n1.p_due > '2016-01-03T00:00:00Z'::timestamptz)\n) t
+=== og_cypher graph=cal WITH date({year: 2024, month: 2, day: 29}) AS d\n        RETURN d.year AS y, d.dayOfWeek AS w, d.ordinalDay AS od, toString(d) AS s
+SQL SELECT jsonb_build_object('y', t.c0, 'w', t.c1, 'od', t.c2, 's', t.c3) AS row FROM (\nSELECT to_jsonb(extract(year FROM ((w1."d") #>> '{}')::date)::int8) AS c0, to_jsonb(extract(isodow FROM ((w1."d") #>> '{}')::date)::int8) AS c1, to_jsonb(extract(doy FROM ((w1."d") #>> '{}')::date)::int8) AS c2, (((w1."d") #>> '{}')::date)::text AS c3 FROM (SELECT to_jsonb(t.c0) AS "d" FROM (\nSELECT make_date((2024)::int, (2)::int, (29)::int) AS c0\n) t) AS w1("d")\n) t
+=== og_cypher graph=cal MATCH (o:Order) WITH o.placed AS p WHERE p.year = 2016 RETURN p
+SQL SELECT jsonb_build_object('p', t.c0) AS row FROM (\nSELECT w2."p" AS c0 FROM (SELECT to_jsonb(t.c0) AS "p" FROM (\nSELECT to_jsonb(n1.p_placed) AS c0 FROM og_data.v_1 n1\n) t) AS w2("p")\n WHERE (extract(year FROM ((w2."p") #>> '{}')::date)::int8 = 2016)\n) t
+=== og_cypher graph=cal UNWIND [{year: 7}] AS r RETURN r.year AS y
+SQL SELECT jsonb_build_object('y', t.c0) AS row FROM (\nSELECT (CASE jsonb_typeof(to_jsonb(NULLIF(uw1.v, 'null'::jsonb))) WHEN 'object' THEN to_jsonb(NULLIF(uw1.v, 'null'::jsonb)) -> 'year' WHEN 'string' THEN to_jsonb(extract(year FROM (to_jsonb(NULLIF(uw1.v, 'null'::jsonb)) #>> '{}')::timestamptz)::int8) END) AS c0 FROM LATERAL jsonb_array_elements((jsonb_build_array(to_jsonb(jsonb_build_object('year', to_jsonb(7)))))::jsonb) AS uw1(v)\n) t
+=== og_cypher graph=cal MATCH (o:Order) WHERE o.placed < date($cut) RETURN o.order_id
+SQL SELECT jsonb_build_object('o.order_id', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_order_id) AS c0 FROM og_data.v_1 n1\n WHERE (n1.p_placed < (($1 ->> 'cut'))::date)\n) t
+=== og_cypher graph=cal UNWIND ['2024-03-05'] AS s RETURN date(s).month AS m, s.day AS d
+SQL SELECT jsonb_build_object('m', t.c0, 'd', t.c1) AS row FROM (\nSELECT to_jsonb(extract(month FROM (((NULLIF(uw1.v, 'null'::jsonb)) #>> '{}')::text)::date)::int8) AS c0, (CASE jsonb_typeof(to_jsonb(NULLIF(uw1.v, 'null'::jsonb))) WHEN 'object' THEN to_jsonb(NULLIF(uw1.v, 'null'::jsonb)) -> 'day' WHEN 'string' THEN to_jsonb(extract(day FROM (to_jsonb(NULLIF(uw1.v, 'null'::jsonb)) #>> '{}')::timestamptz)::int8) END) AS c1 FROM LATERAL jsonb_array_elements((jsonb_build_array(to_jsonb('2024-03-05'::text)))::jsonb) AS uw1(v)\n) t
+=== og_cypher graph=cal MATCH (o:Order) WHERE o.placed_text < date('2016-01-01') RETURN o.order_id
+SQL SELECT jsonb_build_object('o.order_id', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_order_id) AS c0 FROM og_data.v_1 n1\n WHERE ((n1.p_placed_text)::date < '2016-01-01'::date)\n) t
+=== og_cypher graph=cal RETURN date('2024-03-01') - duration({days: 1}) AS a,\n                                   date('2024-01-31') + duration('P1M') AS b
+SQL SELECT jsonb_build_object('a', t.c0, 'b', t.c1) AS row FROM (\nSELECT (('2024-03-01'::date - make_interval(days => (1)::int))::date) AS c0, (('2024-01-31'::date + 'P1M'::interval)::date) AS c1\n) t
+=== og_cypher graph=cal MATCH (o:Order) WHERE o.placed >= date('2016-03-16') - duration({days: 1}) RETURN o.order_id
+SQL SELECT jsonb_build_object('o.order_id', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_order_id) AS c0 FROM og_data.v_1 n1\n WHERE (n1.p_placed >= (('2016-03-16'::date - make_interval(days => (1)::int))::date))\n) t
+=== og_cypher graph=cal CREATE (:Event {name: 'launch', day: date('2024-05-06')})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=cal MATCH (e:Event) RETURN e.day AS d, e.day.month AS m
+SQL SELECT jsonb_build_object('d', t.c0, 'm', t.c1) AS row FROM (\nSELECT to_jsonb(n1.p_day) AS c0, (CASE jsonb_typeof(to_jsonb(n1.p_day)) WHEN 'object' THEN to_jsonb(n1.p_day) -> 'month' WHEN 'string' THEN to_jsonb(extract(month FROM (to_jsonb(n1.p_day) #>> '{}')::timestamptz)::int8) END) AS c1 FROM og_data.v_2 n1\n) t
+=== og_cypher graph=cal RETURN date('soon') AS d
+SQL SELECT jsonb_build_object('d', t.c0) AS row FROM (\nSELECT 'soon'::date AS c0\n) t

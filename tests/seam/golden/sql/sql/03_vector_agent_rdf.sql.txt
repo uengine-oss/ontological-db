@@ -1,0 +1,14 @@
+=== og_cypher graph=kb CREATE (d:Doc {title:'batteries', body:'lithium chemistry', emb:'[1,0,0]'}) RETURN d.title
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=kb CREATE (d:Doc {title:'solar', body:'photovoltaics', emb:'[0,1,0]'}) RETURN d.title
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=kb CREATE (d:Doc {title:'anodes', body:'silicon anode', emb:'[0.9,0.1,0]'}) RETURN d.title
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=kb MATCH (a:Doc {title:'batteries'}), (b:Doc {title:'anodes'})\n                        CREATE (a)-[:CITES {context_emb:'[1,0,0]'}]->(b) RETURN a.title
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=kb MATCH (a:Doc {title:'solar'}), (b:Doc {title:'anodes'})\n                        CREATE (a)-[:CITES {context_emb:'[0,1,0]'}]->(b) RETURN a.title
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=onto MATCH (v:Vehicle) RETURN v.model AS model
+SQL SELECT jsonb_build_object('model', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_model) AS c0 FROM og_data.v_3 n1\n) t
+=== og_cypher graph=onto MATCH (p:Person)-[:owns]->(v) RETURN p.name AS owner, v.model AS vehicle
+SQL SELECT jsonb_build_object('owner', t.c0, 'vehicle', t.c1) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0, (og_node_json(n2.id) -> 'model') AS c1 FROM og_data.v_7 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[6]::int4[])) u4\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 2)) n2\n WHERE n2.id = u4.nbr\n) t

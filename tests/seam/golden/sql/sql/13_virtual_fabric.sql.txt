@@ -1,0 +1,32 @@
+=== og_cypher graph=fab CREATE (:Risk {title:"flood", supplier_code:"S1"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=fab MATCH (s:Supplier) WHERE s.country = 'KR' RETURN s.name
+SQL SELECT jsonb_build_object('s.name', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0 FROM og_data.v_1 n1\n WHERE (n1.p_country = 'KR')\n) t
+=== og_cypher graph=fab MATCH (p:Purchase)-[:FROM_SUPPLIER]->(s:Supplier) RETURN p.po_no
+SQL SELECT jsonb_build_object('p.po_no', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_po_no) AS c0 FROM og_data.v_2 n1\n  CROSS JOIN og_data.v_1 n2\n WHERE n1.p_supplier_code = n2.p_code\n) t
+=== og_cypher graph=fab MATCH (s:Supplier {code:'S1'})<-[:FROM_SUPPLIER]-(p) RETURN sum(p.amount) AS t
+SQL SELECT jsonb_build_object('t', t.c0) AS row FROM (\nSELECT sum(n2.p_amount) AS c0 FROM og_data.v_1 n1\n  CROSS JOIN og_data.v_2 n2\n WHERE n1.p_code = 'S1'\n   AND n2.p_supplier_code = n1.p_code\n) t
+=== og_cypher graph=fab MATCH (r:Risk)-[:AFFECTS]->(s:Supplier)<-[:FROM_SUPPLIER]-(p:Purchase) RETURN count(p) AS c
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(n3.id) AS c0 FROM og_data.v_4 n1\n  CROSS JOIN og_data.v_1 n2\n  CROSS JOIN og_data.v_2 n3\n WHERE n1.p_supplier_code = n2.p_code\n   AND n3.p_supplier_code = n2.p_code\n) t
+=== og_cypher graph=fab MATCH (s:Supplier) OPTIONAL MATCH (s)<-[:FROM_SUPPLIER]-(p:Purchase) RETURN s.code, p.po_no
+SQL SELECT jsonb_build_object('s.code', t.c0, 'p.po_no', t.c1) AS row FROM (\nSELECT to_jsonb(n1.p_code) AS c0, to_jsonb(n2.p_po_no) AS c1 FROM og_data.v_1 n1\n  LEFT JOIN og_data.v_2 n2 ON (n2.p_supplier_code = n1.p_code)\n) t
+=== og_cypher graph=fab MATCH (p:Purchase {po_no:'P3'})-[r:FROM_SUPPLIER]->(s:Supplier) RETURN r
+SQL SELECT jsonb_build_object('r', t.c0) AS row FROM (\nSELECT jsonb_build_object('_id', og_make_id(0, 3, hashtextextended(n1.id::text || ':' || n2.id::text, 0) & 68719476735), '_type', 'FROM_SUPPLIER', '_src', n1.id, '_dst', n2.id) AS c0 FROM og_data.v_2 n1\n  CROSS JOIN og_data.v_1 n2\n WHERE n1.p_po_no = 'P3'\n   AND n1.p_supplier_code = n2.p_code\n) t
+=== og_cypher graph=fab MATCH (s:Supplier) OPTIONAL MATCH (s)<-[:FROM_SUPPLIER]-(p:Purchase) WITH s, count(p) AS c WHERE c = 0 RETURN s.code
+SQL SELECT jsonb_build_object('s.code', t.c0) AS row FROM (\nSELECT ((w3."s") -> 'code') AS c0 FROM (SELECT to_jsonb(t.c0) AS "s", to_jsonb(t.c1) AS "c" FROM (\nSELECT (CASE WHEN n1.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n1.id, '_type', og_type_name(n1.type_id), 'code', to_jsonb(n1.p_code), 'country', to_jsonb(n1.p_country), 'name', to_jsonb(n1.p_name))) || COALESCE(n1.__ext,'{}'::jsonb) END) AS c0, count(n2.id) AS c1 FROM og_data.v_1 n1\n  LEFT JOIN og_data.v_2 n2 ON (n2.p_supplier_code = n1.p_code)\n GROUP BY (CASE WHEN n1.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n1.id, '_type', og_type_name(n1.type_id), 'code', to_jsonb(n1.p_code), 'country', to_jsonb(n1.p_country), 'name', to_jsonb(n1.p_name))) || COALESCE(n1.__ext,'{}'::jsonb) END)\n) t) AS w3("s", "c")\n WHERE (((w3."c") #>> '{}')::int8 = 0)\n) t
+=== og_cypher graph=fab MATCH (s:Supplier {code:'S3'}) OPTIONAL MATCH (s)<-[:FROM_SUPPLIER]-(p:Purchase) RETURN p
+SQL SELECT jsonb_build_object('p', t.c0) AS row FROM (\nSELECT (CASE WHEN n2.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n2.id, '_type', og_type_name(n2.type_id), 'amount', to_jsonb(n2.p_amount), 'po_no', to_jsonb(n2.p_po_no), 'supplier_code', to_jsonb(n2.p_supplier_code))) || COALESCE(n2.__ext,'{}'::jsonb) END) AS c0 FROM og_data.v_1 n1\n  LEFT JOIN og_data.v_2 n2 ON (n2.p_supplier_code = n1.p_code)\n WHERE n1.p_code = 'S3'\n) t
+=== og_cypher graph=fab MATCH (s:Supplier {code:'S2'}), (r:Risk) CREATE (r)-[:WATCHES]->(s)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=fab MATCH (r:Risk)-[:WATCHES]->(s:Supplier) RETURN s.name
+SQL SELECT jsonb_build_object('s.name', t.c0) AS row FROM (\nSELECT to_jsonb(n2.p_name) AS c0 FROM og_data.v_4 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[6]::int4[])) u4\n  CROSS JOIN og_data.v_1 n2\n WHERE n2.id = u4.nbr\n) t
+=== og_cypher graph=fab MATCH (s:Supplier) WHERE s.country <> 'KR' RETURN s.code
+SQL SELECT jsonb_build_object('s.code', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_code) AS c0 FROM og_data.v_1 n1\n WHERE (n1.p_country <> 'KR')\n) t
+=== og_cypher graph=fab CREATE (:Supplier {code:"S9", name:"x"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=fab MATCH (s:Supplier {code:"S3"}) SET s.name = "y"
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=fab MATCH (s:Supplier {code:"S3"}) DELETE s
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=fab MATCH (p:Purchase)-[:FROM_SUPPLIER*1..2]->(s:Supplier) RETURN s
+SQL ERR XX000 virtual relationship 'FROM_SUPPLIER' cannot be traversed with a variable length yet

@@ -1,0 +1,2 @@
+=== og_cypher graph=vb MATCH (n:C {k:"x"}) RETURN count(n) AS c
+SQL ERR XX000 graph 'vb' does not exist

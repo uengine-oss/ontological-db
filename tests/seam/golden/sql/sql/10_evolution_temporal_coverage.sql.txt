@@ -1,0 +1,28 @@
+=== og_cypher graph=cov CREATE (:P {name: "a", n: "1"})-[:R]->(:P {name: "b", n: "2"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=cov MATCH (p:P {name: "a"}) SET p.n = "10"
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=cov CREATE (:P {name: "temp"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=cov MATCH (p:P {name: "temp"}) SET p.name = "x"
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=cov MATCH (a:P)-[r]->(b:P) RETURN r
+SQL SELECT jsonb_build_object('r', t.c0) AS row FROM (\nSELECT og_edge_json(u4.eid) AS c0 FROM og_data.v_1 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype <> ALL(ARRAY[3]::int4[]) UNION ALL SELECT te5.dst, te5.id FROM (SELECT id, src, dst FROM og_data.e_3 WHERE __valid @> og_valid_at() AND __sys_from <= og_system_at() UNION ALL SELECT id, src, dst FROM og_data.h_3 WHERE __sys_to = 'infinity' AND __valid @> og_valid_at() AND __sys_from <= og_system_at() UNION ALL SELECT id, src, dst FROM og_data.h_3 WHERE og_asof_active() AND __sys_to <> 'infinity' AND __valid @> og_valid_at() AND __sys_from <= og_system_at() AND __sys_to > og_system_at()) te5 WHERE te5.src = n1.id) u4\n  CROSS JOIN og_data.v_1 n2\n WHERE og_require_current('a relationship variable without a single type')\n   AND n2.id = u4.nbr\n) t
+=== og_cypher graph=cov CREATE (:H {v: 1})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=cov MATCH (h:H) RETURN id(h) AS i
+SQL SELECT jsonb_build_object('i', t.c0) AS row FROM (\nSELECT n1.id AS c0 FROM og_data.v_5 n1\n) t
+=== og_cypher graph=cov MATCH (h:H) SET h.v = 2
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=cov MATCH (h:H) SET h.v = 3
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=cov MATCH (h:H) DETACH DELETE h
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=cov CREATE (:Q)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=cov CREATE (:Q {score: "5"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=cov MATCH (q:Q {score: "5"}) SET q.score = "6"
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=cov MATCH (q:Q) WHERE q.score = 6 RETURN count(q) AS c
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM og_data.v_2 n1\n WHERE (n1.p_score = 6)\n) t

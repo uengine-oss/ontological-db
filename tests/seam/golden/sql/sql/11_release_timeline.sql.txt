@@ -1,0 +1,6 @@
+=== og_cypher graph=ops CREATE (:Clause {clause_key:"SUPV#9", article_no:"제9조", text:"원금의 100분의 40"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=ops MATCH (c:Clause {clause_key:"SUPV#9"}) SET c.text = "원금의 100분의 30"
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=ops MATCH (c:Clause {clause_key:"SUPV#9"}) SET c.text = "원금의 100분의 40"
+SQL ERR XX000 write queries are not compiled to a single statement

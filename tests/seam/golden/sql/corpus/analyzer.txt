@@ -1,0 +1,1007 @@
+=== fixture corpus/analyzer/fixture/20_fabric.cypher:3 graph=analyzer_run
+CHECK {"ok": true, "write": true, "fabric": true, "clauses": 1}
+COLS ["result"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT format('virtual node %s ← %s (%s properties)', j->>'type', 'erp.supplier', (SELECT count(*) FROM jsonb_object_keys(j->'properties'))) AS result FROM og_map_relation('analyzer_run', 'AnSupplier', 'erp.supplier', 'supplier_id', NULL) j
+=== fixture corpus/analyzer/fixture/20_fabric.cypher:4 graph=analyzer_run
+CHECK {"ok": true, "write": true, "fabric": true, "clauses": 1}
+COLS ["result"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT format('virtual node %s ← %s (%s properties)', j->>'type', 'erp.purchase_order', (SELECT count(*) FROM jsonb_object_keys(j->'properties'))) AS result FROM og_map_relation('analyzer_run', 'AnPurchaseOrder', 'erp.purchase_order', 'po_id', NULL) j
+=== fixture corpus/analyzer/fixture/20_fabric.cypher:5 graph=analyzer_run
+CHECK {"ok": true, "write": true, "fabric": true, "clauses": 1}
+COLS ["result"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT format('virtual relationship (:%s)-[:%s]->(:%s) on %s.%s = %s.%s', 'AnPurchaseOrder', 'AN_SUPPLIED_BY', 'AnSupplier', 'AnPurchaseOrder', 'supplier_id', 'AnSupplier', 'supplier_id') AS result FROM og_create_virtual_rel('analyzer_run', 'AN_SUPPLIED_BY', 'AnPurchaseOrder', 'supplier_id', 'AnSupplier', 'supplier_id')
+=== fixture corpus/analyzer/fixture/90_derived.cypher:5 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 18, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:6 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 18, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:7 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 7, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:8 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 7, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:9 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 7, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:10 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 7, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:11 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:12 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:13 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:14 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:15 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 10, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:16 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 10, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:17 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 4, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:18 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 4, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:19 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:20 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:21 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:22 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:23 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 5, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:24 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 5, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:25 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 15, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:26 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 1, "indexes-added": 0, "nodes-created": 1, "nodes-deleted": 0, "properties-set": 15, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:28 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:29 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:30 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:31 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:32 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:33 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:34 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:35 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:36 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:37 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:38 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:39 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:40 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== fixture corpus/analyzer/fixture/90_derived.cypher:41 graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== read analyzer-266c7d346b read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 3}
+COLS ["id"]
+RUN rows=2
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0) AS row FROM (\nSELECT (og_node_json(n2.id) -> 'id') AS c0 FROM LATERAL jsonb_array_elements((($1 ->> 'ids'))::jsonb) AS uw1(v)\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE (og_node_json(n2.id) -> 'id') = to_jsonb(NULLIF(uw1.v, 'null'::jsonb))\n   AND (og_node_json(n2.id) -> 'graph_owner') = to_jsonb('analyzer'::text)\n) t
+=== read analyzer-e19e41183d read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 3}
+COLS ["source_id", "target_id", "evidence_lines", "evidence_files", "dml_types", "evidence_locations"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('source_id', t.c0, 'target_id', t.c1, 'evidence_lines', t.c2, 'evidence_files', t.c3, 'dml_types', t.c4, 'evidence_locations', t.c5) AS row FROM (\nSELECT ((NULLIF(uw1.v, 'null'::jsonb)) -> 'source_id') AS c0, ((NULLIF(uw1.v, 'null'::jsonb)) -> 'target_id') AS c1, (og_edge_json(u5.eid) ->> 'evidence_lines') AS c2, (og_edge_json(u5.eid) ->> 'evidence_files') AS c3, (og_edge_json(u5.eid) ->> 'dml_types') AS c4, (og_edge_json(u5.eid) ->> 'evidence_locations') AS c5 FROM LATERAL jsonb_array_elements((($1 ->> 'items'))::jsonb) AS uw1(v)\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj4, LATERAL unnest(adj4.nbr, adj4.eid) AS u(nbr, eid) WHERE adj4.src = n2.id AND adj4.dir = 'o'::"char" AND adj4.etype = ANY(ARRAY[]::int4[])) u5\n  CROSS JOIN og_data.v_213 n3\n WHERE (og_node_json(n2.id) -> 'id') = to_jsonb(((NULLIF(uw1.v, 'null'::jsonb)) -> 'source_id'))\n   AND (og_node_json(n2.id) -> 'graph_owner') = to_jsonb('analyzer'::text)\n   AND n3.p_id = (NULLIF(uw1.v, 'null'::jsonb) ->> 'target_id')\n   AND n3.p_graph_owner = 'analyzer'\n   AND n3.id = u5.nbr\n) t
+=== read analyzer-1ae8d24c4c read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["matched"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('matched', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM og_data.v_203 n1\n WHERE n1.p_graph_owner = ($1 ->> 'graph_owner')\n   AND ((($1 ->> 'ids')::jsonb) @> to_jsonb(to_jsonb(n1.p_id)))\n) t
+=== read analyzer-4640fb33f1 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["matched"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('matched', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM og_data.v_213 n1\n WHERE n1.p_graph_owner = ($1 ->> 'graph_owner')\n   AND ((($1 ->> 'ids')::jsonb) @> to_jsonb(to_jsonb(n1.p_id)))\n) t
+=== read analyzer-19cfcd4c16 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 3}
+COLS ["state"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('state', t.c0) AS row FROM (\nSELECT w2."state" AS c0 FROM (SELECT to_jsonb(t.c0) AS "name", to_jsonb(t.c1) AS "state" FROM (\nSELECT cp1.name AS c0, 'ONLINE' AS c1 FROM (SELECT name, kind, entity, type_name, props FROM og_catalog.compat_index WHERE graph_id = 1 AND kind <> 'constraint') AS cp1\n) t) AS w2("name", "state")\n WHERE (((w2."name") #>> '{}')::text = 'analyzer_search_vec')\n) t
+=== read analyzer-c1de9c8d5d read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS []
+RUN XX000 cypher error: procedure 'show.indexes' does not yield 'options'. it yields: id, name, state, type, entityType, labelsOrTypes, properties
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 procedure 'show.indexes' does not yield 'options'. it yields: id, name, state, type, entityType, labelsOrTypes, properties
+=== read analyzer-6645d7fd00 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["c"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE (og_node_json(n1.id) -> 'graph_owner') = to_jsonb('analyzer'::text)\n   AND ((((((og_node_json(n1.id)->>'summary') IS NOT NULL) AND ((og_node_json(n1.id)->>'summary') <> '')) AND (NOT (CASE WHEN n1.type_id IS NULL THEN NULL ELSE ((false)) END))) AND (NOT (CASE WHEN n1.type_id IS NULL THEN NULL ELSE ((n1.type_id = ANY('{208}'::int4[]))) END))) AND (NOT (CASE WHEN n1.type_id IS NULL THEN NULL ELSE ((n1.type_id = ANY('{209}'::int4[]))) END)))\n) t
+=== read analyzer-0ff6fefcbf read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["c"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE (og_node_json(n1.id) -> 'graph_owner') = to_jsonb('analyzer'::text)\n   AND (((((og_node_json(n1.id)->>'embedded'))::bool))::bool = true)\n) t
+=== read analyzer-509e26c19b read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 3}
+COLS ["dim", "c"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('dim', t.c0, 'c', t.c1) AS row FROM (\nSELECT w2."d" AS c0, count(*) AS c1, w2."d" AS o0 FROM (SELECT to_jsonb(t.c0) AS "d" FROM (\nSELECT (CASE jsonb_typeof(to_jsonb((og_node_json(n1.id) -> 'search_embedding'))) WHEN 'array' THEN jsonb_array_length(to_jsonb((og_node_json(n1.id) -> 'search_embedding'))) WHEN 'string' THEN char_length(to_jsonb((og_node_json(n1.id) -> 'search_embedding')) #>> '{}') WHEN 'object' THEN CASE WHEN to_jsonb((og_node_json(n1.id) -> 'search_embedding')) ? '_path' THEN jsonb_array_length(to_jsonb((og_node_json(n1.id) -> 'search_embedding')) -> 'relationships') END END) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE (og_node_json(n1.id) -> 'graph_owner') = to_jsonb('analyzer'::text)\n   AND (((((og_node_json(n1.id)->>'embedded'))::bool))::bool = true)\n) t) AS w2("d")\n GROUP BY w2."d"\n) t\n ORDER BY t.o0
+=== read analyzer-4b42161a21 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["fp", "dim"]
+RUN rows=2
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('fp', t.c0, 'dim', t.c1) AS row FROM (\nSELECT to_jsonb(n1.p_fingerprint) AS c0, to_jsonb(n1.p_dim) AS c1 FROM og_data.v_204 n1\n WHERE n1.p_graph_owner = 'analyzer'\n) t
+=== read analyzer-499006d13d read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 3}
+COLS ["name", "state", "type"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('name', t.c0, 'state', t.c1, 'type', t.c2) AS row FROM (\nSELECT w2."name" AS c0, w2."state" AS c1, w2."type" AS c2 FROM (SELECT to_jsonb(t.c0) AS "name", to_jsonb(t.c1) AS "state", to_jsonb(t.c2) AS "type" FROM (\nSELECT cp1.name AS c0, 'ONLINE' AS c1, upper(cp1.kind) AS c2 FROM (SELECT name, kind, entity, type_name, props FROM og_catalog.compat_index WHERE graph_id = 1 AND kind <> 'constraint') AS cp1\n) t) AS w2("name", "state", "type")\n WHERE (((w2."name") #>> '{}')::text = 'analyzer_search_vec')\n) t
+=== read analyzer-32995cb830 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('name', t.c0) AS row FROM (\nSELECT cp1.name AS c0 FROM (SELECT name, kind, entity, type_name, props FROM og_catalog.compat_index WHERE graph_id = 1 AND kind = 'constraint') AS cp1\n) t
+=== read analyzer-196388371d read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('name', t.c0, 'type', t.c1) AS row FROM (\nSELECT cp1.name AS c0, upper(cp1.kind) AS c1 FROM (SELECT name, kind, entity, type_name, props FROM og_catalog.compat_index WHERE graph_id = 1 AND kind <> 'constraint') AS cp1\n) t
+=== read analyzer-6cd9c510f3 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('name', t.c0) AS row FROM (\nSELECT cp1.name AS c0 FROM (SELECT name, kind, entity, type_name, props FROM og_catalog.compat_index WHERE graph_id = 1 AND kind <> 'constraint') AS cp1\n) t
+=== read analyzer-e0a89ebe64 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id", "name", "file_path", "start_line", "summary", "search_text", "domain_terms_json"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'name', t.c1, 'file_path', t.c2, 'start_line', t.c3, 'summary', t.c4, 'search_text', t.c5, 'domain_terms_json', t.c6) AS row FROM (\nSELECT (og_node_json(n1.id) -> 'id') AS c0, (og_node_json(n1.id) -> 'name') AS c1, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'file_path')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c2, coalesce(((og_node_json(n1.id)->>'start_line'))::int8, 0) AS c3, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'summary')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c4, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'search_text')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c5, (og_node_json(n1.id) -> 'domain_terms_json') AS c6 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE (og_node_json(n1.id) -> 'graph_owner') = to_jsonb('analyzer'::text)\n   AND (((og_node_json(n1.id)->>'domain_terms_json') IS NOT NULL) AND ((og_node_json(n1.id)->>'domain_terms_json') <> ''))\n) t
+=== read analyzer-6148f3bc6e read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id", "file_path", "start_line", "end_line", "summary"]
+RUN rows=2
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'file_path', t.c1, 'start_line', t.c2, 'end_line', t.c3, 'summary', t.c4) AS row FROM (\nSELECT (og_node_json(n1.id) -> 'id') AS c0, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'file_path')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c1, coalesce(((og_node_json(n1.id)->>'start_line'))::int8, 0) AS c2, coalesce(((og_node_json(n1.id)->>'end_line'))::int8, 0) AS c3, (og_node_json(n1.id) -> 'summary') AS c4 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE (og_node_json(n1.id) -> 'graph_owner') = to_jsonb('analyzer'::text)\n   AND (((CASE WHEN n1.type_id IS NULL THEN NULL ELSE ((n1.type_id = ANY('{208}'::int4[]))) END) OR (CASE WHEN n1.type_id IS NULL THEN NULL ELSE ((false)) END)) AND ((og_node_json(n1.id)->>'summary') IS NOT NULL))\n) t
+=== read analyzer-59b19766f1 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id", "v"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'v', t.c1) AS row FROM (\nSELECT (og_node_json(n1.id) -> 'id') AS c0, (og_node_json(n1.id) -> 'search_embedding') AS c1 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE (og_node_json(n1.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n   AND (((($1 ->> 'ids')::jsonb) @> to_jsonb((og_node_json(n1.id) -> 'id'))) AND ((og_node_json(n1.id)->>'search_embedding') IS NOT NULL))\n) t
+=== read analyzer-2628ded746 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id", "label", "name", "summary", "code_text", "search_text", "stereotype", "logical_name"]
+RUN rows=4
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'label', t.c1, 'name', t.c2, 'summary', t.c3, 'code_text', t.c4, 'search_text', t.c5, 'stereotype', t.c6, 'logical_name', t.c7) AS row FROM (\nSELECT (og_node_json(n1.id) -> 'id') AS c0, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'type')), 'null'::jsonb), NULLIF(to_jsonb((to_jsonb((SELECT coalesce(jsonb_agg(lc2.v), '[]'::jsonb) FROM jsonb_array_elements((to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n1.type_id)) AS t)))::jsonb) AS lc2(v) WHERE (((NULLIF(lc2.v, 'null'::jsonb)) #>> '{}')::text <> 'ANALYZER_OWNED'))) -> 0)), 'null'::jsonb)) AS c1, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'name')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c2, (og_node_json(n1.id) -> 'summary') AS c3, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'code_text')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c4, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'search_text')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c5, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'stereotype')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c6, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'logical_name')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c7, (og_node_json(n1.id) -> 'id') AS o0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE (((((((og_node_json(n1.id)->>'graph_owner') = 'analyzer') AND ((og_node_json(n1.id)->>'summary') IS NOT NULL)) AND ((og_node_json(n1.id)->>'summary') <> '')) AND (NOT (CASE WHEN n1.type_id IS NULL THEN NULL ELSE ((false)) END))) AND (NOT (CASE WHEN n1.type_id IS NULL THEN NULL ELSE ((n1.type_id = ANY('{208}'::int4[]))) END))) AND (NOT (CASE WHEN n1.type_id IS NULL THEN NULL ELSE ((n1.type_id = ANY('{209}'::int4[]))) END)))\n) t\n ORDER BY t.o0
+=== read analyzer-df99eeb32c read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id", "fi"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'fi', t.c1) AS row FROM (\nSELECT (og_node_json(n2.id) -> 'id') AS c0, count(DISTINCT n1.id) AS c1 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[]::int4[])) u4\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE (og_node_json(n1.id) -> 'graph_owner') = to_jsonb('analyzer'::text)\n   AND (og_node_json(n2.id) -> 'graph_owner') = to_jsonb('analyzer'::text)\n   AND n2.id = u4.nbr\n   AND ((og_node_json(n2.id)->>'id') IS NOT NULL)\n GROUP BY (og_node_json(n2.id) -> 'id')\n) t
+=== read analyzer-c82f075526 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["fp", "count"]
+RUN rows=2
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('fp', t.c0, 'count', t.c1) AS row FROM (\nSELECT to_jsonb(n1.p_fingerprint) AS c0, to_jsonb(n1.p_embedded_count) AS c1 FROM og_data.v_204 n1\n WHERE n1.p_graph_owner = ($1 ->> 'graph_owner')\n) t
+=== read analyzer-a4f49a725e read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 3}
+COLS ["id", "label", "name", "stereotype", "summary", "search_text", "rel_type", "table_name"]
+RUN rows=4
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'label', t.c1, 'name', t.c2, 'stereotype', t.c3, 'summary', t.c4, 'search_text', t.c5, 'rel_type', t.c6, 'table_name', t.c7) AS row FROM (\nSELECT (og_node_json(n1.id) -> 'id') AS c0, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'type')), 'null'::jsonb), NULLIF(to_jsonb((to_jsonb((SELECT coalesce(jsonb_agg(lc5.v), '[]'::jsonb) FROM jsonb_array_elements((to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n1.type_id)) AS t)))::jsonb) AS lc5(v) WHERE (((NULLIF(lc5.v, 'null'::jsonb)) #>> '{}')::text <> 'ANALYZER_OWNED'))) -> 0)), 'null'::jsonb)) AS c1, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'name')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c2, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'stereotype')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c3, (og_node_json(n1.id) -> 'summary') AS c4, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'search_text')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c5, og_type_name(og_id_type(u4.eid)) AS c6, to_jsonb(n2.p_name) AS c7, (og_node_json(n1.id) -> 'id') AS o0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  LEFT JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[214]::int4[])) u4 ON true\n  LEFT JOIN og_data.v_213 n2 ON (n2.p_graph_owner = 'analyzer') AND (n2.id = u4.nbr)\n WHERE (((((((og_node_json(n1.id)->>'graph_owner') = 'analyzer') AND ((og_node_json(n1.id)->>'summary') IS NOT NULL)) AND ((og_node_json(n1.id)->>'summary') <> '')) AND (NOT (CASE WHEN n1.type_id IS NULL THEN NULL ELSE ((false)) END))) AND (NOT (CASE WHEN n1.type_id IS NULL THEN NULL ELSE ((n1.type_id = ANY('{208}'::int4[]))) END))) AND (NOT (CASE WHEN n1.type_id IS NULL THEN NULL ELSE ((n1.type_id = ANY('{209}'::int4[]))) END)))\n) t\n ORDER BY t.o0
+=== read analyzer-734f7725c9 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id", "name", "dtype", "is_primary_key", "logical_name", "description"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'name', t.c1, 'dtype', t.c2, 'is_primary_key', t.c3, 'logical_name', t.c4, 'description', t.c5) AS row FROM (\nSELECT to_jsonb(n2.p_id) AS c0, to_jsonb(n2.p_name) AS c1, coalesce(n2.p_dtype, '') AS c2, coalesce(n2.p_is_primary_key, false) AS c3, coalesce(n2.p_logical_name, '') AS c4, (CASE WHEN (btrim((coalesce(n2.p_description, ''))::text) <> '') THEN n2.p_description WHEN (btrim((coalesce(n2.p_analyzed_description, ''))::text) <> '') THEN n2.p_analyzed_description ELSE '' END) AS c5, n2.p_id AS o0 FROM og_data.v_213 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[220]::int4[])) u4\n  CROSS JOIN og_data.v_203 n2\n WHERE n1.p_id = ($1 ->> 'id')\n   AND n1.p_graph_owner = ($1 ->> 'graph_owner')\n   AND n2.p_graph_owner = ($1 ->> 'graph_owner')\n   AND n2.id = u4.nbr\n) t\n ORDER BY t.o0
+=== read analyzer-9c3ef044ee read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 4}
+COLS ["rule_id", "occurrence_id", "ordinal", "statement", "example_id", "given", "when_", "then_", "table_name", "op"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('rule_id', t.c0, 'occurrence_id', t.c1, 'ordinal', t.c2, 'statement', t.c3, 'example_id', t.c4, 'given', t.c5, 'when_', t.c6, 'then_', t.c7, 'table_name', t.c8, 'op', t.c9) AS row FROM (\nSELECT to_jsonb(n2.p_id) AS c0, (og_edge_json(u4.eid) ->> 'occurrence_id') AS c1, coalesce(((og_edge_json(u4.eid) ->> 'ordinal'))::int8, 0) AS c2, to_jsonb(n2.p_statement) AS c3, to_jsonb(n5.p_id) AS c4, to_jsonb(n5.p_given) AS c5, to_jsonb(n5.p_when_) AS c6, to_jsonb(n5.p_then_) AS c7, to_jsonb(n8.p_name) AS c8, (e11.__ext -> 'op') AS c9 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[]::int4[])) u4\n  CROSS JOIN og_data.v_211 n2\n  LEFT JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj6, LATERAL unnest(adj6.nbr, adj6.eid) AS u(nbr, eid) WHERE adj6.src = n2.id AND adj6.dir = 'o'::"char" AND adj6.etype = ANY(ARRAY[216]::int4[])) u7 ON true\n  LEFT JOIN og_data.v_205 n5 ON (n5.p_graph_owner = ($1 ->> 'graph_owner')) AND (n5.id = u7.nbr)\n  LEFT JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj9, LATERAL unnest(adj9.nbr, adj9.eid) AS u(nbr, eid) WHERE adj9.src = n5.id AND adj9.dir = 'o'::"char" AND adj9.etype = ANY(ARRAY[214]::int4[])) u10 ON true\n  LEFT JOIN og_data.ve_214 e11 ON e11.id = u10.eid\n  LEFT JOIN og_data.v_213 n8 ON (n8.p_graph_owner = ($1 ->> 'graph_owner')) AND (n8.id = u10.nbr)\n WHERE (og_node_json(n1.id) -> 'id') = ($1 -> 'id')\n   AND (og_node_json(n1.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n   AND n2.p_graph_owner = ($1 ->> 'graph_owner')\n   AND n2.id = u4.nbr\n) t
+=== read analyzer-9272d0b9cd read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["labels", "props"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('labels', t.c0, 'props', t.c1) AS row FROM (\nSELECT to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n1.type_id)) AS t)) AS c0, (CASE WHEN to_jsonb(og_node_json(n1.id)) ? '_id' THEN to_jsonb(og_node_json(n1.id)) - '_id' - '_type' - '_src' - '_dst' ELSE to_jsonb(og_node_json(n1.id)) END) AS c1 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE (og_node_json(n1.id) -> 'id') = ($1 -> 'id')\n   AND (og_node_json(n1.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n) t
+=== read analyzer-04f40f550f read graph=analyzer_run
+CHECK {"ok": false, "error": "expected '(' at offset 6, near: …MATCH {pattern} RETURN type(r) AS ty…"}
+COLS XX000 expected '(' at offset 6, near: …MATCH {pattern} RETURN type(r) AS ty…
+RUN XX000 cypher parse error: expected '(' at offset 6, near: …MATCH {pattern} RETURN type(r) AS ty…
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 expected '(' at offset 6, near: …MATCH {pattern} RETURN type(r) AS ty…
+=== read analyzer-4843073e79 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["tj"]
+RUN rows=2
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('tj', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_terms_json) AS c0 FROM og_data.v_207 n1\n WHERE n1.p_id = 'glossary'\n   AND n1.p_graph_owner = ($1 ->> 'graph_owner')\n) t
+=== read analyzer-93e0ed02b6 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id", "name"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'name', t.c1) AS row FROM (\nSELECT (og_node_json(n2.id) -> 'id') AS c0, coalesce(NULLIF(to_jsonb((og_node_json(n2.id) -> 'name')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c1 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[]::int4[])) u4\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE (og_node_json(n1.id) -> 'id') = ($1 -> 'id')\n   AND (og_node_json(n1.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n   AND (og_node_json(n2.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n   AND n2.id = u4.nbr\n   AND ((og_node_json(n2.id)->>'id') IS NOT NULL)\n) t
+=== read analyzer-752a266136 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id", "name", "relation", "direction"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'name', t.c1, 'relation', t.c2, 'direction', t.c3) AS row FROM (\nSELECT (og_node_json(n2.id) -> 'id') AS c0, coalesce(NULLIF(to_jsonb((og_node_json(n2.id) -> 'name')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c1, 'CALLS' AS c2, 'out' AS c3 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[]::int4[])) u4\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE (og_node_json(n1.id) -> 'id') = ($1 -> 'id')\n   AND (og_node_json(n1.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n   AND (og_node_json(n2.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n   AND n2.id = u4.nbr\n   AND ((og_node_json(n2.id)->>'id') IS NOT NULL)\n) t
+=== read analyzer-a90e7019cf read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id", "name", "relation", "direction"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'name', t.c1, 'relation', t.c2, 'direction', t.c3) AS row FROM (\nSELECT (og_node_json(n1.id) -> 'id') AS c0, coalesce(NULLIF(to_jsonb((og_node_json(n1.id) -> 'name')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c1, 'CALLS' AS c2, 'in' AS c3 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[]::int4[])) u4\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE (og_node_json(n1.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n   AND (og_node_json(n2.id) -> 'id') = ($1 -> 'id')\n   AND (og_node_json(n2.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n   AND n2.id = u4.nbr\n   AND ((og_node_json(n1.id)->>'id') IS NOT NULL)\n) t
+=== read analyzer-3eed836022 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id", "eid", "name", "logical_name", "summary", "relation"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'eid', t.c1, 'name', t.c2, 'logical_name', t.c3, 'summary', t.c4, 'relation', t.c5) AS row FROM (\nSELECT to_jsonb(n2.p_id) AS c0, (n2.id)::text AS c1, coalesce(n2.p_name, '') AS c2, coalesce(n2.p_logical_name, '') AS c3, (CASE WHEN (btrim((coalesce(n2.p_description, ''))::text) <> '') THEN to_jsonb(to_jsonb(n2.p_description)) ELSE to_jsonb(coalesce(n2.p_analyzed_description, '')) END) AS c4, og_type_name(og_id_type(u4.eid)) AS c5 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char") u4\n  CROSS JOIN og_data.v_213 n2\n WHERE (og_node_json(n1.id) -> 'id') = ($1 -> 'id')\n   AND (og_node_json(n1.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n   AND n2.p_graph_owner = ($1 ->> 'graph_owner')\n   AND n2.id = u4.nbr\n   AND (((($1 ->> 'rels')::jsonb) @> to_jsonb(og_type_name(og_id_type(u4.eid)))) AND (n2.p_id IS NOT NULL))\n) t
+=== read analyzer-6ea2a0f3b5 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 3}
+COLS ["id", "score"]
+RUN XX000 cypher error: there is no index named 'analyzer_search_vec'; none have been created in this graph
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 there is no index named 'analyzer_search_vec'; none have been created in this graph
+=== read analyzer-51fc0500c4 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 3}
+COLS ["eid", "tb"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('eid', t.c0, 'tb', t.c1) AS row FROM (\nSELECT (n1.id)::text AS c0, coalesce(jsonb_agg(jsonb_build_object('rel', to_jsonb(og_type_name(og_id_type(u4.eid))), 't', to_jsonb(to_jsonb(n2.p_name)))) FILTER (WHERE (jsonb_build_object('rel', to_jsonb(og_type_name(og_id_type(u4.eid))), 't', to_jsonb(to_jsonb(n2.p_name)))) IS NOT NULL), '[]'::jsonb) AS c1 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  LEFT JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char") u4 ON (((($1 ->> 'rels')::jsonb) @> to_jsonb(og_type_name(og_id_type(u4.eid)))))\n  LEFT JOIN og_data.v_213 n2 ON (n2.p_graph_owner = ($1 ->> 'graph_owner')) AND (n2.id = u4.nbr)\n WHERE (og_node_json(n1.id) -> 'id') = ($1 -> 'id')\n   AND (og_node_json(n1.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n GROUP BY (n1.id)::text\n) t
+=== read analyzer-9308740bbb read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0) AS row FROM (\nSELECT DISTINCT (og_node_json(n2.id) -> 'id') AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir IN ('o','i') AND adj3.etype = ANY(ARRAY[]::int4[])) u4\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE (og_node_json(n1.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n   AND (og_node_json(n2.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n   AND n2.id = u4.nbr\n   AND (((($1 ->> 'ids')::jsonb) @> to_jsonb((og_node_json(n1.id) -> 'id'))) AND ((og_node_json(n2.id)->>'id') IS NOT NULL))\n) t
+=== read analyzer-e500f9a281 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id", "v"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'v', t.c1) AS row FROM (\nSELECT (og_node_json(n1.id) -> 'id') AS c0, (og_node_json(n1.id) -> 'search_embedding') AS c1 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE (og_node_json(n1.id) -> 'graph_owner') = ($1 -> 'graph_owner')\n   AND (((($1 ->> 'ids')::jsonb) @> to_jsonb((og_node_json(n1.id) -> 'id'))) AND ((og_node_json(n1.id)->>'search_embedding') IS NOT NULL))\n) t
+=== read analyzer-a1f91d4b6d read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["id", "datasource", "schema", "name"]
+RUN rows=2
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('id', t.c0, 'datasource', t.c1, 'schema', t.c2, 'name', t.c3) AS row FROM (\nSELECT (n1.id)::text AS c0, to_jsonb(n1.p_datasource) AS c1, to_jsonb(n1.p_schema) AS c2, to_jsonb(n1.p_name) AS c3 FROM og_data.v_213 n1\n WHERE ((n1.p__owner = ($1 ->> 'owner')) AND ((($1 ->> 'datasources')::jsonb) @> to_jsonb(to_jsonb(n1.p_datasource))))\n) t
+=== read analyzer-f83eace09f read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["rid", "type", "props", "sid", "from_datasource", "from_schema", "from_table", "tid", "to_datasource", "to_schema", "to_table"]
+RUN rows=4
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('rid', t.c0, 'type', t.c1, 'props', t.c2, 'sid', t.c3, 'from_datasource', t.c4, 'from_schema', t.c5, 'from_table', t.c6, 'tid', t.c7, 'to_datasource', t.c8, 'to_schema', t.c9, 'to_table', t.c10) AS row FROM (\nSELECT (u4.eid)::text AS c0, og_type_name(og_id_type(u4.eid)) AS c1, (((og_edge_json(u4.eid)) - '_id' - '_type' - '_src' - '_dst') || '{}'::jsonb) AS c2, (n1.id)::text AS c3, to_jsonb(n1.p_datasource) AS c4, to_jsonb(n1.p_schema) AS c5, to_jsonb(n1.p_name) AS c6, (n2.id)::text AS c7, to_jsonb(n2.p_datasource) AS c8, to_jsonb(n2.p_schema) AS c9, to_jsonb(n2.p_name) AS c10 FROM og_data.v_213 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char") u4\n  CROSS JOIN og_data.v_213 n2\n WHERE n2.id = u4.nbr\n   AND ((((n1.p__owner = ($1 ->> 'owner')) AND (n2.p__owner = ($1 ->> 'owner'))) AND ((($1 ->> 'datasources')::jsonb) @> to_jsonb(to_jsonb(n1.p_datasource)))) AND ((jsonb_build_array(to_jsonb('FK'::text), to_jsonb('FK_CANDIDATE'::text))) @> to_jsonb(og_type_name(og_id_type(u4.eid)))))\n) t
+=== read analyzer-b7682eaec5 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 4}
+COLS ["datasource", "schema", "name", "table_type", "columns"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('datasource', t.c0, 'schema', t.c1, 'name', t.c2, 'table_type', t.c3, 'columns', t.c4) AS row FROM (\nSELECT ((w5."table") -> 'datasource') AS c0, ((w5."table") -> 'schema') AS c1, ((w5."table") -> 'name') AS c2, ((w5."table") -> 'table_type') AS c3, (SELECT coalesce(jsonb_agg(lc6.v), '[]'::jsonb) FROM jsonb_array_elements((coalesce(jsonb_agg(jsonb_build_object('name', to_jsonb(((w5."column") -> 'name')), 'data_type', to_jsonb(((w5."column") -> 'data_type')), 'nullable', to_jsonb(((w5."column") -> 'nullable')), 'primary_key', to_jsonb(((w5."column") -> 'primary_key')), 'unique', to_jsonb(((w5."column") -> 'unique')))) FILTER (WHERE (jsonb_build_object('name', to_jsonb(((w5."column") -> 'name')), 'data_type', to_jsonb(((w5."column") -> 'data_type')), 'nullable', to_jsonb(((w5."column") -> 'nullable')), 'primary_key', to_jsonb(((w5."column") -> 'primary_key')), 'unique', to_jsonb(((w5."column") -> 'unique')))) IS NOT NULL), '[]'::jsonb))::jsonb) AS lc6(v) WHERE ((NULLIF(lc6.v, 'null'::jsonb) ->> 'name') IS NOT NULL)) AS c4, ((w5."table") -> 'datasource') AS o0, ((w5."table") -> 'schema') AS o1, ((w5."table") -> 'name') AS o2 FROM (SELECT to_jsonb(t.c0) AS "table", to_jsonb(t.c1) AS "column" FROM (\nSELECT (CASE WHEN n1.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n1.id, '_type', og_type_name(n1.type_id), '_owner', to_jsonb(n1.p__owner), 'analyzed_description', to_jsonb(n1.p_analyzed_description), 'comment', to_jsonb(n1.p_comment), 'datasource', to_jsonb(n1.p_datasource), 'db', to_jsonb(n1.p_db), 'description', to_jsonb(n1.p_description), 'description_source', to_jsonb(n1.p_description_source), 'graph_owner', to_jsonb(n1.p_graph_owner), 'id', to_jsonb(n1.p_id), 'logical_name', to_jsonb(n1.p_logical_name), 'name', to_jsonb(n1.p_name), 'schema', to_jsonb(n1.p_schema), 'schema_name', to_jsonb(n1.p_schema_name), 'summary', to_jsonb(n1.p_summary), 'table_type', to_jsonb(n1.p_table_type))) || COALESCE(n1.__ext,'{}'::jsonb) END) AS c0, (CASE WHEN n2.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n2.id, '_type', og_type_name(n2.type_id), '_owner', to_jsonb(n2.p__owner), 'analyzed_description', to_jsonb(n2.p_analyzed_description), 'comment', to_jsonb(n2.p_comment), 'data_type', to_jsonb(n2.p_data_type), 'default_value', to_jsonb(n2.p_default_value), 'description', to_jsonb(n2.p_description), 'description_source', to_jsonb(n2.p_description_source), 'dtype', to_jsonb(n2.p_dtype), 'graph_owner', to_jsonb(n2.p_graph_owner), 'id', to_jsonb(n2.p_id), 'is_primary_key', to_jsonb(n2.p_is_primary_key), 'is_unique', to_jsonb(n2.p_is_unique), 'logical_name', to_jsonb(n2.p_logical_name), 'name', to_jsonb(n2.p_name), 'nullable', to_jsonb(n2.p_nullable), 'primary_key', to_jsonb(n2.p_primary_key), 'summary', to_jsonb(n2.p_summary), 'unique', to_jsonb(n2.p_unique))) || COALESCE(n2.__ext,'{}'::jsonb) END) AS c1, n2.p_name AS o0 FROM og_data.v_213 n1\n  LEFT JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[220]::int4[])) u4 ON true\n  LEFT JOIN og_data.v_203 n2 ON (n2.p__owner = ($1 ->> 'owner')) AND (n2.id = u4.nbr)\n WHERE (((n1.p__owner = ($1 ->> 'owner')) AND ((($1 ->> 'datasources')::jsonb) @> to_jsonb(to_jsonb(n1.p_datasource)))) AND ((($1 ->> 'schema') IS NULL) OR (n1.p_schema = ($1 ->> 'schema'))))\n) t\n ORDER BY t.o0) AS w5("table", "column")\n GROUP BY ((w5."table") -> 'datasource'), ((w5."table") -> 'schema'), ((w5."table") -> 'name'), ((w5."table") -> 'table_type')\n) t\n ORDER BY t.o0, t.o1, t.o2
+=== read analyzer-0d01666842 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["from_datasource", "from_schema", "from_table", "from_column", "to_datasource", "to_schema", "to_table", "to_column"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('from_datasource', t.c0, 'from_schema', t.c1, 'from_table', t.c2, 'from_column', t.c3, 'to_datasource', t.c4, 'to_schema', t.c5, 'to_table', t.c6, 'to_column', t.c7) AS row FROM (\nSELECT to_jsonb(n1.p_datasource) AS c0, to_jsonb(n1.p_schema) AS c1, to_jsonb(n1.p_name) AS c2, (e5.__ext -> 'from_column') AS c3, to_jsonb(n2.p_datasource) AS c4, to_jsonb(n2.p_schema) AS c5, to_jsonb(n2.p_name) AS c6, (e5.__ext -> 'to_column') AS c7 FROM og_data.v_213 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[218]::int4[])) u4\n  JOIN og_data.ve_218 e5 ON e5.id = u4.eid\n  CROSS JOIN og_data.v_213 n2\n WHERE n2.id = u4.nbr\n   AND (((((n1.p__owner = ($1 ->> 'owner')) AND (n2.p__owner = ($1 ->> 'owner'))) AND ((($1 ->> 'datasources')::jsonb) @> to_jsonb(to_jsonb(n1.p_datasource)))) AND ((($1 ->> 'datasources')::jsonb) @> to_jsonb(to_jsonb(n2.p_datasource)))) AND (NOT (((e5.__ext->>'_owner') = ($1 ->> 'catalog_owner')) AND ((e5.__ext->>'description') = ($1 ->> 'inferred')))))\n) t
+=== read analyzer-a228bd4f6f read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["propertyKey"]
+RUN rows=46
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('propertyKey', t.c0) AS row FROM (\nSELECT cp1.k AS c0 FROM (SELECT DISTINCT p.name FROM og_catalog.property p JOIN og_catalog.type t ON t.type_id = p.type_id WHERE t.graph_id = 1) AS cp1(k)\n) t
+=== read analyzer-5c389ce25e read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["count"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('count', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE ((og_node_json(n1.id)->>'_owner') = 'analyzer')\n) t
+=== read analyzer-f042364e5b read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["nodeId", "labels", "props"]
+RUN rows=22
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('nodeId', t.c0, 'labels', t.c1, 'props', t.c2) AS row FROM (\nSELECT (n1.id)::text AS c0, to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n1.type_id)) AS t)) AS c1, (((og_node_json(n1.id)) - '_id' - '_type' - '_src' - '_dst') || jsonb_build_object('embedding', 'null'::jsonb)) AS c2 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE ((og_node_json(n1.id)->>'_owner') = 'analyzer')\n) t
+=== read analyzer-69f2970e5f read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["relId", "startId", "endId", "relType", "props"]
+RUN rows=14
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('relId', t.c0, 'startId', t.c1, 'endId', t.c2, 'relType', t.c3, 'props', t.c4) AS row FROM (\nSELECT (u4.eid)::text AS c0, (n1.id)::text AS c1, (n2.id)::text AS c2, og_type_name(og_id_type(u4.eid)) AS c3, (((og_edge_json(u4.eid)) - '_id' - '_type' - '_src' - '_dst') || jsonb_build_object('embedding', 'null'::jsonb)) AS c4 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char") u4\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE n2.id = u4.nbr\n   AND (((og_node_json(n1.id)->>'_owner') = 'analyzer') AND ((og_node_json(n2.id)->>'_owner') = 'analyzer'))\n) t
+=== read analyzer-8ee2b93393 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["from_table", "from_schema", "from_desc", "to_table", "to_schema", "to_desc", "source_column", "target_column", "source", "rel_type"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('from_table', t.c0, 'from_schema', t.c1, 'from_desc', t.c2, 'to_table', t.c3, 'to_schema', t.c4, 'to_desc', t.c5, 'source_column', t.c6, 'target_column', t.c7, 'source', t.c8, 'rel_type', t.c9) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0, coalesce(n1.p_schema_name, n1.p_schema) AS c1, to_jsonb(n1.p_description) AS c2, to_jsonb(n2.p_name) AS c3, coalesce(n2.p_schema_name, n2.p_schema) AS c4, to_jsonb(n2.p_description) AS c5, (e5.__ext -> 'from_column') AS c6, (e5.__ext -> 'to_column') AS c7, (e5.__ext -> '_owner') AS c8, og_type_name(e5.type_id) AS c9 FROM og_data.v_213 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[218]::int4[])) u4\n  JOIN og_data.ve_218 e5 ON e5.id = u4.eid\n  CROSS JOIN og_data.v_213 n2\n WHERE n2.id = u4.nbr\n   AND (((n1.p__owner = ($1 ->> 'owner')) AND (n2.p__owner = ($1 ->> 'owner'))) AND ((((n1.p_name = ($1 ->> 'table_name')) OR (n2.p_name = ($1 ->> 'table_name'))) OR ((n1.id)::text LIKE '%' || (($1 ->> 'table_name'))::text)) OR ((n2.id)::text LIKE '%' || (($1 ->> 'table_name'))::text)))\n) t
+=== read analyzer-25633efcc8 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["name", "table_name", "data_type", "nullable", "logical_name", "description", "summary"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('name', t.c0, 'table_name', t.c1, 'data_type', t.c2, 'nullable', t.c3, 'logical_name', t.c4, 'description', t.c5, 'summary', t.c6) AS row FROM (\nSELECT to_jsonb(n2.p_name) AS c0, to_jsonb(n1.p_name) AS c1, to_jsonb(n2.p_data_type) AS c2, coalesce(n2.p_nullable, true) AS c3, coalesce(n2.p_logical_name, '') AS c4, coalesce(n2.p_description, '') AS c5, coalesce(n2.p_summary, '') AS c6, n2.p_name AS o0 FROM og_data.v_213 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[220]::int4[])) u4\n  CROSS JOIN og_data.v_203 n2\n WHERE n2.id = u4.nbr\n   AND (((n1.p__owner = ($1 ->> 'owner')) AND (n2.p__owner = ($1 ->> 'owner'))) AND (((n1.p_name = ($1 ->> 'table_name')) OR ((n1.id)::text LIKE '%' || (($1 ->> 'table_name'))::text)) AND (n1.p_schema = ($1 ->> 'schema'))))\n) t\n ORDER BY t.o0
+=== read analyzer-77f4d8c070 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 4}
+COLS ["procedure_name", "procedure_type", "access_type", "start_line", "end_line", "statement_type", "statement_line", "evidence_line", "file_path", "code_text"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('procedure_name', t.c0, 'procedure_type', t.c1, 'access_type', t.c2, 'start_line', t.c3, 'end_line', t.c4, 'statement_type', t.c5, 'statement_line', t.c6, 'evidence_line', t.c7, 'file_path', t.c8, 'code_text', t.c9) AS row FROM (\nSELECT DISTINCT coalesce(NULLIF(to_jsonb(((w8."owner_node") -> 'name')), 'null'::jsonb), NULLIF(to_jsonb(((w8."owner_node") -> '_id')), 'null'::jsonb)) AS c0, (to_jsonb(to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(og_id_type(((w8."owner_node") ->> '_id')::int8))) AS t))) -> 0) AS c1, og_type_name(og_id_type(((w8."access") ->> '_id')::int8)) AS c2, ((w8."owner_node") -> 'start_line') AS c3, ((w8."owner_node") -> 'end_line') AS c4, (to_jsonb(to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(og_id_type(((w8."source") ->> '_id')::int8))) AS t))) -> 0) AS c5, ((w8."source") -> 'start_line') AS c6, ((w8."source") -> 'start_line') AS c7, ((w8."owner_node") -> 'file_path') AS c8, ((w8."owner_node") -> 'code_text') AS c9, coalesce(NULLIF(to_jsonb(((w8."owner_node") -> 'name')), 'null'::jsonb), NULLIF(to_jsonb(((w8."owner_node") -> '_id')), 'null'::jsonb)) AS o0, ((w8."source") -> 'start_line') AS o1 FROM (SELECT to_jsonb(t.c0) AS "source", to_jsonb(t.c1) AS "access", to_jsonb(t.c2) AS "owner_node" FROM (\nSELECT og_node_json(n1.id) AS c0, og_edge_json(u4.eid) AS c1, coalesce(NULLIF(to_jsonb(og_node_json(n5.id)), 'null'::jsonb), NULLIF(to_jsonb(og_node_json(n1.id)), 'null'::jsonb)) AS c2 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[]::int4[])) u4\n  CROSS JOIN og_data.v_213 n2\n  LEFT JOIN LATERAL og_vlp(n1.id, ARRAY[]::int4[], 'i'::"char", 0, 8) vl6 ON true\n  LEFT JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n5 ON (n5.id = vl6.node) AND ((((og_node_json(n5.id)->>'_owner') = ($1 ->> 'owner')) AND (EXISTS (SELECT 1 FROM jsonb_array_elements((to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n5.type_id)) AS t)))::jsonb) AS lp7(v) WHERE ((jsonb_build_array(to_jsonb('FUNCTION'::text), to_jsonb('PROCEDURE'::text), to_jsonb('METHOD'::text), to_jsonb('TRIGGER'::text))) @> to_jsonb(NULLIF(lp7.v, 'null'::jsonb)))))))\n WHERE n2.id = u4.nbr\n   AND ((((og_node_json(n1.id)->>'_owner') = ($1 ->> 'owner')) AND (n2.p__owner = ($1 ->> 'owner'))) AND ((n2.p_name = ($1 ->> 'table_name')) OR ((n2.id)::text LIKE '%' || (($1 ->> 'table_name'))::text)))\n) t) AS w8("source", "access", "owner_node")\n) t\n ORDER BY t.o0, t.o1
+=== read analyzer-7a0ec4c538 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["start_line", "end_line", "statement_type", "summary"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('start_line', t.c0, 'end_line', t.c1, 'statement_type', t.c2, 'summary', t.c3) AS row FROM (\nSELECT (og_node_json(n2.id) -> 'start_line') AS c0, (og_node_json(n2.id) -> 'end_line') AS c1, (to_jsonb(to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n2.type_id)) AS t))) -> 0) AS c2, (og_node_json(n2.id) -> 'summary') AS c3, (og_node_json(n2.id)->>'start_line') AS o0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL og_vlp(n1.id, ARRAY[]::int4[], 'o'::"char", 1, 1) vl3\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE n2.id = vl3.node\n   AND (((((og_node_json(n1.id)->>'_owner') = ($1 ->> 'owner')) AND ((og_node_json(n2.id)->>'_owner') = ($1 ->> 'owner'))) AND ((og_node_json(n1.id)->>'name') = ($1 ->> 'procedure_name'))) AND ((og_node_json(n1.id)->>'file_path') = ($1 ->> 'file_path')))\n) t\n ORDER BY t.o0
+=== read analyzer-28541ef93f read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["from_table", "from_schema", "from_column", "to_table", "to_schema", "to_column", "relationship_type", "description"]
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('from_table', t.c0, 'from_schema', t.c1, 'from_column', t.c2, 'to_table', t.c3, 'to_schema', t.c4, 'to_column', t.c5, 'relationship_type', t.c6, 'description', t.c7) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0, to_jsonb(n1.p_schema) AS c1, (e5.__ext -> 'from_column') AS c2, to_jsonb(n2.p_name) AS c3, to_jsonb(n2.p_schema) AS c4, (e5.__ext -> 'to_column') AS c5, 'FK' AS c6, coalesce(NULLIF(to_jsonb((e5.__ext -> 'description')), 'null'::jsonb), NULLIF(to_jsonb(''::text), 'null'::jsonb)) AS c7, n1.p_name AS o0, n2.p_name AS o1, (e5.__ext -> 'from_column') AS o2, (e5.__ext -> 'to_column') AS o3 FROM og_data.v_213 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[218]::int4[])) u4\n  JOIN og_data.ve_218 e5 ON e5.id = u4.eid\n  CROSS JOIN og_data.v_213 n2\n WHERE n2.id = u4.nbr\n   AND (((n1.p__owner = ($1 ->> 'owner')) AND (n2.p__owner = ($1 ->> 'owner'))) AND ((($1 ->> 'relationship_owners')::jsonb) @> to_jsonb((e5.__ext -> '_owner'))))\n) t\n ORDER BY t.o0, t.o1, t.o2, t.o3
+=== read analyzer-4d9978c9ba read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 3}
+COLS ["table_name", "schema_name", "columns"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('table_name', t.c0, 'schema_name', t.c1, 'columns', t.c2) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0, to_jsonb(n1.p_schema) AS c1, coalesce(jsonb_agg(jsonb_build_object('name', to_jsonb(to_jsonb(n2.p_name)), 'data_type', to_jsonb(to_jsonb(n2.p_data_type)), 'description', to_jsonb(to_jsonb(n2.p_description)))) FILTER (WHERE (jsonb_build_object('name', to_jsonb(to_jsonb(n2.p_name)), 'data_type', to_jsonb(to_jsonb(n2.p_data_type)), 'description', to_jsonb(to_jsonb(n2.p_description)))) IS NOT NULL), '[]'::jsonb) AS c2 FROM og_data.v_213 n1\n  LEFT JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[220]::int4[])) u4 ON true\n  LEFT JOIN og_data.v_203 n2 ON (n2.p__owner = ($1 ->> 'owner')) AND (n2.id = u4.nbr)\n WHERE (((n1.p__owner = ($1 ->> 'owner')) AND (n1.p_datasource = ($1 ->> 'datasource'))) AND ((n1.p_description IS NULL) OR (n1.p_description = '')))\n GROUP BY to_jsonb(n1.p_name), to_jsonb(n1.p_schema)\n) t
+=== read analyzer-7e6868a940 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 4}
+COLS ["name", "schema", "datasource", "logical_name", "description", "summary", "column_count"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('name', t.c0, 'schema', t.c1, 'datasource', t.c2, 'logical_name', t.c3, 'description', t.c4, 'summary', t.c5, 'column_count', t.c6) AS row FROM (\nSELECT ((w5."table") -> 'name') AS c0, ((w5."table") -> 'schema') AS c1, ((w5."table") -> 'datasource') AS c2, ((w5."table") -> 'logical_name') AS c3, ((w5."table") -> 'description') AS c4, ((w5."table") -> 'summary') AS c5, w5."column_count" AS c6, (w5."table" ->> 'datasource') AS o0, (w5."table" ->> 'schema') AS o1, (w5."table" ->> 'name') AS o2 FROM (SELECT to_jsonb(t.c0) AS "table", to_jsonb(t.c1) AS "column_count" FROM (\nSELECT (CASE WHEN n1.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n1.id, '_type', og_type_name(n1.type_id), '_owner', to_jsonb(n1.p__owner), 'analyzed_description', to_jsonb(n1.p_analyzed_description), 'comment', to_jsonb(n1.p_comment), 'datasource', to_jsonb(n1.p_datasource), 'db', to_jsonb(n1.p_db), 'description', to_jsonb(n1.p_description), 'description_source', to_jsonb(n1.p_description_source), 'graph_owner', to_jsonb(n1.p_graph_owner), 'id', to_jsonb(n1.p_id), 'logical_name', to_jsonb(n1.p_logical_name), 'name', to_jsonb(n1.p_name), 'schema', to_jsonb(n1.p_schema), 'schema_name', to_jsonb(n1.p_schema_name), 'summary', to_jsonb(n1.p_summary), 'table_type', to_jsonb(n1.p_table_type))) || COALESCE(n1.__ext,'{}'::jsonb) END) AS c0, count(n2.id) AS c1 FROM og_data.v_213 n1\n  LEFT JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[220]::int4[])) u4 ON true\n  LEFT JOIN og_data.v_203 n2 ON (n2.p__owner = ($1 ->> 'owner')) AND (n2.id = u4.nbr)\n WHERE ((n1.p__owner = ($1 ->> 'owner')) AND (n1.p_schema = ($1 ->> 'schema')))\n GROUP BY (CASE WHEN n1.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n1.id, '_type', og_type_name(n1.type_id), '_owner', to_jsonb(n1.p__owner), 'analyzed_description', to_jsonb(n1.p_analyzed_description), 'comment', to_jsonb(n1.p_comment), 'datasource', to_jsonb(n1.p_datasource), 'db', to_jsonb(n1.p_db), 'description', to_jsonb(n1.p_description), 'description_source', to_jsonb(n1.p_description_source), 'graph_owner', to_jsonb(n1.p_graph_owner), 'id', to_jsonb(n1.p_id), 'logical_name', to_jsonb(n1.p_logical_name), 'name', to_jsonb(n1.p_name), 'schema', to_jsonb(n1.p_schema), 'schema_name', to_jsonb(n1.p_schema_name), 'summary', to_jsonb(n1.p_summary), 'table_type', to_jsonb(n1.p_table_type))) || COALESCE(n1.__ext,'{}'::jsonb) END)\n) t) AS w5("table", "column_count")\n) t\n ORDER BY t.o0, t.o1, t.o2\n LIMIT ($1 ->> 'limit')::int8
+=== read analyzer-82773beb3e fabric-read graph=analyzer_run
+CHECK {"ok": true, "write": false, "fabric": true, "clauses": 1}
+COLS ["name", "engine", "host", "tables", "credentials"]
+RUN rows=2
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT d.name, d.engine, d.options->>'host' AS host, (SELECT count(*) FROM pg_foreign_table ft JOIN pg_foreign_server s ON s.oid = ft.ftserver WHERE s.srvname = d.server_name) AS tables, coalesce(d.options->>'credentials', 'inline') AS credentials FROM og_catalog.datasource d ORDER BY d.name
+=== read analyzer-1be7d75919 fabric-read graph=analyzer_run
+CHECK {"ok": true, "write": false, "fabric": true, "clauses": 1}
+COLS ["table", "columns", "virtual_node", "kind", "primary_key"]
+RUN rows=4
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT n.nspname || '.' || c.relname AS "table", (SELECT count(*) FROM pg_attribute a WHERE a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped) AS columns, (SELECT string_agg(t.name, ', ' ORDER BY t.name) FROM og_catalog.mapping m JOIN og_catalog.type t USING (type_id) WHERE to_regclass(m.source_table) = c.oid) AS virtual_node, d.options->'source_catalog'->'relations'->coalesce((SELECT o.option_value FROM pg_options_to_table(ft.ftoptions) o WHERE o.option_name = 'table_name'), c.relname::text)->>'kind' AS kind, d.options->'source_catalog'->'relations'->coalesce((SELECT o.option_value FROM pg_options_to_table(ft.ftoptions) o WHERE o.option_name = 'table_name'), c.relname::text)->'pk' AS primary_key FROM pg_foreign_table ft JOIN pg_foreign_server s ON s.oid = ft.ftserver JOIN og_catalog.datasource d ON d.server_name = s.srvname JOIN pg_class c ON c.oid = ft.ftrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE d.name = 'erp' ORDER BY 1
+=== read analyzer-ce5d1247e5 fabric-read graph=analyzer_run
+CHECK {"ok": true, "write": false, "fabric": true, "clauses": 1}
+COLS ["column", "type", "nullable", "key", "primary_key"]
+RUN rows=4
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT a.attname AS "column", format_type(a.atttypid, a.atttypmod) AS type, NOT a.attnotnull AS nullable, EXISTS (SELECT 1 FROM og_catalog.mapping m WHERE to_regclass(m.source_table) = c.oid AND m.id_column = a.attname) AS key, CASE WHEN d.options->'source_catalog'->'relations'->coalesce((SELECT o.option_value FROM pg_options_to_table(ft.ftoptions) o WHERE o.option_name = 'table_name'), c.relname::text) IS NULL THEN NULL ELSE coalesce(d.options->'source_catalog'->'relations'->coalesce((SELECT o.option_value FROM pg_options_to_table(ft.ftoptions) o WHERE o.option_name = 'table_name'), c.relname::text)->'pk', '[]'::jsonb) ? a.attname::text END AS primary_key FROM pg_foreign_table ft JOIN pg_foreign_server s ON s.oid = ft.ftserver JOIN og_catalog.datasource d ON d.server_name = s.srvname JOIN pg_class c ON c.oid = ft.ftrelid JOIN pg_namespace n ON n.oid = c.relnamespace JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped WHERE d.name = 'erp' AND c.relname = 'supplier' ORDER BY a.attnum
+=== read analyzer-a9667cec85 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["fid", "fname", "rel", "tid", "tname"]
+RUN 42804 COALESCE types text and bigint cannot be matched
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('fid', t.c0, 'fname', t.c1, 'rel', t.c2, 'tid', t.c3, 'tname', t.c4) AS row FROM (\nSELECT (n1.id)::text AS c0, coalesce(((og_node_json(n1.id)->>'logical_name'))::int8, ((og_node_json(n1.id)->>'name'))::int8, n1.id) AS c1, og_type_name(og_id_type(u4.eid)) AS c2, (n2.id)::text AS c3, coalesce(n2.p_logical_name, n2.p_name, n2.id) AS c4 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[]::int4[])) u4\n  CROSS JOIN og_data.v_213 n2\n WHERE n2.id = u4.nbr\n   AND (((og_node_json(n1.id)->>'_owner') = 'analyzer') AND (n2.p__owner = 'analyzer'))\n) t
+=== read analyzer-cd5b1715bc fabric-read graph=analyzer_run
+CHECK {"ok": true, "write": false, "fabric": true, "clauses": 1}
+COLS ["column", "type", "nullable", "key", "sampled", "nulls", "distinct", "unique", "top_values", "samples", "primary_key"]
+RUN rows=4
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT x->>'column' AS "column", x->>'type' AS type, (x->>'nullable')::boolean AS nullable, (x->>'key')::boolean AS key, (x->>'sampled')::bigint AS sampled, (x->>'nulls')::bigint AS nulls, (x->>'distinct')::bigint AS "distinct", (x->>'unique')::boolean AS "unique", x->'top_values' AS top_values, x->'samples' AS samples, (x->>'primary_key')::boolean AS primary_key FROM jsonb_array_elements(og_fabric_column_stats('erp', 'supplier', 1000)) x
+=== read analyzer-4a4be9fa7d fabric-read graph=analyzer_run
+CHECK {"ok": true, "write": false, "fabric": true, "clauses": 1}
+COLS ["graph", "types"]
+RUN rows=4
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT g.name AS graph, (SELECT count(*) FROM og_catalog.type t WHERE t.graph_id = g.graph_id) AS types FROM og_catalog.graph g ORDER BY 1
+=== read analyzer-5951c818a5 fabric-read graph=analyzer_run
+CHECK {"ok": true, "write": false, "fabric": true, "clauses": 1}
+COLS ["node", "source", "key", "properties", "storage"]
+RUN rows=2
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT t.name AS node, replace(m.source_table, chr(34), '') AS source, m.id_column AS key, (SELECT count(*) FROM og_catalog.property p WHERE p.type_id = t.type_id) AS properties, CASE WHEN c.relkind = 'v' THEN 'virtual' ELSE 'materialized' END AS storage FROM og_catalog.mapping m JOIN og_catalog.type t USING (type_id) JOIN og_catalog.graph g USING (graph_id) JOIN pg_class c ON c.oid = to_regclass(t.storage_table) WHERE g.name = 'analyzer_run' ORDER BY 1
+=== read analyzer-44c9cff933 fabric-read graph=analyzer_run
+CHECK {"ok": true, "write": false, "fabric": true, "clauses": 1}
+COLS ["relationship", "from", "to"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT r.name AS relationship, s.name || '.' || v.src_prop AS "from", d.name || '.' || v.dst_prop AS "to" FROM og_catalog.virtual_rel v JOIN og_catalog.type r ON r.type_id = v.type_id JOIN og_catalog.type s ON s.type_id = v.src_type JOIN og_catalog.type d ON d.type_id = v.dst_type JOIN og_catalog.graph g ON g.graph_id = r.graph_id WHERE g.name = 'analyzer_run' ORDER BY 1
+=== read analyzer-9e8310341c fabric-read graph=analyzer_run
+CHECK {"ok": true, "write": false, "fabric": true, "clauses": 1}
+COLS ["sampled", "matched", "ratio", "parent_sampled", "parent_distinct", "parent_unique", "parent_key", "compare"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT (x->>'sampled')::bigint AS sampled, (x->>'matched')::bigint AS matched, (x->>'ratio')::float8 AS ratio, (x->>'parent_sampled')::bigint AS parent_sampled, (x->>'parent_distinct')::bigint AS parent_distinct, (x->>'parent_unique')::boolean AS parent_unique, (x->>'parent_key')::boolean AS parent_key, x->>'compare' AS compare FROM (SELECT og_fabric_value_overlap('erp', 'purchase_order', 'supplier_id', 'erp', 'supplier', 'supplier_id', 1000) AS x) s
+=== read analyzer-0c0b8138a8 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["fqn"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('fqn', t.c0) AS row FROM (\nSELECT DISTINCT coalesce(((((n1.p_schema)::text || ('.')::text))::text || (n1.p_name)::text), n1.p_name) AS c0 FROM og_data.v_213 n1\n WHERE ((n1.p__owner = ($1 ->> 'owner')) AND (n1.p_datasource = ($1 ->> 'ds')))\n) t
+=== read analyzer-fcb5f4deb1 read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["name", "data_type", "description", "primary_key", "nullable"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('name', t.c0, 'data_type', t.c1, 'description', t.c2, 'primary_key', t.c3, 'nullable', t.c4) AS row FROM (\nSELECT to_jsonb(n2.p_name) AS c0, to_jsonb(n2.p_data_type) AS c1, to_jsonb(n2.p_description) AS c2, to_jsonb(n2.p_primary_key) AS c3, to_jsonb(n2.p_nullable) AS c4, n2.p_name AS o0 FROM og_data.v_213 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[220]::int4[])) u4\n  CROSS JOIN og_data.v_203 n2\n WHERE n2.id = u4.nbr\n   AND (((n1.p__owner = ($1 ->> 'owner')) AND (n2.p__owner = ($1 ->> 'owner'))) AND (((n1.p_name = ($1 ->> 'name')) AND ((($1 ->> 'schema') = '') OR (n1.p_schema = ($1 ->> 'schema')))) OR (n1.id = ($1 ->> 'fqn')::int8)))\n) t\n ORDER BY t.o0
+=== read analyzer-9ecaa5921b read graph=analyzer_run
+CHECK {"ok": true, "write": false, "clauses": 2}
+COLS ["name", "schema", "description"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL SELECT jsonb_build_object('name', t.c0, 'schema', t.c1, 'description', t.c2) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0, to_jsonb(n1.p_schema) AS c1, to_jsonb(n1.p_description) AS c2, n1.p_name AS o0 FROM og_data.v_213 n1\n WHERE (((n1.p__owner = ($1 ->> 'owner')) AND (n1.p_description IS NOT NULL)) AND (n1.p_description <> ''))\n) t\n ORDER BY t.o0\n LIMIT 200
+=== scenario robo-data-analyzer:graph/edges/affects_table.py graph=analyzer_run
+=== step analyzer-b6bdbba3e7 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 2, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 2, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/belongs_to.py graph=analyzer_run
+=== step analyzer-4a7c5c0698 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 2, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/calls.py graph=analyzer_run
+=== step analyzer-abea97f45b write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 5}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 4, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 2, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-897d7c528c write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 9}
+COLS []
+RUN rows=0
+STATS {"labels-added": 4, "indexes-added": 0, "nodes-created": 4, "nodes-deleted": 0, "properties-set": 28, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 4, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-f80eb1b761 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 5}
+COLS []
+RUN rows=0
+STATS {"labels-added": 2, "indexes-added": 0, "nodes-created": 2, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 2, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/external_links.py graph=analyzer_run
+=== step analyzer-0f0f302365 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/fk.py graph=analyzer_run
+=== step analyzer-7160c9983e write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 5}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 8, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 2, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/has_column.py graph=analyzer_run
+=== step analyzer-e10822cd38 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/has_example.py graph=analyzer_run
+=== step analyzer-87446775c2 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 5}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 4, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 2, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/has_member.py graph=analyzer_run
+=== step analyzer-36224ba15a write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/has_question.py graph=analyzer_run
+=== step analyzer-c645bde46e write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 2, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/has_rule.py graph=analyzer_run
+=== step analyzer-76bb38717e write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 6}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 8, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 2, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/init_by.py graph=analyzer_run
+=== step analyzer-1026afba5a write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 2, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/next.py graph=analyzer_run
+=== step analyzer-da835b3c14 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 2, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/parent_of.py graph=analyzer_run
+=== step analyzer-0d107dc64d write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 2, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/reads_writes.py graph=analyzer_run
+=== step analyzer-6ffc7ad738 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 5}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/edges/references.py graph=analyzer_run
+=== step analyzer-5eccc5d9d6 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 5}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 2, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 2, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/node_upsert.py graph=analyzer_run
+=== step analyzer-67f14a7dc6 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS ["created"]
+RUN rows=1
+STATS {"labels-added": 2, "indexes-added": 0, "nodes-created": 2, "nodes-deleted": 0, "properties-set": 8, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/nodes/code_node.py graph=analyzer_run
+=== step analyzer-7735797b58 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/nodes/column.py graph=analyzer_run
+=== step analyzer-35d48a45d9 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS ["created"]
+RUN 0A000 cannot alter type of a column used by a view or rule
+STATS {"labels-added": 2, "indexes-added": 0, "nodes-created": 2, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-6234e05922 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/nodes/db_schema.py graph=analyzer_run
+=== step analyzer-a28cc50e5e write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS ["created"]
+RUN rows=1
+STATS {"labels-added": 2, "indexes-added": 0, "nodes-created": 2, "nodes-deleted": 0, "properties-set": 10, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/nodes/example.py graph=analyzer_run
+=== step analyzer-515858998b write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS []
+RUN rows=0
+STATS {"labels-added": 2, "indexes-added": 0, "nodes-created": 2, "nodes-deleted": 0, "properties-set": 12, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/nodes/package.py graph=analyzer_run
+=== step analyzer-ed4cfa65b2 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS ["created"]
+RUN rows=1
+STATS {"labels-added": 2, "indexes-added": 0, "nodes-created": 2, "nodes-deleted": 0, "properties-set": 8, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/nodes/question.py graph=analyzer_run
+=== step analyzer-9da393810f write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS []
+RUN rows=0
+STATS {"labels-added": 2, "indexes-added": 0, "nodes-created": 2, "nodes-deleted": 0, "properties-set": 10, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/nodes/rule.py graph=analyzer_run
+=== step analyzer-8054c7e4b7 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS []
+RUN rows=0
+STATS {"labels-added": 2, "indexes-added": 0, "nodes-created": 2, "nodes-deleted": 0, "properties-set": 8, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/nodes/table.py graph=analyzer_run
+=== step analyzer-92c8afee79 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS ["created"]
+RUN rows=1
+STATS {"labels-added": 2, "indexes-added": 0, "nodes-created": 2, "nodes-deleted": 0, "properties-set": 22, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-a0d7ceb893 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 6, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:graph/schema/constraints.py graph=analyzer_run
+=== step analyzer-bc3dee5fa4 schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN 23505 could not create unique index "uq_207_uniq_analyzer_owned"
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-0f9720f55e schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 1, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-3ec742058a schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 1, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-3e6ea09e40 schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 1, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-569bb04baa schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 1, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-91073909db schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 1, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-de8ed5ae09 schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 1, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-827e6103f5 schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 1, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-57311ca12b schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 1, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-b5418d64e1 schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 1, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-ef8cbd314c write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS ["migrated"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-dab27e80c0 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 22, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 14}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:pipeline/steps/step8_post_processing/build_components_step.py graph=analyzer_run
+=== step analyzer-c8bc8cef20 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 4, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:pipeline/steps/step8_post_processing/build_glossary_step.py graph=analyzer_run
+=== step analyzer-b3425d227e write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 4, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:pipeline/steps/step8_post_processing/embed_step.py graph=analyzer_run
+=== step analyzer-87b4a7bf2f schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 1, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-bcf75bf8a6 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 3, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-353f6d2010 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 4, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-075a526699 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 2, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:pipeline/steps/step8_post_processing/health_metrics_step.py graph=analyzer_run
+=== step analyzer-3e4e52a215 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 2, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-analyzer:scripts/reset_neo4j_schema.py graph=analyzer_run
+=== step analyzer-4969073e8e schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 1, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-e993747eff schema graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 1}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 1, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-catalog:enrichment/description.py graph=analyzer_run
+=== step analyzer-af27c1e73e write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS ["updated"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 1, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-eb4503359a write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS ["updated"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 1, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-catalog:enrichment/fk_store.py graph=analyzer_run
+=== step analyzer-13ec91aee9 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 6}
+COLS ["created"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-5c5855ae89 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 6}
+COLS ["created"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-c6b8b465f1 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 4}
+COLS ["updated"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-3d4e6d600c write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-catalog:graph/deletes.py graph=analyzer_run
+=== step analyzer-0cdf31fce2 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 2}
+COLS []
+RUN rows=0
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 22, "properties-set": 0, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 14}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-catalog:graph/schema_commands.py graph=analyzer_run
+=== step analyzer-7f7689e11f write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 5}
+COLS ["from_table", "to_table"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 4, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-417a23a3c1 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS ["name"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 1, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-c71db86114 write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS ["name"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 1, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== step analyzer-5412750f5d write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 3}
+COLS ["deleted"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== scenario robo-data-catalog:lineage/sql_extract.py graph=analyzer_run
+=== step analyzer-060316a90f write graph=analyzer_run
+CHECK {"ok": false, "error": "expected a name at offset 316, near: …)-[__cy_r__:%s {_owner: $catalog_own…"}
+COLS XX000 expected a name at offset 316, near: …)-[__cy_r__:%s {_owner: $catalog_own…
+RUN XX000 cypher parse error: expected a name at offset 316, near: …)-[__cy_r__:%s {_owner: $catalog_own…
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 0, "indexes-removed": 0, "contains-updates": false, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 0, "relationships-deleted": 0}
+SQL ERR XX000 expected a name at offset 316, near: …)-[__cy_r__:%s {_owner: $catalog_own…
+=== step analyzer-0922dffa2a write graph=analyzer_run
+CHECK {"ok": true, "write": true, "clauses": 5}
+COLS ["__cy_src__", "__cy_r__", "__cy_tgt__"]
+RUN rows=1
+STATS {"labels-added": 0, "indexes-added": 0, "nodes-created": 0, "nodes-deleted": 0, "properties-set": 3, "indexes-removed": 0, "contains-updates": true, "constraints-added": 0, "constraints-removed": 0, "relationships-created": 1, "relationships-deleted": 0}
+SQL ERR XX000 write queries are not compiled to a single statement

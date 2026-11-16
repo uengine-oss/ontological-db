@@ -1,0 +1,50 @@
+=== og_cypher graph=sec CREATE (:Person {name: "seed", salary: 1})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec CREATE (:Doc {title: "d1"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec MATCH (d:Doc) RETURN d.title
+SQL SELECT jsonb_build_object('d.title', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_title) AS c0 FROM og_data.v_3 n1\n) t
+=== og_cypher graph=sec CREATE (:Person {name: "w", mood: "fine"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec MATCH (p:Person {name: "w"}) RETURN p.mood AS m
+SQL SELECT jsonb_build_object('m', t.c0) AS row FROM (\nSELECT (n1.__ext -> 'mood') AS c0 FROM og_data.v_1 n1\n WHERE n1.p_name = 'w'\n) t
+=== og_cypher graph=sec CREATE (:Person {name: "c1"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec MATCH (p:Person {name: "c1"}) SET p.name = "c2"
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec CREATE (:Employee {name: "e1"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec CREATE (:Person {name: "c3", salary: 9})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec MATCH (p:Person {name: "c2"}) SET p.salary = 9
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec MATCH (p:Person {name: "c2"}) SET p.nick = "x"
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec MATCH (p:Person {name: "c2"}) DETACH DELETE p
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec CREATE (:Doc {title: "nope"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec CREATE (:Person {name: "r", _type: "Admin"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec MATCH (p:Person {name: "seed"}) SET p.__actor = "x"
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec CREATE (:Person {name: "stamped"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec MATCH (p:Person {name: "stamped"}) RETURN id(p) AS i
+SQL SELECT jsonb_build_object('i', t.c0) AS row FROM (\nSELECT n1.id AS c0 FROM og_data.v_1 n1\n WHERE n1.p_name = 'stamped'\n) t
+=== og_cypher graph=sec CREATE (:Contractor {name: "k"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec MATCH (p:Contractor) RETURN id(p) AS i
+SQL SELECT jsonb_build_object('i', t.c0) AS row FROM (\nSELECT n1.id AS c0 FROM og_data.v_4 n1\n) t
+=== og_cypher graph=sec CREATE (:Person {name: "rogue"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec MATCH (p:Person {name: "ada"}) RETURN p
+SQL SELECT jsonb_build_object('p', t.c0) AS row FROM (\nSELECT (CASE WHEN n1.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n1.id, '_type', og_type_name(n1.type_id), 'name', to_jsonb(n1.p_name), 'salary', to_jsonb(n1.p_salary))) || COALESCE(n1.__ext,'{}'::jsonb) END) AS c0 FROM og_data.v_1 n1\n WHERE n1.p_name = 'ada'\n) t
+=== og_cypher graph=sec MATCH (p:Person) RETURN count(p)
+SQL SELECT jsonb_build_object('count(p)', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM og_data.v_1 n1\n) t
+=== og_cypher graph=sec MATCH (p:Person) RETURN count(p) AS reasoned
+SQL SELECT jsonb_build_object('reasoned', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM og_data.v_1 n1\n) t
+=== og_cypher graph=sec CREATE (:Person {name: "late"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=sec MATCH (p:Person {name: "c2"}) SET p.name = "c4"
+SQL ERR XX000 write queries are not compiled to a single statement

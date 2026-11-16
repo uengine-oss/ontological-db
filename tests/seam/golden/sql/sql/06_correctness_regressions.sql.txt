@@ -1,0 +1,46 @@
+=== og_cypher graph=reg CREATE (:P {name:"a"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg CREATE (:P {name:"b"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg CREATE (:Q {name:"q1"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg CREATE (:Q {name:"q2"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg MATCH (p:P) RETURN p.name AS name UNION ALL MATCH (q:Q) RETURN q.name AS name
+SQL SELECT * FROM (\nSELECT jsonb_build_object('name', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0 FROM og_data.v_1 n1\n) t\n) AS ub_l\nUNION ALL\nSELECT * FROM (\nSELECT jsonb_build_object('name', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0 FROM og_data.v_2 n1\n) t\n) AS ub_r
+=== og_cypher graph=reg MATCH (p:P) RETURN p.name AS name UNION MATCH (q:Q) RETURN q.name AS name
+SQL SELECT * FROM (\nSELECT jsonb_build_object('name', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0 FROM og_data.v_1 n1\n) t\n) AS ub_l\nUNION\nSELECT * FROM (\nSELECT jsonb_build_object('name', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0 FROM og_data.v_2 n1\n) t\n) AS ub_r
+=== og_cypher graph=reg MATCH (p:P) SET p.name = p.name RETURN count(DISTINCT p.name) AS n
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg MATCH (p:P) SET p.name = p.name RETURN collect(DISTINCT p.name) AS c
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg MATCH (p:P) RETURN p.name AS name
+SQL SELECT jsonb_build_object('name', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0 FROM og_data.v_1 n1\n) t
+=== og_cypher graph=reg CREATE (:P {name:"s"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg CREATE (:P {name:"t1"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg CREATE (:P {name:"x"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg CREATE (:P {name:"y"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg CREATE (:P {name:"z"})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg MATCH (a:P {name:"s"}),(b:P {name:"t1"}) CREATE (a)-[:L]->(b)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg MATCH (a:P {name:"s"}),(b:P {name:"x"})  CREATE (a)-[:L]->(b)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg MATCH (a:P {name:"x"}),(b:P {name:"y"})  CREATE (a)-[:L]->(b)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg MATCH (a:P {name:"y"}),(b:P {name:"z"})  CREATE (a)-[:L]->(b)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg MATCH (a:P {name:"z"}),(b:P {name:"t1"}) CREATE (a)-[:L]->(b)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg MATCH (s:P {name:"s"})-[*2..4]->(m) RETURN DISTINCT m.name AS n
+SQL SELECT jsonb_build_object('n', t.c0) AS row FROM (\nSELECT DISTINCT (og_node_json(n2.id) -> 'name') AS c0 FROM og_data.v_1 n1\n  CROSS JOIN LATERAL og_vlp(n1.id, NULL::int4[], 'o'::"char", 2, 4) vl3\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE n1.p_name = 's'\n   AND n2.id = vl3.node\n) t
+=== og_cypher graph=reg MATCH (p:P) WHERE p.name = "a" RETURN p.name AS n
+SQL SELECT jsonb_build_object('n', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0 FROM og_data.v_1 n1\n WHERE (n1.p_name = 'a')\n) t
+=== og_cypher graph=reg MATCH (p:P) WHERE p.name = "a" WITH p LIMIT 1 DELETE p
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=reg MATCH (p:P) WITH count(p) AS c DELETE p
+SQL ERR XX000 write queries are not compiled to a single statement

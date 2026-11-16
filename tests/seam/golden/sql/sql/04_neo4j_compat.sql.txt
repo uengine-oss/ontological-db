@@ -1,0 +1,74 @@
+=== og_cypher graph=compat CREATE (n:_Entity:Doc {_source_id:'d1', title:'첫 문서'}) RETURN n
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=compat MERGE (n:_Entity:Doc {_source_id:'d2'})\n    ON CREATE SET n.created_at = datetime()\n    SET n.title = '둘째 문서', n.updated_at = datetime()\n    RETURN n.title
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=compat MATCH (n:Doc {_source_id:'d2'}) RETURN n.created_at IS NOT NULL AS stamped
+SQL SELECT jsonb_build_object('stamped', t.c0) AS row FROM (\nSELECT ((og_node_json(n1.id)->>'created_at') IS NOT NULL) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE false\n   AND (og_node_json(n1.id) -> '_source_id') = to_jsonb('d2'::text)\n) t
+=== og_cypher graph=compat MATCH (n:_Entity:Doc) RETURN count(n) AS cnt
+SQL SELECT jsonb_build_object('cnt', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE false\n) t
+=== og_cypher graph=compat MATCH (a:Doc {_source_id:'d1'}) MATCH (b:Doc {_source_id:'d2'})\n    MERGE (a)-[r:CONTAINS]->(b) ON CREATE SET r.created_at = datetime() RETURN type(r) AS t
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=compat MATCH (n:Doc) RETURN elementId(n) AS eid ORDER BY eid
+SQL SELECT jsonb_build_object('eid', t.c0) AS row FROM (\nSELECT (n1.id)::text AS c0, (n1.id)::text AS o0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE false\n) t\n ORDER BY t.o0
+=== og_cypher graph=compat MATCH (n:Doc) RETURN labels(n) AS labels LIMIT 1
+SQL SELECT jsonb_build_object('labels', t.c0) AS row FROM (\nSELECT to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n1.type_id)) AS t)) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE false\n) t\n LIMIT 1
+=== og_cypher graph=compat MATCH (n:_Entity)\n    RETURN [l IN labels(n) WHERE l <> '_Entity'] AS classes LIMIT 1
+SQL SELECT jsonb_build_object('classes', t.c0) AS row FROM (\nSELECT (SELECT coalesce(jsonb_agg(lc2.v), '[]'::jsonb) FROM jsonb_array_elements((to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n1.type_id)) AS t)))::jsonb) AS lc2(v) WHERE (((NULLIF(lc2.v, 'null'::jsonb)) #>> '{}')::text <> '_Entity')) AS c0 FROM og_data.v_1 n1\n) t\n LIMIT 1
+=== og_cypher graph=compat MATCH (n:_Entity) WHERE any(l IN labels(n) WHERE l IN $classes)\n    RETURN count(*) AS cnt
+SQL SELECT jsonb_build_object('cnt', t.c0) AS row FROM (\nSELECT count(*) AS c0 FROM og_data.v_1 n1\n WHERE (EXISTS (SELECT 1 FROM jsonb_array_elements((to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n1.type_id)) AS t)))::jsonb) AS lp2(v) WHERE ((($1 ->> 'classes')::jsonb) @> to_jsonb(NULLIF(lp2.v, 'null'::jsonb)))))\n) t
+=== og_cypher graph=compat MATCH (n:_Entity) WHERE $class IN labels(n)\n    RETURN count(*) AS cnt
+SQL SELECT jsonb_build_object('cnt', t.c0) AS row FROM (\nSELECT count(*) AS c0 FROM og_data.v_1 n1\n WHERE ((to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n1.type_id)) AS t))) @> ($1 -> 'class'))\n) t
+=== og_cypher graph=compat MATCH (n:_Entity)\n    RETURN labels(n) AS class, count(*) AS count ORDER BY count DESC
+SQL SELECT jsonb_build_object('class', t.c0, 'count', t.c1) AS row FROM (\nSELECT to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n1.type_id)) AS t)) AS c0, count(*) AS c1, count(*) AS o0 FROM og_data.v_1 n1\n GROUP BY to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n1.type_id)) AS t))\n) t\n ORDER BY t.o0 DESC
+=== og_cypher graph=compat MATCH (n:NeverWritten) RETURN count(n) AS cnt
+SQL SELECT jsonb_build_object('cnt', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE false\n) t
+=== og_cypher graph=compat MATCH (n:Doc) OPTIONAL MATCH (n)-[:NEVER_WRITTEN]->(m)\n    RETURN count(n) AS kept
+SQL SELECT jsonb_build_object('kept', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  LEFT JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[]::int4[])) u4 ON true\n  LEFT JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2 ON (n2.id = u4.nbr)\n WHERE false\n) t
+=== og_cypher graph=compat MATCH (n:_Entity)\n    WITH labels(n) AS class, count(*) AS c\n    WHERE c > 0\n    RETURN class, c ORDER BY c DESC
+SQL SELECT jsonb_build_object('class', t.c0, 'c', t.c1) AS row FROM (\nSELECT w2."class" AS c0, w2."c" AS c1, w2."c" AS o0 FROM (SELECT to_jsonb(t.c0) AS "class", to_jsonb(t.c1) AS "c" FROM (\nSELECT to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n1.type_id)) AS t)) AS c0, count(*) AS c1 FROM og_data.v_1 n1\n GROUP BY to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(n1.type_id)) AS t))\n) t) AS w2("class", "c")\n WHERE (((w2."c") #>> '{}')::int8 > 0)\n) t\n ORDER BY t.o0 DESC
+=== og_cypher graph=compat MATCH (d:Doc)\n    OPTIONAL MATCH (d)-[:CONTAINS]->(child:Doc)\n    WITH d, collect(child._source_id) AS children\n    RETURN d._source_id AS id, children ORDER BY id
+SQL SELECT jsonb_build_object('id', t.c0, 'children', t.c1) AS row FROM (\nSELECT ((w5."d") -> '_source_id') AS c0, w5."children" AS c1, ((w5."d") -> '_source_id') AS o0 FROM (SELECT to_jsonb(t.c0) AS "d", to_jsonb(t.c1) AS "children" FROM (\nSELECT og_node_json(n1.id) AS c0, coalesce(jsonb_agg((og_node_json(n2.id)->>'_source_id')) FILTER (WHERE ((og_node_json(n2.id)->>'_source_id')) IS NOT NULL), '[]'::jsonb) AS c1 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  LEFT JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[3]::int4[])) u4 ON true\n  LEFT JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2 ON false AND (n2.id = u4.nbr)\n WHERE false\n GROUP BY og_node_json(n1.id)\n) t) AS w5("d", "children")\n) t\n ORDER BY t.o0
+=== og_cypher graph=compat CREATE CONSTRAINT doc_source_unique IF NOT EXISTS\n    FOR (d:Doc) REQUIRE d._source_id IS UNIQUE
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=compat CREATE VECTOR INDEX doc_embedding IF NOT EXISTS\n    FOR (n:_Entity) ON (n.embedding)\n    OPTIONS {indexConfig: {`vector.dimensions`: 4, `vector.similarity_function`: 'cosine'}}
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=compat MATCH (n:Doc {_source_id:'d1'}) SET n.embedding = $v RETURN n._source_id
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=compat CALL db.index.vector.queryNodes('doc_embedding', 2, $v)\n    YIELD node, score\n    RETURN node._source_id AS id, labels(node) AS labels
+SQL SELECT jsonb_build_object('id', t.c0, 'labels', t.c1) AS row FROM (\nSELECT ((cp1.entity) -> '_source_id') AS c0, to_jsonb(ARRAY(SELECT og_type_name(t) FROM unnest(og_supertypes(og_id_type(((cp1.entity) ->> '_id')::int8))) AS t)) AS c1 FROM og_vector_search('compat', '_Entity', 'embedding', translate((($1 ->> 'v'))::text, '{}', '[]'), (2)::int4) AS cp1(id, score, entity)\n) t
+=== og_cypher graph=compat CREATE FULLTEXT INDEX doc_text IF NOT EXISTS\n    FOR (n:Doc) ON EACH [n.title]
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=compat CALL db.index.fulltext.queryNodes('doc_text', '문서')\n    YIELD node, score RETURN count(node) AS hits
+SQL ERR XX000 there is no index named 'doc_text'. known indexes: doc_source_unique, doc_embedding
+=== og_cypher graph=compat MATCH (n:Doc {_source_id:'d1'})\n    CALL apoc.neighbors.tohop(n, '>', 2) YIELD node AS m\n    WITH n, m\n    RETURN m._source_id AS reached ORDER BY reached
+SQL SELECT jsonb_build_object('reached', t.c0) AS row FROM (\nSELECT ((w3."m") -> '_source_id') AS c0, ((w3."m") -> '_source_id') AS o0 FROM (SELECT to_jsonb(t.c0) AS "n", to_jsonb(t.c1) AS "m" FROM (\nSELECT og_node_json(n1.id) AS c0, og_node_json(cp2.node) AS c1 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL og_vlp(n1.id, NULL::int4[], 'o'::"char", 1, (2)::int) AS cp2(node, depth, path)\n WHERE false\n   AND (og_node_json(n1.id) -> '_source_id') = to_jsonb('d1'::text)\n) t) AS w3("n", "m")\n) t\n ORDER BY t.o0
+=== og_cypher graph=compat CALL db.labels() YIELD label RETURN label ORDER BY label
+SQL SELECT jsonb_build_object('label', t.c0) AS row FROM (\nSELECT cp1.label AS c0, cp1.label AS o0 FROM (SELECT name FROM og_catalog.type WHERE graph_id = 1 AND kind = 'e') AS cp1(label)\n) t\n ORDER BY t.o0
+=== og_cypher graph=compat CALL db.relationshipTypes() YIELD relationshipType AS t RETURN t ORDER BY t
+SQL SELECT jsonb_build_object('t', t.c0) AS row FROM (\nSELECT cp1.t AS c0, cp1.t AS o0 FROM (SELECT name FROM og_catalog.type WHERE graph_id = 1 AND kind = 'r') AS cp1(t)\n) t\n ORDER BY t.o0
+=== og_cypher graph=compat MATCH (n:_Entity:Doc) REMOVE n:Doc SET n:Document RETURN count(n) AS cnt
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=compat MATCH (n:Document) RETURN count(n) AS cnt
+SQL SELECT jsonb_build_object('cnt', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM og_data.v_2 n1\n) t
+=== og_cypher graph=compat MATCH (n:Doc) RETURN count(n) AS cnt
+SQL SELECT jsonb_build_object('cnt', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE false\n) t
+=== og_cypher graph=compat CALL apoc.does.not.exist() YIELD x RETURN x
+SQL ERR XX000 procedure 'apoc.does.not.exist' is not available. supported: db.index.vector.queryNodes, db.index.fulltext.queryNodes, apoc.meta.schema, apoc.neighbors.tohop, db.labels, db.relationshipTypes, db.propertyKeys, dbms.components
+=== og_cypher graph=compat MATCH (n:Document) RETURN count(n) AS c
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM og_data.v_2 n1\n) t
+=== og_cypher graph=compat CALL db.index.fulltext.queryNodes('doc_text', '문서')\n        YIELD node RETURN count(node) AS hits
+SQL ERR XX000 there is no index named 'doc_text'. known indexes: doc_source_unique, doc_embedding
+=== og_cypher graph=compat CALL db.index.vector.queryNodes('doc_embedding', 2, $v)\n        YIELD node RETURN count(node) AS hits
+SQL SELECT jsonb_build_object('hits', t.c0) AS row FROM (\nSELECT count(cp1.entity) AS c0 FROM og_vector_search('compat', '_Entity', 'embedding', translate((($1 ->> 'v'))::text, '{}', '[]'), (2)::int4) AS cp1(id, score, entity)\n) t
+=== og_cypher graph=compat MATCH (n:Document {_source_id:'d1'})\n        CALL apoc.neighbors.tohop(n, '>', 2) YIELD node AS m\n        RETURN count(m) AS reached
+SQL SELECT jsonb_build_object('reached', t.c0) AS row FROM (\nSELECT count(og_node_json(cp2.node)) AS c0 FROM og_data.v_2 n1\n  CROSS JOIN LATERAL og_vlp(n1.id, NULL::int4[], 'o'::"char", 1, (2)::int) AS cp2(node, depth, path)\n WHERE n1.p__source_id = 'd1'\n) t
+=== og_cypher graph=compat CALL apoc.meta.schema({sample: 1000})\n        YIELD value RETURN value AS v
+SQL SELECT jsonb_build_object('v', t.c0) AS row FROM (\nSELECT cp1.value AS c0 FROM (SELECT og_apoc_meta_schema('compat', COALESCE((jsonb_build_object('sample', to_jsonb(1000)))::jsonb ->> 'sample', '1000')::int4)) AS cp1(value)\n) t
+=== og_cypher graph=compat CREATE (n:Document {_source_id:'d9', title:'셋째'})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=compat MATCH (n:Document {_source_id:'d9'}) DETACH DELETE n
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=compat RETURN genai.vector.encode('probe') AS v
+SQL SELECT jsonb_build_object('v', t.c0) AS row FROM (\nSELECT og_genai_encode(('probe')::text, (NULL)::text, ('{}')::jsonb) AS c0\n) t
+=== og_cypher graph=compat DROP INDEX doc_text IF EXISTS
+SQL ERR XX000 write queries are not compiled to a single statement

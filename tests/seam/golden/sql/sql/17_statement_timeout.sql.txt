@@ -1,0 +1,8 @@
+=== og_cypher graph=lim MATCH (a:Item), (b:Line), (c:Line) RETURN count(*) AS n
+SQL SELECT jsonb_build_object('n', t.c0) AS row FROM (\nSELECT count(*) AS c0 FROM og_data.v_1 n1\n  CROSS JOIN og_data.v_2 n2\n  CROSS JOIN og_data.v_2 n3\n) t
+=== og_cypher graph=lim MATCH (a:Item), (b:Line) WHERE a.name STARTS WITH 'item' RETURN a.name, b.qty ORDER BY a.name
+SQL SELECT jsonb_build_object('a.name', t.c0, 'b.qty', t.c1) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0, to_jsonb(n2.p_qty) AS c1, n1.p_name AS o0 FROM og_data.v_1 n1\n  CROSS JOIN og_data.v_2 n2\n WHERE ((n1.p_name)::text LIKE ('item')::text || '%')\n) t\n ORDER BY t.o0
+=== og_cypher graph=lim MATCH (l:Line)-[:OF_ITEM]->(i:Item) RETURN count(*) AS n
+SQL SELECT jsonb_build_object('n', t.c0) AS row FROM (\nSELECT count(*) AS c0 FROM og_data.v_2 n1\n  CROSS JOIN og_data.v_1 n2\n WHERE n1.p_item_id = n2.p_item_id\n) t
+=== og_cypher graph=lim MATCH (i:Item {item_id: 1}) RETURN i.name AS n
+SQL SELECT jsonb_build_object('n', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0 FROM og_data.v_1 n1\n WHERE n1.p_item_id = 1\n) t

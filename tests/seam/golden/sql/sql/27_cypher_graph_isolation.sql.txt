@@ -1,0 +1,64 @@
+=== og_cypher graph=iso_far CREATE (:Far {name: 'f1'})-[:LINK]->(:Far {name: 'f2'})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso_far MATCH (n:Far {name: 'f1'}) RETURN id(n) AS i
+SQL SELECT jsonb_build_object('i', t.c0) AS row FROM (\nSELECT n1.id AS c0 FROM og_data.v_1 n1\n WHERE n1.p_name = 'f1'\n) t
+=== og_cypher graph=iso CREATE (:Near {name: 'n1'})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso MATCH (n) WHERE id(n) = $i RETURN count(n) AS c
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE (n1.id = ($1 ->> 'i')::int8)\n) t
+=== og_cypher graph=iso WITH $m AS n MATCH (n)-[r]->(x) RETURN count(x) AS c
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(n3.id) AS c0 FROM (SELECT to_jsonb(t.c0) AS "n" FROM (\nSELECT ($1 -> 'm') AS c0\n) t) AS w1("n")\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj4, LATERAL unnest(adj4.nbr, adj4.eid) AS u(nbr, eid) WHERE adj4.src = n2.id AND adj4.dir = 'o'::"char") u5\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n3\n WHERE n2.id = ((w1."n") ->> '_id')::int8\n   AND n3.id = u5.nbr\n) t
+=== og_cypher graph=iso UNWIND [$m] AS n MATCH (n) RETURN count(n) AS c
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(n2.id) AS c0 FROM LATERAL jsonb_array_elements((jsonb_build_array(($1 -> 'm')))::jsonb) AS uw1(v)\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE n2.id = ((NULLIF(uw1.v, 'null'::jsonb)) ->> '_id')::int8\n) t
+=== og_cypher graph=iso WITH $m AS n SET n.hacked = true
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso WITH $m AS n CREATE (n)-[:X]->(:Near)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso WITH $m AS n DETACH DELETE n
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso WITH $m AS a MATCH (b:Near) MERGE (a)-[:Y]->(b)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso_far MATCH (n:Far) RETURN count(n) AS c, collect(n.hacked) AS h
+SQL SELECT jsonb_build_object('c', t.c0, 'h', t.c1) AS row FROM (\nSELECT count(n1.id) AS c0, coalesce(jsonb_agg((n1.__ext->>'hacked')) FILTER (WHERE ((n1.__ext->>'hacked')) IS NOT NULL), '[]'::jsonb) AS c1 FROM og_data.v_1 n1\n) t
+=== og_cypher graph=iso_far MATCH (:Far)-[r]->(:Far) RETURN count(r) AS c
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(og_edge_json(u4.eid)) AS c0 FROM og_data.v_1 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char") u4\n  CROSS JOIN og_data.v_1 n2\n WHERE n2.id = u4.nbr\n) t
+=== og_cypher graph=iso MATCH (n:Near) WITH n {.*, _id: id(n)} AS m WITH m AS n SET n.touched = true
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso MATCH (n:Near) RETURN n.touched AS t
+SQL SELECT jsonb_build_object('t', t.c0) AS row FROM (\nSELECT to_jsonb(n1.p_touched) AS c0 FROM og_data.v_3 n1\n) t
+=== og_cypher graph=iso MATCH (a:Near) CREATE (a)-[:OWN]->(:Near {name: 'n2'})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso MATCH ()-[r]->() RETURN count(r) AS c
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(og_edge_json(u4.eid)) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char") u4\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE n2.id = u4.nbr\n) t
+=== og_cypher graph=iso MATCH ()-[r]-() RETURN count(r) AS c
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(og_edge_json(u4.eid)) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir IN ('o','i')) u4\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE n2.id = u4.nbr\n) t
+=== og_cypher graph=iso MATCH (a)-[r]->(b) DETACH DELETE b
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso MATCH (n) RETURN count(n) AS c
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n) t
+=== og_cypher graph=iso_far MATCH (a)-[r]->(b) RETURN count(r) AS c
+SQL SELECT jsonb_build_object('c', t.c0) AS row FROM (\nSELECT count(og_edge_json(u4.eid)) AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 2)) n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char") u4\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 2)) n2\n WHERE n2.id = u4.nbr\n) t
+=== og_cypher graph=iso MATCH (n:Near) RETURN id(n) AS i
+SQL SELECT jsonb_build_object('i', t.c0) AS row FROM (\nSELECT n1.id AS c0 FROM og_data.v_3 n1\n) t
+=== og_cypher graph=iso MATCH (n) WHERE id(n) = $i RETURN n.name AS name
+SQL SELECT jsonb_build_object('name', t.c0) AS row FROM (\nSELECT (og_node_json(n1.id) -> 'name') AS c0 FROM (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n1\n WHERE (n1.id = ($1 ->> 'i')::int8)\n) t
+=== og_cypher graph=iso_far MATCH (a:Far)-[r:LINK]->() SET r.w = 3\n                                    RETURN keys(a) AS ka, keys(r) AS kr, properties(r) AS pr, keys({_k: 1}) AS km
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso_far MATCH (a:Far)-[r:LINK]->() RETURN keys(a) AS ka, keys(r) AS kr, properties(r) AS pr
+SQL SELECT jsonb_build_object('ka', t.c0, 'kr', t.c1, 'pr', t.c2) AS row FROM (\nSELECT to_jsonb(ARRAY(SELECT k FROM jsonb_object_keys(to_jsonb((CASE WHEN n1.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n1.id, '_type', og_type_name(n1.type_id), 'name', to_jsonb(n1.p_name))) || COALESCE(n1.__ext,'{}'::jsonb) END))) AS k WHERE NOT (to_jsonb((CASE WHEN n1.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n1.id, '_type', og_type_name(n1.type_id), 'name', to_jsonb(n1.p_name))) || COALESCE(n1.__ext,'{}'::jsonb) END)) ? '_id' AND k IN ('_id', '_type', '_src', '_dst')))) AS c0, to_jsonb(ARRAY(SELECT k FROM jsonb_object_keys(to_jsonb((CASE WHEN e5.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', e5.id, '_type', og_type_name(e5.type_id), '_src', e5.src, '_dst', e5.dst, 'w', to_jsonb(e5.p_w))) || COALESCE(e5.__ext,'{}'::jsonb) END))) AS k WHERE NOT (to_jsonb((CASE WHEN e5.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', e5.id, '_type', og_type_name(e5.type_id), '_src', e5.src, '_dst', e5.dst, 'w', to_jsonb(e5.p_w))) || COALESCE(e5.__ext,'{}'::jsonb) END)) ? '_id' AND k IN ('_id', '_type', '_src', '_dst')))) AS c1, (CASE WHEN to_jsonb((CASE WHEN e5.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', e5.id, '_type', og_type_name(e5.type_id), '_src', e5.src, '_dst', e5.dst, 'w', to_jsonb(e5.p_w))) || COALESCE(e5.__ext,'{}'::jsonb) END)) ? '_id' THEN to_jsonb((CASE WHEN e5.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', e5.id, '_type', og_type_name(e5.type_id), '_src', e5.src, '_dst', e5.dst, 'w', to_jsonb(e5.p_w))) || COALESCE(e5.__ext,'{}'::jsonb) END)) - '_id' - '_type' - '_src' - '_dst' ELSE to_jsonb((CASE WHEN e5.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', e5.id, '_type', og_type_name(e5.type_id), '_src', e5.src, '_dst', e5.dst, 'w', to_jsonb(e5.p_w))) || COALESCE(e5.__ext,'{}'::jsonb) END)) END) AS c2 FROM og_data.v_1 n1\n  CROSS JOIN LATERAL (SELECT u.nbr, u.eid FROM og_data.og_adj adj3, LATERAL unnest(adj3.nbr, adj3.eid) AS u(nbr, eid) WHERE adj3.src = n1.id AND adj3.dir = 'o'::"char" AND adj3.etype = ANY(ARRAY[2]::int4[])) u4\n  JOIN og_data.ve_2 e5 ON e5.id = u4.eid\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 2)) n2\n WHERE n2.id = u4.nbr\n) t
+=== og_cypher graph=iso CREATE CONSTRAINT near_code IF NOT EXISTS FOR (n:Coded) REQUIRE n.id IS UNIQUE
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso UNWIND ['c1', 'c1', 'c2', 'c1'] AS k MERGE (n:Coded {id: k}) ON MATCH SET n.again = true RETURN count(*) AS rows
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso MATCH (n:Coded) RETURN count(n) AS c, collect(n.again) AS a
+SQL SELECT jsonb_build_object('c', t.c0, 'a', t.c1) AS row FROM (\nSELECT count(n1.id) AS c0, coalesce(jsonb_agg(n1.p_again) FILTER (WHERE (n1.p_again) IS NOT NULL), '[]'::jsonb) AS c1 FROM og_data.v_5 n1\n) t
+=== og_cypher graph=iso CREATE (:Coded {id: 'c2'})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso UNWIND [1, 2] AS i CREATE (s:Seen {k: i}) WITH collect(s) AS made\n                                MATCH (t:Seen) RETURN size(made) AS m, count(t) AS c
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso MATCH (s:Seen) SET s.v = s.k * 10 WITH s WHERE s.v > 10 RETURN collect(s.v) AS vs
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso MATCH (s:Seen {k: 1}) DETACH DELETE s WITH count(*) AS gone MATCH (t:Seen) RETURN gone, count(t) AS left
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=iso MATCH (s:Seen) WITH s, s.k = 2 AS two, true AS yes SET s.flag = two\n                                RETURN sum(CASE WHEN two AND yes THEN 1 ELSE 0 END) AS n
+SQL ERR XX000 write queries are not compiled to a single statement

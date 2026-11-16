@@ -1,0 +1,20 @@
+=== og_cypher graph=umb CREATE (:_Entity:Note {text: 'x'})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=umb CREATE (:Plain {x: 1})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=umb MATCH (o:Order)-[:PLACED_BY]->(c:_Entity:Customer) RETURN count(*) AS n
+SQL SELECT jsonb_build_object('n', t.c0) AS row FROM (\nSELECT count(*) AS c0 FROM og_data.v_5 n1\n  CROSS JOIN og_data.v_4 n2\n WHERE n1.p_cust_id = n2.p_cust_id\n) t
+=== og_cypher graph=umb MATCH (o:_Entity:Order)-[:PLACED_BY]->(c:_Entity:Customer {name: 'Acme'})\n                             RETURN sum(o.amount) AS s
+SQL SELECT jsonb_build_object('s', t.c0) AS row FROM (\nSELECT sum(n1.p_amount) AS c0 FROM og_data.v_5 n1\n  CROSS JOIN og_data.v_4 n2\n WHERE n2.p_name = 'Acme'\n   AND n1.p_cust_id = n2.p_cust_id\n) t
+=== og_cypher graph=umb MATCH (c:_Entity:Customer) RETURN count(c) AS n
+SQL SELECT jsonb_build_object('n', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM og_data.v_4 n1\n) t
+=== og_cypher graph=umb MATCH (n:_Entity) RETURN count(n) AS n
+SQL SELECT jsonb_build_object('n', t.c0) AS row FROM (\nSELECT count(n1.id) AS c0 FROM og_data.v_1 n1\n) t
+=== og_cypher graph=umb MATCH (o:Order)-[:PLACED_BY]->(c:Nope:Customer) RETURN o
+SQL SELECT jsonb_build_object('o', t.c0) AS row FROM (\nSELECT (CASE WHEN n1.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n1.id, '_type', og_type_name(n1.type_id), 'amount', to_jsonb(n1.p_amount), 'cust_id', to_jsonb(n1.p_cust_id), 'order_id', to_jsonb(n1.p_order_id))) || COALESCE(n1.__ext,'{}'::jsonb) END) AS c0 FROM og_data.v_5 n1\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE false\n   AND (n1.id IS NULL AND n2.id IS NULL AND false)\n) t
+=== og_cypher graph=umb MATCH (o:Order)-[:PLACED_BY]->(c:Plain:Customer) RETURN o
+SQL SELECT jsonb_build_object('o', t.c0) AS row FROM (\nSELECT (CASE WHEN n1.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n1.id, '_type', og_type_name(n1.type_id), 'amount', to_jsonb(n1.p_amount), 'cust_id', to_jsonb(n1.p_cust_id), 'order_id', to_jsonb(n1.p_order_id))) || COALESCE(n1.__ext,'{}'::jsonb) END) AS c0 FROM og_data.v_5 n1\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE false\n   AND (n1.id IS NULL AND n2.id IS NULL AND false)\n) t
+=== og_cypher graph=umb MATCH (o:Order)-[:PLACED_BY]->(c:Order:Customer) RETURN o
+SQL SELECT jsonb_build_object('o', t.c0) AS row FROM (\nSELECT (CASE WHEN n1.id IS NULL THEN NULL ELSE jsonb_strip_nulls(jsonb_build_object('_id', n1.id, '_type', og_type_name(n1.type_id), 'amount', to_jsonb(n1.p_amount), 'cust_id', to_jsonb(n1.p_cust_id), 'order_id', to_jsonb(n1.p_order_id))) || COALESCE(n1.__ext,'{}'::jsonb) END) AS c0 FROM og_data.v_5 n1\n  CROSS JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2\n WHERE false\n   AND (n1.id IS NULL AND n2.id IS NULL AND false)\n) t
+=== og_cypher graph=umb MATCH (c:Customer) OPTIONAL MATCH (c)<-[:PLACED_BY]-(o:Nope:Order) RETURN c.name, o
+SQL SELECT jsonb_build_object('c.name', t.c0, 'o', t.c1) AS row FROM (\nSELECT to_jsonb(n1.p_name) AS c0, og_node_json(n2.id) AS c1 FROM og_data.v_4 n1\n  LEFT JOIN (SELECT gn.* FROM og_data.og_node gn WHERE gn.type_id IN (SELECT gt.type_id FROM og_catalog.type gt WHERE gt.graph_id = 1)) n2 ON false AND ((n2.id IS NULL AND n1.id IS NULL AND false))\n) t

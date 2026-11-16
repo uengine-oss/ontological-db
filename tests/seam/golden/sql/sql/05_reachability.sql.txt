@@ -1,0 +1,24 @@
+=== og_cypher graph=r CREATE (:N {name:'a'})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=r CREATE (:N {name:'b'})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=r CREATE (:N {name:'c'})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=r CREATE (:N {name:'d'})
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=r MATCH (x:N {name:'a'}), (y:N {name:'b'}) CREATE (x)-[:E]->(y)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=r MATCH (x:N {name:'a'}), (y:N {name:'c'}) CREATE (x)-[:E]->(y)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=r MATCH (x:N {name:'b'}), (y:N {name:'d'}) CREATE (x)-[:E]->(y)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=r MATCH (x:N {name:'c'}), (y:N {name:'d'}) CREATE (x)-[:E]->(y)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=r MATCH (x:N {name:'d'}), (y:N {name:'a'}) CREATE (x)-[:E]->(y)
+SQL ERR XX000 write queries are not compiled to a single statement
+=== og_cypher graph=r MATCH (x:N {name:'a'})-[:E*1..12]->(y:N) RETURN count(DISTINCT y)
+SQL SELECT jsonb_build_object('count(y)', t.c0) AS row FROM (\nSELECT count(DISTINCT n2.id) AS c0 FROM og_data.v_1 n1\n  CROSS JOIN LATERAL og_vlp(n1.id, ARRAY[2]::int4[], 'o'::"char", 1, 12) vl3\n  CROSS JOIN og_data.v_1 n2\n WHERE n1.p_name = 'a'\n   AND n2.id = vl3.node\n) t
+=== og_cypher graph=r MATCH (x:N {name:'a'})-[e:E*1..12]->(y:N) RETURN count(DISTINCT y)
+SQL SELECT jsonb_build_object('count(y)', t.c0) AS row FROM (\nSELECT count(DISTINCT n2.id) AS c0 FROM og_data.v_1 n1\n  CROSS JOIN LATERAL og_vlp(n1.id, ARRAY[2]::int4[], 'o'::"char", 1, 12) vl3\n  CROSS JOIN og_data.v_1 n2\n WHERE n1.p_name = 'a'\n   AND n2.id = vl3.node\n) t
+=== og_cypher graph=r MATCH (x:N {name:'a'})-[:E*1..3]->(y:N)  RETURN count(y)
+SQL SELECT jsonb_build_object('count(y)', t.c0) AS row FROM (\nSELECT count(n2.id) AS c0 FROM og_data.v_1 n1\n  CROSS JOIN LATERAL og_vlp(n1.id, ARRAY[2]::int4[], 'o'::"char", 1, 3) vl3\n  CROSS JOIN og_data.v_1 n2\n WHERE n1.p_name = 'a'\n   AND n2.id = vl3.node\n) t
