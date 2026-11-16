@@ -7,6 +7,7 @@
 # --python, --only, --keep), and
 #   --layer all|sql|trace   what to compare (default all)
 #   --show N                differing cases to print per file (default 3)
+#   --width W               characters of a line to print (default 240)
 #   --golden DIR            the mold to compare with (default tests/seam/golden)
 # The capture is left in <work>/mold for a closer look (tests/seam/compare.py <golden> <work>/mold).
 #
@@ -19,6 +20,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 GOLDEN="$ROOT/tests/seam/golden"
 LAYER=all
 SHOW=3
+WIDTH=240
 PORT="${OG_MOLD_PGPORT:-}"
 WORK="${OG_MOLD_WORK:-}"
 PY="${OG_PYTHON:-python3}"
@@ -28,12 +30,13 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --layer) LAYER="$2"; shift 2 ;;
         --show) SHOW="$2"; shift 2 ;;
+        --width) WIDTH="$2"; shift 2 ;;
         --golden) GOLDEN="$2"; shift 2 ;;
         --port) PORT="$2"; pass+=("$1" "$2"); shift 2 ;;
         --work) WORK="$2"; has_work=1; pass+=("$1" "$2"); shift 2 ;;
         --python) PY="$2"; pass+=("$1" "$2"); shift 2 ;;
         --out|--repeat) echo "check.sh: $1 is not an option here (see capture.sh)" >&2; exit 2 ;;
-        -h|--help) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+        -h|--help) sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
         *) pass+=("$1"); shift ;;
     esac
 done
@@ -46,7 +49,7 @@ WORK="${WORK:-${TMPDIR:-/tmp}/og-mold-$PORT}"
 "$ROOT/tests/seam/capture.sh" "${pass[@]}" --out "$WORK/mold" || { echo "check.sh: the capture failed" >&2; exit 2; }
 echo
 printf '\033[36m== compare with %s\033[0m\n' "$GOLDEN"
-"$PY" "$ROOT/tests/seam/compare.py" "$GOLDEN" "$WORK/mold" --layer "$LAYER" --show "$SHOW"
+"$PY" "$ROOT/tests/seam/compare.py" "$GOLDEN" "$WORK/mold" --layer "$LAYER" --show "$SHOW" --width "$WIDTH"
 rc=$?
 case $rc in
     0) echo "mold: the same as the golden mold" ;;

@@ -37,7 +37,7 @@ ONLY=""
 REPEAT=1
 KEEP="${OG_MOLD_KEEP:-0}"
 
-usage() { sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
+usage() { sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
 while [ $# -gt 0 ]; do
     case "$1" in
         --pg-config) PG_CONFIG="$2"; shift 2 ;;
@@ -136,6 +136,9 @@ timezone = 'UTC'
 log_timezone = 'UTC'
 fsync = off
 session_preload_libraries = 'og_mold_trace'
+# planner statistics change only when a test asks (ANALYZE, CREATE INDEX): the compiler reads
+# reltuples to choose og_vlp or og_reach, so an autovacuum that happens to run would change the SQL
+autovacuum = off
 EOF
     cat > "$DATA/pg_hba.conf" <<'EOF'
 local   all   all                        trust
