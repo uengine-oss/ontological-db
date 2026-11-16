@@ -42,6 +42,54 @@ const RELATIONSHIP: u8 = 0x52;
 const UNBOUND_RELATIONSHIP: u8 = 0x72;
 const PATH: u8 = 0x50;
 
+/// The engine's functions, as this gateway calls them: the one place their
+/// names are written.
+///
+/// With no schema (`OG_BOLT_ENGINE_SCHEMA` unset or blank) each name goes out
+/// unqualified, the text it always was, and PostgreSQL finds it on the
+/// session's `search_path` — `public`, where `CREATE EXTENSION ontological`
+/// puts v1's functions. With a schema, every call names it, so the gateway
+/// reaches an engine installed there (`ontological_age` in `oga_catalog`) even
+/// when another one is on the path. The gateway does not work out which engine
+/// a database has; it is told.
+///
+/// `set_config` is PostgreSQL's own and stays as it is, and so do the setting
+/// names it is given (`og.*`).
+pub struct EngineSql {
+    schema: Option<String>,
+    statement_timeout: String,
+    cypher_columns: String,
+    cypher: String,
+    cypher_stats: String,
+    cypher_check: String,
+}
+
+impl EngineSql {
+    /// From the setting's raw value. Blank is the same as unset; the name is
+    /// taken as it is stored (`pg_namespace.nspname`) and quoted, so case and
+    /// any other character survive.
+    pub fn from_setting(raw: Option<&str>) -> EngineSql {
+        let schema = raw.map(str::trim).filter(|s| !s.is_empty()).map(str::to_string);
+        let f = |name: &str| match &schema {
+            None => name.to_string(),
+            Some(s) => format!("\"{}\".{name}", s.replace('"', "\"\"")),
+        };
+        EngineSql {
+            statement_timeout: format!("SELECT {}()", f("og_statement_timeout")),
+            cypher_columns: format!("SELECT {}($1::text)", f("og_cypher_columns")),
+            cypher: format!("SELECT {}($1::text, $2::text, $3::text::jsonb)::text", f("og_cypher")),
+            cypher_stats: format!("SELECT {}()::text", f("og_cypher_stats")),
+            cypher_check: format!("SELECT {}($1::text)::text", f("og_cypher_check")),
+            schema,
+        }
+    }
+
+    /// The schema every call names, when there is one.
+    pub fn schema(&self) -> Option<&str> {
+        self.schema.as_deref()
+    }
+}
+
 #[derive(PartialEq)]
 enum State {
     /// Ready for a query.
@@ -289,7 +337,7 @@ impl Session<'_> {
         // What the limit is, to say so when it is hit and to stand behind it
         // (see `Watch`). An engine without the function simply has none here.
         self.timeout_ms = client
-            .query_one("SELECT og_statement_timeout()", &[])
+            .query_one(self.config.engine.statement_timeout.as_str(), &[])
             .map(|r| r.get::<_, i64>(0))
             .unwrap_or(0);
         self.pg = Some(client);
@@ -416,9 +464,10 @@ impl Session<'_> {
         // Field order comes from the parser, not from the row: jsonb sorts its
         // keys, so the row cannot tell us what the query asked for (FR-010).
         let columns: Vec<String> = {
+            let engine = &self.config.engine;
             let pg = self.client()?;
             let row = pg
-                .query_one("SELECT og_cypher_columns($1::text)", &[&query])
+                .query_one(engine.cypher_columns.as_str(), &[&query])
                 .map_err(|e| Failure::from_pg(&e))?;
             row.get(0)
         };
@@ -445,15 +494,13 @@ impl Session<'_> {
         }
         let rows = {
             let graph = self.graph.clone();
+            let engine = &self.config.engine;
             let pg = self.client()?;
             // While PostgreSQL works this thread is blocked, so another one
             // watches the client: a closed connection or a RESET cancels the
             // query, which otherwise ran on with nobody left to read it.
             let watch = Watch::start(stream, pg.cancel_token(), limit_ms);
-            let result = pg.query(
-                "SELECT og_cypher($1::text, $2::text, $3::text::jsonb)::text",
-                &[&graph, &query, &params_json],
-            );
+            let result = pg.query(engine.cypher.as_str(), &[&graph, &query, &params_json]);
             let seen = watch.finish(stream);
             self.early.extend(seen.bytes);
             result.map_err(|e| Failure::from_query(&e, seen.interrupt, limit_ms))
@@ -601,8 +648,9 @@ impl Session<'_> {
     /// write over, so a connection that cannot answer simply reports no
     /// counters — which is what it did before there were any.
     fn write_stats(&mut self) -> Option<Value> {
+        let engine = &self.config.engine;
         let pg = self.pg.as_mut()?;
-        let row = pg.query_one("SELECT og_cypher_stats()::text", &[]).ok()?;
+        let row = pg.query_one(engine.cypher_stats.as_str(), &[]).ok()?;
         let raw: String = row.get(0);
         let parsed: serde_json::Value = serde_json::from_str(&raw).ok()?;
         Some(to_bolt(&parsed))
@@ -615,9 +663,10 @@ impl Session<'_> {
     /// A query that does not parse gets its syntax error now rather than after
     /// `EXPLAIN` has silently reported it as a read.
     fn is_write(&mut self, query: &str) -> Result<bool, Failure> {
+        let engine = &self.config.engine;
         let pg = self.client()?;
         let row = pg
-            .query_one("SELECT og_cypher_check($1::text)::text", &[&query])
+            .query_one(engine.cypher_check.as_str(), &[&query])
             .map_err(|e| Failure::from_pg(&e))?;
         let raw: String = row.get(0);
         let check: serde_json::Value =
@@ -1398,5 +1447,39 @@ mod parameter_tests {
         assert_eq!(walk, &vec![Value::Int(1), Value::Int(1), Value::Int(-1), Value::Int(0)]);
         // Not shaped like a path: a map.
         assert!(matches!(to_bolt(&serde_json::json!({"_path": true, "nodes": []})), Value::Map(_)));
+    }
+}
+
+#[cfg(test)]
+mod engine_sql_tests {
+    use super::*;
+
+    #[test]
+    fn unset_or_blank_calls_the_functions_unqualified() {
+        // The texts the gateway sent before there was a setting: PostgreSQL
+        // resolves them on search_path, where v1 installs into `public`.
+        for raw in [None, Some(""), Some("   ")] {
+            let e = EngineSql::from_setting(raw);
+            assert_eq!(e.schema(), None);
+            assert_eq!(e.statement_timeout, "SELECT og_statement_timeout()");
+            assert_eq!(e.cypher_columns, "SELECT og_cypher_columns($1::text)");
+            assert_eq!(e.cypher, "SELECT og_cypher($1::text, $2::text, $3::text::jsonb)::text");
+            assert_eq!(e.cypher_stats, "SELECT og_cypher_stats()::text");
+            assert_eq!(e.cypher_check, "SELECT og_cypher_check($1::text)::text");
+        }
+    }
+
+    #[test]
+    fn a_schema_names_every_call() {
+        let e = EngineSql::from_setting(Some(" oga_catalog "));
+        assert_eq!(e.schema(), Some("oga_catalog"));
+        assert_eq!(e.statement_timeout, "SELECT \"oga_catalog\".og_statement_timeout()");
+        assert_eq!(e.cypher_columns, "SELECT \"oga_catalog\".og_cypher_columns($1::text)");
+        assert_eq!(e.cypher, "SELECT \"oga_catalog\".og_cypher($1::text, $2::text, $3::text::jsonb)::text");
+        assert_eq!(e.cypher_stats, "SELECT \"oga_catalog\".og_cypher_stats()::text");
+        assert_eq!(e.cypher_check, "SELECT \"oga_catalog\".og_cypher_check($1::text)::text");
+        // Quoted as an identifier: case kept, a quote doubled.
+        let odd = EngineSql::from_setting(Some("Edition \"2\""));
+        assert_eq!(odd.cypher_stats, "SELECT \"Edition \"\"2\"\"\".og_cypher_stats()::text");
     }
 }

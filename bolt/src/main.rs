@@ -18,6 +18,11 @@
 //!                         (two minutes) applies. "300s", "2min", 120000 (ms),
 //!                         "0" for no limit. A driver's transaction timeout
 //!                         (`tx_timeout`) overrides it for one transaction.
+//!     OG_BOLT_ENGINE_SCHEMA  unset — the engine's functions are called
+//!                         unqualified and found on the session's search_path
+//!                         (`public`, for `ontological`). A schema name — e.g.
+//!                         `oga_catalog` for `ontological_age` — makes every
+//!                         call name it (`session::EngineSql`).
 //!
 //! The listen default is loopback. Bolt carries the password in the clear on
 //! the way in — there is no TLS here — and this process authenticates by
@@ -62,6 +67,8 @@ pub struct Config {
     pub advertised: String,
     /// `og.statement_timeout` for every session, when the deployment sets one.
     pub statement_timeout: Option<String>,
+    /// The engine's functions, as every session calls them.
+    pub engine: session::EngineSql,
 }
 
 fn env_or(key: &str, default: &str) -> String {
@@ -80,6 +87,7 @@ fn main() {
         default_graph: env_or("OG_BOLT_GRAPH", "default"),
         advertised: env_or("OG_BOLT_ADVERTISED", &listen),
         statement_timeout: env::var("OG_BOLT_STATEMENT_TIMEOUT").ok().filter(|v| !v.trim().is_empty()),
+        engine: session::EngineSql::from_setting(env::var("OG_BOLT_ENGINE_SCHEMA").ok().as_deref()),
     };
 
     let listener = match TcpListener::bind(&listen) {
@@ -91,8 +99,12 @@ fn main() {
     };
     eprintln!(
         "ontological-bolt: listening on {listen}, \
-         forwarding to postgres://{}:{}/{} (default graph '{}')",
-        config.pg_host, config.pg_port, config.pg_database, config.default_graph
+         forwarding to postgres://{}:{}/{} (default graph '{}'){}",
+        config.pg_host,
+        config.pg_port,
+        config.pg_database,
+        config.default_graph,
+        config.engine.schema().map_or(String::new(), |s| format!(", engine functions in schema '{s}'"))
     );
 
     let config = Arc::new(config);
