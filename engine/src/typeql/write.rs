@@ -5,13 +5,17 @@
 //! attribute instance is identified by *type and value*, so `has genre
 //! "fiction"` interns rather than creates. That is what makes two books share
 //! one genre instance — and it is why the value column carries a UNIQUE index.
+//!
+//! The catalog checks (type kinds, `owns`, value types and constraints, roles)
+//! and the error wording are here; every row is written and read through the
+//! storage API ([`crate::layout::Layout`], `reports/ontological-v2/P1-K3-api.md`),
+//! so this file names no storage table.
 
 use super::ast::*;
 use super::compile::{lit_str, Compiler};
 use super::schema;
 use crate::catalog::{labeling, types};
-use crate::storage::{adjacency, alloc_id};
-use pgrx::prelude::*;
+use crate::layout::{SqlExpr, TypeStore, WriteError};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
@@ -191,18 +195,12 @@ fn create_instance(gid: i32, ty: &str) -> WResult<i64> {
              not with 'isa'"
         ));
     }
-    let table = types::storage_table(tid)
+    let l = crate::layout::active();
+    let store = l
+        .type_store(tid)
         .ok_or_else(|| format!("'{ty}' is abstract and cannot be instantiated"))?;
-    crate::storage::refuse_virtual_write(tid);
-    let id = alloc_id(tid);
-    Spi::run_with_args(
-        "INSERT INTO og_data.og_node (id, type_id) VALUES ($1, $2)",
-        &[id.into(), tid.into()],
-    )
-    .map_err(|e| format!("creating '{ty}' failed: {e}"))?;
-    Spi::run_with_args(&format!("INSERT INTO {table} (id) VALUES ($1)"), &[id.into()])
-        .map_err(|e| format!("creating '{ty}' failed: {e}"))?;
-    Ok(id)
+    l.refuse_virtual_write(tid);
+    l.create_instance(tid, &store).map_err(|e| format!("creating '{ty}' failed: {e}"))
 }
 
 // --------------------------------------------------------------------------
@@ -222,43 +220,36 @@ fn intern_attribute(
     if types::type_kind(attr_tid) != 'a' {
         return Err(format!("'{attr}' is not an attribute type"));
     }
-    let owner_tid = crate::id::id_type(owner_id);
+    let l = crate::layout::active();
+    let owner_tid = l.type_of_element(owner_id);
     let Some((_, anns)) = schema::owned_attribute(gid, owner_tid, attr) else {
         return Err(format!(
             "'{}' does not own '{attr}'. declare 'owns {attr}' on it first",
             crate::storage::type_name_of(owner_tid)
         ));
     };
-    let table = types::storage_table(attr_tid)
+    let store = l
+        .type_store(attr_tid)
         .ok_or_else(|| format!("attribute type '{attr}' is abstract and has no instances"))?;
     let vt = schema::value_type_of(attr_tid)
         .ok_or_else(|| format!("attribute type '{attr}' has no value type"))?;
     let sql_ty = schema::value_type_sql(&vt)?;
-    let lit = typed_literal(value, sql_ty, attr)?;
+    let lit = SqlExpr::new(typed_literal(value, sql_ty, attr)?);
 
     check_value_constraints(attr_tid, attr, value)?;
-    check_ownership_constraints(gid, owner_id, owner_tid, attr_tid, attr, &anns, &lit, &table)?;
+    check_ownership_constraints(gid, owner_id, owner_tid, attr_tid, attr, &anns, &lit, &store)?;
 
-    if let Some(existing) = crate::spiu::one::<i64>(
-        &format!("SELECT id FROM {table} WHERE val = {lit}"),
-        &[],
-    )
-    .map_err(|e| format!("attribute lookup for '{attr}' failed: {e}"))?
+    if let Some(existing) = l
+        .find_attribute(&store, &lit)
+        .map_err(|e| format!("attribute lookup for '{attr}' failed: {e}"))?
     {
         return Ok((existing, value.clone()));
     }
 
-    let id = alloc_id(attr_tid);
-    Spi::run_with_args(
-        "INSERT INTO og_data.og_node (id, type_id) VALUES ($1, $2)",
-        &[id.into(), attr_tid.into()],
-    )
-    .map_err(|e| format!("creating '{attr}' failed: {e}"))?;
-    Spi::run_with_args(
-        &format!("INSERT INTO {table} (id, val) VALUES ($1, {lit})"),
-        &[id.into()],
-    )
-    .map_err(|e| format!("creating '{attr}' = {value} failed: {e}"))?;
+    let id = l.create_attribute(attr_tid, &store, &lit).map_err(|e| match e {
+        WriteError::Register(e) => format!("creating '{attr}' failed: {e}"),
+        WriteError::Store(e) => format!("creating '{attr}' = {value} failed: {e}"),
+    })?;
     Ok((id, value.clone()))
 }
 
@@ -305,9 +296,10 @@ fn check_ownership_constraints(
     attr_tid: i32,
     attr: &str,
     anns: &Value,
-    lit: &str,
-    table: &str,
+    lit: &SqlExpr,
+    store: &TypeStore,
 ) -> WResult<()> {
+    let l = crate::layout::active();
     let has_tid = schema::ensure_has_type(gid);
     let key = anns.get("key").and_then(|v| v.as_bool()).unwrap_or(false);
     let unique = anns.get("unique").and_then(|v| v.as_bool()).unwrap_or(false);
@@ -315,19 +307,9 @@ fn check_ownership_constraints(
     if key || unique {
         // The same value may not be owned twice across the owner's type line.
         let owners = labeling::og_subtypes(root_of(owner_tid));
-        let clash = crate::spiu::one::<i64>(
-            &format!(
-                "SELECT e.src FROM og_data.og_edge e
-                   JOIN {table} a ON a.id = e.dst
-                  WHERE e.type_id = $1 AND a.val = {lit} AND e.src <> $2
-                    AND ((e.src >> {}) & {})::int4 = ANY($3)
-                  LIMIT 1",
-                crate::id::TYPE_SHIFT,
-                crate::id::TYPE_MASK
-            ),
-            &[has_tid.into(), owner_id.into(), owners.into()],
-        )
-        .map_err(|e| format!("uniqueness check for '{attr}' failed: {e}"))?;
+        let clash = l
+            .other_owner(has_tid, store, lit, owner_id, &owners)
+            .map_err(|e| format!("uniqueness check for '{attr}' failed: {e}"))?;
         if let Some(other) = clash {
             return Err(format!(
                 "'{attr}' is declared @{} but that value is already owned by instance {other}",
@@ -339,18 +321,9 @@ fn check_ownership_constraints(
     if let Some(card) = anns.get("card").and_then(|v| v.as_array()) {
         if let Some(max) = card.get(1).and_then(|x| x.as_i64()) {
             let attrs = labeling::og_subtypes(attr_tid);
-            let n = crate::spiu::one::<i64>(
-                &format!(
-                    "SELECT count(*) FROM og_data.og_edge e
-                      WHERE e.type_id = $1 AND e.src = $2
-                        AND ((e.dst >> {}) & {})::int4 = ANY($3)",
-                    crate::id::TYPE_SHIFT,
-                    crate::id::TYPE_MASK
-                ),
-                &[has_tid.into(), owner_id.into(), attrs.into()],
-            )
-            .map_err(|e| format!("cardinality check for '{attr}' failed: {e}"))?
-            .unwrap_or(0);
+            let n = l
+                .count_owned(has_tid, owner_id, &attrs)
+                .map_err(|e| format!("cardinality check for '{attr}' failed: {e}"))?;
             if n >= max {
                 return Err(format!(
                     "'{attr}' is declared @card(..{max}) and instance {owner_id} already owns {n}"
@@ -377,34 +350,15 @@ fn root_of(tid: i32) -> i32 {
     .unwrap_or(tid)
 }
 
-/// Ownership edge: registry + typed table + both adjacency directions, in one
-/// transaction (spec 001 FR-012).
+/// Ownership edge — in v1 the registry, the typed table and both directions of
+/// the segments, in one transaction (spec 001 FR-012). Nothing when `owner`
+/// already owns `attr`.
 pub fn link_has(gid: i32, owner: i64, attr: i64) -> WResult<()> {
     let has_tid = schema::ensure_has_type(gid);
-    let exists = crate::spiu::one::<i64>(
-        "SELECT id FROM og_data.og_edge WHERE type_id = $1 AND src = $2 AND dst = $3 LIMIT 1",
-        &[has_tid.into(), owner.into(), attr.into()],
-    )
-    .ok()
-    .flatten();
-    if exists.is_some() {
-        return Ok(());
-    }
-    let table = types::storage_table(has_tid).expect("$has has no table");
-    let eid = alloc_id(has_tid);
-    Spi::run_with_args(
-        "INSERT INTO og_data.og_edge (id, type_id, src, dst) VALUES ($1, $2, $3, $4)",
-        &[eid.into(), has_tid.into(), owner.into(), attr.into()],
-    )
-    .map_err(|e| format!("ownership registry insert failed: {e}"))?;
-    Spi::run_with_args(
-        &format!("INSERT INTO {table} (id, src, dst) VALUES ($1, $2, $3)"),
-        &[eid.into(), owner.into(), attr.into()],
-    )
-    .map_err(|e| format!("ownership insert failed: {e}"))?;
-    adjacency::append(owner, has_tid, 'o', attr, eid);
-    adjacency::append(attr, has_tid, 'i', owner, eid);
-    Ok(())
+    crate::layout::active().link_has(has_tid, owner, attr).map_err(|e| match e {
+        WriteError::Register(e) => format!("ownership registry insert failed: {e}"),
+        WriteError::Store(e) => format!("ownership insert failed: {e}"),
+    })
 }
 
 // --------------------------------------------------------------------------
@@ -412,7 +366,8 @@ pub fn link_has(gid: i32, owner: i64, attr: i64) -> WResult<()> {
 // --------------------------------------------------------------------------
 
 fn add_role_player(gid: i32, rel_id: i64, role: Option<&str>, player: i64) -> WResult<()> {
-    let rel_tid = crate::id::id_type(rel_id);
+    let l = crate::layout::active();
+    let rel_tid = l.type_of_element(rel_id);
     let rel_name = crate::storage::type_name_of(rel_tid);
     let role_id = match role {
         Some(r) => schema::find_role(gid, rel_tid, r).ok_or_else(|| {
@@ -424,14 +379,7 @@ fn add_role_player(gid: i32, rel_id: i64, role: Option<&str>, player: i64) -> WR
             let candidates = super::compile::all_roles_of(rel_tid);
             let mut chosen = None;
             for c in candidates {
-                let taken = crate::spiu::one::<i64>(
-                    "SELECT 1 FROM og_data.og_role_player WHERE edge_id = $1 AND role_id = $2",
-                    &[rel_id.into(), c.into()],
-                )
-                .ok()
-                .flatten()
-                .is_some();
-                if !taken {
+                if !l.role_filled(rel_id, c) {
                     chosen = Some(c);
                     break;
                 }
@@ -444,12 +392,8 @@ fn add_role_player(gid: i32, rel_id: i64, role: Option<&str>, player: i64) -> WR
             })?
         }
     };
-    Spi::run_with_args(
-        "INSERT INTO og_data.og_role_player (edge_id, role_id, player_id)
-         VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
-        &[rel_id.into(), role_id.into(), player.into()],
-    )
-    .map_err(|e| format!("role assignment failed: {e}"))?;
+    l.add_role_player(rel_id, role_id, player)
+        .map_err(|e| format!("role assignment failed: {e}"))?;
     Ok(())
 }
 
@@ -458,6 +402,7 @@ fn add_role_player(gid: i32, rel_id: i64, role: Option<&str>, player: i64) -> WR
 // --------------------------------------------------------------------------
 
 pub fn run_delete(gid: i32, items: &[DeleteItem], env: &Env) -> WResult<()> {
+    let l = crate::layout::active();
     for item in items {
         match &item.kind {
             DeleteKind::Instance(v) => {
@@ -479,18 +424,14 @@ pub fn run_delete(gid: i32, items: &[DeleteItem], env: &Env) -> WResult<()> {
                 let player_id = require_id(env, player)?;
                 let role_ids = match role {
                     Some(r) => {
-                        let tid = crate::id::id_type(rel_id);
+                        let tid = l.type_of_element(rel_id);
                         vec![schema::find_role(gid, tid, r)
                             .ok_or_else(|| format!("no role '{r}' on this relation"))?]
                     }
-                    None => super::compile::all_roles_of(crate::id::id_type(rel_id)),
+                    None => super::compile::all_roles_of(l.type_of_element(rel_id)),
                 };
-                Spi::run_with_args(
-                    "DELETE FROM og_data.og_role_player
-                      WHERE edge_id = $1 AND player_id = $2 AND role_id = ANY($3)",
-                    &[rel_id.into(), player_id.into(), role_ids.into()],
-                )
-                .map_err(|e| format!("role removal failed: {e}"))?;
+                l.remove_role_player(rel_id, player_id, &role_ids)
+                    .map_err(|e| format!("role removal failed: {e}"))?;
             }
         }
     }
@@ -508,22 +449,7 @@ pub fn run_update(gid: i32, pats: &[Pat], env: &mut Env) -> WResult<()> {
             .ok_or_else(|| format!("attribute type '{attr}' is not defined"))?;
         let has_tid = schema::ensure_has_type(gid);
         let attrs = labeling::og_subtypes(attr_tid);
-        let old: Vec<i64> = Spi::connect(|client| {
-            client
-                .select(
-                    &format!(
-                        "SELECT dst FROM og_data.og_edge
-                          WHERE type_id = $1 AND src = $2
-                            AND ((dst >> {}) & {})::int4 = ANY($3)",
-                        crate::id::TYPE_SHIFT,
-                        crate::id::TYPE_MASK
-                    ),
-                    None,
-                    &[has_tid.into(), owner_id.into(), attrs.into()],
-                )
-                .map(|rows| rows.filter_map(|r| r.get::<i64>(1).ok().flatten()).collect())
-                .unwrap_or_default()
-        });
+        let old = crate::layout::active().owned_attributes(has_tid, owner_id, &attrs);
         for a in old {
             unlink_has(gid, owner_id, a);
         }
@@ -533,75 +459,29 @@ pub fn run_update(gid: i32, pats: &[Pat], env: &mut Env) -> WResult<()> {
 
 fn unlink_has(gid: i32, owner: i64, attr: i64) {
     let has_tid = schema::ensure_has_type(gid);
-    let eid = crate::spiu::one::<i64>(
-        "SELECT id FROM og_data.og_edge WHERE type_id = $1 AND src = $2 AND dst = $3",
-        &[has_tid.into(), owner.into(), attr.into()],
-    )
-    .ok()
-    .flatten();
-    let Some(eid) = eid else { return };
-    adjacency::remove(owner, has_tid, 'o', eid);
-    adjacency::remove(attr, has_tid, 'i', eid);
-    if let Some(table) = types::storage_table(has_tid) {
-        Spi::run_with_args(&format!("DELETE FROM {table} WHERE id = $1"), &[eid.into()]).ok();
-    }
-    Spi::run_with_args("DELETE FROM og_data.og_edge WHERE id = $1", &[eid.into()]).ok();
+    crate::layout::active().unlink_has(has_tid, owner, attr);
 }
 
 /// Deleting an instance also removes what referenced it, so the graph never
 /// keeps a role assignment or ownership pointing at nothing (FR-038).
 fn delete_instance(gid: i32, id: i64) -> WResult<()> {
-    let tid = crate::id::id_type(id);
+    let l = crate::layout::active();
     let has_tid = schema::ensure_has_type(gid);
 
     // Ownerships in both directions.
-    let edges: Vec<(i64, i64, i64)> = Spi::connect(|client| {
-        client
-            .select(
-                "SELECT id, src, dst FROM og_data.og_edge
-                  WHERE type_id = $1 AND (src = $2 OR dst = $2)",
-                None,
-                &[has_tid.into(), id.into()],
-            )
-            .map(|rows| {
-                rows.filter_map(|r| {
-                    Some((
-                        r.get::<i64>(1).ok()??,
-                        r.get::<i64>(2).ok()??,
-                        r.get::<i64>(3).ok()??,
-                    ))
-                })
-                .collect()
-            })
-            .unwrap_or_default()
-    });
-    for (_, src, dst) in edges {
+    for (_, src, dst) in l.ownerships_of(has_tid, id) {
         unlink_has(gid, src, dst);
     }
 
     // Relations this instance plays a role in are removed with it: a relation
     // missing a player is not a smaller relation, it is a broken one.
-    let rels: Vec<i64> = Spi::connect(|client| {
-        client
-            .select(
-                "SELECT DISTINCT edge_id FROM og_data.og_role_player WHERE player_id = $1",
-                None,
-                &[id.into()],
-            )
-            .map(|rows| rows.filter_map(|r| r.get::<i64>(1).ok().flatten()).collect())
-            .unwrap_or_default()
-    });
-    for r in rels {
+    for r in l.relations_played(id) {
         delete_instance(gid, r)?;
     }
-    Spi::run_with_args("DELETE FROM og_data.og_role_player WHERE edge_id = $1", &[id.into()]).ok();
 
-    crate::storage::refuse_virtual_write(tid);
-    if let Some(table) = types::storage_table(tid) {
-        Spi::run_with_args(&format!("DELETE FROM {table} WHERE id = $1"), &[id.into()]).ok();
-    }
-    Spi::run_with_args("DELETE FROM og_data.og_node WHERE id = $1", &[id.into()]).ok();
-    Spi::run_with_args("DELETE FROM og_data.og_adj WHERE src = $1", &[id.into()]).ok();
+    // Then its own role players (as a relation), its row, its registry entry
+    // and segments; a virtual type is refused on the way.
+    l.remove_instance(id);
     Ok(())
 }
 
