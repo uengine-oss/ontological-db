@@ -215,9 +215,15 @@ def main():
 
     print("\nSchema round trip and refusals")
     dump = psql(db, "SELECT og_typeql_schema('bookstore')")
-    pathlib.Path("/tmp/og_typeql_dump.tql").write_text(dump.stdout)
+    # OG_TYPEQL_DUMP lets parallel runs use their own file; the default keeps the
+    # SQL text (and so the seam golden) unchanged. Written then renamed, so a
+    # concurrent run never reads a half-written file.
+    dump_path = os.environ.get("OG_TYPEQL_DUMP", "/tmp/og_typeql_dump.tql")
+    tmp_path = f"{dump_path}.{os.getpid()}.tmp"
+    pathlib.Path(tmp_path).write_text(dump.stdout)
+    os.replace(tmp_path, dump_path)
     psql(db, "SELECT og_create_graph('roundtrip')")
-    r = psql(db, "SELECT og_typeql_script('roundtrip', pg_read_file('/tmp/og_typeql_dump.tql'))")
+    r = psql(db, f"SELECT og_typeql_script('roundtrip', pg_read_file('{dump_path}'))")
     rt = psql(db, """SELECT kind::text || '=' || count(*) FROM og_catalog.type
                      WHERE graph_id = (SELECT graph_id FROM og_catalog.graph WHERE name='roundtrip')
                        AND name NOT LIKE '$%' GROUP BY kind ORDER BY kind""")

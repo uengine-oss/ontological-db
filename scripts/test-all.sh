@@ -360,7 +360,7 @@ if want typeql; then
         [ -f "$dir/run.py" ] || continue
         say "typeql ($(basename "$(dirname "$dir")"))"
         if [ $py_ok = 0 ]; then record typeql FAIL "" "" "no usable Python"; continue; fi
-        "$PY" "$dir/run.py" > "$LOGS/typeql.log" 2>&1; rc=$?
+        OG_TYPEQL_DUMP="$WORK/og_typeql_dump.tql" "$PY" "$dir/run.py" > "$LOGS/typeql.log" 2>&1; rc=$?
         tail -4 "$LOGS/typeql.log"
         line="$(sed -E 's/\x1b\[[0-9;]*m//g' "$LOGS/typeql.log" | grep -E '^[0-9]+/[0-9]+ checks passed' | tail -1)"
         p="$(printf '%s' "$line" | sed -E 's#^([0-9]+)/([0-9]+).*#\1#')"
