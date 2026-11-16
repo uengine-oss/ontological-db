@@ -503,7 +503,7 @@ pub fn load(graph: &str, document: &str, format: &str) -> Value {
         {
             ensure_type(gid, o, 'e');
             let Some(tid) = iri_type(gid, o) else { continue };
-            let id = crate::store_v1::storage::create_node_inner(
+            let id = crate::layout::active().create_node(
                 gid,
                 tid,
                 &local_name(o),
@@ -538,7 +538,7 @@ pub fn load(graph: &str, document: &str, format: &str) -> Value {
                 Some(&did) => {
                     ensure_type(gid, p, 'r');
                     if let Some(rel) = iri_type(gid, p) {
-                        crate::store_v1::storage::create_edge_inner(
+                        crate::layout::active().create_edge(
                             gid,
                             rel,
                             &local_name(p),
@@ -568,7 +568,7 @@ pub fn load(graph: &str, document: &str, format: &str) -> Value {
                 if let Some(d) = datatype {
                     payload.insert(format!("{pname}^^"), json!(d));
                 }
-                crate::store_v1::storage::set_node_props_inner(sid, Value::Object(payload));
+                crate::layout::active().set_node_props(sid, Value::Object(payload));
                 facts += 1;
             }
             Term::Blank(_) => {

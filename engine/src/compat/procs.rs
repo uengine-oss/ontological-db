@@ -279,7 +279,9 @@ fn fulltext_query(gid: i32, args: &[Arg], alias: &str) -> Result<Plan, String> {
     let q = args[1].sql();
     // The view carries every subtype's rows with the properties as columns, so
     // one scan covers the hierarchy the index was declared on.
-    let view = crate::store_v1::views::ensure_view(tid, false);
+    let view = crate::layout::active()
+        .node_scan(gid, &crate::layout::LabelSet::Under(tid), crate::layout::TimeScope::Session)
+        .into_string();
     Ok(Plan {
         from: format!(
             "(SELECT src.id, ts_rank({ts}, websearch_to_tsquery('simple', ({q})::text)) AS score \
