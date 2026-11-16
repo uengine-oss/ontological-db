@@ -206,7 +206,7 @@ pub fn lock_schema() {
 pub fn bump_schema_version(graph_id: i32, description: &str) {
     lock_schema();
     // Generated per-type union views encode the descendant set, so any schema
-    // change invalidates them (spec 003 / cypher::views).
+    // change invalidates them (spec 003 / store_v1::views).
     crate::store_v1::views::drop_all_views();
     // The whole catalog of the graph as it stands after this change, so "what
     // structure was this written under?" has an answer (spec 012 FR-009).

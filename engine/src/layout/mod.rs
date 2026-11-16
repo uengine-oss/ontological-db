@@ -191,7 +191,7 @@ pub trait Layout {
     /// have at least `id` and `type_id`, and a column per property the layout
     /// gives one (see [`Layout::prop`]).
     ///
-    /// v1 (`cypher/compile.rs` `bind_node`, `graph_nodes`; `cypher/views.rs`):
+    /// v1 (`cypher/compile.rs` `bind_node`, `graph_nodes`; `store_v1/views.rs`):
     /// - `Under(t)`: `og_data.v_<t>`, or `og_data.vp_<t>` when the view packs
     ///   properties into `__ext` (more than `WIDE_VIEW_COLUMNS` columns). The view
     ///   is the `UNION ALL` of `og_data.n_<sub>` (`og_data.a_<sub>` for TypeQL
@@ -433,7 +433,7 @@ pub trait Layout {
     /// were rewritten. A layout with nothing to compact returns 0.
     ///
     /// v1: each `(src, etype, dir)` of `g` whose segments would fit in fewer
-    /// chunks of `storage::adjacency::CHUNK` is rewritten densely, one
+    /// chunks of `store_v1::adjacency::CHUNK` is rewritten densely, one
     /// statement per group; the count is of groups.
     fn reorganize(&self, g: GraphId) -> i64;
 

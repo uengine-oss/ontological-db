@@ -27,7 +27,7 @@
 //! The walks are the storage layout's only through the SQL they read: the
 //! per-level query is [`Layout::frontier_step`] and the topology scan
 //! [`Layout::topology_scan`] (`crate::layout`; v1's text, the adjacency
-//! segments, is in `layout/v1.rs`). Nothing else here names a table.
+//! segments, is in `store_v1/layout.rs`). Nothing else here names a table.
 //!
 //! [`Layout::frontier_step`]: crate::layout::Layout::frontier_step
 //! [`Layout::topology_scan`]: crate::layout::Layout::topology_scan

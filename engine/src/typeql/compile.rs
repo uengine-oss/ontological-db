@@ -43,7 +43,7 @@ pub enum Bind {
 
 pub struct Compiler {
     pub gid: i32,
-    /// Where the graph's rows are stored (v1: `layout::v1::LayoutV1`).
+    /// Where the graph's rows are stored (v1: `store_v1::layout::LayoutV1`).
     lay: &'static dyn Layout,
     has_tid: i32,
     pub binds: HashMap<String, Bind>,

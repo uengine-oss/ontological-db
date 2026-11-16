@@ -6,7 +6,7 @@
 //! The SQL functions are the same whatever the storage layout; what they read
 //! and what they can report is the layout's ([`Layout::graph_stats`] and the
 //! rest of the trait's "traversal and storage upkeep" methods). v1's queries —
-//! the registries, the adjacency segments — are in `layout/v1.rs`.
+//! the registries, the adjacency segments — are in `store_v1/layout.rs`.
 //!
 //! [`Layout::graph_stats`]: crate::layout::Layout::graph_stats
 

@@ -15,7 +15,7 @@
 //! SQL is versioned exactly as Cypher is.
 //!
 //! Reads need nothing from the caller but the instant. The generated type views
-//! (`cypher::views`) put the current and history rows of a temporal type behind
+//! (`store_v1::views`) put the current and history rows of a temporal type behind
 //! one relation filtered by `og_valid_at()` / `og_system_at()`, which read the
 //! `og.valid_at` / `og.system_at` settings. The compiled SQL is the same for
 //! every instant, so the plan cache is unaffected; when no instant is set the
