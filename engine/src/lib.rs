@@ -33,6 +33,7 @@ pub mod fabric;
 pub mod spiu;
 pub mod id;
 pub mod interop;
+pub mod layout;
 pub mod security;
 pub mod stats;
 pub mod storage;
