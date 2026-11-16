@@ -22,6 +22,7 @@ tests/compat/
   corpus/_shared/fixture/ 모든 클라이언트가 같이 쓰는 준비 데이터 (패브릭 데이터소스)
   targets/<target>/bootstrap.sql   대상 판의 시작점 (v1 은 있음, age 는 자리만)
   targets/source.sql  패브릭이 읽는 원천 시스템(작은 ERP, 일반 PostgreSQL 테이블)
+  targets/stats.sql   준비 데이터를 넣은 뒤 한 번: 통계를 떠 두고 autovacuum 을 꺼 실행 중 계획이 바뀌지 않게 한다
   normalize.py        결과 정규화 규칙
   run.py              실행기 — 모음을 Bolt 로 돌려 결과를 저장하거나 정답과 비교한다
   unstable.json       같은 v1 에서도 실행마다 답이 달라 정답에서 뺀 쿼리 (지금은 없음)
@@ -31,8 +32,13 @@ tests/compat/
 
 ## 쓰는 법
 
-필요한 것: `psql`, Python 3.10+ 와 neo4j 드라이버(5 또는 6; Robo 가 6.0.3 을 쓴다), 대상 판의 PostgreSQL 과
-Bolt 게이트웨이 실행 파일. 실행기는 `--pg-database`(기본 `og_compat`)를 **지우고 새로 만든다.**
+필요한 것: `psql`, Python 3.9 이상(3.9.6 과 3.12 에서 바이트까지 같은 결과를 확인했다)과 neo4j 드라이버
+(5.28 로 확인; Robo 는 6.0.3 을 쓴다), 대상 판의 PostgreSQL 과 Bolt 게이트웨이 실행 파일. 실행기는
+`--pg-database`(기본 `og_compat`)를 **지우고 새로 만들고**, 그 데이터베이스의 세션 TimeZone 을 `UTC` 로 고정한다
+(`ALTER DATABASE … SET TimeZone`). 그래서 클러스터의 시간대(UTC, Asia/Seoul …)와 포트가 달라도 결과 폴더는 같다.
+준비 데이터를 넣은 뒤에는 `targets/stats.sql` 로 `ANALYZE` 를 한 번 하고 그 데이터베이스 테이블들의 autovacuum 을
+끈다. autovacuum 이 실행 중간에 통계를 바꾸면 계획이 바뀌어, 30홉 가변 길이 쿼리 하나가 0.01초에서 30초 제한을
+넘긴 일이 있었다.
 
 ```sh
 # v1 정답 다시 만들기 (게이트웨이는 실행기가 띄우고 끈다)
@@ -185,12 +191,17 @@ CREATE/MERGE → SET/REMOVE → DELETE/DROP, 같은 단계 안에서는 소스�
    번호는 읽기 하나마다, 시나리오 하나마다 새로 매기며, 시나리오 안에서는 단계 사이에 이어진다. 그냥 정수나
    문자열이라도 그 순간 그래프에 있는 노드·관계의 id/elementId 이고, 열의 식에 `id(`/`elementId(` 가 있거나
    (정수는) 2^31 이상이면 id 로 본다. 실행 때 찾아 넣은 매개변수 값도 같은 규칙으로 바뀐다.
-6. **시계**: 실행 시각 앞뒤 이틀 안의 시간 값과 ISO-8601 문자열은 `<now>`, epoch 밀리초는 `<now:ms>`.
-   (`datetime()` 이 서버 시간대로 찍히는 차이도 이것으로 사라진다.) 준비 데이터의 고정 시각은 그대로다.
+6. **시계**: 실행 시각 앞뒤 이틀 안의 시간 값과 ISO-8601 문자열(날짜만 있는 것도)은 `<now>`, epoch 밀리초는
+   `<now:ms>`. ISO 문자열은 직접 파싱한다 — `datetime.fromisoformat` 은 Python 3.11 미만에서 소수 자리가 3·6자리가
+   아닌 시각(PostgreSQL 은 뒤의 0 을 지운다: `.3238`)과 `Z` 를 못 읽어 결과가 Python 에 따라 달라졌다.
+   준비 데이터의 고정 시각은 그대로 남는데, 세션 TimeZone 이 `UTC` 라 엔진이 돌려주는 시각은 늘 `+00:00` 이다.
 7. **randomUUID()**: UUID 꼴 문자열은 `<uuid1>`, `<uuid2>` … (5와 같은 순서로).
 8. **실수**는 유효 숫자 6자리.
 9. **실패**는 `{"error": {"code", "message"}}`, 메시지의 9자리 이상 숫자는 `<n>`(id·oid).
-10. 200행이 넘는 답은 앞 200행과 전체의 SHA-1(`rows_sha1`)을 남긴다. 단계 변화도 종류마다 100개까지.
+10. **접속**: 실행에 쓴 PostgreSQL 포트·Bolt 포트·`host:port`·데이터베이스 이름은 `<pg-port>`, `<bolt-port>`,
+    `<pg-host>:<pg-port>`, `<pg-database>` 가 된다(`SHOW CREDENTIALS`·`SHOW DATASOURCES` 와 데이터소스 매개변수에
+    나온다). 오류 메시지에도 같은 규칙을 쓴다.
+11. 200행이 넘는 답은 앞 200행과 전체의 SHA-1(`rows_sha1`)을 남긴다. 단계 변화도 종류마다 100개까지.
 
 두 번 실행해 다른 것이 나오면, 까닭을 찾아 위 규칙에 넣거나 `unstable.json` 에 사유와 함께 적는다
 (그 쿼리는 여전히 실행되지만 답 대신 사유만 남는다).
