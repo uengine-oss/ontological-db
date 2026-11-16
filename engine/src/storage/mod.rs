@@ -273,7 +273,7 @@ fn ext_expr(plan: &PropPlan, param: &str) -> String {
 fn og_create_node(graph: &str, type_name: &str, props: default!(JsonB, "'{}'")) -> i64 {
     let gid = types::graph_id(graph);
     let tid = types::type_id(gid, type_name);
-    create_node_inner(gid, tid, type_name, props.0)
+    crate::layout::active().create_node(gid, tid, type_name, props.0)
 }
 
 /// A virtual type's storage is a view over rows that live elsewhere. The view
@@ -335,7 +335,7 @@ pub fn create_node_inner(_gid: i32, tid: i32, type_name: &str, props: Value) -> 
 
 #[pg_extern]
 fn og_set_node_props(id: i64, props: JsonB) {
-    set_node_props_inner(id, props.0);
+    crate::layout::active().set_node_props(id, props.0);
 }
 
 pub fn set_node_props_inner(id: i64, props: Value) {
@@ -415,7 +415,7 @@ pub fn set_edge_props_inner(id: i64, props: Value) {
 /// Delete a node and every incident edge (DETACH DELETE semantics).
 #[pg_extern]
 fn og_delete_node(id: i64) -> i64 {
-    delete_node_inner(id)
+    crate::layout::active().delete_node(id)
 }
 
 pub fn delete_node_inner(id: i64) -> i64 {
@@ -466,7 +466,7 @@ fn og_create_edge(
 ) -> i64 {
     let gid = types::graph_id(graph);
     let tid = types::type_id(gid, rel_type);
-    create_edge_inner(gid, tid, rel_type, src, dst, props.0)
+    crate::layout::active().create_edge(gid, tid, rel_type, src, dst, props.0)
 }
 
 pub fn create_edge_inner(
@@ -568,7 +568,7 @@ pub fn type_name_of(tid: i32) -> String {
 
 #[pg_extern]
 fn og_delete_edge(id: i64) -> i64 {
-    delete_edge_inner(id)
+    crate::layout::active().delete_edge(id)
 }
 
 pub fn delete_edge_inner(eid: i64) -> i64 {

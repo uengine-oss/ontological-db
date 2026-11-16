@@ -35,9 +35,10 @@ thread_local! {
 ///
 /// The cache used to be keyed on `(graph, query)` alone, so a compiled plan
 /// outlived the schema it was compiled against. The visible failure is worse
-/// than a stale view name: when a property is promoted out of `__ext` into its
-/// own column, a cached plan keeps reading `__ext ->> 'x'` while new writes go
-/// to `p_x`, and the query returns rows with the value silently missing.
+/// than a stale view name: when (v1) storage promotes a property out of the
+/// overflow payload into a column of its own, a cached plan keeps reading the
+/// payload while new writes go to the column, and the query returns rows with
+/// the value silently missing.
 /// Property promotion happens on an ordinary write, so this needs no DDL to
 /// trigger.
 ///
@@ -82,15 +83,16 @@ pub(crate) fn compile_cached(graph: &str, query: &str) -> Result<(String, Vec<St
     if is_write(&ast) {
         return Err("write queries are not compiled to a single statement".into());
     }
-    views::take_created_view();
+    let layout = crate::layout::active();
+    layout.take_uncacheable();
     let mut c = compile::Compiler::new(graph);
     let compiled = c.compile_read(&ast)?;
     let out = (compiled.sql, compiled.columns);
-    // A view this compile created exists only once its transaction commits; a
-    // rollback drops it, and a cached plan would then name a missing relation
-    // ("relation og_data.v_N does not exist") for the rest of the session.
-    // Compile again next time — by then the view either exists or is rebuilt.
-    if views::take_created_view() {
+    // What this compile created (v1: a union view) exists only once its
+    // transaction commits; a rollback drops it, and a cached plan would then
+    // name a missing relation ("relation … does not exist") for the rest of the
+    // session. Compile again next time — by then it either exists or is rebuilt.
+    if layout.take_uncacheable() {
         return Ok(out);
     }
     PLAN_CACHE.with(|cache| {
@@ -487,7 +489,7 @@ fn read_segment(
                     .filter(|v| v.get("_src").is_none())
                     .and_then(|v| v.get("_id"))
                     .and_then(Value::as_i64)
-                    .map(crate::id::id_type);
+                    .map(|id| crate::layout::active().type_of_element(id));
                 match (t, tid) {
                     (Some(t), None) => tid = Some(t),
                     (Some(t), Some(have)) if t == have => {}
@@ -579,17 +581,12 @@ fn apply_write(graph: &str, gid: i32, clause: &Clause, env: &mut eval::Env, para
                 let v = eval_or_fail(e, env, params);
                 if let Some(id) = element_id(gid, &v, "DELETE") {
                     let is_edge = v.get("_src").is_some();
+                    let store = crate::layout::active();
                     if is_edge {
-                        crate::storage::delete_edge_inner(id);
+                        store.delete_edge(id);
                     } else {
                         if !*detach {
-                            let deg = crate::spiu::one::<i64>(
-                                "SELECT COALESCE(sum(n),0)::int8 FROM og_data.og_adj WHERE src = $1",
-                                &[id.into()],
-                            )
-                            .ok()
-                            .flatten()
-                            .unwrap_or(0);
+                            let deg = store.degree(id);
                             if deg > 0 {
                                 error!(
                                     "cannot delete node {id}: it still has {deg} \
@@ -597,7 +594,7 @@ fn apply_write(graph: &str, gid: i32, clause: &Clause, env: &mut eval::Env, para
                                 );
                             }
                         }
-                        crate::storage::delete_node_inner(id);
+                        store.delete_node(id);
                     }
                 }
             }
@@ -673,7 +670,7 @@ fn create_pattern(graph: &str, gid: i32, p: &Pattern, env: &mut eval::Env, param
                         );
                         let label = np.labels.last().map(String::as_str).unwrap_or("");
                         let props = props_json(&np.props, env, params);
-                        let id = crate::storage::create_node_inner(gid, tid, label, props);
+                        let id = crate::layout::active().create_node(gid, tid, label, props);
                         if let Some(v) = &np.var {
                             env.insert(v.clone(), node_json(id));
                         }
@@ -707,7 +704,7 @@ fn create_rel(graph: &str, gid: i32, rel: &RelPat, a: i64, b: i64, env: &mut eva
         "relation",
     );
     let props = props_json(&rel.props, env, params);
-    let eid = crate::storage::create_edge_inner(gid, tid, &rel.types[0], src, dst, props);
+    let eid = crate::layout::active().create_edge(gid, tid, &rel.types[0], src, dst, props);
     if let Some(v) = &rel.var {
         env.insert(v.clone(), edge_json(eid));
     }
@@ -857,11 +854,8 @@ fn rename_label(gid: i32, clauses: &[&Clause]) -> bool {
         &[old_id.into(), new.into()],
     )
     .unwrap_or_else(|e| error!("failed to rename label '{old}' to '{new}': {e}"));
-    // The human-readable view is named after the type, so it moves with it.
-    crate::catalog::types::drop_alias_view(old);
-    if let Some(table) = crate::catalog::types::storage_table(old_id) {
-        crate::catalog::types::ensure_alias_view(old_id, new, &table);
-    }
+    // What storage named after the type (v1: its human-readable view) moves with it.
+    crate::layout::active().type_renamed(old_id, old, new);
     // Named indexes point at the label by name. Leaving them behind would keep
     // the name resolvable while what it names no longer exists.
     Spi::run_with_args(
@@ -886,7 +880,7 @@ fn rename_label(gid: i32, clauses: &[&Clause]) -> bool {
 /// too. A map that is not an element at all (`{_id: 'x'}`) is no target.
 fn element_id(gid: i32, v: &Value, clause: &str) -> Option<i64> {
     let id = v.get("_id").and_then(Value::as_i64)?;
-    let tid = crate::id::id_type(id);
+    let tid = crate::layout::active().type_of_element(id);
     if type_graph(tid) != Some(gid) {
         error!(
             "{clause}: {id} is not a node or relationship of this graph — a map with an `_id` \
@@ -957,7 +951,7 @@ fn apply_set(gid: i32, items: &[SetOp], env: &mut eval::Env, params: &Value) {
                     error!("SET/REMOVE refers to unbound variable '{var}'");
                 };
                 let Some(id) = element_id(gid, &entity, "SET") else { continue };
-                let tid = crate::id::id_type(id);
+                let tid = crate::layout::active().type_of_element(id);
                 let gid = crate::spiu::one::<i32>(
                     "SELECT graph_id FROM og_catalog.type WHERE type_id = $1",
                     &[tid.into()],
@@ -985,10 +979,11 @@ fn apply_set(gid: i32, items: &[SetOp], env: &mut eval::Env, params: &Value) {
 }
 
 fn write_props(id: i64, is_edge: bool, props: Value) {
+    let store = crate::layout::active();
     if is_edge {
-        crate::storage::set_edge_props_inner(id, props);
+        store.set_edge_props(id, props);
     } else {
-        crate::storage::set_node_props_inner(id, props);
+        store.set_node_props(id, props);
     }
 }
 
