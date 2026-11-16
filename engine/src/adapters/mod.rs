@@ -53,32 +53,8 @@ fn og_dump_rdf(graph: &str, format: default!(&str, "'turtle'")) -> String {
 #[pg_extern(stable)]
 fn og_mapping_report(graph: &str) -> JsonB {
     let gid = types::graph_id(graph);
-    let unmapped: Vec<serde_json::Value> = Spi::connect(|client| {
-        client
-            .select(
-                "SELECT subject, predicate, object, reason FROM og_data.og_triple_overflow
-                  WHERE graph_id = $1 ORDER BY id LIMIT 200",
-                None,
-                &[gid.into()],
-            )
-            .expect("overflow scan failed")
-            .map(|r| {
-                json!({
-                    "subject": r.get::<String>(1).unwrap(),
-                    "predicate": r.get::<String>(2).unwrap(),
-                    "object": r.get::<String>(3).unwrap(),
-                    "reason": r.get::<String>(4).unwrap(),
-                })
-            })
-            .collect()
-    });
-    let total = crate::spiu::one::<i64>(
-        "SELECT count(*) FROM og_data.og_triple_overflow WHERE graph_id = $1",
-        &[gid.into()],
-    )
-    .ok()
-    .flatten()
-    .unwrap_or(0);
+    let unmapped: Vec<serde_json::Value> = crate::store_v1::rdf::overflow_sample(gid);
+    let total = crate::store_v1::rdf::overflow_count(gid);
 
     JsonB(json!({
         "graph": graph,

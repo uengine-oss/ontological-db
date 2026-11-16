@@ -940,17 +940,7 @@ pub fn run(statement: &str, graph: Option<&str>, params: &Map<String, Value>) ->
     crate::cypher::timeout::arm();
     let mut shown = format!("[{}] {}", graph.unwrap_or("-"), redacted(statement));
     let audit = |shown: &str, rows: i64, err: Option<&str>| {
-        Spi::run_with_args(
-            "INSERT INTO og_data.og_audit (query, lang, rows_out, duration_ms, error_code)
-             VALUES ($1, 'fabric', $2, $3, $4)",
-            &[
-                shown.into(),
-                rows.into(),
-                (started.elapsed().as_secs_f64() * 1000.0).into(),
-                err.map(|e| e.chars().take(200).collect::<String>()).into(),
-            ],
-        )
-        .ok();
+        crate::store_v1::security::audit_fabric(shown, rows, started.elapsed().as_secs_f64() * 1000.0, err);
     };
     // QUERY FABRIC runs here, not through SQL: an installation whose extension
     // script predates the statement has no og_fabric_query() function, and needs none.

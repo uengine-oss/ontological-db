@@ -12,7 +12,6 @@ pub mod eval;
 pub mod lexer;
 pub mod parser;
 pub mod timeout;
-pub mod views;
 
 use ast::*;
 use pgrx::prelude::*;
@@ -183,7 +182,7 @@ fn og_cypher_stats() -> JsonB {
 }
 
 fn audit(graph: &str, query: &str, rows: i64, started: std::time::Instant, err: Option<&str>) {
-    crate::security::audit("cypher", graph, query, rows, started, err);
+    crate::store_v1::security::audit("cypher", graph, query, rows, started, err);
 }
 
 fn run_read(graph: &str, query: &str, params: &Value) -> Vec<Value> {

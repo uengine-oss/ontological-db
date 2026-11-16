@@ -231,7 +231,7 @@ fn ensure_writer_base(role: &str) {
                og_data.og_role_player, og_data.og_id_alloc TO {r}"
     ))
     .unwrap_or_else(|e| error!("registry grant failed: {e}"));
-    crate::catalog::privileges::grant_write_functions(&r);
+    crate::store_v1::privileges::grant_write_functions(&r);
 }
 
 /// Recompute one role's privileges on one concrete type's table from the
@@ -428,6 +428,23 @@ pub fn audit(lang: &str, graph: &str, query: &str, rows: i64, started: std::time
             ms.into(),
             err.map(|e| e.chars().take(200).collect::<String>()).into(),
             action.into(),
+        ],
+    )
+    .ok();
+}
+
+/// Record a fabric statement in the audit log (`crate::fabric::sqlish::run`):
+/// `shown` is the statement with its parameter block blanked, `ms` how long it
+/// took. Unlike `audit` it writes the row itself, without the actor columns.
+pub fn audit_fabric(shown: &str, rows: i64, ms: f64, err: Option<&str>) {
+    Spi::run_with_args(
+        "INSERT INTO og_data.og_audit (query, lang, rows_out, duration_ms, error_code)
+             VALUES ($1, 'fabric', $2, $3, $4)",
+        &[
+            shown.into(),
+            rows.into(),
+            ms.into(),
+            err.map(|e| e.chars().take(200).collect::<String>()).into(),
         ],
     )
     .ok();

@@ -225,7 +225,7 @@ fn intern_attribute(
     let Some((_, anns)) = schema::owned_attribute(gid, owner_tid, attr) else {
         return Err(format!(
             "'{}' does not own '{attr}'. declare 'owns {attr}' on it first",
-            crate::storage::type_name_of(owner_tid)
+            crate::store_v1::storage::type_name_of(owner_tid)
         ));
     };
     let store = l
@@ -368,7 +368,7 @@ pub fn link_has(gid: i32, owner: i64, attr: i64) -> WResult<()> {
 fn add_role_player(gid: i32, rel_id: i64, role: Option<&str>, player: i64) -> WResult<()> {
     let l = crate::layout::active();
     let rel_tid = l.type_of_element(rel_id);
-    let rel_name = crate::storage::type_name_of(rel_tid);
+    let rel_name = crate::store_v1::storage::type_name_of(rel_tid);
     let role_id = match role {
         Some(r) => schema::find_role(gid, rel_tid, r).ok_or_else(|| {
             format!("relation '{rel_name}' declares no role '{r}'")

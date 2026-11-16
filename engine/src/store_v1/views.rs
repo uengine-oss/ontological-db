@@ -310,12 +310,12 @@ fn build_view(tid: i32, is_edge: bool) -> String {
     for (sub, table) in &tables {
         // A temporal type contributes its current rows and, when an instant
         // is set, its history rows — both filtered to that instant (spec 013).
-        let temporal = crate::temporal::is_temporal(*sub);
+        let temporal = crate::store_v1::temporal::is_temporal(*sub);
         let mut sources: Vec<(String, String)> = Vec::new();
         if temporal {
-            let (cur, open, closed) = crate::temporal::visibility_predicates();
+            let (cur, open, closed) = crate::store_v1::temporal::visibility_predicates();
             sources.push((table.clone(), format!(" WHERE {cur}")));
-            if let Some(h) = crate::temporal::history_table(table) {
+            if let Some(h) = crate::store_v1::temporal::history_table(table) {
                 sources.push((h.clone(), format!(" WHERE {open}")));
                 sources.push((h, format!(" WHERE {closed}")));
             }
@@ -378,7 +378,7 @@ fn build_view(tid: i32, is_edge: bool) -> String {
         selects.join("\nUNION ALL\n")
     ))
         .unwrap_or_else(|e| error!("failed to build type view for type {tid}: {e}"));
-    crate::catalog::privileges::apply_to_view(&view);
+    crate::store_v1::privileges::apply_to_view(&view);
     view
 }
 

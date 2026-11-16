@@ -153,7 +153,7 @@ fn tables(tid: i32) -> Vec<(i32, String)> {
 }
 
 fn hist(table: &str) -> Option<String> {
-    let h = crate::temporal::history_table(table)?;
+    let h = crate::store_v1::temporal::history_table(table)?;
     spiu::one::<bool>("SELECT to_regclass($1) IS NOT NULL", &[h.as_str().into()])
         .ok()
         .flatten()
@@ -185,16 +185,16 @@ fn sample_ids(sql: &str) -> Vec<i64> {
 fn refresh_alias_views(tid: i32) {
     for sub in labeling::og_subtypes(tid) {
         if let (Some(table), Some(name)) = (types::storage_table(sub), types::try_type_name(sub)) {
-            types::ensure_alias_view(sub, &name, &table);
+            crate::store_v1::type_tables::ensure_alias_view(sub, &name, &table);
         }
     }
 }
 
 fn drop_alias_views(tid: i32) {
-    crate::cypher::views::drop_all_views();
+    crate::store_v1::views::drop_all_views();
     for sub in labeling::og_subtypes(tid) {
         if let Some(name) = types::try_type_name(sub) {
-            types::drop_alias_view(&name);
+            crate::store_v1::type_tables::drop_alias_view(&name);
         }
     }
 }
@@ -413,7 +413,7 @@ fn analyse(c: &Change) -> Value {
             let tid = type_of(c);
             let prop = s(spec, "property");
             let new = s(spec, "new_name");
-            if crate::security::is_reserved_key(new) {
+            if crate::store_v1::security::is_reserved_key(new) {
                 error!("'{new}' is a reserved name");
             }
             property(tid, prop);
@@ -684,7 +684,7 @@ fn expand(c: &mut Change) {
                     id = c.id
                 ))
                 .unwrap_or_else(|e| error!("could not attach the dual write to {t}: {e}"));
-                crate::temporal::sync_history(sub);
+                crate::store_v1::temporal::sync_history(sub);
             }
             // The dual-write list is read from the change's spec.
             let mut sp = c.spec.as_object().cloned().unwrap_or_default();
@@ -924,7 +924,7 @@ fn contract(c: &mut Change) {
                 for d in defs {
                     Spi::run(&d).unwrap_or_else(|e| error!("could not rebuild index ({d}): {e}"));
                 }
-                crate::security::replay_write_grants(sub);
+                crate::store_v1::security::replay_write_grants(sub);
             }
             Spi::run_with_args(
                 "UPDATE og_catalog.property SET data_type = $3 WHERE type_id = ANY($1) AND column_name = $2",
@@ -976,9 +976,9 @@ fn contract(c: &mut Change) {
                 &[tid.into(), new.as_str().into()],
             )
             .expect("rename failed");
-            types::drop_alias_view(&old);
+            crate::store_v1::type_tables::drop_alias_view(&old);
             if let Some(table) = types::storage_table(tid) {
-                types::ensure_alias_view(tid, &new, &table);
+                crate::store_v1::type_tables::ensure_alias_view(tid, &new, &table);
             }
             Spi::run_with_args(
                 "UPDATE og_catalog.compat_index SET type_name = $3 WHERE graph_id = $1 AND type_name = $2",
@@ -1000,15 +1000,15 @@ fn contract(c: &mut Change) {
             labeling::relabel_graph(c.gid);
             for sub in labeling::og_subtypes(tid) {
                 if let Some(table) = types::storage_table(sub) {
-                    types::copy_inherited_properties(pid, sub, &table);
-                    if crate::security::inherits_stamping(sub) {
-                        crate::security::stamp_table(&table);
+                    crate::store_v1::type_tables::copy_inherited_properties(pid, sub, &table);
+                    if crate::store_v1::security::inherits_stamping(sub) {
+                        crate::store_v1::security::stamp_table(&table);
                     }
-                    if crate::temporal::is_temporal(sub) {
-                        crate::temporal::enable_table(sub);
+                    if crate::store_v1::temporal::is_temporal(sub) {
+                        crate::store_v1::temporal::enable_table(sub);
                     }
-                    crate::temporal::sync_history(sub);
-                    crate::security::replay_write_grants(sub);
+                    crate::store_v1::temporal::sync_history(sub);
+                    crate::store_v1::security::replay_write_grants(sub);
                 }
             }
             refresh_alias_views(tid);

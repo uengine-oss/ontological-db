@@ -59,7 +59,7 @@ pub fn run_action_body(graph: &str, query: &str) -> Vec<Value> {
     let started = std::time::Instant::now();
     let gid = crate::catalog::types::graph_id(graph);
     // TypeQL reads the registries, which hold only the current state.
-    crate::temporal::guard_current_only(gid, "TypeQL");
+    crate::store_v1::temporal::guard_current_only(gid, "TypeQL");
     let rows = match run_script(gid, query) {
         Ok(r) => r,
         Err(e) => {
@@ -120,7 +120,7 @@ fn og_typeql_script(graph: &str, script: &str) -> i64 {
 }
 
 fn audit(graph: &str, query: &str, rows: i64, started: std::time::Instant, err: Option<&str>) {
-    crate::security::audit("typeql", graph, query, rows, started, err);
+    crate::store_v1::security::audit("typeql", graph, query, rows, started, err);
 }
 
 // --------------------------------------------------------------------------

@@ -109,7 +109,7 @@ fn og_enable_temporal(graph: &str, type_name: &str) {
 pub fn enable_table(sub: i32) {
     let Some(table) = types::storage_table(sub) else { return };
     let Some(hist) = history_table(&table) else { return };
-    crate::security::stamp_table(&table);
+    crate::store_v1::security::stamp_table(&table);
     Spi::run(&format!(
         "ALTER TABLE {table}
            ADD COLUMN IF NOT EXISTS __valid tstzrange NOT NULL
@@ -146,7 +146,7 @@ pub fn enable_table(sub: i32) {
         {
             Spi::run(&format!("GRANT SELECT, INSERT ON {hist} TO {owner}")).ok();
         }
-        crate::catalog::privileges::apply_to_table(&hist);
+        crate::store_v1::privileges::apply_to_table(&hist);
     } else {
         sync_history(sub);
     }

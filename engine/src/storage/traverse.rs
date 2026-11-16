@@ -465,35 +465,3 @@ fn og_csr_hops(src: i64, dst: i64, maxhop: default!(i32, 32)) -> Option<i32> {
         None
     })
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::layout::{v1::LayoutV1, Dir, Layout};
-
-    // What `og_reach` and `og_csr_build` sent before the walks asked the layout
-    // (P1 K5) — the v1 layout must keep sending exactly this.
-    #[test]
-    fn v1_frontier_step_is_the_old_per_level_scan() {
-        let l = LayoutV1;
-        assert_eq!(
-            l.frontier_step(Dir::Out, "$1", "$2"),
-            "SELECT a.nbr FROM og_data.og_adj a WHERE a.src = ANY($1::int8[]) AND a.dir = 'o'::\"char\" AND ($2::int4[] IS NULL OR a.etype = ANY($2::int4[]))"
-        );
-        assert_eq!(
-            l.frontier_step(Dir::In, "$1", "$2"),
-            "SELECT a.nbr FROM og_data.og_adj a WHERE a.src = ANY($1::int8[]) AND a.dir = 'i'::\"char\" AND ($2::int4[] IS NULL OR a.etype = ANY($2::int4[]))"
-        );
-        assert_eq!(
-            l.frontier_step(Dir::Both, "$1", "$2"),
-            "SELECT a.nbr FROM og_data.og_adj a WHERE a.src = ANY($1::int8[]) AND a.dir IN ('o','i') AND ($2::int4[] IS NULL OR a.etype = ANY($2::int4[]))"
-        );
-    }
-
-    #[test]
-    fn v1_topology_scan_is_the_old_csr_scan() {
-        assert_eq!(
-            LayoutV1.topology_scan("$1"),
-            "SELECT a.src, a.dir::text, a.nbr FROM og_data.og_adj a WHERE a.dir IN ('o','i') AND ($1::int4[] IS NULL OR a.etype = ANY($1::int4[]))"
-        );
-    }
-}

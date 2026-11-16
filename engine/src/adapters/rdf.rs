@@ -503,19 +503,14 @@ pub fn load(graph: &str, document: &str, format: &str) -> Value {
         {
             ensure_type(gid, o, 'e');
             let Some(tid) = iri_type(gid, o) else { continue };
-            let id = crate::storage::create_node_inner(
+            let id = crate::store_v1::storage::create_node_inner(
                 gid,
                 tid,
                 &local_name(o),
                 json!({ "iri": s }),
             );
             node_of.insert(s.to_string(), id);
-            Spi::run_with_args(
-                "INSERT INTO og_data.og_iri (entity_id, iri) VALUES ($1,$2)
-                 ON CONFLICT (iri) DO NOTHING",
-                &[id.into(), s.into()],
-            )
-            .ok();
+            crate::store_v1::rdf::record_iri(id, s);
             instances += 1;
         }
     }
@@ -543,7 +538,7 @@ pub fn load(graph: &str, document: &str, format: &str) -> Value {
                 Some(&did) => {
                     ensure_type(gid, p, 'r');
                     if let Some(rel) = iri_type(gid, p) {
-                        crate::storage::create_edge_inner(
+                        crate::store_v1::storage::create_edge_inner(
                             gid,
                             rel,
                             &local_name(p),
@@ -560,8 +555,8 @@ pub fn load(graph: &str, document: &str, format: &str) -> Value {
                 }
             },
             Term::Literal { value, datatype, lang } => {
-                let tid = crate::id::id_type(sid);
-                let tname = crate::storage::type_name_of(tid);
+                let tid = crate::layout::active().type_of_element(sid);
+                let tname = crate::store_v1::storage::type_name_of(tid);
                 let pname = local_name(p);
                 let ptype = xsd_to_property_type(datatype.as_deref());
                 ensure_property(graph, &tname, &pname, ptype);
@@ -573,7 +568,7 @@ pub fn load(graph: &str, document: &str, format: &str) -> Value {
                 if let Some(d) = datatype {
                     payload.insert(format!("{pname}^^"), json!(d));
                 }
-                crate::storage::set_node_props_inner(sid, Value::Object(payload));
+                crate::store_v1::storage::set_node_props_inner(sid, Value::Object(payload));
                 facts += 1;
             }
             Term::Blank(_) => {
@@ -601,18 +596,7 @@ pub fn load(graph: &str, document: &str, format: &str) -> Value {
 }
 
 fn record_overflow(gid: i32, t: &Triple, reason: &str) {
-    Spi::run_with_args(
-        "INSERT INTO og_data.og_triple_overflow (graph_id, subject, predicate, object, reason)
-         VALUES ($1,$2,$3,$4,$5)",
-        &[
-            gid.into(),
-            t.s.text().into(),
-            t.p.text().into(),
-            t.o.text().into(),
-            reason.into(),
-        ],
-    )
-    .ok();
+    crate::store_v1::rdf::record_overflow(gid, t.s.text(), t.p.text(), t.o.text(), reason);
 }
 
 fn iri_type(gid: i32, iri: &str) -> Option<i32> {
@@ -744,26 +728,7 @@ pub fn dump(graph: &str, format: &str) -> String {
     }
 
     // ABox
-    let nodes: Vec<(i64, String, Value)> = Spi::connect(|client| {
-        client
-            .select(
-                "SELECT n.id, COALESCE(t.iri, 'urn:og:' || t.name), og_node_json(n.id)
-                   FROM og_data.og_node n
-                   JOIN og_catalog.type t ON t.type_id = n.type_id
-                  WHERE t.graph_id = $1",
-                None,
-                &[gid.into()],
-            )
-            .expect("node dump failed")
-            .filter_map(|r| {
-                Some((
-                    r.get::<i64>(1).ok()??,
-                    r.get::<String>(2).ok()??,
-                    r.get::<pgrx::JsonB>(3).ok()??.0,
-                ))
-            })
-            .collect()
-    });
+    let nodes: Vec<(i64, String, Value)> = crate::store_v1::rdf::dump_nodes(gid);
     for (id, tiri, doc) in &nodes {
         let subject = doc
             .get("iri")
@@ -786,55 +751,13 @@ pub fn dump(graph: &str, format: &str) -> String {
         }
     }
 
-    let edges: Vec<(String, String, String)> = Spi::connect(|client| {
-        client
-            .select(
-                "SELECT COALESCE(si.iri, 'urn:og:node:' || e.src),
-                        COALESCE(t.iri, 'urn:og:' || t.name),
-                        COALESCE(di.iri, 'urn:og:node:' || e.dst)
-                   FROM og_data.og_edge e
-                   JOIN og_catalog.type t ON t.type_id = e.type_id
-                   LEFT JOIN og_data.og_iri si ON si.entity_id = e.src
-                   LEFT JOIN og_data.og_iri di ON di.entity_id = e.dst
-                  WHERE t.graph_id = $1",
-                None,
-                &[gid.into()],
-            )
-            .expect("edge dump failed")
-            .filter_map(|r| {
-                Some((
-                    r.get::<String>(1).ok()??,
-                    r.get::<String>(2).ok()??,
-                    r.get::<String>(3).ok()??,
-                ))
-            })
-            .collect()
-    });
+    let edges: Vec<(String, String, String)> = crate::store_v1::rdf::dump_edges(gid);
     for (s, p, o) in &edges {
         out.push_str(&format!("<{s}> <{p}> <{o}> .\n"));
     }
 
     // Round-trip fidelity: re-emit whatever we could not map on the way in.
-    let overflow: Vec<(String, String, String)> = Spi::connect(|client| {
-        client
-            .select(
-                "SELECT subject, predicate, object FROM og_data.og_triple_overflow
-                  WHERE graph_id = $1",
-                None,
-                &[gid.into()],
-            )
-            .map(|rows| {
-                rows.filter_map(|r| {
-                    Some((
-                        r.get::<String>(1).ok()??,
-                        r.get::<String>(2).ok()??,
-                        r.get::<String>(3).ok()??,
-                    ))
-                })
-                .collect()
-            })
-            .unwrap_or_default()
-    });
+    let overflow: Vec<(String, String, String)> = crate::store_v1::rdf::dump_overflow(gid);
     for (s, p, o) in &overflow {
         let obj = if o.starts_with("http") || o.starts_with("urn:") {
             format!("<{o}>")

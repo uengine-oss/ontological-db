@@ -4,16 +4,14 @@
 //! (`p_*`) and the rest in `__ext`, adjacency segments (`og_data.og_adj`), union
 //! views per type (`v_` / `vp_` / `ve_` / `vep_`).
 //!
-//! **An empty skeleton (K1).** Every method is a `todo!` naming the card that
-//! moves the v1 code here: K2 the Cypher read compiler (`cypher/compile.rs`,
-//! `cypher/views.rs`), K3 the write path (`cypher/mod.rs`, `storage/`), K4
-//! TypeQL (`typeql/compile.rs`, `write.rs`, `schema.rs`), K5 traversal
-//! (`storage/traverse.rs`). What each must produce is on the trait
-//! ([`super::Layout`]): v1's text today, byte for byte. Nothing calls this yet,
-//! so none of these panics can be reached.
+//! K1 left it a skeleton of `todo!`s; K2 (the Cypher read compiler), K3 (the
+//! write path), K4 (TypeQL) and K5 (traversal) filled it with the code that
+//! wrote v1's names, and K6 moved it from `layout/v1.rs` into the v1 store. What
+//! each method produces is on the trait ([`crate::layout::Layout`]): v1's text
+//! as it always was, byte for byte.
 
-use super::{Aliases, Dir, ElementId, GraphId, Kind, LabelSet, Layout, PathSem, PropRead, SqlExpr, SqlFrag, TimeScope, TypeId};
-use super::OwnershipJoin;
+use crate::layout::{Aliases, Dir, ElementId, GraphId, Kind, LabelSet, Layout, PathSem, PropRead, SqlExpr, SqlFrag, TimeScope, TypeId};
+use crate::layout::{OwnershipJoin, RoleId, TypeStore, WriteError};
 use serde_json::Value;
 
 /// The v1 layout. A unit struct: everything it needs is in the catalog.
@@ -23,7 +21,7 @@ pub struct LayoutV1;
 /// The TypeQL methods (K4) spell what `typeql/compile.rs` wrote before, byte for byte.
 #[cfg(test)]
 mod k4_typeql {
-    use super::super::{Kind, Layout, SqlExpr, SqlFrag};
+    use crate::layout::{Kind, Layout, SqlExpr, SqlFrag};
     use super::LayoutV1;
 
     #[test]
@@ -68,12 +66,47 @@ mod k4_typeql {
     }
 }
 
+/// The traversal methods (K5) spell what `storage/traverse.rs` sent before, byte for byte
+/// (the tests sat in `storage::traverse` until K6 moved `LayoutV1` here).
+#[cfg(test)]
+mod k5_traversal {
+    use super::LayoutV1;
+    use crate::layout::{Dir, Layout};
+
+    // What `og_reach` and `og_csr_build` sent before the walks asked the layout
+    // (P1 K5) — the v1 layout must keep sending exactly this.
+    #[test]
+    fn v1_frontier_step_is_the_old_per_level_scan() {
+        let l = LayoutV1;
+        assert_eq!(
+            l.frontier_step(Dir::Out, "$1", "$2"),
+            "SELECT a.nbr FROM og_data.og_adj a WHERE a.src = ANY($1::int8[]) AND a.dir = 'o'::\"char\" AND ($2::int4[] IS NULL OR a.etype = ANY($2::int4[]))"
+        );
+        assert_eq!(
+            l.frontier_step(Dir::In, "$1", "$2"),
+            "SELECT a.nbr FROM og_data.og_adj a WHERE a.src = ANY($1::int8[]) AND a.dir = 'i'::\"char\" AND ($2::int4[] IS NULL OR a.etype = ANY($2::int4[]))"
+        );
+        assert_eq!(
+            l.frontier_step(Dir::Both, "$1", "$2"),
+            "SELECT a.nbr FROM og_data.og_adj a WHERE a.src = ANY($1::int8[]) AND a.dir IN ('o','i') AND ($2::int4[] IS NULL OR a.etype = ANY($2::int4[]))"
+        );
+    }
+
+    #[test]
+    fn v1_topology_scan_is_the_old_csr_scan() {
+        assert_eq!(
+            LayoutV1.topology_scan("$1"),
+            "SELECT a.src, a.dir::text, a.nbr FROM og_data.og_adj a WHERE a.dir IN ('o','i') AND ($1::int4[] IS NULL OR a.etype = ANY($1::int4[]))"
+        );
+    }
+}
+
 impl Layout for LayoutV1 {
     fn node_scan(&self, g: GraphId, labels: &LabelSet, _at: TimeScope) -> SqlFrag {
         match labels {
             // The union view reads a temporal type's history at the session's
             // instant itself, so the instant does not change the name.
-            LabelSet::Under(t) => SqlFrag::new(crate::cypher::views::ensure_view(*t, false)),
+            LabelSet::Under(t) => SqlFrag::new(crate::store_v1::views::ensure_view(*t, false)),
             // The registry is shared by every graph — a node's graph is its
             // type's — so it is narrowed to `g`'s types, looked up when the
             // statement runs (a type created meanwhile must not be missed by a
@@ -88,7 +121,7 @@ impl Layout for LayoutV1 {
 
     fn edge_scan(&self, _g: GraphId, types: &LabelSet, _at: TimeScope) -> SqlFrag {
         match types {
-            LabelSet::Under(t) => SqlFrag::new(crate::cypher::views::ensure_view(*t, true)),
+            LabelSet::Under(t) => SqlFrag::new(crate::store_v1::views::ensure_view(*t, true)),
             _ => unimplemented!("LayoutV1::edge_scan: v1 scans relationships of one type only (others are read by id)"),
         }
     }
@@ -295,7 +328,7 @@ impl Layout for LayoutV1 {
                 .unwrap_or((0, 0.0, 0))
         });
 
-        let chunk = crate::storage::adjacency::CHUNK as f64;
+        let chunk = crate::store_v1::adjacency::CHUNK as f64;
         serde_json::json!({
             "graph": graph,
             "nodes": nodes.unwrap_or(0),
@@ -351,7 +384,7 @@ impl Layout for LayoutV1 {
                   GROUP BY a.src, a.etype, a.dir
                  HAVING count(*) > 1 AND sum(a.n) <= count(*) * $2 - $2",
                     None,
-                    &[gid.into(), crate::storage::adjacency::CHUNK.into()],
+                    &[gid.into(), crate::store_v1::adjacency::CHUNK.into()],
                 )
                 .expect("reorg scan failed")
                 .filter_map(|r| {
@@ -377,7 +410,7 @@ impl Layout for LayoutV1 {
                   WHERE src = $1 AND etype = $2 AND dir = $3::text::\"char\")
              INSERT INTO og_data.og_adj (src, etype, dir, seq, n, nbr, eid)
              SELECT $1, $2, $3::text::\"char\", newseq::int4, n, nbr, eid FROM packed",
-                &[src.into(), etype.into(), dir.into(), (crate::storage::adjacency::CHUNK as i64).into()],
+                &[src.into(), etype.into(), dir.into(), (crate::store_v1::adjacency::CHUNK as i64).into()],
             )
             .expect("repack failed");
             repacked += 1;
@@ -478,7 +511,7 @@ impl Layout for LayoutV1 {
         if let Some(t) = scanned {
             // A column of the view, or — over a wide view — a typed read of
             // the packed value (views::Layout).
-            if let Some((sql, dt)) = crate::cypher::views::view_layout(t).read(alias, key) {
+            if let Some((sql, dt)) = crate::store_v1::views::view_layout(t).read(alias, key) {
                 return PropRead { sql: SqlExpr::new(sql), sql_type: Some(dt) };
             }
         }
@@ -498,7 +531,7 @@ impl Layout for LayoutV1 {
             return SqlExpr::new(format!("to_jsonb({alias}.id)"));
         }
         if let Some(t) = scanned {
-            if let Some(sql) = crate::cypher::views::view_layout(t).read_json(alias, key) {
+            if let Some(sql) = crate::store_v1::views::view_layout(t).read_json(alias, key) {
                 return SqlExpr::new(sql);
             }
             return SqlExpr::new(format!("({alias}.__ext -> {})", sql_str(key)));
@@ -507,7 +540,7 @@ impl Layout for LayoutV1 {
     }
 
     fn prop_type(&self, t: TypeId, key: &str) -> Option<String> {
-        crate::cypher::views::view_properties(t).get(key).map(|(_, dt)| dt.clone())
+        crate::store_v1::views::view_properties(t).get(key).map(|(_, dt)| dt.clone())
     }
 
     fn element_json(&self, alias: &str, scanned: Option<TypeId>, kind: Kind) -> SqlExpr {
@@ -516,7 +549,7 @@ impl Layout for LayoutV1 {
             return self.element_json_of_id(&self.element_id(alias), kind);
         };
         // Packed properties of a wide view are already in `__ext`.
-        let props = crate::cypher::views::view_layout(t).columns;
+        let props = crate::store_v1::views::view_layout(t).columns;
         let mut pairs = vec![format!("'_id', {alias}.id"), format!("'_type', og_type_name({alias}.type_id)")];
         if kind == Kind::Rel {
             pairs.push(format!("'_src', {alias}.src"));
@@ -577,13 +610,13 @@ impl Layout for LayoutV1 {
                 .copied()
                 .filter(|t| {
                     types::storage_table(*t).is_some_and(|s| s.starts_with("og_data.e_"))
-                        && crate::temporal::is_temporal(*t)
+                        && crate::store_v1::temporal::is_temporal(*t)
                 })
                 .collect(),
-            (Kind::Rel, None) => crate::temporal::temporal_tables(g, 'e'),
-            (Kind::Node, None) => crate::temporal::temporal_tables(g, 'n'),
+            (Kind::Rel, None) => crate::store_v1::temporal::temporal_tables(g, 'e'),
+            (Kind::Node, None) => crate::store_v1::temporal::temporal_tables(g, 'n'),
             // Not asked by the compilers.
-            (Kind::Node, Some(ids)) => ids.iter().copied().filter(|t| crate::temporal::is_temporal(*t)).collect(),
+            (Kind::Node, Some(ids)) => ids.iter().copied().filter(|t| crate::store_v1::temporal::is_temporal(*t)).collect(),
         }
     }
 
@@ -605,11 +638,11 @@ impl Layout for LayoutV1 {
     }
 
     fn take_uncacheable(&self) -> bool {
-        crate::cypher::views::take_created_view()
+        crate::store_v1::views::take_created_view()
     }
 
     fn create_node(&self, g: GraphId, t: TypeId, type_name: &str, props: Value) -> ElementId {
-        crate::storage::create_node_inner(g, t, type_name, props)
+        crate::store_v1::storage::create_node_inner(g, t, type_name, props)
     }
 
     fn create_edge(
@@ -621,104 +654,104 @@ impl Layout for LayoutV1 {
         dst: ElementId,
         props: Value,
     ) -> ElementId {
-        crate::storage::create_edge_inner(g, t, type_name, src, dst, props)
+        crate::store_v1::storage::create_edge_inner(g, t, type_name, src, dst, props)
     }
 
     fn set_node_props(&self, id: ElementId, props: Value) {
-        crate::storage::set_node_props_inner(id, props)
+        crate::store_v1::storage::set_node_props_inner(id, props)
     }
 
     fn set_edge_props(&self, id: ElementId, props: Value) {
-        crate::storage::set_edge_props_inner(id, props)
+        crate::store_v1::storage::set_edge_props_inner(id, props)
     }
 
     fn delete_node(&self, id: ElementId) -> i64 {
-        crate::storage::delete_node_inner(id)
+        crate::store_v1::storage::delete_node_inner(id)
     }
 
     fn delete_edge(&self, id: ElementId) -> i64 {
-        crate::storage::delete_edge_inner(id)
+        crate::store_v1::storage::delete_edge_inner(id)
     }
 
     fn degree(&self, id: ElementId) -> i64 {
-        crate::storage::adjacency::total_degree(id)
+        crate::store_v1::adjacency::total_degree(id)
     }
 
     fn refuse_virtual_write(&self, t: TypeId) {
-        crate::storage::refuse_virtual_write(t)
+        crate::store_v1::storage::refuse_virtual_write(t)
     }
 
     fn type_renamed(&self, t: TypeId, old: &str, new: &str) {
-        crate::storage::type_renamed(t, old, new)
+        crate::store_v1::storage::type_renamed(t, old, new)
     }
 
     // ---------------------------------------------------------------- TypeQL (K3 → K4)
 
-    fn type_store(&self, t: TypeId) -> Option<super::TypeStore> {
-        crate::catalog::types::storage_table(t).map(super::TypeStore)
+    fn type_store(&self, t: TypeId) -> Option<TypeStore> {
+        crate::catalog::types::storage_table(t).map(TypeStore::new)
     }
 
-    fn create_instance(&self, t: TypeId, store: &super::TypeStore) -> Result<ElementId, super::WriteError> {
-        crate::storage::create_instance(t, &store.0)
+    fn create_instance(&self, t: TypeId, store: &TypeStore) -> Result<ElementId, WriteError> {
+        crate::store_v1::storage::create_instance(t, store.as_str())
     }
 
-    fn find_attribute(&self, store: &super::TypeStore, value: &SqlExpr) -> Result<Option<ElementId>, String> {
-        crate::storage::find_attribute(&store.0, value.as_str())
+    fn find_attribute(&self, store: &TypeStore, value: &SqlExpr) -> Result<Option<ElementId>, String> {
+        crate::store_v1::storage::find_attribute(store.as_str(), value.as_str())
     }
 
-    fn create_attribute(&self, t: TypeId, store: &super::TypeStore, value: &SqlExpr) -> Result<ElementId, super::WriteError> {
-        crate::storage::create_attribute(t, &store.0, value.as_str())
+    fn create_attribute(&self, t: TypeId, store: &TypeStore, value: &SqlExpr) -> Result<ElementId, WriteError> {
+        crate::store_v1::storage::create_attribute(t, store.as_str(), value.as_str())
     }
 
     fn other_owner(
         &self,
         has: TypeId,
-        store: &super::TypeStore,
+        store: &TypeStore,
         value: &SqlExpr,
         except: ElementId,
         owner_types: &[TypeId],
     ) -> Result<Option<ElementId>, String> {
-        crate::storage::other_owner(has, &store.0, value.as_str(), except, owner_types)
+        crate::store_v1::storage::other_owner(has, store.as_str(), value.as_str(), except, owner_types)
     }
 
     fn count_owned(&self, has: TypeId, owner: ElementId, attr_types: &[TypeId]) -> Result<i64, String> {
-        crate::storage::count_owned(has, owner, attr_types)
+        crate::store_v1::storage::count_owned(has, owner, attr_types)
     }
 
     fn owned_attributes(&self, has: TypeId, owner: ElementId, attr_types: &[TypeId]) -> Vec<ElementId> {
-        crate::storage::owned_attributes(has, owner, attr_types)
+        crate::store_v1::storage::owned_attributes(has, owner, attr_types)
     }
 
     fn ownerships_of(&self, has: TypeId, id: ElementId) -> Vec<(ElementId, ElementId, ElementId)> {
-        crate::storage::ownerships_of(has, id)
+        crate::store_v1::storage::ownerships_of(has, id)
     }
 
-    fn link_has(&self, has: TypeId, owner: ElementId, attr: ElementId) -> Result<(), super::WriteError> {
-        crate::storage::link_has(has, owner, attr)
+    fn link_has(&self, has: TypeId, owner: ElementId, attr: ElementId) -> Result<(), WriteError> {
+        crate::store_v1::storage::link_has(has, owner, attr)
     }
 
     fn unlink_has(&self, has: TypeId, owner: ElementId, attr: ElementId) {
-        crate::storage::unlink_has(has, owner, attr)
+        crate::store_v1::storage::unlink_has(has, owner, attr)
     }
 
-    fn role_filled(&self, rel: ElementId, role: super::RoleId) -> bool {
-        crate::storage::role_filled(rel, role)
+    fn role_filled(&self, rel: ElementId, role: RoleId) -> bool {
+        crate::store_v1::storage::role_filled(rel, role)
     }
 
-    fn add_role_player(&self, rel: ElementId, role: super::RoleId, player: ElementId) -> Result<(), String> {
-        crate::storage::add_role_player(rel, role, player)
+    fn add_role_player(&self, rel: ElementId, role: RoleId, player: ElementId) -> Result<(), String> {
+        crate::store_v1::storage::add_role_player(rel, role, player)
     }
 
-    fn remove_role_player(&self, rel: ElementId, player: ElementId, roles: &[super::RoleId]) -> Result<(), String> {
-        crate::storage::remove_role_player(rel, player, roles)
+    fn remove_role_player(&self, rel: ElementId, player: ElementId, roles: &[RoleId]) -> Result<(), String> {
+        crate::store_v1::storage::remove_role_player(rel, player, roles)
     }
 
     fn relations_played(&self, player: ElementId) -> Vec<ElementId> {
-        crate::storage::relations_played(player)
+        crate::store_v1::storage::relations_played(player)
     }
 
     fn remove_instance(&self, id: ElementId) {
-        crate::storage::remove_instance(id)
+        crate::store_v1::storage::remove_instance(id)
     }
 }
 
@@ -770,7 +803,7 @@ fn stored_hop_rows(
     }
     let mut parts = vec![format!("{segments} AND {a}.etype <> ALL({})", int4_array(temporal))];
     for t in temporal {
-        let Some(erel) = crate::temporal::edge_relation(*t) else { continue };
+        let Some(erel) = crate::store_v1::temporal::edge_relation(*t) else { continue };
         let te = names.fresh("te");
         if matches!(dir, Dir::Out | Dir::Both) {
             parts.push(format!("SELECT {te}.dst, {te}.id FROM {erel} {te} WHERE {te}.src = {start}"));

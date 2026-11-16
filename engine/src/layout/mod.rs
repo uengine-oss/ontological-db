@@ -9,14 +9,15 @@
 //! storage layout — v2, Apache AGE's shape, `ontological_age` — can sit behind
 //! the same compilers without a line of them changing.
 //!
-//! **Nothing calls this yet.** K1 only defines it; K2 (Cypher read), K3 (Cypher
-//! write and the storage API), K4 (TypeQL) and K5 (traversal) move the code that
-//! writes physical names into [`v1::LayoutV1`], one call site at a time, and the
-//! generated-SQL mold (`tests/seam/`) checks that every statement comes out
-//! byte for byte as before. That is why the methods take what the call sites
-//! have in hand today — an alias, a type id, a caller-minted alias for the
-//! layout's own scan — and why each method's documentation says exactly what
-//! v1 writes: that text is what the moved code must keep producing.
+//! K1 defined it; K2 (Cypher read), K3 (Cypher write and the storage API), K4
+//! (TypeQL) and K5 (traversal) moved the code that wrote physical names into
+//! v1's implementation, one call site at a time, and the generated-SQL mold
+//! (`tests/seam/`) checks that every statement comes out byte for byte as
+//! before. K6 moved that implementation into the v1 store
+//! ([`crate::store_v1::layout::LayoutV1`]). That is why the methods take what
+//! the call sites had in hand — an alias, a type id, a caller-minted alias for
+//! the layout's own scan — and why each method's documentation says exactly
+//! what v1 writes: that text is what the moved code must keep producing.
 //!
 //! Rules for the cards that fill it in (`P1-CARDS.md`): add methods, do not
 //! rename or remove them (several cards edit this file in parallel); keep v1's
@@ -24,10 +25,8 @@
 //! means, what a pattern matches — stay in the compilers. A layout decides
 //! *where* things are, never *what* is asked.
 //!
-//! Note the name clash: [`crate::cypher::views::Layout`] is an older struct (the
+//! Note the name clash: [`crate::store_v1::views::Layout`] is an older struct (the
 //! columns of one union view). Inside `views.rs` refer to this trait by its path.
-
-pub mod v1;
 
 use serde_json::Value;
 use std::fmt;
@@ -613,8 +612,8 @@ pub trait Layout {
     /// the type.
     ///
     /// v1 (`cypher::rename_label`): the alias view `og_data."<old>"` is dropped
-    /// (`types::drop_alias_view`) and, when the type has a table, made again as
-    /// `og_data."<new>"` over it (`types::storage_table`, `types::ensure_alias_view`).
+    /// (`crate::store_v1::type_tables::drop_alias_view`) and, when the type has a table, made again as
+    /// `og_data."<new>"` over it (`types::storage_table`, `crate::store_v1::type_tables::ensure_alias_view`).
     fn type_renamed(&self, t: TypeId, old: &str, new: &str);
 
     // ------------------------------------------------------------------ writes: TypeQL
@@ -774,6 +773,17 @@ pub type RoleId = i32;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TypeStore(String);
 
+impl TypeStore {
+    /// For a layout: what it found where a type's rows are stored.
+    pub fn new(where_stored: impl Into<String>) -> Self {
+        TypeStore(where_stored.into())
+    }
+    /// For the layout that made it.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 /// Which step of a write failed, for callers that word the two failures
 /// differently (TypeQL's "creating 'x' failed" / "creating 'x' = v failed").
 /// The text is the database error's.
@@ -797,7 +807,7 @@ impl fmt::Display for WriteError {
 /// The layout this build stores graphs in: v1. Each extension crate will pick
 /// its own once the crates are split (K7); `ontological` is v1.
 pub fn active() -> &'static dyn Layout {
-    &v1::LayoutV1
+    &crate::store_v1::layout::LayoutV1
 }
 
 #[cfg(test)]
@@ -806,8 +816,8 @@ mod tests {
 
     #[test]
     fn sql_text_round_trips() {
-        let f = SqlFrag::new("og_data.v_1");
-        assert_eq!(f.to_string(), "og_data.v_1");
+        let f = SqlFrag::new("some_schema.some_view");
+        assert_eq!(f.to_string(), "some_schema.some_view");
         assert_eq!(SqlExpr::from("n1.id").as_str(), "n1.id");
         assert_eq!(SqlExpr::from(String::from("x")).into_string(), "x");
     }

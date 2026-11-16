@@ -154,7 +154,7 @@ fn ensure_property(graph: &str, tid: i32, label: &str, prop: &str) {
 /// would reject two tables of the same name in different schemas, which is the
 /// ordinary case this constraint exists to allow.
 fn enforce_unique(tid: i32, label: &str, props: &[String], name: &str) {
-    let cols: Vec<String> = props.iter().map(|p| types::column_name(p)).collect();
+    let cols: Vec<String> = props.iter().map(|p| crate::store_v1::type_tables::column_name(p)).collect();
     for sub in labeling::og_subtypes(tid) {
         let Some(table) = types::storage_table(sub) else { continue };
         let idx = format!("uq_{sub}_{}", sanitize(name));
@@ -272,7 +272,7 @@ fn build_fulltext(tid: i32, props: &[String], name: &str) {
 pub fn fulltext_expr(props: &[String]) -> String {
     let cols: Vec<String> = props
         .iter()
-        .map(|p| format!("coalesce({}::text, '')", types::column_name(p)))
+        .map(|p| format!("coalesce({}::text, '')", crate::store_v1::type_tables::column_name(p)))
         .collect();
     format!("to_tsvector('simple', {})", cols.join(" || ' ' || "))
 }

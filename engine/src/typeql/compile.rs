@@ -388,7 +388,7 @@ impl Compiler {
                     return Err(match rel_tid {
                         Some(t) => format!(
                             "relation '{}' declares no role '{name}'",
-                            crate::storage::type_name_of(t)
+                            crate::store_v1::storage::type_name_of(t)
                         ),
                         None => format!(
                             "cannot resolve role '{name}': the relation variable '${rel}' has no \

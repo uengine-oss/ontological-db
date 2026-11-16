@@ -52,7 +52,7 @@ fn og_add_embedding(
     )
     .unwrap_or_else(|e| error!("failed to declare embedding property: {e}"));
 
-    let col = types::column_name(prop);
+    let col = crate::store_v1::type_tables::column_name(prop);
     for sub in labeling::og_subtypes(tid) {
         if let Some(table) = types::storage_table(sub) {
             Spi::run(&format!(
@@ -107,9 +107,9 @@ fn og_vector_search(
     let tid = types::type_id(gid, type_name);
     let (dims, metric) = embedding_meta(tid, prop);
     let (op, _) = metric_op(&metric);
-    let col = types::column_name(prop);
+    let col = crate::store_v1::type_tables::column_name(prop);
     let is_edge = types::type_kind(tid) == 'r';
-    let view = crate::cypher::views::ensure_view(tid, is_edge);
+    let view = crate::store_v1::views::ensure_view(tid, is_edge);
     let json_fn = if is_edge { "og_edge_json" } else { "og_node_json" };
 
     let where_sql = match filter {
@@ -165,10 +165,10 @@ fn og_similar(
     let tid = crate::id::id_type(id);
     let (_, metric) = embedding_meta(tid, prop);
     let (op, _) = metric_op(&metric);
-    let col = types::column_name(prop);
+    let col = crate::store_v1::type_tables::column_name(prop);
     let is_edge = types::type_kind(tid) == 'r';
     let root = root_type_of(tid);
-    let view = crate::cypher::views::ensure_view(root, is_edge);
+    let view = crate::store_v1::views::ensure_view(root, is_edge);
     let json_fn = if is_edge { "og_edge_json" } else { "og_node_json" };
     let _ = graph;
 
@@ -243,8 +243,8 @@ fn og_hybrid_search(
     let tid = types::type_id(gid, type_name);
     let (_, metric) = embedding_meta(tid, prop);
     let (op, _) = metric_op(&metric);
-    let col = types::column_name(prop);
-    let view = crate::cypher::views::ensure_view(tid, false);
+    let col = crate::store_v1::type_tables::column_name(prop);
+    let view = crate::store_v1::views::ensure_view(tid, false);
     let pool = (k * 10).max(50);
 
     // Graph proximity: shortest hop count from the anchor, capped.
@@ -325,8 +325,8 @@ fn og_stale_embeddings(graph: &str) -> TableIterator<
 
     let mut out = Vec::new();
     for (tid, tname, prop, source) in specs {
-        let ecol = types::column_name(&prop);
-        let scol = types::column_name(&source);
+        let ecol = crate::store_v1::type_tables::column_name(&prop);
+        let scol = crate::store_v1::type_tables::column_name(&source);
         for sub in labeling::og_subtypes(tid) {
             let Some(table) = types::storage_table(sub) else { continue };
             let ids: Vec<i64> = Spi::connect(|client| {
@@ -371,7 +371,7 @@ fn og_mark_embedded(entity_id: i64, prop: &str) {
     .flatten();
     let Some(source) = source else { return };
     let Some(table) = types::storage_table(tid) else { return };
-    let scol = types::column_name(&source);
+    let scol = crate::store_v1::type_tables::column_name(&source);
     Spi::run_with_args(
         &format!(
             "INSERT INTO og_data.og_embedding_state (entity_id, prop, source_hash, embedded_at)
@@ -424,9 +424,9 @@ fn og_vector_search_exact(
     let tid = types::type_id(gid, type_name);
     let (_, metric) = embedding_meta(tid, prop);
     let (op, _) = metric_op(&metric);
-    let col = types::column_name(prop);
+    let col = crate::store_v1::type_tables::column_name(prop);
     let is_edge = types::type_kind(tid) == 'r';
-    let view = crate::cypher::views::ensure_view(tid, is_edge);
+    let view = crate::store_v1::views::ensure_view(tid, is_edge);
 
     // Disabling index scans is the point: this is the reference implementation.
     Spi::run("SET LOCAL enable_indexscan = off").ok();

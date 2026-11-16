@@ -33,9 +33,6 @@ pub mod sqlish;
 use pgrx::JsonB;
 use serde_json::{json, Map, Value};
 
-/// 36 bits: the local part of a node identifier (see `id.rs`).
-const LOCAL_MASK: i64 = (1_i64 << 36) - 1;
-
 fn sanitize(s: &str) -> String {
     s.chars()
         .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '_' })
@@ -941,7 +938,7 @@ pub(crate) fn map_relation(
     let gid = types::graph_id(graph);
     let tid = match types::try_type_id(gid, type_name) {
         Some(t) => t,
-        None => types::create_type_inner(graph, type_name, "entity", &[], false),
+        None => crate::store_v1::type_tables::create_type_inner(graph, type_name, "entity", &[], false),
     };
     for (prop, _, rtype) in &picks {
         let declared = one::<String>(
@@ -959,43 +956,8 @@ pub(crate) fn map_relation(
         }
     }
 
-    // 4. Replace the type's table with a view over the foreign table.
-    let ftable = format!("{}.{}", ident(lschema), ident(rtable));
-    let key = ident(key_column);
-    let id_expr = match key_type.as_str() {
-        "smallint" | "integer" | "bigint" => format!("og_make_id(0, {tid}, ({key})::int8)"),
-        _ => format!("og_make_id(0, {tid}, hashtextextended(({key})::text, 0) & {LOCAL_MASK})"),
-    };
-    let mut select = vec![format!("{id_expr} AS id")];
-    for (prop, col, _) in &picks {
-        let dtype = one::<String>(
-            "SELECT data_type FROM og_catalog.property WHERE type_id = $1 AND name = $2",
-            &[tid.into(), prop.as_str().into()],
-        )
-        .ok()
-        .flatten()
-        .unwrap_or_else(|| "text".into());
-        select.push(format!("({})::{dtype} AS {}", ident(col), types::column_name(prop)));
-    }
-    select.push("NULL::jsonb AS __ext".into());
-
-    let table = types::storage_table(tid)
-        .unwrap_or_else(|| error!("'{type_name}' is abstract and cannot be virtual"));
-    // The type's storage may already be a view from an earlier mapping.
-    let is_view = one::<bool>("SELECT relkind = 'v' FROM pg_class WHERE oid = $1::regclass", &[table.as_str().into()])
-        .ok()
-        .flatten()
-        .unwrap_or(false);
-    let kind = if is_view { "VIEW" } else { "TABLE" };
-    Spi::run(&format!("DROP {kind} IF EXISTS {table} CASCADE"))
-        .unwrap_or_else(|e| error!("failed to drop storage of '{type_name}': {e}"));
-    Spi::run(&format!(
-        "CREATE VIEW {table}{} AS SELECT {} FROM {ftable}",
-        crate::spiu::VIEW_SECURITY,
-        select.join(", ")
-    ))
-    .unwrap_or_else(|e| error!("failed to create virtual view for '{type_name}': {e}"));
-    crate::catalog::privileges::apply_to_view(&table);
+    // 4. Replace the type's table with a view over the foreign table (v1's row shape).
+    let ftable = crate::store_v1::fabric::virtual_view(tid, type_name, lschema, rtable, key_column, &key_type, &picks);
 
     let pmap: Map<String, Value> =
         picks.iter().map(|(p, c, _)| (p.clone(), Value::String(c.clone()))).collect();
@@ -1045,7 +1007,7 @@ fn og_create_virtual_rel(
     }
     let rid = match types::try_type_id(gid, rel_name) {
         Some(r) => r,
-        None => types::create_type_inner(graph, rel_name, "relation", &[], false),
+        None => crate::store_v1::type_tables::create_type_inner(graph, rel_name, "relation", &[], false),
     };
     Spi::run_with_args(
         "INSERT INTO og_catalog.virtual_rel (type_id, src_type, src_prop, dst_type, dst_prop)

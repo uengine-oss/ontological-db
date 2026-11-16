@@ -7,14 +7,15 @@
 //! | module     | spec |
 //! |------------|------|
 //! | [`id`]     | 001 — identifier encoding |
-//! | `storage`  | 001 — adjacency segments, type tables |
+//! | `storage`  | 001 — the write and traversal SQL functions every edition has |
 //! | `catalog`  | 002 — type system, interval labels, roles, constraints |
 //! | `cypher`   | 003 — parser, planner, executor |
-//! | `vector`   | 004 — node/edge/path embeddings |
-//! | `interop`  | 005 — SQL bridge, relational mapping |
+//! | `interop`  | 005 — SQL bridge |
 //! | `adapters` | 006 — RDF / SPARQL |
-//! | `agent`    | 008 — introspection, provenance, guardrails |
+//! | `agent`    | 008 — introspection, guardrails |
 //! | `compat`   | Neo4j surface: named indexes, `db.*` / `apoc.*` procedures |
+//! | `layout`   | the storage-layout seam (`DESIGN.md` 5.1) |
+//! | `store_v1` | v1's storage: adjacency segments, type tables, views, history, security, embeddings (P1 K6) |
 
 use pgrx::prelude::*;
 
@@ -34,12 +35,10 @@ pub mod spiu;
 pub mod id;
 pub mod interop;
 pub mod layout;
-pub mod security;
 pub mod stats;
 pub mod storage;
-pub mod temporal;
+pub mod store_v1;
 pub mod typeql;
-pub mod vector;
 
 /// Extension version, for clients that need to gate on capabilities.
 #[pg_extern(immutable, parallel_safe)]

@@ -135,25 +135,10 @@ fn declared_endpoints(tid: i32) -> Option<(i32, i32)> {
 /// carries APOC's caveat with it: what is reported is what the sample contained,
 /// not a constraint the database will enforce.
 ///
-/// The type of a node is a bit field of its id, so this needs no join to the
-/// node table — and `og_edge_type_idx` leads with `type_id`, so the sample is a
-/// bounded index scan rather than a scan of every edge.
+/// Reading the edges is the storage's business (v1:
+/// `crate::store_v1::meta::observed_endpoints`).
 fn observed_endpoints(tid: i32, sample: i32) -> Vec<(i32, i32)> {
-    Spi::connect(|client| {
-        client
-            .select(
-                "SELECT DISTINCT og_id_type(e.src), og_id_type(e.dst)
-                   FROM (SELECT src, dst FROM og_data.og_edge
-                          WHERE type_id = $1 ORDER BY id LIMIT $2) e",
-                None,
-                &[tid.into(), (sample.max(1) as i64).into()],
-            )
-            .map(|rows| {
-                rows.filter_map(|r| Some((r.get::<i32>(1).ok()??, r.get::<i32>(2).ok()??)))
-                    .collect()
-            })
-            .unwrap_or_default()
-    })
+    crate::store_v1::meta::observed_endpoints(tid, sample)
 }
 
 /// Subtypes answer a label too, so a relationship declared on a supertype is
@@ -185,29 +170,7 @@ fn label_names(tid: i32, expand: bool) -> Vec<String> {
 fn og_apoc_meta_schema(graph: &str, sample: default!(i32, 1000)) -> JsonB {
     let gid = types::graph_id(graph);
 
-    let rows: Vec<(i32, String, String, i64)> = Spi::connect(|client| {
-        client
-            .select(
-                "SELECT t.type_id, t.name, t.kind::text,
-                        COALESCE((SELECT count(*) FROM og_data.og_node n WHERE n.type_id = t.type_id), 0)
-                      + COALESCE((SELECT count(*) FROM og_data.og_edge e WHERE e.type_id = t.type_id), 0)
-                   FROM og_catalog.type t
-                  WHERE t.graph_id = $1 AND t.kind IN ('e', 'r')
-                  ORDER BY t.name",
-                None,
-                &[gid.into()],
-            )
-            .expect("meta scan failed")
-            .filter_map(|r| {
-                Some((
-                    r.get::<i32>(1).ok()??,
-                    r.get::<String>(2).ok()??,
-                    r.get::<String>(3).ok()??,
-                    r.get::<i64>(4).ok()?.unwrap_or(0),
-                ))
-            })
-            .collect()
-    });
+    let rows: Vec<(i32, String, String, i64)> = crate::store_v1::meta::apoc_types(gid);
 
     // Nodes first: relationships are attached to them in a second pass, which
     // needs every label to already exist as an entry.
