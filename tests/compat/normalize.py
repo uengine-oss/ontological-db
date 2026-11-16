@@ -14,12 +14,16 @@ The rules, in the order they apply (README "정규화 규칙" says the same):
    expression mentions id( / elementId( — or, for a string, it is one of those elementIds.
    Numbering restarts for every read and for every scenario (a scenario keeps its numbering
    across its steps, so the same node is the same @n in every step).
-5. The clock: temporal values and ISO-8601 strings within two days of the run become "<now>"
-   (with the type for temporal values); epoch milliseconds within two days become "<now:ms>".
+5. The clock: temporal values and ISO-8601 strings (dates too) within two days of the run become
+   "<now>" (with the type for temporal values); epoch milliseconds within two days become "<now:ms>".
+   ISO strings are parsed here, not with datetime.fromisoformat (which differs before Python 3.11).
+   The run fixes the session TimeZone to UTC, so times far from now are written the same everywhere.
 6. randomUUID(): strings shaped like a UUID become <uuid1>, <uuid2> … in first-seen order.
 7. Floats keep 6 significant digits.
 8. A failure is {"error": {"code": …, "message": …}}; digit runs of 9 or more in the message
    become <n> (they are ids or oids).
+9. The connection: the PostgreSQL / Bolt port, host:port and the database name the run was given
+   become <pg-port>, <pg-host>:<pg-port>, <pg-database>, <bolt-port> (fabric statements show them).
 """
 from __future__ import annotations
 
@@ -30,8 +34,55 @@ import math
 import re
 
 UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-ISO = re.compile(r"^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(:\d{2}(\.\d+)?)?)(Z|[+-]\d{2}(:?\d{2})?)?(\[[^\]]+\])?$")
+ISO = re.compile(r"^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:[.,](\d+))?)?"
+                 r"(Z|[+-]\d{2}(?::?\d{2})?)?(?:\[[^\]]+\])?)?$")
+
+
+def parse_iso(s: str):
+    """ISO-8601 date or date-time -> aware datetime (a time without an offset is UTC), or None.
+
+    Parsed by hand: datetime.fromisoformat() before Python 3.11 refuses fractions that are not 3 or 6
+    digits long (PostgreSQL drops trailing zeros: .3238) and the `Z` suffix, and the answers must not
+    depend on the Python that ran them."""
+    m = ISO.match(s)
+    if not m:
+        return None
+    y, mo, d, hh, mi, ss, frac, off = m.groups()
+    try:
+        tz = dt.timezone.utc
+        if off and off != "Z":
+            sign = -1 if off[0] == "-" else 1
+            digits = off[1:].replace(":", "")
+            tz = dt.timezone(sign * dt.timedelta(hours=int(digits[:2]), minutes=int(digits[2:4] or 0)))
+        micro = int((frac or "0")[:6].ljust(6, "0"))
+        return dt.datetime(int(y), int(mo), int(d), int(hh or 0), int(mi or 0), int(ss or 0), micro, tzinfo=tz)
+    except ValueError:
+        return None
 MASK = "@"
+
+# what the run was connected to (run.py sets it): values that differ only because a run used another
+# port or database name. {"pg_host", "pg_port", "pg_database", "bolt_port"}
+CONNECTION: dict = {}
+
+
+def set_connection(**kw):
+    CONNECTION.clear()
+    CONNECTION.update({k: v for k, v in kw.items() if v not in (None, "")})
+
+
+def _conn_text(s: str) -> str:
+    c = CONNECTION
+    if not c:
+        return s
+    if c.get("pg_host") and c.get("pg_port"):
+        s = s.replace(f"{c['pg_host']}:{c['pg_port']}", "<pg-host>:<pg-port>")
+    if c.get("pg_port"):
+        s = re.sub(r"(?<![\d.])" + re.escape(str(c["pg_port"])) + r"(?![\d.])", "<pg-port>", s)
+    if c.get("bolt_port"):
+        s = re.sub(r"(?<![\d.])" + re.escape(str(c["bolt_port"])) + r"(?![\d.])", "<bolt-port>", s)
+    if c.get("pg_database"):
+        s = re.sub(r"(?<![\w])" + re.escape(c["pg_database"]) + r"(?![\w])", "<pg-database>", s)
+    return s
 
 
 def _now():
@@ -57,14 +108,11 @@ class Normalizer:
         return abs((d - self.now).total_seconds()) < 2 * 86400
 
     def _iso_now(self, s: str) -> bool:
-        m = ISO.match(s)
-        if not m:
+        d = parse_iso(s)
+        if d is None:
             return False
-        try:
-            core = s.split("[")[0].replace("Z", "+00:00").replace(" ", "T")
-            d = dt.datetime.fromisoformat(core)
-        except ValueError:
-            return False
+        if len(s) == 10:  # a date: today or the days next to it, in any time zone
+            return abs((d.date() - self.now.date()).days) <= 2
         return self.near_now(d)
 
     # -- ids ----------------------------------------------------------------
@@ -104,12 +152,15 @@ class Normalizer:
             native = v.to_native()
             return {"~temporal": "DateTime", "v": "<now>" if self.near_now(native) else v.iso_format()}
         if Date and isinstance(v, Date):
-            return {"~temporal": "Date", "v": v.iso_format()}
+            near = abs((v.to_native() - self.now.date()).days) <= 2
+            return {"~temporal": "Date", "v": "<now>" if near else v.iso_format()}
         if Time and isinstance(v, Time):
             return {"~temporal": "Time", "v": v.iso_format()}
         if Duration and isinstance(v, Duration):
             return {"~temporal": "Duration", "v": str(v)}
         if isinstance(v, int):
+            if CONNECTION and v in (CONNECTION.get("pg_port"), CONNECTION.get("bolt_port")):
+                return "<pg-port>" if v == CONNECTION.get("pg_port") else "<bolt-port>"
             s = str(v)
             if s in self.known and (id_column or abs(v) >= 2 ** 31):
                 return {"~id": self.known[s], "v": s, "int": True}
@@ -129,7 +180,7 @@ class Normalizer:
                 return {"~uuid": v}
             if self._iso_now(v):
                 return "<now>"
-            return v
+            return _conn_text(v)
         if isinstance(v, (list, tuple)):
             return [self.raw(x, id_column) for x in v]
         if isinstance(v, dict):
@@ -186,6 +237,6 @@ def sha1(v) -> str:
 def error_of(e) -> dict:
     code = getattr(e, "code", None) or type(e).__name__
     msg = str(getattr(e, "message", None) or e)
-    msg = re.sub(r"\d{9,}", "<n>", msg)
+    msg = _conn_text(re.sub(r"\d{9,}", "<n>", msg))
     msg = re.sub(r"\s+", " ", msg).strip()[:400]
     return {"code": code, "message": msg}
