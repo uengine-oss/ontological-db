@@ -29,10 +29,10 @@ esac
     echo "Only when the coordinator says so: OG_MOLD_BLESS=yes scripts/mold.sh bless …" >&2
     exit 2
 }
-PORT="${OG_MOLD_PGPORT:-}"; WORK="${OG_MOLD_WORK:-}"; args=(--repeat 2)
+PORT="${OG_MOLD_PGPORT:-}"; WORK="${OG_MOLD_WORK:-}"; PKG="${OG_ENGINE_PKG:-}"; args=(--repeat 2)
 for a in "$@"; do args+=("$a"); done
 while [ $# -gt 0 ]; do
-    case "$1" in --port) PORT="$2"; shift 2 ;; --work) WORK="$2"; shift 2 ;; *) shift ;; esac
+    case "$1" in --port) PORT="$2"; shift 2 ;; --work) WORK="$2"; shift 2 ;; --engine-pkg) PKG="$2"; shift 2 ;; *) shift ;; esac
 done
 [ -n "$PORT" ] || { echo "--port N is required" >&2; exit 2; }
 WORK="${WORK:-${TMPDIR:-/tmp}/og-mold-$PORT}"
@@ -43,9 +43,9 @@ t0=$(date +%s)
 [ -n "${OG_MOLD_PGPORT:-}" ] && args+=(--port "$PORT")
 "$ROOT/tests/seam/capture.sh" "${args[@]}" --out "$WORK/bless" || exit 1
 PGV="$(cd "$WORK/pg/bin" && ./postgres --version)"
-"${OG_PYTHON:-python3}" - "$WORK/bless" "$ROOT/tests/seam/golden" "$ROOT" "$PGV" "$(( $(date +%s) - t0 ))" <<'EOF'
+"${OG_PYTHON:-python3}" - "$WORK/bless" "$ROOT/tests/seam/golden" "$ROOT" "$PGV" "$(( $(date +%s) - t0 ))" "$PKG" <<'EOF'
 import lzma, os, shutil, subprocess, sys, json
-src, dst, root, pgv, secs = sys.argv[1:]
+src, dst, root, pgv, secs, pkg = sys.argv[1:]
 if os.path.isdir(dst):
     shutil.rmtree(dst)
 for d, _, fs in os.walk(src):
@@ -68,7 +68,10 @@ tree = git("rev-parse", "--short", "HEAD:engine")
 dirty = git("status", "--porcelain", "--", "engine")
 summary = json.load(open(os.path.join(src, "summary.json")))
 with open(os.path.join(dst, "SOURCE"), "w") as w:
-    w.write(f"captured at {head}, engine/ tree {tree}{' plus uncommitted changes' if dirty else ''}, with {pgv}\n")
+    if pkg:
+        w.write(f"captured at {head} with {pgv}, from the engine package {pkg} (not built here)\n")
+    else:
+        w.write(f"captured at {head}, engine/ tree {tree}{' plus uncommitted changes' if dirty else ''}, with {pgv}\n")
     w.write(f"captured twice, the two identical ({secs}s for both)\n")
     w.write(json.dumps(summary, sort_keys=True) + "\n")
 print(f"golden mold written to {dst}")

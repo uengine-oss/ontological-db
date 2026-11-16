@@ -48,13 +48,17 @@ class Norm:
     """What differs between two captures of the same tree and is not the engine's doing.
 
     - the cluster's port, data directory and work directory (each capture picks its own);
+    - where this checkout is (the TypeQL suite reads its files by absolute path);
     - the time of the run: timestamps within two days of it, and epoch milliseconds;
     - elapsed time the engine reports in a message (``… after 1503 ms``).
     """
 
     def __init__(self, port, paths):
         self.port = str(port)
-        self.paths = sorted({p for p in paths if p}, key=len, reverse=True)
+        # (path, token), the longest first so that a path inside another is replaced whole
+        named = [(p, "<work>") for p in paths if p]
+        named += [(r, "<repo>") for r in {ROOT, os.path.realpath(ROOT)}]
+        self.paths = sorted(set(named), key=lambda pt: len(pt[0]), reverse=True)
         t = time.time()
         days = {time.strftime("%Y-%m-%d", time.gmtime(t + d * 86400)) for d in (-2, -1, 0, 1, 2)}
         days |= {time.strftime("%Y-%m-%d", time.localtime(t + d * 86400)) for d in (-2, -1, 0, 1, 2)}
@@ -66,8 +70,8 @@ class Norm:
         self.elapsed_re = re.compile(r"(?<![0-9])[0-9]+(?:\.[0-9]+)? ?ms\b")
 
     def __call__(self, s: str) -> str:
-        for p in self.paths:
-            s = s.replace(p, "<work>")
+        for p, token in self.paths:
+            s = s.replace(p, token)
         s = self.port_re.sub("<pgport>", s)
         s = self.now_re.sub("<now>", s)
         s = self.ms_re.sub(lambda m: "<now:ms>" if self.ms_lo <= int(m.group(0)) <= self.ms_hi else m.group(0), s)

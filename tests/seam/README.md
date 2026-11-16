@@ -69,7 +69,7 @@ scripts/mold.sh compare tests/seam/golden <work>/mold --layer sql          # sql
 ```
 
 종류: `E` 실행기 문장(SELECT/INSERT/UPDATE/DELETE), `U` 유틸리티 문장(CREATE/ALTER/SET/DO …), `X` 보고된 오류·경고
-(SQLSTATE 메시지), `L` LOG 메시지(엔진의 `log!`). 줄바꿈·탭·역슬래시는 `\n` `\t` `\\` 로 적는다. 같은 라인이
+(SQLSTATE 메시지), `L` LOG 메시지(엔진의 `log!`). 개행·탭·역슬래시는 `\n` `\t` `\\` 로 적는다. 같은 라인이
 연달아 나오면 한 번만 적고 `  ×N` 을 붙인다. `CREATE EXTENSION` 이 도는 동안은 적지 않는다.
 
 trace 층에는 sql 층이 볼 수 없는 것이 들어 있다: **쓰기**(저장 API 가 실행하는 INSERT·UPDATE 와 그 순서 — K3·K4),
@@ -98,7 +98,8 @@ trace 층에는 sql 층이 볼 수 없는 것이 들어 있다: **쓰기**(저�
 
 뜰 때마다 달라지지만 엔진 탓이 아닌 것만 지운다(`capture.py` 의 `Norm`):
 
-- 클러스터 포트 → `<pgport>`, 작업 폴더·데이터 폴더 경로 → `<work>` (패브릭 서버 정의에 들어간다)
+- 클러스터 포트 → `<pgport>`, 작업 폴더·데이터 폴더 경로 → `<work>` (패브릭 서버 정의에 들어간다), 이 체크아웃의
+  경로 → `<repo>` (TypeQL 스위트가 예제 파일을 절대 경로로 읽는다. 작업 트리마다 다르다)
 - 실행 시각 앞뒤 이틀 안의 시각(날짜와 시:분이 함께 있는 것) → `<now>`, 그 범위의 epoch 밀리초 → `<now:ms>`
   (회귀 파일이 `SELECT now() \gset` 으로 받은 값을 다음 문장에 넣는다)
 

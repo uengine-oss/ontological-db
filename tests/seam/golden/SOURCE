@@ -1,3 +1,3 @@
-captured at 4aee7ce, engine/ tree 7ac0324, with postgres (PostgreSQL) 16.15
-captured twice, the two identical (201s for both)
+captured at 26e053d with postgres (PostgreSQL) 16.15, from the engine package scripts/test-all.sh built from v2/main f76d4d9 (engine/ tree 7ac0324: no Layout yet)
+captured twice, the two identical (165s for both)
 {"corpus": {"fixture": 638, "read": 652, "scenario": 148, "step": 502}, "sql": {"compiled": 883, "files": 30, "og_calls": 600, "statements": 1356}, "tutorials": {"compiled": 97, "statements": 511}, "typeql": {"queries": 28}}
