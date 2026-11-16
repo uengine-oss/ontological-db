@@ -349,6 +349,11 @@ fn probe_mysql_catalog(srv: &str, database: &str) -> Option<Value> {
 /// superuser-only (`PGC_SUSET`): the host's `-c`, `postgresql.conf`, `ALTER
 /// SYSTEM` / `ALTER DATABASE`, or a superuser's `SET`. Another role cannot turn
 /// the refusal off with a `SET` of its own.
+///
+/// The prefix is the edition's (`DESIGN.md` 5.3 (2)): two editions' libraries
+/// in one backend each define their own, and defining one name twice is an
+/// error. v1 sets no edition and so defines `ontological.…` as it always did;
+/// `ontological_age` defines `ontological_age.fabric_inline_passwords`.
 #[derive(pgrx::guc::PostgresGucEnum, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum InlinePasswords {
     #[name = c"allow"]
@@ -361,11 +366,26 @@ static INLINE_PASSWORDS: pgrx::guc::GucSetting<InlinePasswords> =
     pgrx::guc::GucSetting::<InlinePasswords>::new(InlinePasswords::Allow);
 static INLINE_PASSWORDS_DEFINED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
+/// The setting's name: `<edition>.fabric_inline_passwords`, `ontological` when
+/// no edition was set (v1).
+fn inline_passwords_guc() -> &'static std::ffi::CStr {
+    static NAME: std::sync::OnceLock<&'static std::ffi::CStr> = std::sync::OnceLock::new();
+    NAME.get_or_init(|| match crate::spiu::edition() {
+        None => c"ontological.fabric_inline_passwords",
+        // Made once per backend; the GUC registry keeps the name for good.
+        Some(ext) => Box::leak(
+            std::ffi::CString::new(format!("{ext}.fabric_inline_passwords"))
+                .expect("an extension name has no NUL")
+                .into_boxed_c_str(),
+        ),
+    })
+}
+
 fn inline_passwords() -> InlinePasswords {
     use std::sync::atomic::Ordering;
     if !INLINE_PASSWORDS_DEFINED.swap(true, Ordering::Relaxed) {
         pgrx::guc::GucRegistry::define_enum_guc(
-            c"ontological.fabric_inline_passwords",
+            inline_passwords_guc(),
             c"Whether CREATE DATASOURCE may store a password given inline: allow or refuse.",
             c"An inline password is stored in clear in pg_user_mapping. refuse requires a credentials reference \
               (PARAMETERS = {credentials: 'keychain:…'}) whose secret the host writes under \
@@ -378,18 +398,20 @@ fn inline_passwords() -> InlinePasswords {
     INLINE_PASSWORDS.get()
 }
 
-/// Refuse an inline password when `ontological.fabric_inline_passwords = refuse`.
-/// Called before anything is created or changed.
+/// Refuse an inline password when `ontological.fabric_inline_passwords = refuse`
+/// (the edition's prefix, `inline_passwords_guc`). Called before anything is
+/// created or changed.
 fn check_inline_password(name: &str, login: &Login) {
     if !matches!(login, Login::Inline(pw) if !pw.is_empty()) {
         return;
     }
     if inline_passwords() == InlinePasswords::Refuse {
+        let guc = inline_passwords_guc().to_str().expect("the setting's name is ASCII");
         ereport!(
             ERROR,
             PgSqlErrorCode::ERRCODE_INSUFFICIENT_PRIVILEGE,
             format!(
-                "datasource {name}: a password given inline is refused here (ontological.fabric_inline_passwords = refuse) — \
+                "datasource {name}: a password given inline is refused here ({guc} = refuse) — \
                  pass a credentials reference instead: PARAMETERS = {{…, credentials: 'keychain:ds/{name}'}} or \
                  'vault:<mount>/<path>#<field>', whose secret the application that keeps it writes under \
                  ontological.fabric_credentials_dir (SHOW CREDENTIALS says which file)"
@@ -1260,4 +1282,13 @@ fn og_fabric_explain(
         row.0 = i as i32 + 1;
     }
     TableIterator::new(out)
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn without_an_edition_the_setting_keeps_its_v1_name() {
+        assert_eq!(crate::spiu::edition(), None);
+        assert_eq!(super::inline_passwords_guc().to_str(), Ok("ontological.fabric_inline_passwords"));
+    }
 }
