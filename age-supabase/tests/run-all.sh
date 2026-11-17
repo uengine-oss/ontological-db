@@ -17,6 +17,7 @@ run robo  10-robo-cypher.sql
 run robo  11-params.sql
 run admin 12-labels-privs.sql
 run robo  13-check-trigger.sql
+run robo  16-neo4j-probe.sql
 if [ "${WITH_DUMP:-0}" = 1 ]; then
   echo "== 14-dump-roundtrip.sh"; WORK="$OUT/dump" "$here/14-dump-roundtrip.sh" > "$OUT/14-dump-roundtrip.out" 2>&1
 fi

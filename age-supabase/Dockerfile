@@ -31,8 +31,9 @@ RUN --mount=type=bind,from=age-artifacts,target=/tmp/age \
     libdir="$(sed -n "s/^export NIX_PGLIBDIR='\(.*\)'.*/\1/p" "$wrapper")"; \
     test -d "$libdir"; \
     install -m 755 /tmp/age/age.so "$libdir/age.so"; \
-    # 2) extension control/SQL: the share dir next to that lib dir (what the
-    #    server resolves from its own path) and the one pg_config reports
+    # 2) extension control/SQL: the share dir pg_config reports (the one the
+    #    running server reads, checked by moving the file away) and, to be safe
+    #    if a later image resolves it from the binary's path, the one next to libdir
     for extdir in "$(dirname "$libdir")/share/postgresql/extension" \
                   "$(readlink -f "$(pg_config --sharedir)/extension")"; do \
       test -d "$extdir"; \
