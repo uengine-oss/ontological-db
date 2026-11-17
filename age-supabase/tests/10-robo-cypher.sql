@@ -174,6 +174,30 @@ SELECT n::text AS as_text, (v)::text::int AS via_text_int, (v)::int AS direct_in
   FROM ag_catalog.cypher('robo_t1', $$ MATCH (a:Aggregate {name: 'Order'}) RETURN a.name, a.version $$)
        AS (n ag_catalog.agtype, v ag_catalog.agtype);
 
+\echo '### top-level scalars: which conversions work'
+SELECT x AS agtype_text, x IS NULL AS sql_null FROM ag_catalog.cypher('robo_t1', $$ RETURN null $$) AS (x ag_catalog.agtype);
+SELECT x::jsonb FROM ag_catalog.cypher('robo_t1', $$ RETURN 'str' $$) AS (x ag_catalog.agtype);
+SELECT x::jsonb FROM ag_catalog.cypher('robo_t1', $$ RETURN 1 $$) AS (x ag_catalog.agtype);
+SELECT x::jsonb FROM ag_catalog.cypher('robo_t1', $$ RETURN true $$) AS (x ag_catalog.agtype);
+SELECT x::json FROM ag_catalog.cypher('robo_t1', $$ RETURN 1 $$) AS (x ag_catalog.agtype);
+SELECT to_jsonb(x) FROM ag_catalog.cypher('robo_t1', $$ RETURN 1 $$) AS (x ag_catalog.agtype);
+\echo '-- the list wrap works for every value except NaN / Infinity'
+SELECT (ag_catalog.agtype_build_list(x)::jsonb) -> 0 AS via_list
+  FROM ag_catalog.cypher('robo_t1', $$ UNWIND [1, 1.5, true, 'str', null, [1], {a: 1}, 1.25::numeric] AS v RETURN v $$) AS (x ag_catalog.agtype);
+SELECT (ag_catalog.agtype_build_list(x)::jsonb) -> 0 AS via_list
+  FROM ag_catalog.cypher('robo_t1', $$ MATCH (v:Event) RETURN v LIMIT 1 $$) AS (x ag_catalog.agtype);
+SELECT (ag_catalog.agtype_build_list(x)::jsonb) -> 0
+  FROM ag_catalog.cypher('robo_t1', $$ RETURN 'NaN'::float $$) AS (x ag_catalog.agtype);
+\echo '-- ::text is a value cast, not the agtype text'
+SELECT x AS agtype_text, x::text AS text_cast
+  FROM ag_catalog.cypher('robo_t1', $$ UNWIND [1, 1.0, 1.5e300, 'NaN'::float, '-Infinity'::float, 1.25::numeric, 'a"b', '한글'] AS v RETURN v $$) AS (x ag_catalog.agtype);
+SELECT x::text FROM ag_catalog.cypher('robo_t1', $$ MATCH ()-[r:HAS]->() RETURN r $$) AS (x ag_catalog.agtype);
+\echo '-- binary send format: version byte 1 + agtype text'
+SELECT x AS agtype_text, encode(ag_catalog.agtype_send(x), 'hex') AS send_hex
+  FROM ag_catalog.cypher('robo_t1', $$ UNWIND [1, 1.0, 'a'] AS v RETURN v $$) AS (x ag_catalog.agtype);
+\echo '-- casts registered from agtype'
+SELECT casttarget::regtype, castfunc::regproc, castcontext FROM pg_cast WHERE castsource = 'ag_catalog.agtype'::regtype ORDER BY 1::text;
+
 \echo '### column definition list must match RETURN'
 SELECT * FROM ag_catalog.cypher('robo_t1', $$ MATCH (a:Aggregate) RETURN a.name, a.bc $$) AS (n ag_catalog.agtype);
 SELECT * FROM ag_catalog.cypher('robo_t1', $$ MATCH (a:Aggregate) RETURN a.name $$) AS (n ag_catalog.agtype, x ag_catalog.agtype);
