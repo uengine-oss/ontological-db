@@ -5,7 +5,7 @@ use crate::packstream::{self as ps, map, string, Value};
 use crate::Config;
 use postgres::error::SqlState;
 use postgres::{CancelToken, Client, NoTls};
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::{BTreeMap, HashSet, VecDeque};
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -126,7 +126,16 @@ struct Session<'a> {
     timeout_ms: i64,
     /// The open transaction's own limit, from BEGIN's `tx_timeout`.
     tx_timeout_ms: Option<i64>,
+    /// AGE backend: what the last write changed, for its summary.
+    age_stats: Option<Value>,
+    /// AGE backend: graphs this session has seen exist.
+    age_graphs: HashSet<String>,
 }
+
+// The AGE backend's statement path (`OG_BOLT_BACKEND=age`). A child module, so
+// that it works on the same session state.
+#[path = "age/run.rs"]
+mod age_run;
 
 /// The `tx_metadata` keys the gateway understands, and the setting each one
 /// becomes. Neo4j drivers already carry application metadata this way, so a
@@ -152,6 +161,23 @@ const TX_SETTINGS: &[(&str, &str)] = &[
 /// Neo4j drivers send for `Query(…, timeout=…)` and `begin_transaction(timeout=…)`.
 /// It becomes the engine's `og.statement_timeout` for that transaction; 0 means
 /// no limit, as it does for Neo4j.
+/// The HELLO answer. The server string is how clients tell an Ontological
+/// gateway from Neo4j (and send it fabric statements); in front of AGE there
+/// is no fabric, so it says so with a tag of its own.
+fn hello_success(age: bool) -> Value {
+    let server = if age {
+        concat!("Neo4j/4.4.0 (age-bolt/", env!("CARGO_PKG_VERSION"), ")")
+    } else {
+        "Neo4j/4.4.0 (ontological-bolt)"
+    };
+    map(vec![
+        // Drivers gate features on this string; we are Bolt 4.4, so we say so.
+        ("server", string(server)),
+        ("connection_id", string(format!("bolt-{}", std::process::id()))),
+        ("hints", Value::Map(BTreeMap::new())),
+    ])
+}
+
 fn tx_timeout(extra: &Value) -> Option<i64> {
     extra.map_get("tx_timeout").and_then(Value::as_i64).filter(|ms| *ms >= 0)
 }
@@ -197,6 +223,8 @@ pub fn serve(mut stream: TcpStream, config: &Config) -> io::Result<()> {
         early: VecDeque::new(),
         timeout_ms: 0,
         tx_timeout_ms: None,
+        age_stats: None,
+        age_graphs: HashSet::new(),
     };
     sess.run(&mut stream)
 }
@@ -329,6 +357,11 @@ impl Session<'_> {
         // has no way to ask, and refuses the setting; that is not worth failing
         // a login over.
         let _ = client.batch_execute("SET client_connection_check_interval = '2s'");
+        if self.config.age.is_some() {
+            self.timeout_ms = age_run::hello(&mut client, self.config)?;
+            self.pg = Some(client);
+            return Ok(hello_success(true));
+        }
         if let Some(limit) = &self.config.statement_timeout {
             client
                 .execute("SELECT set_config('og.statement_timeout', $1, false)", &[limit])
@@ -342,12 +375,7 @@ impl Session<'_> {
             .unwrap_or(0);
         self.pg = Some(client);
 
-        Ok(map(vec![
-            // Drivers gate features on this string; we are Bolt 4.4, so we say so.
-            ("server", string("Neo4j/4.4.0 (ontological-bolt)")),
-            ("connection_id", string(format!("bolt-{}", std::process::id()))),
-            ("hints", Value::Map(BTreeMap::new())),
-        ]))
+        Ok(hello_success(false))
     }
 
     fn reset(&mut self) -> Result<Value, Failure> {
@@ -358,6 +386,7 @@ impl Session<'_> {
                 let _ = pg.batch_execute("ROLLBACK");
             }
             self.in_tx = false;
+            self.age_graphs.clear();
         }
         self.tx_meta.clear();
         self.tx_timeout_ms = None;
@@ -381,7 +410,11 @@ impl Session<'_> {
 
     /// Transaction-local, so nothing outlives the transaction it was sent with.
     fn apply_settings(&mut self, settings: &[(String, String)]) -> Result<(), Failure> {
+        let age = self.config.age.is_some();
         for (k, v) in settings {
+            // AGE has no `og.statement_timeout`; PostgreSQL's own limit is it.
+            let renamed = String::from("statement_timeout");
+            let k = if age && k == "og.statement_timeout" { &renamed } else { k };
             let pg = self.client()?;
             pg.execute("SELECT set_config($1, $2, true)", &[k, v])
                 .map_err(|e| Failure::from_pg(&e))?;
@@ -390,6 +423,9 @@ impl Session<'_> {
     }
 
     fn end_tx(&mut self, verb: &str) -> Result<Value, Failure> {
+        if verb == "ROLLBACK" {
+            self.age_graphs.clear();
+        }
         self.sql(verb)?;
         self.in_tx = false;
         self.tx_meta.clear();
@@ -446,6 +482,9 @@ impl Session<'_> {
         // read/write verdict is spec 003's, reached through a second transport
         // rather than reimplemented behind one.
         let (body, plan_only) = split_plan_prefix(&query);
+        if self.config.age.is_some() {
+            return self.age_run(body, plan_only, &params, &extra, stream);
+        }
         let write = self.is_write(body)?;
         self.qtype = if write { "w" } else { "r" };
 
@@ -648,6 +687,9 @@ impl Session<'_> {
     /// write over, so a connection that cannot answer simply reports no
     /// counters — which is what it did before there were any.
     fn write_stats(&mut self) -> Option<Value> {
+        if self.config.age.is_some() {
+            return self.age_stats.take();
+        }
         let engine = &self.config.engine;
         let pg = self.pg.as_mut()?;
         let row = pg.query_one(engine.cypher_stats.as_str(), &[]).ok()?;
