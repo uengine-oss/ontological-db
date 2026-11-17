@@ -1,0 +1,10 @@
+[package]
+name = "cypher-syntax"
+version = "0.1.0"
+edition = "2021"
+description = "The engine's Cypher lexer, parser and AST, compiled without pgrx — for the Bolt gateway's AGE backend"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
