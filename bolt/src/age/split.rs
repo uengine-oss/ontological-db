@@ -18,7 +18,15 @@
 //!    - `CALL { … }`: the body once per row, with the imported variables bound
 //!      (an aggregate over no rows still gives its one row, as in Neo4j); the
 //!      row goes on once per row the body returns, or as it was for a unit
-//!      subquery;
+//!      subquery. Every branch of a `UNION` in the body gets the imported
+//!      variables bound (SUITES B2). Its names are checked as Neo4j checks
+//!      them before anything runs (B3: an import that is not bound, a
+//!      returned name that is);
+//!    - a FOREACH, CALL { … } or label change inside a FOREACH or CALL { … }
+//!      body (B4): the body is cut into steps of its own ([`plan_in`]) and
+//!      run on the rows the outer step gives it ([`run_on`]) — a FOREACH's on
+//!      one row per row and element (made by one statement), a CALL's once
+//!      per row;
 //!    - `SET n:L` / `REMOVE n:L`: the vertex is moved to the label's table —
 //!      its row deleted from the old one, inserted into the new one with its
 //!      properties, and every edge's `start_id`/`end_id` pointed at the new id.
@@ -74,8 +82,13 @@ const ROW: &str = "__og_row";
 enum Seg {
     /// Ordinary clauses, and the variables in scope after them.
     Clauses(Vec<Clause>, Vec<String>),
-    Foreach { var: String, list: Expr, body: Vec<Clause> },
-    Call { body: Query, imports: Option<Vec<String>>, optional: bool, returns: Vec<String> },
+    /// `inner`: the body as steps of its own, when it holds what has to be
+    /// cut itself (a FOREACH, a label change: B4) — run on the rows, one per
+    /// row and element; `None`: the body is one statement.
+    Foreach { var: String, list: Expr, body: Vec<Clause>, inner: Option<Box<Steps>> },
+    /// `inner`: the body as steps of its own, when it holds a CALL { … },
+    /// FOREACH or label change (B4) — run once per row.
+    Call { body: Query, imports: Option<Vec<String>>, optional: bool, returns: Vec<String>, inner: Option<Box<Steps>> },
     /// Per variable: labels added, labels removed.
     Relabel(Vec<(String, Vec<String>, Vec<String>)>),
     /// N1: a MERGE's ON CREATE / ON MATCH items, taken out of it because they
@@ -378,13 +391,98 @@ fn merge_then_set(a: &Clause, b: &Clause) -> bool {
 
 /// Cut the statement into steps.
 pub fn plan(q: &Query, p: &mut Printer) -> Result<Steps, String> {
+    plan_in(q, p, Vec::new())
+}
+
+/// The branches of a query and what joins each to the next (`Some(true)`:
+/// `UNION ALL`, `Some(false)`: `UNION`, `None`: the last).
+fn branches(q: &Query) -> Vec<(Query, Option<bool>)> {
+    let mut out = Vec::new();
+    let mut at = q;
+    loop {
+        let one = Query { clauses: at.clauses.clone(), union: None };
+        match &at.union {
+            Some((all, tail)) => {
+                out.push((one, Some(*all)));
+                at = tail;
+            }
+            None => {
+                out.push((one, None));
+                return out;
+            }
+        }
+    }
+}
+
+/// The variables a `CALL { … }` imports: `CALL (a, b)` names them, `CALL (*)`
+/// all (`None`), and without a scope clause the leading `WITH a, b` of each
+/// branch does (Neo4j 4).
+fn subquery_imports(sc: &Option<Vec<String>>, body: &Query) -> Option<Vec<String>> {
+    match sc {
+        Some(names) if names.iter().any(|n| n == "*") => None,
+        Some(names) => Some(names.clone()),
+        None => {
+            let mut names: Vec<String> = Vec::new();
+            for (b, _) in branches(body) {
+                if let Some(Clause::With { proj, .. }) = b.clauses.first() {
+                    for it in &proj.items {
+                        if let Expr::Var(v) = &it.expr {
+                            if !names.contains(v) {
+                                names.push(v.clone());
+                            }
+                        }
+                    }
+                }
+            }
+            Some(names)
+        }
+    }
+}
+
+/// SUITES B3: what Neo4j refuses about a `CALL { … }`'s names, before it
+/// runs (`Neo.ClientError.Statement.SyntaxError`, Neo4j's wording): a name it
+/// imports that is not bound (`CALL (nope) { … }`, or `WITH nope` leading a
+/// branch), and a name it returns that is bound outside already (`MATCH (s)
+/// CALL { MATCH (b:Box) RETURN b AS s } RETURN s`). AGE never sees a CALL
+/// { … }, so nothing else would refuse them; the gateway answered both.
+fn check_subquery_names(sc: &Option<Vec<String>>, body: &Query, outer: &[String]) -> Result<(), String> {
+    let not_defined = |v: &str| format!("Variable `{v}` not defined");
+    match sc {
+        Some(names) => {
+            if let Some(n) = names.iter().find(|n| *n != "*" && !outer.contains(n)) {
+                return Err(not_defined(n));
+            }
+        }
+        None => {
+            for (b, _) in branches(body) {
+                if let Some(Clause::With { proj, .. }) = b.clauses.first() {
+                    for it in &proj.items {
+                        if let Expr::Var(v) = &it.expr {
+                            if !outer.contains(v) {
+                                return Err(not_defined(v));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if let Some(n) = super::cypher::columns(body).iter().find(|n| outer.contains(n)) {
+        return Err(format!("Variable `{n}` already declared in outer scope"));
+    }
+    Ok(())
+}
+
+/// Cut a statement into steps, `scope0` bound before its first clause (a
+/// FOREACH or CALL { … } body planned on its own: the variables it sees).
+fn plan_in(q: &Query, p: &mut Printer, scope0: Vec<String>) -> Result<Steps, String> {
     if q.union.is_some() {
         return Err(super::cypher::unsupported("UNION with FOREACH, CALL { … } or a label change"));
     }
     let ncols = super::cypher::columns(q).len();
     let mut segs: Vec<Seg> = Vec::new();
     let mut cur: Vec<Clause> = Vec::new();
-    let mut scope: Vec<String> = Vec::new();
+    let mut scope: Vec<String> = scope0;
     // what the part being put together has done (N3, N4); a new one at every cut
     let mut cut = Cut::default();
     let flush = |cur: &mut Vec<Clause>, segs: &mut Vec<Seg>, scope: &[String], cut: &mut Cut| {
@@ -398,35 +496,38 @@ pub fn plan(q: &Query, p: &mut Printer) -> Result<Steps, String> {
         let c = &q.clauses[i];
         match c {
             Clause::Foreach { var, list, body } => {
-                if body.iter().any(|b| matches!(b, Clause::Foreach { .. }) || matches!(b, Clause::Set(x) | Clause::Remove(x) if has_label_op(x))) {
-                    return Err(super::cypher::unsupported("FOREACH inside FOREACH, or a label change inside FOREACH"));
-                }
                 flush(&mut cur, &mut segs, &scope, &mut cut);
-                segs.push(Seg::Foreach { var: var.clone(), list: list.clone(), body: body.clone() });
+                // B4: a FOREACH or a label change inside: the body is cut too,
+                // and runs on the rows a statement makes of each row and element
+                let body_q = Query { clauses: body.clone(), union: None };
+                let inner = if must_cut(&body_q) {
+                    let mut sc = scope.clone();
+                    if !sc.contains(var) {
+                        sc.push(var.clone());
+                    }
+                    Some(Box::new(plan_in(&body_q, p, sc)?))
+                } else {
+                    None
+                };
+                segs.push(Seg::Foreach { var: var.clone(), list: list.clone(), body: body.clone(), inner });
             }
             Clause::Subquery { scope: sc, body, optional } => {
-                if must_cut(body) {
-                    return Err(super::cypher::unsupported("FOREACH, CALL { … } or a label change inside CALL { … }"));
-                }
+                check_subquery_names(sc, body, &scope)?;
                 flush(&mut cur, &mut segs, &scope, &mut cut);
-                let imports = match sc {
-                    Some(names) if names.iter().any(|n| n == "*") => None,
-                    Some(names) => Some(names.clone()),
-                    // Neo4j 4: a leading `WITH a, b` imports.
-                    None => Some(match body.clauses.first() {
-                        Some(Clause::With { proj, .. }) => proj
-                            .items
-                            .iter()
-                            .filter_map(|it| match &it.expr {
-                                Expr::Var(v) => Some(v.clone()),
-                                _ => None,
-                            })
-                            .collect(),
-                        _ => Vec::new(),
-                    }),
-                };
+                let imports = subquery_imports(sc, body);
                 let returns = super::cypher::columns(body);
-                segs.push(Seg::Call { body: (**body).clone(), imports, optional: *optional, returns });
+                // B4: a CALL { … }, FOREACH or label change inside: the body is
+                // cut too, and runs as steps of its own once per row
+                let inner = if must_cut(body) {
+                    let sees = match &imports {
+                        None => scope.clone(),
+                        Some(names) => names.clone(),
+                    };
+                    Some(Box::new(plan_in(body, p, sees)?))
+                } else {
+                    None
+                };
+                segs.push(Seg::Call { body: (**body).clone(), imports, optional: *optional, returns, inner });
             }
             Clause::Set(items) | Clause::Remove(items) if has_label_op(items) => {
                 // This clause and the SET / REMOVE right after it: the label
@@ -868,14 +969,30 @@ fn waves(rows: &[Row], targets: &[String]) -> Vec<Vec<usize>> {
 /// Run the steps. Returns the statement's rows (its RETURN columns) and the
 /// counter corrections for vertices that changed table.
 pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag>>, Stats), Refusal> {
-    let pmap = params.as_object().cloned().unwrap_or_default();
-    let mut rows: Vec<Row> = vec![Row::default()];
-    let mut scope: Vec<String> = Vec::new();
     let mut adjust = Stats::default();
-    let mut out: Vec<Vec<Ag>> = Vec::new();
-    let mut first = true;
-    let last = steps.segs.len().saturating_sub(1);
     let mut hier = steps.hier.clone();
+    let out = run_on(x, steps, params, vec![Row::default()], Vec::new(), true, &mut hier, &mut adjust)?;
+    Ok((out, adjust))
+}
+
+/// Run the steps on `rows` (each binding `scope`); `first`: nothing ran
+/// before, the first step needs no rows carried in. A FOREACH or CALL { … }
+/// body cut on its own ([`Seg::Foreach`], [`Seg::Call`] `inner`) runs
+/// through here too, on the rows the outer step gives it.
+#[allow(clippy::too_many_arguments)]
+fn run_on(
+    x: &mut dyn Exec,
+    steps: &Steps,
+    params: &Json,
+    mut rows: Vec<Row>,
+    mut scope: Vec<String>,
+    mut first: bool,
+    hier: &mut Hierarchy,
+    adjust: &mut Stats,
+) -> Result<Vec<Vec<Ag>>, Refusal> {
+    let pmap = params.as_object().cloned().unwrap_or_default();
+    let mut out: Vec<Vec<Ag>> = Vec::new();
+    let last = steps.segs.len().saturating_sub(1);
     for (k, seg) in steps.segs.iter().enumerate() {
         let mut printer = Printer::new(Some(&pmap), steps.now.clone()).with_hierarchy(hier.clone());
         let ks = kinds(&rows, &scope)?;
@@ -905,7 +1022,7 @@ pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag
                         if cs.is_empty() {
                             // only the writes: the rows go on as they were
                             if k == last {
-                                return Ok((Vec::new(), adjust));
+                                return Ok(Vec::new());
                             }
                             scope = after.clone();
                             continue;
@@ -926,7 +1043,7 @@ pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag
                     let text = texts.join(" ");
                     let p = with_param(&merged(params, &printer.extra), ROWS, rows_json);
                     out = x.cypher(&text, steps.ncols, &p)?;
-                    return Ok((out, adjust));
+                    return Ok(out);
                 }
                 // carry every variable in scope to the next step
                 let carry: Vec<String> = after.iter().filter(|v| !v.starts_with(FRESH) || true).cloned().collect();
@@ -940,7 +1057,35 @@ pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag
                 rows = got.into_iter().map(|vals| if carry.is_empty() { Row::default() } else { row_of(&carry, vals) }).collect();
                 scope = after.clone();
             }
-            Seg::Foreach { var, list, body } => {
+            Seg::Foreach { var, list, inner: Some(inner), .. } => {
+                // B4: each row and element as a row of their own, then the
+                // body's steps on those rows; the rows go on as they were.
+                let mut text = pre.clone().unwrap_or_else(|| format!("UNWIND ${ROWS} AS {ROW}"));
+                let carry: Vec<String> = ks.iter().map(|(v, _, _)| super::cypher::ident(v)).collect();
+                match conditional(list) {
+                    Some((cond, elem)) => {
+                        let mut items = carry.clone();
+                        items.push(format!("{} AS {}", printer.expr(&elem).map_err(Refusal::syntax)?, super::cypher::ident(var)));
+                        text.push_str(&format!(" WITH {} WHERE {}", items.join(", "), printer.expr(&cond).map_err(Refusal::syntax)?));
+                    }
+                    None => text.push_str(&format!(" UNWIND {} AS {}", printer.operand(list).map_err(Refusal::syntax)?, super::cypher::ident(var))),
+                }
+                let mut names: Vec<String> = ks.iter().map(|(v, _, _)| v.clone()).filter(|v| v != var).collect();
+                names.push(var.clone());
+                text.push_str(&format!(" RETURN {}", names.iter().map(|v| super::cypher::ident(v)).collect::<Vec<_>>().join(", ")));
+                let p = with_param(&merged(params, &printer.extra), ROWS, rows_param(&rows, &ks));
+                let got = x.cypher(&text, names.len(), &p)?;
+                let each: Vec<Row> = got.into_iter().map(|vals| row_of(&names, vals)).collect();
+                if !each.is_empty() {
+                    run_on(x, inner, params, each, names, false, hier, adjust)?;
+                }
+                first = false;
+                if k == last {
+                    return Ok(Vec::new());
+                }
+                continue;
+            }
+            Seg::Foreach { var, list, body, inner: None } => {
                 let rows_json = rows_param(&rows, &ks);
                 let mut text = pre.clone().unwrap_or_else(|| format!("UNWIND ${ROWS} AS {ROW}"));
                 let mut body = body.clone();
@@ -972,34 +1117,60 @@ pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag
                     first = false;
                 }
                 if k == last {
-                    return Ok((Vec::new(), adjust));
+                    return Ok(Vec::new());
                 }
                 continue;
             }
-            Seg::Call { body, imports, optional, returns } => {
+            Seg::Call { body, imports, optional, returns, inner } => {
                 let imported: Vec<(String, Kind, Option<String>)> = match imports {
                     None => ks.clone(),
                     Some(names) => ks.iter().filter(|(v, _, _)| names.contains(v)).cloned().collect(),
                 };
-                let body_text = printer.query(body).map_err(Refusal::syntax)?;
+                // SUITES B2: every branch of a UNION gets the rows brought in —
+                // with the prelude on the first one only, the others could not
+                // see the imported variables ("could not find rte for s")
+                let pre_body = prelude(&imported);
+                let mut body_text = String::new();
+                if inner.is_none() {
+                    for (b, join) in branches(body) {
+                        body_text.push_str(&pre_body);
+                        body_text.push(' ');
+                        body_text.push_str(&printer.query(&b).map_err(Refusal::syntax)?);
+                        match join {
+                            Some(true) => body_text.push_str(" UNION ALL "),
+                            Some(false) => body_text.push_str(" UNION "),
+                            None => {}
+                        }
+                    }
+                }
+                let names: Vec<String> = imported.iter().map(|(v, _, _)| v.clone()).collect();
                 let mut next = Vec::new();
                 for (i, r) in rows.iter().enumerate() {
-                    let one = rows_param(std::slice::from_ref(r), &imported);
-                    let mut text = prelude(&imported);
-                    // the row's index, as the prelude's UNWIND expects it
-                    let one = match one {
-                        Json::Array(mut xs) => {
-                            if let Some(Json::Object(m)) = xs.get_mut(0) {
-                                m.insert("__i".into(), Json::from(i as i64));
+                    let got = match inner {
+                        // B4: the body cut into steps of its own, on this row
+                        Some(inner) => {
+                            let mut own = Row::default();
+                            for n in &names {
+                                own.set(n, r.get(n).cloned().unwrap_or(Ag::Null));
                             }
-                            Json::Array(xs)
+                            run_on(x, inner, params, vec![own], names.clone(), false, hier, adjust)?
                         }
-                        o => o,
+                        None => {
+                            let one = rows_param(std::slice::from_ref(r), &imported);
+                            // the row's index, as the prelude's UNWIND expects it
+                            let one = match one {
+                                Json::Array(mut xs) => {
+                                    if let Some(Json::Object(m)) = xs.get_mut(0) {
+                                        m.insert("__i".into(), Json::from(i as i64));
+                                    }
+                                    Json::Array(xs)
+                                }
+                                o => o,
+                            };
+                            let p = with_param(&merged(params, &printer.extra), ROWS, one);
+                            x.cypher(&body_text, returns.len(), &p)?
+                        }
                     };
-                    text.push(' ');
-                    text.push_str(&body_text);
-                    let p = with_param(&merged(params, &printer.extra), ROWS, one);
-                    let got = x.cypher(&text, returns.len(), &p)?;
                     if returns.is_empty() {
                         next.push(r.clone());
                         continue;
@@ -1081,6 +1252,9 @@ pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag
             }
             Seg::Relabel(ops) => {
                 let graph = x.graph();
+                // a vertex more than one row holds moves once; the rows after
+                // the first take the vertex it became
+                let mut moved_to: HashMap<i64, Ag> = HashMap::new();
                 for r in rows.iter_mut() {
                     for (var, add, remove) in ops {
                         let Some(Ag::Vertex { id, label, props }) = r.get(var).cloned() else {
@@ -1089,6 +1263,14 @@ pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag
                             }
                             return Err(Refusal::syntax(format!("SET/REMOVE of a label needs a node; `{var}` is not one")));
                         };
+                        if let Some(moved) = moved_to.get(&id) {
+                            for slot in r.0.iter_mut() {
+                                if slot.1.element_id() == Some(id) && matches!(slot.1, Ag::Vertex { .. }) {
+                                    slot.1 = moved.clone();
+                                }
+                            }
+                            continue;
+                        }
                         // Its labels are its table's and those that table
                         // inherits (`hierarchy.rs`): which table it moves to,
                         // and the inheritance that table gets first.
@@ -1102,7 +1284,7 @@ pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag
                         if target == label {
                             continue;
                         }
-                        let new_id = relabel(x, &graph, id, &target, &mut hier)?;
+                        let new_id = relabel(x, &graph, id, &target, hier)?;
                         adjust.nodes_created -= 1;
                         adjust.nodes_deleted -= 1;
                         adjust.labels_added += added - 1;
@@ -1110,6 +1292,7 @@ pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag
                         adjust.properties_set -= new_id.1;
                         // every variable that was this vertex is the new one
                         let moved = Ag::Vertex { id: new_id.0, label: target.clone(), props: props.clone() };
+                        moved_to.insert(id, moved.clone());
                         for slot in r.0.iter_mut() {
                             if slot.1.element_id() == Some(id) && matches!(slot.1, Ag::Vertex { .. }) {
                                 slot.1 = moved.clone();
@@ -1123,12 +1306,12 @@ pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag
         if k == last {
             // ended on FOREACH / CALL / a label change: no RETURN after it
             if steps.ncols == 0 {
-                return Ok((Vec::new(), adjust));
+                return Ok(Vec::new());
             }
             return Err(Refusal::syntax("the statement ends without a RETURN".into()));
         }
     }
-    Ok((out, adjust))
+    Ok(out)
 }
 
 /// Move one vertex to `target`'s table; returns its new id and how many edge
@@ -1429,6 +1612,127 @@ mod tests {
         let q = cypher_syntax::parse("CREATE (n:Customer {k: 1}) WITH n MATCH (m:_Entity) RETURN count(m) AS c").unwrap();
         assert!(needed(&q, &h));
         assert!(!needed(&q, &Hierarchy::default()));
+    }
+
+    #[test]
+    fn every_union_branch_of_a_call_gets_the_rows() {
+        // SUITES B2: the prelude was on the first branch only ("could not find rte for s")
+        let s = steps(
+            "MATCH (s:Shelf {name: 'a'}) CALL { WITH s MATCH (s)-[:HOLDS]->(b) RETURN b.v AS x \
+             UNION ALL WITH s MATCH (s)-[:HOLDS]->(b) RETURN b.v AS x } RETURN count(x) AS n",
+        );
+        let mut f = Fake { asked: vec![], answers: vec![vec![vec![v(1, "Shelf")]], vec![vec![Ag::Int(5)], vec![Ag::Int(5)]], vec![vec![Ag::Int(2)]]] };
+        let (rows, _) = run(&mut f, &s, &Json::Object(Map::new())).unwrap();
+        assert_eq!(rows, vec![vec![Ag::Int(2)]]);
+        let pre = "UNWIND $__og_rows AS __og_row OPTIONAL MATCH (s:Shelf) WHERE id(s) = __og_row.s WITH __og_row, s";
+        assert_eq!(
+            f.asked[1],
+            format!(
+                "{pre} WITH s MATCH (s)-[:HOLDS]->(b) RETURN b.v AS x UNION ALL {pre} WITH s MATCH (s)-[:HOLDS]->(b) RETURN b.v AS x \
+                 | rows=[{{\"__i\":0,\"s\":1}}]"
+            )
+        );
+        assert!(f.asked[2].contains("__og_row.x AS x RETURN count(x) AS n"), "{}", f.asked[2]);
+        // UNION (not ALL) too; a scope clause imports for every branch
+        let s = steps("MATCH (s:S) CALL (s) { MATCH (s)-[:A]->(b) RETURN b.v AS x UNION MATCH (s)-[:B]->(b) RETURN b.v AS x } RETURN x");
+        let mut f = Fake { asked: vec![], answers: vec![vec![vec![v(1, "S")]], vec![], vec![]] };
+        run(&mut f, &s, &Json::Object(Map::new())).unwrap();
+        assert_eq!(f.asked[1].matches("OPTIONAL MATCH (s:S) WHERE id(s) = __og_row.s").count(), 2, "{}", f.asked[1]);
+        assert!(f.asked[1].contains(" UNION UNWIND $__og_rows"), "{}", f.asked[1]);
+    }
+
+    #[test]
+    fn call_names_are_checked_as_neo4j_checks_them() {
+        // SUITES B3: both gave rows before
+        let plan_err = |q: &str| {
+            let ast = cypher_syntax::parse(q).unwrap();
+            let mut p = Printer::new(None, "2026-11-18T00:00:00+00:00".into());
+            plan(&ast, &mut p).err().unwrap()
+        };
+        assert_eq!(plan_err("MATCH (s:Shelf) CALL { MATCH (b:Box) RETURN b AS s } RETURN s"), "Variable `s` already declared in outer scope");
+        assert_eq!(plan_err("CALL (nope) { RETURN 1 AS one } RETURN one"), "Variable `nope` not defined");
+        assert_eq!(plan_err("MATCH (a) CALL { WITH nope RETURN 1 AS one } RETURN one"), "Variable `nope` not defined");
+        assert_eq!(plan_err("MATCH (a) CALL { WITH a RETURN a } RETURN a"), "Variable `a` already declared in outer scope");
+        // through translate: Neo4j's code
+        let e = super::super::translate("CALL (nope) { RETURN 1 AS one } RETURN one", &Json::Null, &Hierarchy::default()).err().unwrap();
+        assert_eq!(e.code, "Neo.ClientError.Statement.SyntaxError");
+        // what Neo4j takes still plans
+        steps("MATCH (a) CALL (a) { MATCH (a)-->(b) RETURN b } RETURN a, b");
+        steps("MATCH (a) CALL { WITH a MATCH (a)-->(b) RETURN b AS c } RETURN a, c");
+        steps("MATCH (a) CALL { MATCH (z) RETURN count(z) AS n } RETURN a, n");
+    }
+
+    #[test]
+    fn a_foreach_inside_a_foreach_runs_on_each_element() {
+        // SUITES B4: refused before
+        let s = steps("MATCH (u:U {k: 1}) FOREACH (g IN [['a', 'b'], ['c']] | FOREACH (n IN g | CREATE (u)-[:NOTE]->(:Note {text: n})))");
+        let lists = |xs: &[&str]| Ag::List(xs.iter().map(|x| Ag::Str(x.to_string())).collect());
+        let mut f = Fake {
+            asked: vec![],
+            answers: vec![vec![vec![v(1, "U")]], vec![vec![v(1, "U"), lists(&["a", "b"])], vec![v(1, "U"), lists(&["c"])]], vec![]],
+        };
+        let (rows, _) = run(&mut f, &s, &Json::Object(Map::new())).unwrap();
+        assert!(rows.is_empty());
+        assert_eq!(f.asked.len(), 3, "{:#?}", f.asked);
+        assert_eq!(f.asked[0], "MATCH (u:U {k: 1}) RETURN u | rows=[{\"__i\":0}]");
+        assert_eq!(
+            f.asked[1],
+            "UNWIND $__og_rows AS __og_row OPTIONAL MATCH (u:U) WHERE id(u) = __og_row.u WITH __og_row, u \
+             UNWIND [['a', 'b'], ['c']] AS g RETURN u, g | rows=[{\"__i\":0,\"u\":1}]"
+        );
+        assert!(
+            f.asked[2].starts_with(
+                "UNWIND $__og_rows AS __og_row OPTIONAL MATCH (u:U) WHERE id(u) = __og_row.u WITH __og_row, u, __og_row.g AS g \
+                 UNWIND g AS n CREATE (u)-[:NOTE]->(:Note {text: n}) |"
+            ),
+            "{}",
+            f.asked[2]
+        );
+        assert!(f.asked[2].ends_with(r#"rows=[{"__i":0,"g":["a","b"],"u":1},{"__i":1,"g":["c"],"u":1}]"#), "{}", f.asked[2]);
+        // a conditional outer list, and the rows going on afterwards
+        let s = steps("MATCH (m:M) OPTIONAL MATCH (c:C) FOREACH (x IN CASE WHEN c IS NULL THEN [] ELSE [c] END | FOREACH (k IN [1, 2] | SET x.seen = k)) RETURN m");
+        let mut f = Fake { asked: vec![], answers: vec![vec![vec![v(1, "M"), v(2, "C")]], vec![vec![v(1, "M"), v(2, "C"), v(2, "C")]], vec![], vec![vec![v(1, "M")]]] };
+        let (rows, _) = run(&mut f, &s, &Json::Object(Map::new())).unwrap();
+        assert_eq!(rows.len(), 1);
+        assert!(f.asked[1].contains("WITH m, c, c AS x WHERE NOT (c IS NULL) RETURN m, c, x |"), "{}", f.asked[1]);
+        assert!(f.asked[2].contains("UNWIND [1, 2] AS k SET x.seen = k |"), "{}", f.asked[2]);
+        assert!(f.asked[3].contains("RETURN m |"), "{}", f.asked[3]);
+    }
+
+    #[test]
+    fn a_call_inside_a_call_runs_as_steps_per_row() {
+        // SUITES B4
+        let s = steps("MATCH (a:A) CALL { WITH a CALL { WITH a MATCH (a)-[:R]->(b) RETURN count(b) AS n } RETURN n * 2 AS m } RETURN a.k AS k, m");
+        let mut f = Fake {
+            asked: vec![],
+            answers: vec![
+                vec![vec![v(1, "A")]],   // MATCH (a:A) RETURN a
+                vec![vec![v(1, "A")]],   // the body's WITH a, carried
+                vec![vec![Ag::Int(3)]],  // the inner body: count(b)
+                vec![vec![Ag::Int(6)]],  // RETURN n * 2 AS m
+                vec![vec![Ag::Int(7), Ag::Int(6)]],
+            ],
+        };
+        let (rows, _) = run(&mut f, &s, &Json::Object(Map::new())).unwrap();
+        assert_eq!(rows, vec![vec![Ag::Int(7), Ag::Int(6)]]);
+        assert_eq!(f.asked.len(), 5, "{:#?}", f.asked);
+        assert!(f.asked[1].ends_with("WITH __og_row, a WITH a RETURN a | rows=[{\"__i\":0,\"a\":1}]"), "{}", f.asked[1]);
+        assert!(f.asked[2].contains("WITH __og_row, a WITH a MATCH (a)-[:R]->(b) RETURN count(b) AS n |"), "{}", f.asked[2]);
+        assert!(f.asked[3].contains("__og_row.n AS n RETURN n * 2 AS m |") && f.asked[3].contains(r#""n":3"#), "{}", f.asked[3]);
+        assert!(f.asked[4].contains("__og_row.m AS m RETURN a.k AS k, m |") && f.asked[4].contains(r#""m":6"#), "{}", f.asked[4]);
+        // a FOREACH inside a CALL, and a label change inside a FOREACH, plan too
+        steps("MATCH (a:A) CALL { WITH a FOREACH (x IN [1] | SET a.x = x) RETURN 1 AS one } RETURN one");
+        steps("MATCH (a:A) FOREACH (x IN [1] | SET a:B REMOVE a:A)");
+    }
+
+    #[test]
+    fn a_vertex_two_rows_hold_moves_once() {
+        // a label change inside FOREACH gives one row per element: the same vertex twice
+        let s = steps("MATCH (n:A) FOREACH (x IN [1, 2] | SET n:B REMOVE n:A)");
+        let mut f = Fake { asked: vec![], answers: vec![vec![vec![v(844424930131969, "A")]], vec![vec![v(844424930131969, "A"), Ag::Int(1)], vec![v(844424930131969, "A"), Ag::Int(2)]]] };
+        let (_, adj) = run(&mut f, &s, &Json::Object(Map::new())).unwrap();
+        assert_eq!(f.asked.iter().filter(|q| q.contains("DELETE FROM")).count(), 1, "{:#?}", f.asked);
+        assert_eq!((adj.nodes_created, adj.nodes_deleted), (-1, -1));
     }
 
     #[test]

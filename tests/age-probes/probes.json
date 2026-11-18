@@ -2348,6 +2348,39 @@
       ],
       "fixed": {"output": "1"},
       "note": "Inferred from name_validation.h (an ID_Start or _ first, ID_Continue after it, 3 to 63 characters). Rolled back."
+    },
+    {
+      "id": "tgt_rows_in_every_union_branch",
+      "kind": "relied_on",
+      "rewrite": "CALL { … UNION [ALL] … } → every branch with the rows brought in: UNWIND $__og_rows AS __og_row OPTIONAL MATCH (s:L) WHERE id(s) = __og_row.s WITH __og_row, s <branch> UNION ALL UNWIND $__og_rows … (split.rs Seg::Call, SUITES B2)",
+      "defects": ["SUITES B2", "SUITES G6"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'Shelf')",
+        {"cypher": "CREATE (s:Shelf {name: 'a'})-[:HOLDS]->(:Box {v: 1}), (s)-[:HOLDS]->(:Box {v: 2})"}
+      ],
+      "probe": [
+        "SELECT json_build_object('__og_rows', json_build_array(json_build_object('__i', 0, 's', (SELECT id::text::bigint FROM @graph@.\"Shelf\" LIMIT 1))))::text AS params \\gset",
+        {"cypher": "UNWIND $__og_rows AS __og_row OPTIONAL MATCH (s:Shelf) WHERE id(s) = __og_row.s WITH __og_row, s WITH s MATCH (s)-[:HOLDS]->(b) RETURN b.v AS x UNION ALL UNWIND $__og_rows AS __og_row OPTIONAL MATCH (s:Shelf) WHERE id(s) = __og_row.s WITH __og_row, s WITH s MATCH (s)-[:HOLDS]->(b) RETURN b.v * 10 AS x", "params_var": "params"}
+      ],
+      "unordered": true,
+      "fixed": {"output": "1\n10\n2\n20"},
+      "note": "The form SUITES B2 failed on (could not find rte for s) had the UNWIND on the first branch only; this is the form sent now. Not run yet."
+    },
+    {
+      "id": "gateway_call_subquery_union_and_names",
+      "kind": "defect",
+      "rewrite": "CALL { … UNION … }: the rows brought in on every branch (B2, could not find rte for s); CALL { … } names checked as Neo4j checks them — Variable `s` already declared in outer scope, Variable `nope` not defined (B3); a FOREACH, CALL { … } or label change inside a FOREACH or CALL { … } body cut into steps of its own (B4) — split.rs plan_in / run_on",
+      "defects": ["SUITES B2", "SUITES B3", "SUITES B4", "SUITES G6", "SUITES G7", "SUITES G8"],
+      "upstream": null,
+      "source": "SUITES §3 B2, B3, B4",
+      "kills_backend": false,
+      "slow": false,
+      "gateway_only": true,
+      "note": "Gateway-only: AGE has no CALL { } or FOREACH (surface_call_subquery, surface_foreach); B2 was the gateway's own text, B3 its missing checks, B4 its refusal. The form B2 now sends is tgt_rows_in_every_union_branch."
     }
   ]
 }
