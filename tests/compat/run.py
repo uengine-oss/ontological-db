@@ -63,6 +63,16 @@ def psql(args, sql=None, file=None, db=None, variables=None):
 
 
 def bootstrap(args, graphs):
+    if args.reuse_db:
+        # the database as it is (e.g. the one the AGE image makes, LC_COLLATE C): no DROP/CREATE, no locale,
+        # no bootstrap.sql; only the graphs this run uses are dropped, and the gateway makes them again
+        psql(args, "DO $$ BEGIN IF current_setting('TimeZone') <> 'UTC' THEN RAISE EXCEPTION "
+                   "'--reuse-db: the database runs with TimeZone %, the answers need UTC', current_setting('TimeZone'); "
+                   "END IF; END $$", db=args.pg_database)
+        names = ",".join("'" + g.replace("'", "''") + "'" for g in graphs)
+        psql(args, f"SELECT ag_catalog.drop_graph(name, true) FROM ag_catalog.ag_graph WHERE name::text IN ({names})",
+             db=args.pg_database)
+        return
     psql(args, f"DROP DATABASE IF EXISTS {args.pg_database}", db="postgres")
     # --db-locale: the collation strings sort by (v1's clusters are initdb'd with C; a server whose default is
     # a language collation sorts 'orderId' before 'Property 1', and the parameters looked up by ORDER BY change)
@@ -562,6 +572,10 @@ def main():
     ap.add_argument("--pg-database", default="og_compat", help="dropped and made again at every pass")
     ap.add_argument("--psql", default=os.environ.get("PSQL", "psql"))
     ap.add_argument("--db-locale", default=None, help="make the test database with this collation and ctype (e.g. C)")
+    ap.add_argument("--reuse-db", action="store_true",
+                    help="apache-age: use --pg-database as it is instead of dropping and making it (the graph database "
+                         "the AGE image makes); drops only the graphs the run uses. For a throwaway server: like every "
+                         "run, the statistics step turns autovacuum off for the database's tables")
     ap.add_argument("--bolt-bin", default=os.environ.get("OG_BOLT_BIN"), help="start this gateway (else --bolt-uri must be up)")
     ap.add_argument("--bolt-listen", default="127.0.0.1:28731")
     ap.add_argument("--bolt-uri", default=None)
@@ -576,6 +590,10 @@ def main():
     ap.add_argument("--known-differences", default=os.path.join(HERE, "expected", "known-differences.json"))
     ap.add_argument("--work", default=None, help="folder for the gateway log (default: next to --out)")
     args = ap.parse_args()
+    if args.reuse_db and args.target != "apache-age":
+        ap.error("--reuse-db is for --target apache-age")
+    if args.reuse_db and args.db_locale:
+        ap.error("--reuse-db keeps the database's own collation; drop --db-locale")
     if args.pg_password_file:
         with open(args.pg_password_file, encoding="utf-8") as f:
             args.pg_password = f.read().strip()
