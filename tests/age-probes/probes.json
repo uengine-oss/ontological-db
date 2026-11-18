@@ -1660,6 +1660,85 @@
       "fixed": {"output": "4"}
     },
     {
+      "id": "inh_catalog_shows_hierarchy",
+      "kind": "relied_on",
+      "rewrite": "the hierarchy is read from the catalog — ag_label joined with pg_inherits, as in bolt/README.md 'Label hierarchy' (hierarchy.rs) — and an INHERIT on a label table shows there — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "unordered": true,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\""
+      ],
+      "probe": [
+        "SELECT l.name::text, l.kind::text, p.name::text FROM ag_catalog.ag_label l JOIN ag_catalog.ag_graph g ON g.graphid = l.graph LEFT JOIN pg_catalog.pg_inherits i ON i.inhrelid = l.relation::oid LEFT JOIN ag_catalog.ag_label p ON p.relation::oid = i.inhparent AND p.graph = l.graph AND p.kind = 'v' AND p.name <> '_ag_label_vertex' WHERE g.name = '@graph@' AND l.name NOT IN ('_ag_label_vertex', '_ag_label_edge') ORDER BY 1, i.inhseqno"
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "fixed": {"output": "Customer|v|<null>\nCustomer|v|_Entity\nOrder|v|<null>\nPLACED|e|<null>\nSupplier|v|<null>\nSupplier|v|_Entity\n_Entity|v|<null>"},
+      "note": "One row per inheritance; the base-table parent (_ag_label_vertex / _ag_label_edge) shows as <null>."
+    },
+    {
+      "id": "inh_labels_case_with_ancestors",
+      "kind": "relied_on",
+      "rewrite": "labels(x) → (CASE label(x) WHEN 'Customer' THEN ['Customer', '_Entity'] … ELSE labels(x) END), and $class IN / a comprehension over that list — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": "STUDIO-ON-AGE §2.5 (AGE accepts the CASE, $class IN (…) and [l IN (…) WHERE l <> '_Entity'])",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\""
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:_Entity) RETURN n.name, (CASE label(n) WHEN 'Customer' THEN ['Customer', '_Entity'] WHEN 'Supplier' THEN ['Supplier', '_Entity'] ELSE labels(n) END) ORDER BY n.name", "cols": 2},
+        {"cypher": "MATCH (n:_Entity) WHERE $class IN (CASE label(n) WHEN 'Customer' THEN ['Customer', '_Entity'] WHEN 'Supplier' THEN ['Supplier', '_Entity'] ELSE labels(n) END) RETURN count(n)", "params": {"class": "_Entity"}},
+        {"cypher": "MATCH (n:Customer) RETURN [l IN (CASE label(n) WHEN 'Customer' THEN ['Customer', '_Entity'] ELSE labels(n) END) WHERE l <> '_Entity']"}
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "fixed": {"output": "\"c1\"|[\"Customer\", \"_Entity\"]\n\"e0\"|[\"_Entity\"]\n\"s1\"|[\"Supplier\", \"_Entity\"]\n3\n[\"Customer\"]"}
+    },
+    {
+      "id": "inh_two_levels",
+      "kind": "relied_on",
+      "rewrite": "a node has label L when its table is L's or inherits L's, directly or not (bolt/README.md 'Label hierarchy') — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\"",
+        {"cypher": "CREATE (:VipCustomer {name: 'v1'})"},
+        "ALTER TABLE @graph@.\"VipCustomer\" INHERIT @graph@.\"Customer\""
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:_Entity) RETURN n.name ORDER BY n.name"},
+        {"cypher": "MATCH (n:Customer) RETURN n.name ORDER BY n.name"},
+        {"cypher": "MATCH (n) RETURN count(n)"}
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"VipCustomer\" NO INHERIT @graph@.\"Customer\"",
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "fixed": {"output": "\"c1\"\n\"e0\"\n\"s1\"\n\"v1\"\n\"c1\"\n\"v1\"\n5"},
+      "note": "VipCustomer → Customer → _Entity: PostgreSQL's inheritance expansion is transitive and lists each table once."
+    },
+    {
       "id": "tgt_any_as_size_of_comprehension",
       "kind": "relied_on",
       "rewrite": "any/all/none/single → size([x IN l WHERE p]) > 0: the comprehension may read a matched vertex",
