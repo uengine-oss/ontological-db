@@ -115,8 +115,47 @@ Rewrites (each found by running Robo Architect's queries against AGE; see
 | a MERGE whose ON CREATE / ON MATCH items read what it merges (SUITES N1, and #7 for a relationship: "attribute 1 of type record has wrong type", "binary container must be a VLE vpc") | the MERGE with `ON CREATE SET m.__og_c = true` on its first relationship (given a variable) or its node; then the ON MATCH items on the rows that did not create (`NOT first-to-reach OR m.__og_c IS NULL`), the ON CREATE items and `m.__og_c = null` on those that did. Items that read only other variables leave the MERGE as it is |
 | a step that writes (SET / REMOVE first in a part, or N1's items) on rows holding the same element more than once (SUITES N2: `UNWIND [1,1,1] AS i MERGE (t:U {k: i}) ON MATCH SET t.hits = coalesce(t.hits, 0) + 1` stores 1; each row's SET starts from the element as it was before the statement, and a final SET skips a tuple already updated in its command) | run in waves — no element twice in a wave, each element's rows in order (`split.rs` `waves`); one statement when the rows' elements are distinct. The rows the statement returns afterwards show the final values, where Neo4j's would show each row's own |
 | `CREATE CONSTRAINT … IS UNIQUE`, `CREATE INDEX` | unique / plain expression indexes on the label's table (made if missing); `IS NOT NULL`, full-text and vector are accepted and not enforced |
-| `CALL db.labels()`, `db.relationshipTypes()`, `db.propertyKeys()`; `SHOW GRAPHS`, `CREATE GRAPH g` | answered from `ag_catalog` |
+| `SHOW GRAPHS`, `CREATE GRAPH g` | answered from `ag_catalog` |
+| procedures and `SHOW INDEXES` / `SHOW CONSTRAINTS` (SUITES B5–B7, STUDIO G5a–G5d, ANALYZER §5.2: refused, "CALL x() inside a query is not supported") | answered by the gateway (*Procedures and SHOW* below): alone, from the catalog; with `YIELD … WITH … WHERE … RETURN … ORDER BY` after it, the rows as a parameter and the rest in Cypher — `UNWIND $__og_proc1 AS label …` |
+| `CALL apoc.neighbors.tohop(n, '>', d) YIELD node AS m` (STUDIO G5c) | `MATCH (n)-[*1..d]->(m) WHERE id(m) <> id(n) WITH DISTINCT …, m`, `d` a literal or a parameter; with no type or several and over 3 hops, walked by `reach.rs` (the MATCH is followed by DISTINCT) |
+| an unknown procedure (SUITES B12: was `SyntaxError`) | `Neo.ClientError.Procedure.ProcedureNotFound`, Neo4j's wording |
 | a variable-length relationship without exactly one type over 3 hops (`-[:A\|B\|…*1..30]-`, `<-[*1..30]-`) where only the nodes it reaches matter: in `EXISTS { }` between two bound nodes, or as the only pattern of a MATCH followed by `DISTINCT`, `DISTINCT` aggregates (and `min`/`max`) or `LIMIT 1` | walked by the gateway (`reach.rs`): the start nodes' ids from the clauses before it, a breadth-first walk with one SQL statement per hop on the label tables' `start_id`/`end_id`, then the statement with the pattern replaced by `id(t) IN $reached[id(s)]`. Neo4j's trail semantics: the start node counts as reached only over a closed trail (a cycle through it) within the bound |
+
+### Procedures and SHOW
+
+`src/age/procs.rs`. What a client asks of a procedure here is the graph's
+schema, which AGE keeps in `ag_label` and the gateway's schema commands keep
+in PostgreSQL's catalog (the indexes `ddl.rs` makes on the label tables) —
+catalog reads, DIRECTION §4.2 rule 6. A statement that is only the call, or
+the call and a `RETURN` of what it yields, is answered from those rows; in
+any other statement the call becomes `UNWIND $__og_procN AS label` (one
+column yielded) or `UNWIND $__og_procN AS __og_procrowN WITH <what is in
+scope>, __og_procrowN.name AS name, …`, with the rows read into
+`$__og_procN` first, and everything after it is Cypher as written. A
+statement that ends with the call (or with `SHOW … YIELD … WHERE …`) returns
+what it yields. A `YIELD` of a column the procedure does not have is
+`SyntaxError` "Unknown procedure output".
+
+| Procedure | Answer |
+|---|---|
+| `db.labels()`, `db.relationshipTypes()` | `ag_label`, kind `v` / `e`, AGE's two base tables left out |
+| `db.propertyKeys()` | `keys()` of every node and relationship, read through Cypher (two statements; it was a SQL read of the label tables) |
+| `SHOW INDEXES` | every index on a label table whose key columns are property accesses (what `ddl.rs` makes; AGE's own on `id`, `start_id`, `end_id` are plain columns and left out), from `pg_index` / `pg_get_indexdef`, under the name `ddl.rs` gave it. Columns as Neo4j 5 (and 4.4's `uniqueness`) name them: `id` (the index's oid), `name`, `state` (`ONLINE`; `FAILED` for an index PostgreSQL holds invalid), `populationPercent` 100.0, `uniqueness`, `type` `RANGE`, `entityType`, `labelsOrTypes`, `properties`, `indexProvider` `range-1.0`, `owningConstraint` (the constraint's name for its unique index), `lastRead` / `readCount` / `trackedSince` null, `options` `{indexProvider: 'range-1.0', indexConfig: {}}`, `failureMessage`, `createStatement` |
+| `SHOW CONSTRAINTS` | the unique ones: `type` `UNIQUENESS` (`RELATIONSHIP_UNIQUENESS`), `ownedIndex` = `name`, `propertyType` null, `options`, `createStatement`. A `NODE KEY` constraint reads back as `UNIQUENESS` (`ddl.rs` makes a unique index for it) |
+| `dbms.components()` | one row: `Neo4j Kernel`, `['4.4.0']`, `community` — what `HELLO`'s agent says |
+| `db.awaitIndexes(n)`, `db.awaitIndex(name, n)` | nothing: `ddl.rs` makes an index within the statement. Alone, no rows; in a statement, the rows go on unchanged. `awaitIndex` does not check that the index exists |
+| `apoc.meta.schema()` | one row, `value`: per vertex label `{type: 'node', count, labels, properties, relationships: {}}`, per type `{type: 'relationship', count, properties}`, each property `{type, array, indexed, unique, existence: false}`. Approximate: a property's type is the one seen most in a sample of 100 elements stored under each label (`MATCH (n:L) WHERE label(n) = 'L' WITH n LIMIT 100 RETURN properties(n)`; a label's properties are its own table's and those of the tables inheriting it); dates are text here and read `STRING`; a node label's `relationships` is left empty; `labels` are the ones its table inherits. `count` is exact (`MATCH (n) RETURN label(n), count(*)`, summed down the hierarchy) |
+| `apoc.neighbors.tohop(n, filter, d)` | the rewrite in the table above. The filter is APOC's (`'>'`, `'<KNOWS'`, `'KNOWS>|LIKES>'`, `''` / null for both ways), one direction for all its types; `d` from 1 to 30. Two rows the same in every variable before the call come out as one (the DISTINCT), where APOC is called for each |
+
+There are no vector or full-text index rows: `CREATE VECTOR INDEX` /
+`FULLTEXT` are accepted and not made, and nothing records them. So the
+analyzer's wait for `analyzer_search_vec` to be `ONLINE`
+(`embed_step.py` `_await_index_online`) sees no row and times out — the
+embedding step cannot finish on this backend until vector search has a home
+(it is not the gateway's: DIRECTION §4.2 rule 7). `db.index.vector.queryNodes`,
+`db.index.fulltext.queryNodes` and every other procedure are
+`Neo.ClientError.Procedure.ProcedureNotFound`, the message saying which ones
+the backend answers.
 
 Refused by name: such a relationship where the trails themselves matter (a
 relationship or path variable on it, `count(*)` or rows per trail after it, a

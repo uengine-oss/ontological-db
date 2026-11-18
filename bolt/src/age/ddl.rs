@@ -1,5 +1,5 @@
-//! Neo4j's schema commands and the few procedures a client asks of a graph,
-//! answered on AGE's label tables.
+//! Neo4j's schema commands, answered on AGE's label tables (what a client
+//! reads back of them — `SHOW INDEXES`, `SHOW CONSTRAINTS` — is `procs.rs`'s).
 //!
 //! AGE has no `CREATE CONSTRAINT` / `CREATE INDEX` (apache/age #1635). A
 //! label here is a table (`"<graph>"."<label>"`, its properties one `agtype`
@@ -177,79 +177,6 @@ pub fn run(pg: &mut Client, graph: &str, d: &Ddl) -> Result<Stats, Failed> {
     Ok(st)
 }
 
-// ------------------------------------------------------------- procedures
-
-/// `CALL db.labels()`, `db.relationshipTypes()`, `db.propertyKeys()` —
-/// alone, or with `YIELD` and a `RETURN` of what they yield.
-pub struct Procedure {
-    pub which: Which,
-    /// (yielded column, the name it is returned as)
-    pub out: Vec<String>,
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum Which {
-    Labels,
-    RelationshipTypes,
-    PropertyKeys,
-}
-
-impl Procedure {
-    pub fn recognise(q: &Query) -> Option<Procedure> {
-        if q.union.is_some() {
-            return None;
-        }
-        let (name, yields) = match q.clauses.first()? {
-            Clause::Call { name, args, yields } if args.is_empty() => (name, yields),
-            _ => return None,
-        };
-        let (which, col) = match name.to_ascii_lowercase().as_str() {
-            "db.labels" => (Which::Labels, "label"),
-            "db.relationshiptypes" => (Which::RelationshipTypes, "relationshipType"),
-            "db.propertykeys" => (Which::PropertyKeys, "propertyKey"),
-            _ => return None,
-        };
-        let alias = yields.iter().find(|(c, _)| c == col).map(|(_, a)| a.clone()).unwrap_or_else(|| col.to_string());
-        let out = match &q.clauses[1..] {
-            [] => vec![alias],
-            [Clause::Return(p)] if p.order.is_empty() && p.skip.is_none() && p.limit.is_none() => {
-                let mut out = Vec::new();
-                for it in &p.items {
-                    match &it.expr {
-                        Expr::Var(v) if *v == alias => out.push(it.alias.clone().unwrap_or_else(|| v.clone())),
-                        _ => return None,
-                    }
-                }
-                out
-            }
-            _ => return None,
-        };
-        Some(Procedure { which, out })
-    }
-
-    pub fn columns(&self) -> Vec<String> {
-        self.out.clone()
-    }
-
-    /// The SQL whose rows (one text column) are the answer.
-    pub fn sql(&self, graph: &str) -> String {
-        match self.which {
-            Which::Labels | Which::RelationshipTypes => format!(
-                "SELECT l.name::text FROM ag_catalog.ag_label l JOIN ag_catalog.ag_graph g ON g.graphid = l.graph \
-                 WHERE g.name = {} AND l.kind = '{}' AND l.name NOT IN ('_ag_label_vertex', '_ag_label_edge') ORDER BY 1",
-                sql_lit(graph),
-                if self.which == Which::Labels { "v" } else { "e" }
-            ),
-            Which::PropertyKeys => format!(
-                "SELECT DISTINCT k::text FROM (SELECT properties::jsonb AS p FROM {g}.\"_ag_label_vertex\" \
-                 UNION ALL SELECT properties::jsonb FROM {g}.\"_ag_label_edge\") s, \
-                 LATERAL jsonb_object_keys(s.p) AS k ORDER BY 1",
-                g = sql_ident(graph)
-            ),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -267,15 +194,5 @@ mod tests {
     fn a_property_is_reached_as_age_reaches_it() {
         assert_eq!(prop_expr("id"), "ag_catalog.agtype_access_operator(VARIADIC ARRAY[properties, '\"id\"'::ag_catalog.agtype])");
         assert_eq!(prop_expr("it's"), "ag_catalog.agtype_access_operator(VARIADIC ARRAY[properties, '\"it''s\"'::ag_catalog.agtype])");
-    }
-
-    #[test]
-    fn procedures_alone_or_returned() {
-        let p = Procedure::recognise(&cypher_syntax::parse("CALL db.labels()").unwrap()).unwrap();
-        assert_eq!((p.which, p.columns()), (Which::Labels, vec!["label".to_string()]));
-        let p = Procedure::recognise(&cypher_syntax::parse("CALL db.propertyKeys() YIELD propertyKey AS k RETURN k AS key").unwrap()).unwrap();
-        assert_eq!((p.which, p.columns()), (Which::PropertyKeys, vec!["key".to_string()]));
-        assert!(Procedure::recognise(&cypher_syntax::parse("CALL db.labels() YIELD label RETURN count(label) AS n").unwrap()).is_none());
-        assert!(Procedure::recognise(&cypher_syntax::parse("MATCH (n) RETURN n").unwrap()).is_none());
     }
 }

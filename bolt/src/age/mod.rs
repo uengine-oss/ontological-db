@@ -13,6 +13,9 @@
 //!   Relationship, path → Path);
 //! - `ddl.rs` answers `CREATE CONSTRAINT/INDEX` and `DROP` with expression
 //!   indexes on the label's table;
+//! - `procs.rs` answers Neo4j's procedures and `SHOW INDEXES` / `SHOW
+//!   CONSTRAINTS` from the catalog, alone or as rows the rest of the
+//!   statement reads from a parameter;
 //! - `split.rs` runs what AGE's Cypher has no clause for (`FOREACH`,
 //!   `CALL { … }`, `SET n:L` / `REMOVE n:L`) as several statements in one
 //!   transaction;
@@ -34,6 +37,7 @@ pub mod agtype;
 pub mod cypher;
 pub mod ddl;
 pub mod hierarchy;
+pub mod procs;
 pub mod reach;
 pub mod split;
 
@@ -83,8 +87,9 @@ pub enum Plan {
     Cypher { text: String, ncols: usize },
     /// A schema command, answered with SQL on the label tables.
     Ddl(cypher_syntax::ast::Ddl),
-    /// A procedure the gateway answers itself.
-    Procedure(ddl::Procedure),
+    /// A procedure the gateway answers itself, alone in its statement
+    /// (`procs.rs`; one in a longer statement is a catalog read, [`Statement::reads`]).
+    Procedure(procs::Direct),
     /// Several `cypher()` calls and SQL steps in one transaction.
     Steps(split::Steps),
     /// A long variable-length relationship walked by the gateway (`reach.rs`):
@@ -230,6 +235,7 @@ fn graph_or_fabric(query: &str) -> Option<Result<Statement, Refusal>> {
             extra: Map::new(),
             merge_nulls: Vec::new(),
             schema: Schema::default(),
+            reads: Vec::new(),
         }))
     };
     match up.as_slice() {
@@ -267,6 +273,9 @@ pub struct Statement {
     /// Label tables and inheritance to make first, in the statement's
     /// transaction (a `CREATE`/`MERGE (n:A:B)`; `hierarchy.rs`).
     pub schema: Schema,
+    /// The procedures it calls, read before it runs: their rows go into
+    /// parameters the statement `UNWIND`s (`procs.rs`).
+    pub reads: Vec<procs::Read>,
 }
 
 /// A failure, as the code a Neo4j driver expects and a message.
@@ -331,6 +340,25 @@ pub fn translate_parsed(parsed: Parsed, params: &Json, hier: &Hierarchy) -> Resu
         Parsed::Done(st) => return st,
         Parsed::Cypher(q) => q,
     };
+    // Procedures and SHOW: answered from the catalog, alone, or as rows the
+    // rest of the statement reads from a parameter (procs.rs).
+    let (q, reads) = match procs::rewrite(&q, params.as_object())? {
+        None => (q, Vec::new()),
+        Some(r) => match r.direct {
+            Some((d, columns)) => {
+                return Ok(Statement {
+                    plan: Plan::Procedure(d),
+                    columns,
+                    write: false,
+                    extra: Map::new(),
+                    merge_nulls: Vec::new(),
+                    schema: Schema::default(),
+                    reads: Vec::new(),
+                })
+            }
+            None => (r.query, r.reads),
+        },
+    };
     // The fields and read/write are the statement's as sent.
     let write = cypher::is_write(&q);
     let columns = cypher::columns(&q);
@@ -344,16 +372,13 @@ pub fn translate_parsed(parsed: Parsed, params: &Json, hier: &Hierarchy) -> Resu
         extra: Map::new(),
         merge_nulls: Vec::new(),
         schema: Schema::default(),
+        reads: Vec::new(),
     };
     if let Some(Clause::Ddl(d)) = q.clauses.first() {
         if q.clauses.len() > 1 {
             return Err(Refusal::syntax("a schema command cannot be combined with other clauses".into()));
         }
         return Ok(plain(Plan::Ddl(d.clone()), columns, true));
-    }
-    if let Some(p) = ddl::Procedure::recognise(&q) {
-        let columns = p.columns();
-        return Ok(plain(Plan::Procedure(p), columns, false));
     }
     let pmap = params.as_object();
     // MERGE keys that are null: refused now, or guarded (N7).
@@ -374,14 +399,14 @@ pub fn translate_parsed(parsed: Parsed, params: &Json, hier: &Hierarchy) -> Resu
             )));
         }
         let r = reach::plan(&q, &mut printer, columns.len()).map_err(Refusal::syntax)?;
-        return Ok(Statement { plan: Plan::Reach(r), columns, write, extra: printer.extra, merge_nulls, schema });
+        return Ok(Statement { plan: Plan::Reach(r), columns, write, extra: printer.extra, merge_nulls, schema, reads });
     }
     if split::needed(&q, &printer.hier) {
         let steps = split::plan(&q, &mut printer).map_err(Refusal::syntax)?;
-        return Ok(Statement { plan: Plan::Steps(steps), columns, write, extra: printer.extra, merge_nulls, schema });
+        return Ok(Statement { plan: Plan::Steps(steps), columns, write, extra: printer.extra, merge_nulls, schema, reads });
     }
     let text = printer.query(&q).map_err(Refusal::syntax)?;
-    Ok(Statement { plan: Plan::Cypher { text, ncols: columns.len() }, columns, write, extra: printer.extra, merge_nulls, schema })
+    Ok(Statement { plan: Plan::Cypher { text, ncols: columns.len() }, columns, write, extra: printer.extra, merge_nulls, schema, reads })
 }
 
 /// A SQL string literal.
@@ -740,6 +765,37 @@ mod tests {
         // a cycle is refused before anything runs
         let e = translate("CREATE (n:Customer:X:_Entity)", &Json::Null, &h).err().unwrap();
         assert_eq!(e.code, "Neo.ClientError.Statement.SemanticError");
+    }
+
+    #[test]
+    fn procedures_through_translate() {
+        let h = Hierarchy::default();
+        let st = translate("SHOW CONSTRAINTS", &Json::Null, &h).ok().unwrap();
+        assert!(matches!(&st.plan, Plan::Procedure(d) if d.read.as_ref().is_some_and(|r| r.source == procs::Source::Constraints)));
+        assert_eq!(st.columns, vec!["id", "name", "type", "entityType", "labelsOrTypes", "properties"]);
+        assert!(!st.write);
+        // the rest of the statement reads the rows from a parameter
+        let st = translate("CALL db.labels() YIELD label WITH label WHERE label STARTS WITH $p RETURN label", &serde_json::json!({"p": "A"}), &h)
+            .ok()
+            .unwrap();
+        assert_eq!(st.reads.len(), 1);
+        let Plan::Cypher { text, .. } = &st.plan else { panic!() };
+        assert_eq!(text, "UNWIND $__og_proc1 AS label WITH label WHERE label STARTS WITH $p RETURN label");
+        // STUDIO G5c: tohop as a MATCH; over 3 hops without a type, walked by reach.rs
+        let q = "MATCH (n:_Entity) WHERE elementId(n) = $node_id CALL apoc.neighbors.tohop(n, '>', $depth) YIELD node AS m \
+                 WITH n, m OPTIONAL MATCH (m)-[r]->(o:_Entity) OPTIONAL MATCH (p:_Entity)-[r2]->(m) RETURN m, r, o, r2, p";
+        let st = translate(q, &serde_json::json!({"node_id": "844424930131969", "depth": 2}), &h).ok().unwrap();
+        let Plan::Cypher { text, .. } = &st.plan else { panic!() };
+        assert!(
+            text.starts_with("MATCH (n:_Entity) WHERE id(n) = $__og_eid_node_id MATCH (n)-[*1..2]->(m) WHERE id(m) <> id(n) WITH DISTINCT n, m WITH n, m"),
+            "{text}"
+        );
+        assert_eq!(st.columns, vec!["m", "r", "o", "r2", "p"]);
+        let st = translate(q, &serde_json::json!({"node_id": "844424930131969", "depth": 5}), &h).ok().unwrap();
+        assert!(matches!(st.plan, Plan::Reach(_)));
+        // an unknown procedure: Neo4j's code (B12)
+        let e = translate("CALL db.index.fulltext.queryNodes('i', $q) YIELD node RETURN node", &serde_json::json!({"q": "x"}), &h).err().unwrap();
+        assert_eq!(e.code, "Neo.ClientError.Procedure.ProcedureNotFound");
     }
 
     #[test]

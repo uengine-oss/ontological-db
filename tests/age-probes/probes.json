@@ -829,7 +829,7 @@
     {
       "id": "surface_db_labels",
       "kind": "surface",
-      "rewrite": "CALL db.labels() → answered from ag_catalog.ag_label",
+      "rewrite": "CALL db.labels() → answered from ag_catalog.ag_label; with YIELD … WITH … WHERE … RETURN after it, the rows as a parameter: UNWIND $__og_procN AS label … (procs.rs, SUITES B5)",
       "defects": ["ROBO §5.1 (surface)", "IMAGE-RESULTS §5.10"],
       "upstream": null,
       "source": "IMAGE-RESULTS §5.10 (schema \"db\" does not exist)",
@@ -848,7 +848,7 @@
     {
       "id": "surface_db_property_keys",
       "kind": "surface",
-      "rewrite": "CALL db.propertyKeys() (and db.relationshipTypes()) → answered from the label tables",
+      "rewrite": "CALL db.propertyKeys() → keys() of every node and relationship, read through Cypher (procs.rs; it was a SQL read of the label tables); db.relationshipTypes() → ag_catalog.ag_label",
       "defects": ["ROBO §5.1 (surface)"],
       "upstream": null,
       "source": null,
@@ -2381,6 +2381,163 @@
       "slow": false,
       "gateway_only": true,
       "note": "Gateway-only: AGE has no CALL { } or FOREACH (surface_call_subquery, surface_foreach); B2 was the gateway's own text, B3 its missing checks, B4 its refusal. The form B2 now sends is tgt_rows_in_every_union_branch."
+    },
+    {
+      "id": "surface_show_indexes",
+      "kind": "surface",
+      "rewrite": "SHOW INDEXES / SHOW CONSTRAINTS [YIELD … [WHERE …] [RETURN …]] → the indexes ddl.rs made on the label tables, read from pg_index (procs.rs; the rows as a parameter when more follows)",
+      "defects": ["SUITES B6", "SUITES G10", "STUDIO G5b", "ANALYZER §5.2"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'A')",
+        "CREATE INDEX \"index_A_k\" ON \"@graph@\".\"A\" (ag_catalog.agtype_access_operator(VARIADIC ARRAY[properties, '\"k\"'::ag_catalog.agtype]))"
+      ],
+      "probe": [
+        {"cypher": "SHOW INDEXES YIELD name, state RETURN name, state", "cols": 2}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output": "\"index_A_k\"|\"ONLINE\""},
+      "note": "AGE's grammar has no SHOW. The setup makes the index the way ddl.rs answers CREATE INDEX FOR (n:A) ON (n.k)."
+    },
+    {
+      "id": "tgt_index_catalog_read",
+      "kind": "relied_on",
+      "rewrite": "SHOW INDEXES / SHOW CONSTRAINTS → pg_index rows of the graph's label tables, a key column's pg_get_indexdef read back as the property key (procs.rs indexes_sql / index_key): agtype_access_operator(VARIADIC ARRAY[properties, '\"k\"'::agtype]); AGE's own indexes (id, start_id, end_id) are plain columns and left out",
+      "defects": ["SUITES G10", "STUDIO G5b", "DIRECTION §4.2 rule 6"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'A')",
+        "CREATE INDEX \"index_A_k\" ON \"@graph@\".\"A\" (ag_catalog.agtype_access_operator(VARIADIC ARRAY[properties, '\"k\"'::ag_catalog.agtype]))",
+        "CREATE UNIQUE INDEX \"constraint_A_id\" ON \"@graph@\".\"A\" (ag_catalog.agtype_access_operator(VARIADIC ARRAY[properties, '\"id\"'::ag_catalog.agtype]))",
+        {"cypher": "CREATE (:A {id: 1, k: 2})-[:R]->(:A {id: 2})"}
+      ],
+      "probe": [
+        "SELECT c.relname::text, l.name::text, l.kind::text, x.indisunique::text, x.indisvalid::text, pg_catalog.pg_get_indexdef(x.indexrelid, k, true) FROM ag_catalog.ag_label l JOIN ag_catalog.ag_graph g ON g.graphid = l.graph JOIN pg_catalog.pg_index x ON x.indrelid = l.relation::oid JOIN pg_catalog.pg_class c ON c.oid = x.indexrelid CROSS JOIN LATERAL pg_catalog.generate_series(1, x.indnkeyatts::int) AS k WHERE g.name = '@graph@' AND x.indexprs IS NOT NULL AND l.name NOT IN ('_ag_label_vertex', '_ag_label_edge') ORDER BY c.relname, k"
+      ],
+      "fixed": {"output_regex": "^constraint_A_id\\|A\\|v\\|true\\|true\\|(ag_catalog\\.)?agtype_access_operator\\(VARIADIC ARRAY\\[properties, '\"id\"'::(ag_catalog\\.)?agtype\\]\\)\\nindex_A_k\\|A\\|v\\|false\\|true\\|(ag_catalog\\.)?agtype_access_operator\\(VARIADIC ARRAY\\[properties, '\"k\"'::(ag_catalog\\.)?agtype\\]\\)$"},
+      "note": "The SQL of procs.rs indexes_sql less the oid column. The form pg_get_indexdef prints was inferred, not seen."
+    },
+    {
+      "id": "surface_dbms_components",
+      "kind": "surface",
+      "rewrite": "CALL dbms.components() YIELD name, versions, edition → one row: Neo4j Kernel, ['4.4.0'], community, as HELLO's agent says (procs.rs, STUDIO G5a)",
+      "defects": ["STUDIO G5a"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "CALL dbms.components() YIELD name, versions, edition RETURN name, versions, edition", "cols": 3}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output_regex": "^\"Neo4j Kernel\"\\|\\[\"[0-9.]+\"\\]\\|\"(community|enterprise)\"$"}
+    },
+    {
+      "id": "surface_await_indexes",
+      "kind": "surface",
+      "rewrite": "CALL db.awaitIndexes(n), db.awaitIndex(name, n) → nothing (ddl.rs makes an index within the statement; procs.rs: a VOID procedure, alone no rows, in a statement no change to its rows)",
+      "defects": ["SUITES B7", "SUITES G11"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "CALL db.awaitIndexes(30)"}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output": ""}
+    },
+    {
+      "id": "surface_apoc_neighbors_tohop",
+      "kind": "surface",
+      "rewrite": "CALL apoc.neighbors.tohop(n, '>', d) YIELD node AS m → MATCH (n)-[*1..d]->(m) WHERE id(m) <> id(n) WITH DISTINCT …, m (procs.rs tohop; over 3 hops without one type walked by reach.rs)",
+      "defects": ["STUDIO G5c"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (a:V {k: 0})-[:R]->(:V {k: 1})-[:R]->(c:V {k: 2}), (a)-[:R]->(c), (c)-[:R]->(a)"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:V {k: 0}) CALL apoc.neighbors.tohop(n, '>', 2) YIELD node AS m RETURN m.k ORDER BY m.k"}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output": "1\n2"}
+    },
+    {
+      "id": "tgt_tohop_as_match_distinct",
+      "kind": "relied_on",
+      "rewrite": "CALL apoc.neighbors.tohop(n, '>', d) YIELD node AS m → MATCH (n)-[*1..d]->(m) WHERE id(m) <> id(n) WITH DISTINCT …, m (procs.rs tohop): each reached node once, the start left out",
+      "defects": ["STUDIO G5c"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (a:V {k: 0})-[:R]->(:V {k: 1})-[:R]->(c:V {k: 2}), (a)-[:R]->(c), (c)-[:R]->(a)"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:V {k: 0}) MATCH (n)-[*1..2]->(m) WHERE id(m) <> id(n) WITH DISTINCT n, m RETURN m.k ORDER BY m.k"}
+      ],
+      "fixed": {"output": "1\n2"},
+      "note": "k2 is reached over two trails and k0 over a closed one; the DISTINCT and the id test leave k1, k2."
+    },
+    {
+      "id": "surface_apoc_meta_schema",
+      "kind": "surface",
+      "rewrite": "CALL apoc.meta.schema() YIELD value → per label and type: count (Cypher), property types from a sample of 100 per label (Cypher), indexed / unique from ddl.rs's indexes (procs.rs meta_schema; approximate)",
+      "defects": ["STUDIO G5d"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "CALL apoc.meta.schema() YIELD value RETURN value"}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output_regex": "\"A\": \\{.*\"type\": \"node\""}
+    },
+    {
+      "id": "tgt_meta_schema_samples",
+      "kind": "relied_on",
+      "rewrite": "apoc.meta.schema() → MATCH (n) RETURN label(n), count(*) and MATCH (n:L) WHERE label(n) = 'L' WITH n LIMIT 100 RETURN properties(n) per label (procs.rs meta_schema): the sample of a parent label's own table, the children's counted under their labels",
+      "defects": ["STUDIO G5d", "STUDIO §2.5"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "unordered": true,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1}), (:B {s: 'x'})"},
+        "ALTER TABLE @graph@.\"B\" INHERIT @graph@.\"A\""
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:A) WHERE label(n) = 'A' WITH n LIMIT 100 RETURN properties(n)"},
+        {"cypher": "MATCH (n) RETURN label(n), count(*)", "cols": 2}
+      ],
+      "fixed": {"output": "{\"k\": 1}\n\"A\"|1\n\"B\"|1"}
+    },
+    {
+      "id": "gateway_unknown_procedure",
+      "kind": "defect",
+      "rewrite": "an unknown procedure → Neo.ClientError.Procedure.ProcedureNotFound with Neo4j's wording (was SyntaxError \"CALL x() inside a query is not supported\"); db.index.vector.* / db.index.fulltext.* among them, with why (no vector or full-text search through SQL); an unknown YIELD column → SyntaxError Unknown procedure output (procs.rs)",
+      "defects": ["SUITES B12", "SUITES G14", "SUITES A15"],
+      "upstream": null,
+      "source": "SUITES §3 B12",
+      "kills_backend": false,
+      "slow": false,
+      "gateway_only": true,
+      "note": "Gateway-only: the CALL never reaches AGE (AGE's own CALL would look for a SQL function: schema \"db\" does not exist, surface_db_labels)."
     }
   ]
 }

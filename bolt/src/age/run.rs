@@ -251,6 +251,22 @@ impl Session<'_> {
             let mut x = Steps { sess: &mut *self, stream: &mut *stream, limit_ms };
             age::hierarchy::apply(&mut x, &st.schema).map_err(|r| Failure::client(&r.code, r.message))?;
         }
+        // the procedures it calls: their rows into the parameters it reads (`procs.rs`)
+        let filled;
+        let params = if st.reads.is_empty() {
+            params
+        } else {
+            let mut m = params.as_object().cloned().unwrap_or_default();
+            for r in &st.reads {
+                let rows = {
+                    let mut x = Steps { sess: &mut *self, stream: &mut *stream, limit_ms };
+                    age::procs::rows(&mut x, r.source).map_err(|r| Failure::client(&r.code, r.message))?
+                };
+                m.insert(r.param.clone(), age::procs::as_param(r, &rows));
+            }
+            filled = serde_json::Value::Object(m);
+            &filled
+        };
         match &st.plan {
             Plan::Cypher { text, ncols } => {
                 let before = if st.write && counters { Some(self.age_counts()?) } else { None };
@@ -268,18 +284,12 @@ impl Session<'_> {
                 let stats = age::ddl::run(pg, &graph, d).map_err(|f| Failure::client(f.code, f.message))?;
                 Ok(Outcome { records: Vec::new(), stats: Some(stats) })
             }
-            Plan::Procedure(p) => {
-                let sql = p.sql(&graph);
-                let width = p.columns().len();
-                let pg = self.client()?;
-                let rows = pg.query(sql.as_str(), &[]).map_err(|e| failure(&e, None, limit_ms))?;
-                let records = rows
-                    .iter()
-                    .map(|r| {
-                        let v: String = r.get(0);
-                        Value::List(vec![string(v); width])
-                    })
-                    .collect();
+            Plan::Procedure(d) => {
+                let rows = {
+                    let mut x = Steps { sess: &mut *self, stream: &mut *stream, limit_ms };
+                    age::procs::direct(&mut x, d).map_err(|r| Failure::client(&r.code, r.message))?
+                };
+                let records = rows.iter().map(|r| Value::List(r.iter().map(agtype::Ag::to_bolt).collect())).collect();
                 Ok(Outcome { records, stats: None })
             }
             Plan::Graphs(g) => {
