@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Create (or re-key) the `robo` login role with a random password.
+# Create (or re-key) the `robo` login role with a random password, and give it
+# what it needs in database DB (default `graph`, the graph database the image
+# makes; run again with DB=postgres to use AGE in `postgres` too).
 #
 #   NAME=agesb-db ADMIN_PW_FILE=... ROBO_PW_FILE=/private/dir/robo.password ./scripts/create-robo-role.sh
 #
@@ -9,7 +11,7 @@
 set -euo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
 NAME="${NAME:-agesb-db}"
-DB="${DB:-postgres}"
+DB="${DB:-graph}"
 ADMIN_PW_FILE="${ADMIN_PW_FILE:?path of a file holding the supabase_admin password}"
 ROBO_PW_FILE="${ROBO_PW_FILE:?path of the file to keep the robo password in}"
 

@@ -17,6 +17,8 @@ AGE_REF="${AGE_REF:-PG15/v1.8.0-rc0}"
 AGE_COMMIT="${AGE_COMMIT:-88646eb}"          # commit of AGE_REF, checked by the builder
 AGE_VERSION="${AGE_VERSION:-1.8.0}"
 AGE_SRC="${AGE_SRC:-}"                       # optional local AGE checkout (read-only); empty = clone
+AGE_ARTIFACTS="${AGE_ARTIFACTS:-}"           # optional dir with an earlier compile (age.so, age.control, age--*.sql,
+                                             # BUILDINFO): skip step 1 and only rebuild the image
 PLATFORM="${PLATFORM:-}"                     # empty = the Docker host's native platform
 JOBS="${JOBS:-2}"
 BUILD_MEMORY="${BUILD_MEMORY:-1500m}"
@@ -33,6 +35,18 @@ mkdir -p "$OUT_DIR"
 cleanup() { rc=$?; [ "$KEEP_OUT" = 1 ] || rm -rf "$OUT_DIR"; exit $rc; }
 trap cleanup EXIT
 
+if [ -n "$AGE_ARTIFACTS" ]; then
+  echo "== 1/2 reuse the AGE build in ${AGE_ARTIFACTS}"
+  for f in age.so age.control; do test -s "$AGE_ARTIFACTS/$f" || { echo "missing $AGE_ARTIFACTS/$f"; exit 1; }; done
+  if [ -s "$AGE_ARTIFACTS/BUILDINFO" ]; then
+    # the hashes recorded at compile time must still match
+    (cd "$AGE_ARTIFACTS" && sed -n '/^files:/,$p' BUILDINFO | tail -n +2 | shasum -a 256 -c --quiet -) || { echo "artifacts differ from their BUILDINFO"; exit 1; }
+    grep -q "^age_commit=${AGE_COMMIT}" "$AGE_ARTIFACTS/BUILDINFO" || { echo "BUILDINFO is not for ${AGE_COMMIT}"; exit 1; }
+  fi
+  mkdir -p "$OUT_DIR/age"; cp "$AGE_ARTIFACTS"/age.so "$AGE_ARTIFACTS"/age.control "$AGE_ARTIFACTS"/age--*.sql "$OUT_DIR/age/"
+  [ -s "$AGE_ARTIFACTS/BUILDINFO" ] && cp "$AGE_ARTIFACTS/BUILDINFO" "$OUT_DIR/age/"
+  t0=$(date +%s); t1=$t0
+else
 echo "== 1/2 compile AGE ${AGE_REF} against PostgreSQL ${PG_MINOR} (container ${BUILDER_NAME})"
 src_mount=()
 if [ -n "$AGE_SRC" ]; then
@@ -47,6 +61,7 @@ docker run --rm --name "$BUILDER_NAME" ${platform_args[@]+"${platform_args[@]}"}
   -v "$here/builder/compile-age.sh:/compile-age.sh:ro" \
   --entrypoint bash "postgres:${PG_MINOR}-bookworm" /compile-age.sh
 t1=$(date +%s)
+fi
 
 echo "== 2/2 docker build ${IMAGE}"
 docker build ${platform_args[@]+"${platform_args[@]}"} \

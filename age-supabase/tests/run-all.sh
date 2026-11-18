@@ -9,13 +9,17 @@ set -uo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 OUT="${OUT:?directory for the outputs}"
 mkdir -p "$OUT"
-run() { echo "== $2"; "$here/run-sql.sh" "$1" "$here/$2" > "$OUT/${2%.sql}.out" 2>&1; echo "   ERROR lines: $(grep -c 'ERROR' "$OUT/${2%.sql}.out") (many are expected; see IMAGE-RESULTS.md)"; }
+# the graph checks (robo's, and 12 which works on robo's graphs) run in the graph database
+# (ROBO_DB, default graph); 01 and 02 in postgres
+ROBO_DB="${ROBO_DB:-graph}"
+run() { echo "== $2"; db="${3:-postgres}"; [ "$1" = robo ] && db="$ROBO_DB"; "$here/run-sql.sh" "$1" "$here/$2" "$db" > "$OUT/${2%.sql}.out" 2>&1; echo "   ERROR lines: $(grep -c 'ERROR' "$OUT/${2%.sql}.out") (many are expected; see IMAGE-RESULTS.md)"; }
 
 run admin 01-supabase-extensions.sql
 run admin 02-other-database.sql
+run admin 03-graph-database.sql
 run robo  10-robo-cypher.sql
 run robo  11-params.sql
-run admin 12-labels-privs.sql
+run admin 12-labels-privs.sql "$ROBO_DB"
 run robo  13-check-trigger.sql
 run robo  16-neo4j-probe.sql
 if [ "${WITH_DUMP:-0}" = 1 ]; then

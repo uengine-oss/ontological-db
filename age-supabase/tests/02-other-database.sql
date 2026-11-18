@@ -1,8 +1,29 @@
 -- Run as supabase_admin. AGE is preloaded for the whole cluster; what happens in
--- a database that does NOT have the age extension (e.g. Compose's _supabase)?
+-- a database that does NOT have the age extension? The image puts the extension
+-- in every database and template1 at init, so a database made from template1
+-- has it; one made from template0 does not (made here that way on purpose).
 \pset footer off
 DROP DATABASE IF EXISTS agesb_other;
-CREATE DATABASE agesb_other;
+DROP DATABASE IF EXISTS agesb_from_t1;
+\echo '### a database made from template1 has age, TRUNCATE works'
+CREATE DATABASE agesb_from_t1;
+\c agesb_from_t1
+SELECT extversion AS age_from_template1 FROM pg_extension WHERE extname = 'age';
+CREATE TABLE t1 (id int);
+TRUNCATE t1;
+\c postgres
+DROP DATABASE agesb_from_t1;
+\echo '### _supabase (Compose), if there'
+SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = '_supabase') AS has_supabase_db \gset
+\if :has_supabase_db
+\c _supabase
+SELECT extversion AS age_in__supabase FROM pg_extension WHERE extname = 'age';
+CREATE TABLE public.agesb_trunc (id int);
+TRUNCATE public.agesb_trunc;
+DROP TABLE public.agesb_trunc;
+\c postgres
+\endif
+CREATE DATABASE agesb_other TEMPLATE template0;
 \c agesb_other
 \echo '### ordinary work in a database without age'
 CREATE SCHEMA s;
@@ -19,7 +40,7 @@ SELECT count(*) FROM s.t;
 VACUUM s.t;
 CREATE VIEW s.v AS SELECT id FROM s.t;
 DROP VIEW s.v;
-\echo '### TRUNCATE (AGE 1.8.0 utility hook looks up ag_catalog here)'
+\echo '### TRUNCATE (AGE 1.8.0 utility hook looks up ag_catalog here): fails, expected'
 TRUNCATE s.t;
 \echo '### DROP / CREATE EXTENSION of something else'
 CREATE EXTENSION IF NOT EXISTS pgcrypto;

@@ -1,4 +1,5 @@
--- Login role for the Robo Architect test: may use AGE and create its own graphs.
+-- Login role for the Robo Architect test: may use AGE and create its own graphs
+-- in the database psql is connected to (scripts/create-robo-role.sh: `graph`).
 -- Run as supabase_admin with psql:
 --   psql -v ON_ERROR_STOP=1 -v robo_verifier='SCRAM-SHA-256$4096:...' -f robo-role.sql
 -- robo_verifier is a SCRAM-SHA-256 verifier made on the client, so the
@@ -6,7 +7,7 @@
 --
 -- Not granted on purpose: BYPASSRLS, superuser, membership in any Supabase role,
 -- anything in public / auth / storage. The role does not get a search_path
--- setting either (callers qualify ag_catalog names; see README).
+-- setting (the graph database has one; elsewhere callers pass it, see README).
 
 SELECT 'CREATE ROLE robo LOGIN'
  WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'robo') \gexec
