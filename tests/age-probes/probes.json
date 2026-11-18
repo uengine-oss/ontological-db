@@ -2207,7 +2207,7 @@
         {"cypher": "MATCH p = (a:A)-[r:R]->(b:B) RETURN a, r, p", "cols": 3}
       ],
       "fixed": {"output_regex": "^1\\|1\\.0\\|\"a\"\\|\\[1, 1\\.0\\]\\|\\{\"k\": null\\}\\n\\{\"id\": \\d+, \"label\": \"A\", \"properties\": \\{\"k\": 1\\}\\}::vertex\\|\\{\"id\": \\d+, \"label\": \"R\", \"end_id\": \\d+, \"start_id\": \\d+, \"properties\": \\{\\}\\}::edge\\|\\[\\{\"id\": \\d+, \"label\": \"A\", [^|]*\\}::vertex, \\{\"id\": \\d+, \"label\": \"R\", [^|]*\\}::edge, \\{\"id\": \\d+, \"label\": \"B\", [^|]*\\}::vertex\\]::path$"}
-        },
+    },
     {
       "id": "gateway_type_error_codes",
       "kind": "defect",
@@ -2219,7 +2219,7 @@
       "slow": false,
       "gateway_only": true,
       "note": "Gateway-only: AGE refuses these statements as Neo4j does; only the status code the gateway gives the refusal was wrong. AGE's own message for the map case is suites_n8_set_on_a_map."
-        },
+    },
     {
       "id": "tgt_type_error_message",
       "kind": "relied_on",
@@ -2236,6 +2236,41 @@
         {"cypher": "MATCH (m:Member) RETURN sum(m.name * 2)"}
       ],
       "fixed": {"error": "^Invalid input parameter types for agtype_mul"}
-        }
+    },
+    {
+      "id": "surface_set_map_property_access",
+      "kind": "surface",
+      "rewrite": "SET r = item.props, SET n += item.props (a value AGE refuses there: not a map literal, a function call or a variable) → WITH …, item.props AS __og_setvN SET r = __og_setvN (cypher.rs bind_map_params)",
+      "defects": ["ANALYZER §5.3"],
+      "upstream": null,
+      "source": "ANALYZER-ON-AGE §5.3 (SET clause expects a map, through the gateway before the rewrite)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:T {id: 't1'}), (:T {id: 't2'})"}
+      ],
+      "probe": [
+        {"cypher": "UNWIND [{sid: 't1', tid: 't2', props: {k: 1, conf: 0.5}}] AS item MATCH (s:T {id: item.sid}) MATCH (t:T {id: item.tid}) CREATE (s)-[r:FK]->(t) SET r = item.props RETURN count(r)"}
+      ],
+      "broken": {"error": "SET clause expects a map"},
+      "fixed": {"output": "1"}
+    },
+    {
+      "id": "tgt_set_map_property_bound_by_with",
+      "kind": "relied_on",
+      "rewrite": "SET r = item.props → WITH …, item.props AS __og_setvN SET r = __og_setvN (cypher.rs bind_map_params)",
+      "defects": ["ANALYZER §5.3"],
+      "upstream": null,
+      "source": "ANALYZER-ON-AGE §5.3 (WITH s, t, item.props AS m CREATE (s)-[r:FK]->(t) SET r = m works)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:T {id: 't1'}), (:T {id: 't2'})"}
+      ],
+      "probe": [
+        {"cypher": "UNWIND [{sid: 't1', tid: 't2', props: {k: 1, conf: 0.5}}] AS item MATCH (s:T {id: item.sid}) MATCH (t:T {id: item.tid}) CREATE (s)-[r:FK]->(t) WITH item, s, t, r, item.props AS __og_setv1 SET r = __og_setv1 RETURN r.k, r.conf", "cols": 2}
+      ],
+      "fixed": {"output": "1|0.5"}
+    }
   ]
 }

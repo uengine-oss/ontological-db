@@ -162,33 +162,53 @@ impl<'a> Printer<'a> {
             }
         }
         self.in_scope = seen;
-        // AGE takes a whole-map parameter in SET only once it is bound to a
-        // variable (`SET n += $p` is refused; `WITH $p AS p … SET n += p` is
-        // not), so such a clause gets a WITH in front that binds it.
-        if let Some((with, c2)) = self.bind_map_params(c, scope) {
+        // AGE takes a whole-map value in SET only as a map literal, a function
+        // call or a variable (`cypher_clause.c`: "SET clause expects a map"
+        // for anything else), so such a clause gets a WITH in front that
+        // binds the value to a variable first.
+        if let Some((with, c2)) = self.bind_map_params(c, scope)? {
             return Ok(format!("{with} {}", self.clause_text(&c2, scope)?));
         }
         self.clause_text(c, scope)
     }
 
-    fn bind_map_params(&mut self, c: &Clause, scope: &[String]) -> Option<(String, Clause)> {
+    /// `SET n = v` / `SET n += v` with a `v` AGE refuses there, bound by a
+    /// WITH before the clause: `SET n += $p` → `WITH …, $p AS __og_p1 SET n
+    /// += __og_p1`, and (ANALYZER §5.3) `SET r = item.props` → `WITH …,
+    /// item.props AS __og_setv1 SET r = __og_setv1` — AGE takes a variable
+    /// there, not a property access. A map literal, a function call or a
+    /// variable is left as written (AGE takes those; a literal map also keeps
+    /// AGE's own handling of its null entries). An expression that reads
+    /// what the clause itself binds (a MERGE's own variables) cannot be
+    /// evaluated before it and is left too.
+    fn bind_map_params(&mut self, c: &Clause, scope: &[String]) -> R<Option<(String, Clause)>> {
         let mut c = c.clone();
-        let mut bound: Vec<(String, String)> = Vec::new();
+        let mut bound: Vec<(Expr, String)> = Vec::new();
         let mut fix = |items: &mut Vec<SetOp>, this: &mut Self| {
             for it in items.iter_mut() {
-                if let SetOp::Map { value: Expr::Param(p), .. } = it {
-                    let alias = match bound.iter().find(|(q, _)| q == p) {
+                let SetOp::Map { value, .. } = it else { continue };
+                let alias = match &*value {
+                    Expr::Param(p) => match bound.iter().find(|(q, _)| matches!(q, Expr::Param(x) if x == p)) {
                         Some((_, a)) => a.clone(),
                         None => {
                             let a = this.fresh("p");
-                            bound.push((p.clone(), a.clone()));
+                            bound.push((Expr::Param(p.clone()), a.clone()));
                             a
                         }
-                    };
-                    if let SetOp::Map { value, .. } = it {
-                        *value = Expr::Var(alias);
+                    },
+                    Expr::Var(_) | Expr::Map(_) | Expr::Func { .. } => continue,
+                    other => {
+                        let mut vs = Vec::new();
+                        expr_vars(other, &mut vs);
+                        if !vs.iter().all(|v| scope.contains(v)) {
+                            continue;
+                        }
+                        let a = this.fresh("setv");
+                        bound.push((other.clone(), a.clone()));
+                        a
                     }
-                }
+                };
+                *value = Expr::Var(alias);
             }
         };
         match &mut c {
@@ -200,13 +220,17 @@ impl<'a> Printer<'a> {
             _ => {}
         }
         if bound.is_empty() {
-            return None;
+            return Ok(None);
         }
         let mut items: Vec<String> = scope.iter().map(|v| ident(v)).collect();
-        for (p, a) in &bound {
-            items.push(format!("${} AS {}", p, ident(a)));
+        for (e, a) in &bound {
+            let v = match e {
+                Expr::Param(p) => format!("${p}"),
+                other => self.operand(other)?,
+            };
+            items.push(format!("{v} AS {}", ident(a)));
         }
-        Some((format!("WITH {}", items.join(", ")), c))
+        Ok(Some((format!("WITH {}", items.join(", ")), c)))
     }
 
     fn clause_text(&mut self, c: &Clause, scope: &[String]) -> R<String> {
@@ -2463,6 +2487,29 @@ mod tests {
             "WITH $p AS __og_p1 MERGE (n:L {id: 1}) ON CREATE SET n = __og_p1 ON MATCH SET n += __og_p1");
         // a map parameter's field is an ordinary value
         assert_eq!(print("MATCH (n) SET n.a = $p.a"), "MATCH (n) SET n.a = $p.a");
+        // ANALYZER §5.3: a property access is refused there too ("SET clause expects a map")
+        assert_eq!(
+            print("UNWIND $rows AS item MATCH (s:T {id: item.sid}) MATCH (t:T {id: item.tid}) CREATE (s)-[r:FK]->(t) SET r = item.props RETURN count(r) AS c"),
+            "UNWIND $rows AS item MATCH (s:T {id: item.sid}) MATCH (t:T {id: item.tid}) CREATE (s)-[r:FK]->(t) \
+             WITH item, s, t, r, item.props AS __og_setv1 SET r = __og_setv1 RETURN count(r) AS c"
+        );
+        assert_eq!(
+            print("UNWIND $rows AS item MATCH (n:T {id: item.id}) SET n += item.props, n.seen = true"),
+            "UNWIND $rows AS item MATCH (n:T {id: item.id}) WITH item, n, item.props AS __og_setv1 SET n += __og_setv1, n.seen = true"
+        );
+        assert_eq!(
+            print("MATCH (n), (m) SET n = CASE WHEN m.x IS NULL THEN {} ELSE m.p END"),
+            "MATCH (n), (m) WITH n, m, CASE WHEN m.x IS NULL THEN {} ELSE m.p END AS __og_setv1 SET n = __og_setv1"
+        );
+        // what AGE takes is left as written: a variable, a map, a function call
+        assert_eq!(print("UNWIND $rows AS item MATCH (n {id: item.id}) SET n += item"), "UNWIND $rows AS item MATCH (n {id: item.id}) SET n += item");
+        assert_eq!(print("MATCH (n) SET n = {a: 1}"), "MATCH (n) SET n = {a: 1}");
+        assert_eq!(print("MATCH (n), (m) SET n = properties(m)"), "MATCH (n), (m) SET n = properties(m)");
+        // a MERGE item that reads what the MERGE binds cannot be evaluated before it
+        assert_eq!(
+            print("MATCH (m) MERGE (n:L {id: 1}) ON MATCH SET n += m.p ON CREATE SET n += n.q"),
+            "MATCH (m) WITH m, m.p AS __og_setv1 MERGE (n:L {id: 1}) ON CREATE SET n += n.q ON MATCH SET n += __og_setv1"
+        );
     }
 
     #[test]

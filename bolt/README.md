@@ -84,7 +84,7 @@ Rewrites (each found by running Robo Architect's queries against AGE; see
 | `any/all/none/single(x IN l WHERE p)` | `size([x IN l WHERE p]) > 0` … (AGE's own crash the backend when `p` reads a matched node) |
 | `n {.a, .b}` | `CASE WHEN n IS NULL THEN null ELSE {a: n.a, b: n.b} END` (Neo4j's answer for null and for an absent key) |
 | `coalesce(a, b)` over nodes | `coalesce(head([a]), head([b]))` |
-| `SET n += $map` | `WITH …, $map AS p SET n += p` |
+| `SET n += $map`; `SET r = item.props`, `SET n += item.props` (ANALYZER §5.3: AGE takes a map literal, a function call or a variable there — "SET clause expects a map" for a parameter or a property access) | `WITH …, $map AS __og_p1 SET n += __og_p1`, `WITH …, item.props AS __og_setv1 SET r = __og_setv1` (`cypher.rs` `bind_map_params`); left as written when the value reads what a MERGE itself binds |
 | a MERGE pattern property that is null (SUITES N7: AGE makes an element without the key, a new one every time; Neo4j refuses) | known now (a literal, a parameter given, a field of one): refused with Neo4j's `SemanticError` "Cannot merge the following node because of null property value for 'key': (:W {key: null})" ("…relationship…"). Computed (`r.missing`): sent as `CASE WHEN e IS NULL THEN 1 / CASE WHEN e IS NULL THEN 0 ELSE 1 END ELSE e END`, and AGE's "division by zero" from such a statement is answered with that error (`cypher.rs` `guard_merge_nulls`, `mod.rs` `null_merge_refusal`) |
 | an aggregation next to a list comprehension | three projections: lists, aggregates, the rest |
 | variables named `id`, `properties`, `start_id`, `end_id` | renamed (they clash with the label tables' columns) |
