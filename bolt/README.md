@@ -44,10 +44,24 @@ their SQL are the ones above.
 | Variable | Default | Meaning |
 |---|---|---|
 | `OG_BOLT_BACKEND` | `ontological` | `age` to run Cypher through `ag_catalog.cypher()` |
-| `OG_BOLT_AGE_CREATE_GRAPHS` | on | make a graph the first time a session names it (as the role that logged in, which then owns it — AGE needs that to add labels). `0`: answer `DatabaseNotFound` |
+| `OG_BOLT_AGE_CREATE_GRAPHS` | on | make a graph the first time a session names it (as the role that logged in, which then owns it — AGE needs that to add labels). `0`: answer `Neo.ClientError.Database.DatabaseNotFound` ("… make it with CREATE GRAPH x"); `SHOW GRAPHS` and `CREATE GRAPH x` work either way, whatever database the session names |
 | `OG_BOLT_AGE_LOAD` | off | `LOAD 'age'` at login, for a server that does not preload AGE (superuser only) |
 | `OG_BOLT_AGE_TRACE` | off | log every SQL statement sent to AGE and its time, and each statement's plan (cypher, steps, reach, ddl …), to stderr |
 | `OG_BOLT_AGE_COUNTERS` | on | read `summary.counters` (two short SQL statements around every write); off: writes report no counters |
+
+A Bolt database is the AGE graph of the same name, except a name of fewer
+than 3 characters, which AGE refuses ("graph name is invalid", SUITES N10;
+Neo4j refuses those too, but Robo's launcher makes 2-character projects,
+`^[a-z][a-z0-9_]{1,39}$`): `ab` is kept in the AGE graph `_og_ab`. `SHOW
+GRAPHS` lists it as `ab`, `CREATE GRAPH ab` makes `_og_ab`, and every
+statement of a session on `ab` runs there (`mod.rs` `age_graph_name`). No
+client name can land there by itself: Neo4j's database names start with a
+letter, and `_og_` followed by one or two characters is refused as a database
+name. Names of 3 characters or more are the graph of the same name, as
+before. `CREATE GRAPH` of a graph that is there already answers
+`Neo.ClientError.Database.ExistingDatabaseFound` (AGE gives it 3F000, the
+code of a missing schema). An error message from AGE itself names the graph
+as AGE has it (`_og_ab`).
 
 The session sets `search_path = ag_catalog, "$user", public` (AGE's generated
 SQL needs it). `HELLO` answers `Neo4j/4.4.0 (age-bolt/<version>)`, without

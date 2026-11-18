@@ -116,6 +116,8 @@ pub enum GraphStatement {
 }
 
 impl GraphStatement {
+    /// The SQL: graph names as AGE has them ([`age_graph_name`]); the rows
+    /// of `SHOW GRAPHS` are mapped back by [`bolt_database_name`].
     pub fn sql(&self) -> String {
         match self {
             GraphStatement::Show => "SELECT g.name::text AS graph, \
@@ -123,9 +125,79 @@ impl GraphStatement {
                    AND l.name NOT IN ('_ag_label_vertex', '_ag_label_edge'))::int8 AS types \
                 FROM ag_catalog.ag_graph g ORDER BY 1"
                 .into(),
-            GraphStatement::Create(n) => format!("SELECT ag_catalog.create_graph({}::name)", sql_lit(n)),
+            GraphStatement::Create(n) => format!("SELECT ag_catalog.create_graph({}::name)", sql_lit(&age_graph_name(n))),
         }
     }
+}
+
+// ------------------------------------------------------------ graph names
+
+/// What a Bolt database name of fewer than 3 characters is stored under.
+///
+/// AGE refuses a graph name shorter than 3 characters (`name_validation.h`:
+/// `MIN_GRAPH_NAME_LEN 3`, "graph name is invalid"; SUITES N10/A14), and
+/// Robo's launcher makes projects of 2 (`projects.ts`: `^[a-z][a-z0-9_]{1,39}$`).
+/// Such a name `ab` is the AGE graph `_og_ab`. The image cannot be a name a
+/// client means for itself: Neo4j's database names start with a letter, and
+/// the gateway refuses a database name of that exact form (`_og_` and one or
+/// two characters, [`reserved_database_name`]); every name of 3 characters
+/// or more is the graph of the same name, as before. Only `[A-Za-z0-9_]` is
+/// used, the characters AGE and the gateway's SQL take unquoted.
+pub const SHORT_GRAPH_PREFIX: &str = "_og_";
+
+/// The shortest graph name AGE takes.
+pub const MIN_GRAPH_NAME: usize = 3;
+
+/// The AGE graph a Bolt database name is ([`SHORT_GRAPH_PREFIX`]).
+pub fn age_graph_name(db: &str) -> String {
+    if db.chars().count() < MIN_GRAPH_NAME {
+        format!("{SHORT_GRAPH_PREFIX}{db}")
+    } else {
+        db.to_string()
+    }
+}
+
+/// The Bolt database name an AGE graph is shown as (`SHOW GRAPHS`): the
+/// inverse of [`age_graph_name`].
+pub fn bolt_database_name(graph: &str) -> String {
+    match graph.strip_prefix(SHORT_GRAPH_PREFIX) {
+        Some(short) if !short.is_empty() && short.chars().count() < MIN_GRAPH_NAME => short.to_string(),
+        _ => graph.to_string(),
+    }
+}
+
+/// Is this the AGE name of a short database name — refused as a database
+/// name, so that two names never meet in one graph?
+pub fn reserved_database_name(db: &str) -> bool {
+    bolt_database_name(db) != db
+}
+
+/// Can a session name this database? `Err`: why not.
+pub fn check_database_name(db: &str) -> Result<(), String> {
+    let ok = db.chars().next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+        && db.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
+    if !ok {
+        return Err(format!("'{db}' is not a graph name AGE takes (letters, digits and _, not starting with a digit)"));
+    }
+    if reserved_database_name(db) {
+        return Err(format!(
+            "'{db}' is reserved: it is the graph the AGE backend keeps database '{}' in (AGE takes no graph name under {MIN_GRAPH_NAME} characters)",
+            bolt_database_name(db)
+        ));
+    }
+    if age_graph_name(db).len() > 63 {
+        return Err(format!("'{db}' is longer than the 63 characters a graph name may have"));
+    }
+    Ok(())
+}
+
+/// Does the statement need the session's graph to exist (made or found)?
+/// `SHOW GRAPHS` and `CREATE GRAPH` are about the graphs, not in one: they
+/// run whatever database the session names, and with
+/// `OG_BOLT_AGE_CREATE_GRAPHS=0` a session on a database that is not there
+/// yet can still make it.
+pub fn needs_session_graph(plan: &Plan) -> bool {
+    !matches!(plan, Plan::Graphs(_))
 }
 
 /// The words Ontological's statement layer (`engine/src/fabric/sqlish.rs`)
@@ -506,7 +578,10 @@ pub fn null_merge_refusal(code: &str, message: &str, guards: &[cypher::NullMerge
 pub fn error_code(state: Option<&str>, message: &str) -> Option<&'static str> {
     const TYPE: &str = "Neo.ClientError.Statement.TypeError";
     Some(match state? {
-        // invalid_schema_name: `graph "x" does not exist`
+        // invalid_schema_name: `graph "x" does not exist` — and AGE's
+        // `graph "x" already exists` from create_graph() (graph_commands.c
+        // gives that the same code), which is Neo4j's CREATE DATABASE answer
+        "3F000" if message.contains("already exists") => "Neo.ClientError.Database.ExistingDatabaseFound",
         "3F000" => "Neo.ClientError.Database.DatabaseNotFound",
         "42601" => "Neo.ClientError.Statement.SyntaxError",
         "23505" | "23502" | "23514" => "Neo.ClientError.Schema.ConstraintValidationFailed",
@@ -545,6 +620,38 @@ mod tests {
         let e = translate("QUERY FABRIC SELECT 1", &Json::Null, &Hierarchy::default()).err().unwrap();
         assert!(e.message.contains("fabric"), "{}", e.message);
         assert!(check("SHOW GRAPHS").is_ok_and(|w| !w));
+        // with OG_BOLT_AGE_CREATE_GRAPHS=0 these run whatever database the session names
+        assert!(!needs_session_graph(&st.plan));
+        let st = translate("MATCH (n) RETURN n", &Json::Null, &Hierarchy::default()).ok().unwrap();
+        assert!(needs_session_graph(&st.plan));
+    }
+
+    #[test]
+    fn a_short_database_name_has_a_graph_no_client_can_name() {
+        // SUITES A14 / N10: AGE takes no graph name under 3 characters; Robo's launcher makes 2
+        assert_eq!(age_graph_name("pr"), "_og_pr");
+        assert_eq!(age_graph_name("a"), "_og_a");
+        assert_eq!(bolt_database_name("_og_pr"), "pr");
+        assert_eq!(bolt_database_name("_og_a"), "a");
+        // 3 characters and more: the graph of that name, as before
+        for n in ["robo", "abc", "analyzer_run", "_og_abc", "_og_", "_ogab"] {
+            assert_eq!(age_graph_name(n), n);
+            assert_eq!(bolt_database_name(n), n);
+        }
+        // the images are refused as database names; nothing else is
+        assert!(check_database_name("_og_pr").is_err_and(|e| e.contains("reserved") && e.contains("'pr'")));
+        assert!(check_database_name("_og_a").is_err());
+        for ok in ["pr", "a", "robo", "_og_abc", "_private", "x_1"] {
+            assert!(check_database_name(ok).is_ok(), "{ok}");
+        }
+        assert!(check_database_name("1ab").is_err() && check_database_name("my-db").is_err() && check_database_name("").is_err());
+        assert!(check_database_name(&"a".repeat(64)).is_err() && check_database_name(&"a".repeat(63)).is_ok());
+        // CREATE GRAPH makes the mapped one
+        assert_eq!(GraphStatement::Create("pr".into()).sql(), "SELECT ag_catalog.create_graph('_og_pr'::name)");
+        assert_eq!(GraphStatement::Create("shop".into()).sql(), "SELECT ag_catalog.create_graph('shop'::name)");
+        // a graph that is there already: Neo4j's CREATE DATABASE answer
+        assert_eq!(error_code(Some("3F000"), "graph \"shop\" already exists"), Some("Neo.ClientError.Database.ExistingDatabaseFound"));
+        assert_eq!(error_code(Some("3F000"), "graph \"shop\" does not exist"), Some("Neo.ClientError.Database.DatabaseNotFound"));
     }
 
     #[test]

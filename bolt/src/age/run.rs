@@ -122,7 +122,7 @@ impl Session<'_> {
         };
 
         // SHOW GRAPHS / CREATE GRAPH are about the graphs, not in one.
-        if !matches!(st.plan, Plan::Graphs(_)) {
+        if age::needs_session_graph(&st.plan) {
             self.age_graph()?;
         }
 
@@ -183,22 +183,23 @@ impl Session<'_> {
             .ok_or_else(|| Failure::client("Neo.ClientError.Statement.TypeError", format!("{local}[{zone}] is not a date-time")))
     }
 
+    /// The AGE graph of the session's database ([`age::age_graph_name`]:
+    /// the same name, or `_og_<name>` for one of fewer than 3 characters).
+    pub(super) fn age_graph_name(&self) -> String {
+        age::age_graph_name(&self.graph)
+    }
+
     /// The session's graph exists — or is made, when the deployment says so.
     fn age_graph(&mut self) -> Result<(), Failure> {
         if self.age_graphs.contains(&self.graph) {
             return Ok(());
         }
-        let graph = self.graph.clone();
+        let db = self.graph.clone();
         // AGE's graph names are identifiers; anything else would be a schema
-        // name to quote, and AGE refuses most of them anyway.
-        let ok = graph.chars().next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
-            && graph.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
-        if !ok {
-            return Err(Failure::client(
-                "Neo.ClientError.Database.DatabaseNotFound",
-                format!("'{graph}' is not a graph name AGE takes (letters, digits and _, not starting with a digit)"),
-            ));
-        }
+        // name to quote, and AGE refuses most of them anyway. A name of the
+        // form short database names are kept under is refused (mod.rs).
+        age::check_database_name(&db).map_err(|why| Failure::client("Neo.ClientError.Database.DatabaseNotFound", why))?;
+        let graph = self.age_graph_name();
         let create = self.config.age.as_ref().is_some_and(|a| a.create_graphs);
         let pg = self.client()?;
         let exists = pg.query_opt(age::GRAPH_EXISTS, &[&graph]).map_err(|e| Failure::from_pg(&e))?.is_some();
@@ -206,12 +207,12 @@ impl Session<'_> {
             if !create {
                 return Err(Failure::client(
                     "Neo.ClientError.Database.DatabaseNotFound",
-                    format!("graph \"{graph}\" does not exist (OG_BOLT_AGE_CREATE_GRAPHS is off)"),
+                    format!("graph \"{db}\" does not exist (OG_BOLT_AGE_CREATE_GRAPHS is off: make it with CREATE GRAPH {db})"),
                 ));
             }
             pg.execute(age::CREATE_GRAPH, &[&graph]).map_err(|e| failure(&e, None, 0))?;
         }
-        self.age_graphs.insert(graph);
+        self.age_graphs.insert(db);
         Ok(())
     }
 
@@ -229,7 +230,7 @@ impl Session<'_> {
     }
 
     fn age_counts(&mut self) -> Result<Counts, Failure> {
-        let graph = self.graph.clone();
+        let graph = self.age_graph_name();
         let pg = self.client()?;
         let row = pg.query_one(age::COUNTS, &[&graph]).map_err(|e| Failure::from_pg(&e))?;
         Ok(Counts::from_row(&row))
@@ -242,7 +243,7 @@ impl Session<'_> {
         limit_ms: i64,
         stream: &mut TcpStream,
     ) -> Result<Outcome, Failure> {
-        let graph = self.graph.clone();
+        let graph = self.age_graph_name();
         let counters = self.config.age.as_ref().is_none_or(|a| a.counters);
         if !st.schema.is_empty() {
             // the label tables and inheritance a multi-label CREATE / MERGE
@@ -283,29 +284,26 @@ impl Session<'_> {
             }
             Plan::Graphs(g) => {
                 if let age::GraphStatement::Create(name) = g {
-                    let ok = name.chars().next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
-                        && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
-                    if !ok {
-                        return Err(Failure::client(
-                            "Neo.ClientError.Statement.ArgumentError",
-                            format!("'{name}' is not a graph name AGE takes (letters, digits and _)"),
-                        ));
-                    }
+                    age::check_database_name(name).map_err(|why| Failure::client("Neo.ClientError.Statement.ArgumentError", why))?;
                 }
                 let pg = self.client()?;
                 let rows = pg.simple_query(&g.sql()).map_err(|e| failure(&e, None, limit_ms))?;
+                let mut shown: Vec<(String, i64)> = Vec::new();
                 let mut records = Vec::new();
                 for m in rows {
                     if let postgres::SimpleQueryMessage::Row(r) = m {
-                        records.push(match g {
-                            age::GraphStatement::Show => Value::List(vec![
-                                string(r.get(0).unwrap_or("").to_string()),
-                                Value::Int(r.get(1).and_then(|t| t.parse().ok()).unwrap_or(0)),
-                            ]),
-                            age::GraphStatement::Create(n) => Value::List(vec![string(format!("graph {n} created"))]),
-                        });
+                        match g {
+                            // a short database's graph is shown under the database's name
+                            age::GraphStatement::Show => shown.push((
+                                age::bolt_database_name(r.get(0).unwrap_or("")),
+                                r.get(1).and_then(|t| t.parse().ok()).unwrap_or(0),
+                            )),
+                            age::GraphStatement::Create(n) => records.push(Value::List(vec![string(format!("graph {n} created"))])),
+                        }
                     }
                 }
+                shown.sort();
+                records.extend(shown.into_iter().map(|(n, t)| Value::List(vec![string(n), Value::Int(t)])));
                 Ok(Outcome { records, stats: None })
             }
             Plan::Reach(r) => {
@@ -443,7 +441,7 @@ fn refusal(f: Failure) -> age::Refusal {
 
 impl age::split::Exec for Steps<'_, '_> {
     fn cypher(&mut self, text: &str, ncols: usize, params: &serde_json::Value) -> Result<Vec<Vec<agtype::Ag>>, age::Refusal> {
-        let graph = self.sess.graph.clone();
+        let graph = self.sess.age_graph_name();
         let sql = age::cypher_sql(&graph, text, ncols);
         let rows = self.sess.age_query(&sql, params, self.limit_ms, self.stream).map_err(refusal)?;
         if ncols == 0 {
@@ -468,7 +466,7 @@ impl age::split::Exec for Steps<'_, '_> {
     }
 
     fn graph(&self) -> String {
-        self.sess.graph.clone()
+        self.sess.age_graph_name()
     }
 }
 

@@ -874,7 +874,7 @@
       "kills_backend": false,
       "slow": false,
       "gateway_only": true,
-      "note": "Ontological's own statements, not Neo4j's; AGE has SQL functions for them and no Cypher form, so there is no plain form to probe."
+      "note": "Ontological's own statements, not Neo4j's; AGE has SQL functions for them and no Cypher form, so there is no plain form to probe. They run whatever database the session names, also with OG_BOLT_AGE_CREATE_GRAPHS=0 (mod.rs needs_session_graph); CREATE GRAPH of a graph that is there is ExistingDatabaseFound (AGE gives 3F000, the code of a missing one)."
     },
     {
       "id": "surface_pattern_comprehension",
@@ -1177,7 +1177,7 @@
     {
       "id": "suites_n10_short_graph_name",
       "kind": "defect",
-      "rewrite": "(no rewrite) a graph name under three characters is refused; the gateway passes AGE's error on (SUITES G27)",
+      "rewrite": "a Bolt database name under three characters → the AGE graph _og_<name> (mod.rs age_graph_name; SHOW GRAPHS shows it as <name>, and _og_ with one or two characters is refused as a database name) — SUITES G27, Robo's launcher makes two-character projects",
       "defects": ["SUITES N10", "SUITES A14"],
       "upstream": null,
       "source": "SUITES §5 N10 output (new-defects.out)",
@@ -1191,7 +1191,7 @@
       ],
       "broken": {"error": "graph name is invalid"},
       "fixed": {"output": ""},
-      "note": "Not a Neo4j difference: Neo4j database names need three characters too. Rolled back either way."
+      "note": "Not a Neo4j difference: Neo4j database names need three characters too; the gateway maps them because Robo's launcher allows two (projects.ts ^[a-z][a-z0-9_]{1,39}$). Rolled back either way."
     },
     {
       "id": "suites_n11_graph_version_slots",
@@ -2329,6 +2329,25 @@
       ],
       "fixed": {"output_regex": "^\\{(?=[^\\n]*\"a\": 1)(?=[^\\n]*\"id\": \"r1\")(?=[^\\n]*\"embedding\": null)[^\\n]*\\}\\n\\{(?=[^\\n]*\"a\": 1)(?=[^\\n]*\"id\": \"override\")(?=[^\\n]*\"zz\": null)(?=[^\\n]*\"embedding\": \\[0\\.1, 0\\.2\\])[^\\n]*\\}\\n<null>$"},
       "note": "Inferred from agtype_ops.c (agtype_sub with an array: delete_from_object; agtype_add of two objects: agtype_concat_impl) and cypher_gram.y (a map literal keeps null-valued keys); not run yet."
+    },
+    {
+      "id": "tgt_short_database_graph_name",
+      "kind": "relied_on",
+      "rewrite": "a Bolt database name under three characters → the AGE graph _og_<name> (mod.rs age_graph_name): AGE takes _og_ab as a graph name and runs Cypher in it",
+      "defects": ["SUITES N10", "SUITES A14", "SUITES G27"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "graph": false,
+      "probe": [
+        "BEGIN",
+        "SELECT ag_catalog.create_graph('_og_ab')",
+        "SELECT * FROM ag_catalog.cypher('_og_ab', $$ CREATE (n:L {k: 1}) RETURN n.k $$) AS (k ag_catalog.agtype)",
+        "ROLLBACK"
+      ],
+      "fixed": {"output": "1"},
+      "note": "Inferred from name_validation.h (an ID_Start or _ first, ID_Continue after it, 3 to 63 characters). Rolled back."
     }
   ]
 }
