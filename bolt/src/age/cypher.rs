@@ -18,6 +18,7 @@
 //! | `n:L` as a predicate | `label(n) = 'L'` |
 //! | `-[:A\|B]-` in MATCH, EXISTS, COUNT | `-[v]-` and `type(v) IN ['A', 'B']` in that clause's WHERE |
 //! | `(n:A\|B)` in MATCH | `(n)` and `label(n) IN ['A', 'B']` |
+//! | `(n:A:B)` in MATCH (both labels), A ≠ B | `(n:A)` and `false` — a vertex has one label ([`node_label_test`]) |
 //! | `xs[i]`, `a \|\| b` | as written (`\|\|` as `+`, which is what it means for text and lists) |
 //! | `RETURN *` | the variables in scope, sorted, as Neo4j names the columns |
 //!
@@ -327,9 +328,10 @@ impl<'a> Printer<'a> {
 
     // ------------------------------------------------------------- patterns
 
-    /// `-[:A|B]-` and `(n:A|B)`: AGE takes one label or type per element. The
-    /// element gets a variable (a fresh one if it had none) and the choice
-    /// becomes a predicate.
+    /// `-[:A|B]-`, `(n:A|B)` and `(n:A:B)`: AGE takes one label or type per
+    /// element. The element gets a variable (a fresh one if it had none) and
+    /// the choice becomes a predicate; what a node's labels mean is
+    /// [`node_label_test`]'s to say.
     pub fn lift_alternatives(&mut self, p: &mut Pattern, preds: &mut Vec<Expr>) -> R<()> {
         for el in &p.elems {
             if let PatElem::Rel(r) = el {
@@ -368,15 +370,22 @@ impl<'a> Printer<'a> {
                         type_in(Expr::Var(var))
                     });
                 }
-                PatElem::Node(n) if n.labels.len() > 1 => {
-                    let var = n.var.clone().unwrap_or_else(|| self.fresh("n"));
-                    n.var = Some(var.clone());
-                    let labels = Expr::List(n.labels.drain(..).map(|t| Expr::Lit(Lit::Str(t))).collect());
-                    preds.push(Expr::Binary(
-                        BinOp::In,
-                        Box::new(Expr::Func { name: "label".into(), args: vec![Expr::Var(var)], distinct: false }),
-                        Box::new(labels),
-                    ));
+                PatElem::Node(n) => {
+                    let groups = label_groups(n);
+                    if groups.len() < 2 && groups.iter().all(|g| g.len() < 2) {
+                        continue;
+                    }
+                    let (mut scan, mut pred) = node_label_test(n.var.as_deref().unwrap_or(""), &groups);
+                    if pred.is_some() && n.var.is_none() {
+                        let var = self.fresh("n");
+                        (scan, pred) = node_label_test(&var, &groups);
+                        n.var = Some(var);
+                    }
+                    if let Some(p) = pred {
+                        preds.push(p);
+                    }
+                    n.labels = scan.into_iter().collect();
+                    n.label_groups = n.labels.iter().map(|l| vec![l.clone()]).collect();
                 }
                 _ => {}
             }
@@ -401,7 +410,7 @@ impl<'a> Printer<'a> {
                     if let Some(v) = &n.var {
                         s.push_str(&ident(v));
                     }
-                    match n.labels.as_slice() {
+                    match distinct(&n.labels).as_slice() {
                         [] => {}
                         [l] => {
                             s.push(':');
@@ -854,13 +863,75 @@ fn no_alternatives(p: &Pattern, clause: &str) -> R<()> {
     for el in &p.elems {
         match el {
             PatElem::Rel(r) if r.types.len() > 1 => return Err(format!("{clause} needs one relationship type")),
-            PatElem::Node(n) if n.labels.len() > 1 => {
-                return Err(unsupported(&format!("{clause} of a node with more than one label")))
+            PatElem::Node(n) => {
+                let groups = label_groups(n);
+                if groups.iter().any(|g| g.len() > 1) {
+                    return Err(format!("{clause} of a node needs its labels, not a choice of them (:A|B)"));
+                }
+                if distinct(&n.labels).len() > 1 {
+                    return Err(unsupported(&format!("{clause} of a node with more than one label")));
+                }
             }
             _ => {}
         }
     }
     Ok(())
+}
+
+/// The names, each once, in order.
+fn distinct(xs: &[String]) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    for x in xs {
+        if !out.contains(x) {
+            out.push(x.clone());
+        }
+    }
+    out
+}
+
+/// A node pattern's labels as groups (all of the groups, any label within
+/// one). The parser fills [`NodePat::label_groups`]; a pattern without it
+/// (put together by hand) reads its flat list as all of them.
+pub fn label_groups(n: &NodePat) -> Vec<Vec<String>> {
+    if n.label_groups.is_empty() && !n.labels.is_empty() {
+        n.labels.iter().map(|l| vec![l.clone()]).collect()
+    } else {
+        n.label_groups.iter().map(|g| distinct(g)).collect()
+    }
+}
+
+/// What a node pattern's labels ask of AGE, where a vertex has exactly one
+/// label: the label to put in the pattern (scanned), and a predicate for the
+/// clause's WHERE. `groups` are [`NodePat::label_groups`] — all of the groups,
+/// any label within a group — so the vertex's one label must be in every
+/// group:
+///
+/// - one label is in all of them (`(n:A)`, `(n:A:A)`) → that label, no
+///   predicate;
+/// - several are (`(n:A|B)`) → no label, `label(n) IN [...]`;
+/// - none is (`(n:A:B)`, A ≠ B) → nothing can match: the first label and
+///   `false`.
+///
+/// SUITES-ON-AGE B1: the parser used to give `:A:B` and `:A|B` as one list,
+/// and both went out as `label(n) IN ['A', 'B']` — `MATCH (n:Lamp:Part)
+/// RETURN count(n)` counted the Lamps and the Parts (2; Neo4j 0). This is the
+/// one place that decides it, so that a label hierarchy (an umbrella label
+/// whose table the others inherit, STUDIO-ON-AGE G1/G2) can change it here.
+pub fn node_label_test(var: &str, groups: &[Vec<String>]) -> (Option<String>, Option<Expr>) {
+    let Some(first) = groups.first() else { return (None, None) };
+    let common: Vec<String> = distinct(first).into_iter().filter(|l| groups.iter().all(|g| g.contains(l))).collect();
+    match common.as_slice() {
+        [] => (first.first().cloned(), Some(Expr::Lit(Lit::Bool(false)))),
+        [one] => (Some(one.clone()), None),
+        many => (
+            None,
+            Some(Expr::Binary(
+                BinOp::In,
+                Box::new(Expr::Func { name: "label".into(), args: vec![Expr::Var(var.to_string())], distinct: false }),
+                Box::new(Expr::List(many.iter().map(|l| Expr::Lit(Lit::Str(l.clone()))).collect())),
+            )),
+        ),
+    }
 }
 
 /// `w AND p1 AND p2 …`.
@@ -1811,6 +1882,31 @@ mod tests {
             assert!(e.contains("not run on the AGE backend"), "{e}");
         }
         assert_eq!(print("MATCH (a)-[:X*1..30]-(b) RETURN b"), "MATCH (a)-[:X*1..30]-(b) RETURN b");
+    }
+
+    #[test]
+    fn all_labels_are_not_any_label() {
+        // B1: (n:A:B) is both — no vertex of AGE's, which has one label.
+        assert_eq!(print("MATCH (n:Lamp:Part) RETURN count(n) AS c"), "MATCH (n:Lamp) WHERE false RETURN count(n) AS c");
+        assert_eq!(print("MATCH (n:A:B) WHERE n.k = 1 RETURN n"), "MATCH (n:A) WHERE (n.k = 1) AND false RETURN n");
+        assert_eq!(print("OPTIONAL MATCH (:A:B)-[:R]->(m) RETURN m"),
+            "OPTIONAL MATCH (__og_n1:A)-[:R]->(m) WHERE false RETURN m");
+        // the same label twice, or a choice that leaves one, is that label
+        assert_eq!(print("MATCH (n:A:A) RETURN n"), "MATCH (n:A) RETURN n");
+        assert_eq!(print("MATCH (n:A|B:B) RETURN n"), "MATCH (n:B) RETURN n");
+        // a choice is still a choice
+        assert_eq!(print("MATCH (n:A|B) RETURN n"), "MATCH (n) WHERE label(n) IN ['A', 'B'] RETURN n");
+        assert_eq!(print("MATCH (a) WHERE EXISTS { MATCH (a)-[:X]->(:A:B) } RETURN a"),
+            "MATCH (a) WHERE EXISTS { MATCH (a)-[:X]->(__og_n1:A) WHERE false } RETURN a");
+        assert!(matches!(node_label_test("n", &[vec!["A".into()], vec!["B".into(), "A".into()]]), (Some(l), None) if l == "A"));
+        assert!(matches!(node_label_test("n", &[]), (None, None)));
+        // writes: one label, as before
+        let mut p = Printer::new(None, "2026-11-18T00:00:00+00:00".into());
+        let e = p.query(&cypher_syntax::parse("CREATE (n:A:B)").unwrap()).unwrap_err();
+        assert!(e.contains("more than one label"), "{e}");
+        let e = p.query(&cypher_syntax::parse("MERGE (n:A|B {k: 1})").unwrap()).unwrap_err();
+        assert!(e.contains("not a choice"), "{e}");
+        assert_eq!(print("CREATE (n:A:A {k: 1})"), "CREATE (n:A {k: 1})");
     }
 
     #[test]

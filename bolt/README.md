@@ -75,6 +75,7 @@ Rewrites (each found by running Robo Architect's queries against AGE; see
 | `datetime()`, `date()`; `datetime($p)`; `datetime() - duration({minutes: $m})` | the statement's clock, `$p` written as PostgreSQL writes a timestamptz, the shifted instant — as ISO 8601 text in parameters |
 | `randomUUID()` | `toString(pg_catalog.concat(pg_catalog.gen_random_uuid()))` |
 | `n:L` in an expression; `(n:A\|B)`, `-[:A\|B]-` | `label(n) = 'L'`; the choice moved into the clause's WHERE |
+| `(n:A:B)` in MATCH / OPTIONAL MATCH / EXISTS — both labels (SUITES B1: was read as either, `MATCH (n:Lamp:Part)` counted Lamps and Parts) | `(n:A) WHERE false` when A ≠ B (a vertex has one label), `(n:A)` for `(n:A:A)`; decided in `cypher.rs` `node_label_test`, the place a label hierarchy will change it |
 | `any/all/none/single(x IN l WHERE p)` | `size([x IN l WHERE p]) > 0` … (AGE's own crash the backend when `p` reads a matched node) |
 | `n {.a, .b}` | `CASE WHEN n IS NULL THEN null ELSE {a: n.a, b: n.b} END` (Neo4j's answer for null and for an absent key) |
 | `coalesce(a, b)` over nodes | `coalesce(head([a]), head([b]))` |
