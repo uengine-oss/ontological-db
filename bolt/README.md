@@ -77,8 +77,10 @@ Rewrites (each found by running Robo Architect's queries against AGE; see
 | `randomUUID()` | `toString(pg_catalog.concat(pg_catalog.gen_random_uuid()))` |
 | `id(x) IN list` (AGE: `id(n) IN $param` kills the backend, signal 11; `id(n) IN [1, 2]` fails "not a common type" — ROBO 11.4) | `id(coalesce(x)) IN list` |
 | `elementId(x) = e`, `e = elementId(x)` (STUDIO G4: `toString(id(…)) = e` reads every row, 28 ms → 2 ms at 25k vertices) | `id(x) = $__og_eid_p` / `id(x) = 12` when the parameter or literal is an integer's text; `id(x) = toInteger(e) AND toString(id(coalesce(x))) = e` for an expression (the index finds it, the text decides); the text comparison for anything else. `elementId(x) IN list` stays a text comparison (`id(x) IN` is the crash above) |
-| `n:L` in an expression; `(n:A\|B)`, `-[:A\|B]-` | `label(n) = 'L'`; the choice moved into the clause's WHERE |
-| `(n:A:B)` in MATCH / OPTIONAL MATCH / EXISTS — both labels (SUITES B1: was read as either, `MATCH (n:Lamp:Part)` counted Lamps and Parts) | `(n:A) WHERE false` when A ≠ B (a vertex has one label), `(n:A)` for `(n:A:A)`; decided in `cypher.rs` `node_label_test`, the place a label hierarchy will change it |
+| `n:L` in an expression; `(n:A\|B)`, `-[:A\|B]-` | `label(n) = 'L'`, or `label(n) IN ['L', the labels whose tables inherit L's]` when there are any (*Label hierarchy* below); the choice moved into the clause's WHERE — for a node, `label(n) IN [A, B, the labels below them]` |
+| `(n:A:B)` in MATCH / OPTIONAL MATCH / EXISTS — both labels (SUITES B1: was read as either, `MATCH (n:Lamp:Part)` counted Lamps and Parts; STUDIO G2: `(n:_Entity:Customer)` became a scan of every vertex, 6–10 ms at 25k, where one table takes 1 ms) | `(n:B)` — the last label's table, which AGE scans together with the tables inheriting it — with nothing more when every one of those tables has A too (`(n:_Entity:Customer)` once `Customer` inherits `_Entity`), `label(n) IN [those that do]` when some do, `false` when none does; `(n:A)` for `(n:A:A)` (`cypher.rs` `node_label_test`) |
+| `CREATE` / `MERGE (n:A:B:C {…})` (STUDIO G1, ANALYZER §5.1: refused before — the analyzer's every node write, Studio's entity, ingest and publish writes) | `(n:C {…})`, and before it, in its transaction, the label tables that are missing (`create_vlabel`) and the inheritance C's table lacks (`ALTER TABLE "g"."C" INHERIT "g"."A"`) — *Label hierarchy* below (`hierarchy.rs`) |
+| `labels(x)` (STUDIO G3: `["Customer"]` where Neo4j has `["Customer", "_Entity"]`; `$class IN labels(n)` found nothing) | `(CASE label(x) WHEN 'Customer' THEN ['Customer', '_Entity'] … ELSE labels(x) END)`, a branch for each label whose table inherits others, nearest first (`labels(n)[0]` is the specific label); as written when no table inherits |
 | `any/all/none/single(x IN l WHERE p)` | `size([x IN l WHERE p]) > 0` … (AGE's own crash the backend when `p` reads a matched node) |
 | `n {.a, .b}` | `CASE WHEN n IS NULL THEN null ELSE {a: n.a, b: n.b} END` (Neo4j's answer for null and for an absent key) |
 | `coalesce(a, b)` over nodes | `coalesce(head([a]), head([b]))` |
@@ -101,14 +103,89 @@ Rewrites (each found by running Robo Architect's queries against AGE; see
 Refused by name: such a relationship where the trails themselves matter (a
 relationship or path variable on it, `count(*)` or rows per trail after it, a
 lower bound above 1, two of them in one statement — AGE enumerates every
-trail; `*1..30` over ten types ran the server out of memory), a node with two
-labels, and Ontological's fabric statements.
+trail; `*1..30` over ten types ran the server out of memory), a choice of
+labels (`:A|B`) or of relationship types in `CREATE` / `MERGE`, the label
+writes *Label hierarchy* lists, and Ontological's fabric statements.
 
 `summary.counters` come from PostgreSQL's per-transaction statistics of the
 graph's label tables (`pg_stat_xact_*`), read before and after the statement:
 nodes and relationships created and deleted are exact; `properties-set`
-counts updated elements, not properties. A write sent without `BEGIN` runs in
+counts updated elements, not properties; `labels-added` counts one label per
+node created (its table's — not the ones it has through inheritance, where
+Neo4j counts every label of `(:A:B:C)`). A write sent without `BEGIN` runs in
 a transaction of its own for that reason.
+
+### Label hierarchy
+
+A vertex in AGE is a row of one label table, so it has one label. The nodes
+Studio and the analyzer write have several — an umbrella and a kind,
+`(:_Entity:Customer)`, `(:ANALYZER_OWNED:TABLE)` — and are found by either.
+Here the kind's table **inherits** the umbrella's (PostgreSQL's `ALTER TABLE …
+INHERIT`), and a node has label L when its table is L's or inherits L's,
+directly or not (`src/age/hierarchy.rs`). AGE's label scan takes the
+inheriting tables along, so `MATCH (n:_Entity)` finds the Customers with
+nothing rewritten — a single-label MATCH is sent as it is.
+
+- **Storage.** `CREATE` / `MERGE (n:A:B:C {…})` stores the node under the last
+  label, C (the specific one, as both clients write them), unless one of the
+  labels given inherits all the others already, which is then used. Before the
+  statement, in its transaction, the gateway makes the label tables that are
+  missing (`SELECT ag_catalog.create_vlabel('<graph>'::cstring,
+  '<label>'::cstring) WHERE NOT EXISTS (… ag_label …)`) and gives C's table
+  what it does not inherit yet (`ALTER TABLE "<graph>"."C" INHERIT
+  "<graph>"."B"`, the nearest label first, so what B inherits is not added
+  again). Only C's table changes: B does not become an A. The data itself is
+  written by AGE's Cypher, `CREATE (n:C {…})`.
+- **Refused** (`Neo.ClientError.Statement.SemanticError`): C exists and holds
+  nodes — in its table or one inheriting it, asked as `MATCH (n:C) RETURN
+  id(n) LIMIT 1` before anything is made — and does not inherit A yet:
+  inheriting would give every existing C node label A unasked ("… C already
+  has nodes, and they would all become A as well. Use a label that has no
+  nodes yet, or delete the C nodes first"); a cycle (C would have to inherit A,
+  whose table inherits C's); a label that is a relationship type in the graph.
+- **Reads** with more than one label, `n:L` and `labels()` are printed from
+  the hierarchy (rows above). It is read from the catalog — `ag_label` joined
+  with `pg_inherits` — once for each statement that needs it (a node pattern
+  with more than one label, `n:L`, `labels()`, a label SET / REMOVE), and kept
+  for nothing else; a plain `MATCH (n:L)` does not read it:
+
+  ```sql
+  SELECT l.name::text, l.kind::text, p.name::text
+  FROM ag_catalog.ag_label l
+  JOIN ag_catalog.ag_graph g ON g.graphid = l.graph
+  LEFT JOIN pg_catalog.pg_inherits i ON i.inhrelid = l.relation::oid
+  LEFT JOIN ag_catalog.ag_label p ON p.relation::oid = i.inhparent AND p.graph = l.graph
+    AND p.kind = 'v' AND p.name <> '_ag_label_vertex'
+  WHERE g.name = '<graph>' AND l.name NOT IN ('_ag_label_vertex', '_ag_label_edge')
+  ORDER BY 1, i.inhseqno
+  ```
+- **Label changes** (`split.rs`). `SET n:L` of a label the node has through its
+  table does nothing (no `labels-added`); `REMOVE n:L` of such a label, while
+  the table's own label stays, is refused ("`n` is stored as Customer, and
+  Customer's table inherits _Entity — every Customer node is _Entity …").
+  A vertex moved to another table — `REMOVE n:Customer SET n:Client`, its row
+  moved as before, the one place the gateway writes a label table — has the
+  new table inherit the old one's parents first (DDL only; refused as above
+  when the new table exists and holds nodes). Removing a node's own label
+  moves it to its parent's table; setting a label below its own moves it down.
+- **The id changes** when a vertex changes table: AGE's graphid carries the
+  label's number. An element id a client kept from before the change (a screen
+  showing the node) no longer finds it. That is AGE's limit; only a changed AGE
+  would keep it.
+- **Uniqueness is per table.** `CREATE CONSTRAINT … FOR (n:ANALYZER_OWNED)
+  REQUIRE n.id IS UNIQUE` makes a unique index on `ANALYZER_OWNED`'s table and
+  answers as before (`constraints-added: 1`), but PostgreSQL indexes are not
+  inherited: it does not cover the nodes stored in `TABLE`, `COLUMN`, … whose
+  tables inherit it, and two of those may share an id. The gateway does not
+  emulate a constraint across tables. A constraint on the label a node is
+  stored under (`FOR (n:TABLE)`) holds; the analyzer's `MERGE` on the specific
+  label is what keeps one node per key.
+- **Bolt nodes.** A node returned as a value (`RETURN n`) carries its table's
+  one label in `Node.labels`; `labels(n)` gives the inherited ones as well.
+- That AGE's scans, `MERGE`, `DELETE`, `label()` and `drop_label` follow
+  PostgreSQL inheritance is AGE 1.8.0's observed behaviour (STUDIO-ON-AGE
+  §2.5), not a documented one. The probe tests (`tests/age-probes/`) are to
+  check it on every AGE version.
 
 ## Time limits and cancellation
 
