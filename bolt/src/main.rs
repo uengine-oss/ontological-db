@@ -23,6 +23,10 @@
 //!                         (`public`, for `ontological`). A schema name — e.g.
 //!                         `oga_catalog` for `ontological_age` — makes every
 //!                         call name it (`session::EngineSql`).
+//!     OG_BOLT_BACKEND     `ontological` (default) or `age`: Apache AGE's
+//!                         `cypher()` instead of the engine (`age/mod.rs`).
+//!     OG_BOLT_AGE_CREATE_GRAPHS  age only; default on — a graph a session
+//!                         names is made if it does not exist. `0` to refuse.
 //!
 //! The listen default is loopback. Bolt carries the password in the clear on
 //! the way in — there is no TLS here — and this process authenticates by
@@ -32,6 +36,7 @@
 //! it; `start.sh` makes it explicitly, because there the container's network
 //! namespace is the boundary rather than the bind address.
 
+mod age;
 mod packstream;
 mod session;
 
@@ -69,6 +74,8 @@ pub struct Config {
     pub statement_timeout: Option<String>,
     /// The engine's functions, as every session calls them.
     pub engine: session::EngineSql,
+    /// Set when the backend is Apache AGE rather than the engine.
+    pub age: Option<age::AgeConfig>,
 }
 
 fn env_or(key: &str, default: &str) -> String {
@@ -88,6 +95,14 @@ fn main() {
         advertised: env_or("OG_BOLT_ADVERTISED", &listen),
         statement_timeout: env::var("OG_BOLT_STATEMENT_TIMEOUT").ok().filter(|v| !v.trim().is_empty()),
         engine: session::EngineSql::from_setting(env::var("OG_BOLT_ENGINE_SCHEMA").ok().as_deref()),
+        age: match env::var("OG_BOLT_BACKEND").map(|v| v.trim().to_ascii_lowercase()).as_deref() {
+            Err(_) | Ok("") | Ok("ontological") => None,
+            Ok("age") => Some(age::AgeConfig::from_env(|k| env::var(k).ok())),
+            Ok(other) => {
+                eprintln!("ontological-bolt: OG_BOLT_BACKEND must be 'ontological' or 'age', not '{other}'");
+                std::process::exit(2);
+            }
+        },
     };
 
     let listener = match TcpListener::bind(&listen) {
@@ -104,7 +119,13 @@ fn main() {
         config.pg_port,
         config.pg_database,
         config.default_graph,
-        config.engine.schema().map_or(String::new(), |s| format!(", engine functions in schema '{s}'"))
+        match &config.age {
+            Some(a) => format!(
+                ", backend Apache AGE (graphs {})",
+                if a.create_graphs { "made on first use" } else { "must exist" }
+            ),
+            None => config.engine.schema().map_or(String::new(), |s| format!(", engine functions in schema '{s}'")),
+        }
     );
 
     let config = Arc::new(config);

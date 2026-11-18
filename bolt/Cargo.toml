@@ -11,6 +11,9 @@ path = "src/main.rs"
 [dependencies]
 postgres = "0.19"
 serde_json = "1"
+# The engine's Cypher parser, for the AGE backend (src/age/): the engine's own
+# lexer, parser and AST, built without pgrx.
+cypher-syntax = { path = "../cypher-syntax" }
 
 [profile.release]
 opt-level = 3
