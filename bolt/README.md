@@ -46,7 +46,8 @@ their SQL are the ones above.
 | `OG_BOLT_BACKEND` | `ontological` | `age` to run Cypher through `ag_catalog.cypher()` |
 | `OG_BOLT_AGE_CREATE_GRAPHS` | on | make a graph the first time a session names it (as the role that logged in, which then owns it — AGE needs that to add labels). `0`: answer `DatabaseNotFound` |
 | `OG_BOLT_AGE_LOAD` | off | `LOAD 'age'` at login, for a server that does not preload AGE (superuser only) |
-| `OG_BOLT_AGE_TRACE` | off | log every SQL statement sent to AGE and its time to stderr |
+| `OG_BOLT_AGE_TRACE` | off | log every SQL statement sent to AGE and its time, and each statement's plan (cypher, steps, reach, ddl …), to stderr |
+| `OG_BOLT_AGE_COUNTERS` | on | read `summary.counters` (two short SQL statements around every write); off: writes report no counters |
 
 The session sets `search_path = ag_catalog, "$user", public` (AGE's generated
 SQL needs it). `HELLO` answers `Neo4j/4.4.0 (age-bolt/<version>)`, without

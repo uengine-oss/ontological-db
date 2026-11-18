@@ -45,6 +45,10 @@ pub struct AgeConfig {
     pub load: bool,
     /// Write every SQL statement sent to AGE, and how long it took, to stderr.
     pub trace: bool,
+    /// Read the write counters (two short SQL statements around every write).
+    /// On by default; a client that never reads `summary.counters` may turn
+    /// them off.
+    pub counters: bool,
 }
 
 fn flag(v: Option<String>, default: bool) -> bool {
@@ -61,6 +65,7 @@ impl AgeConfig {
             create_graphs: flag(get("OG_BOLT_AGE_CREATE_GRAPHS"), true),
             load: flag(get("OG_BOLT_AGE_LOAD"), false),
             trace: flag(get("OG_BOLT_AGE_TRACE"), false),
+            counters: flag(get("OG_BOLT_AGE_COUNTERS"), true),
         }
     }
 }
@@ -81,6 +86,20 @@ pub enum Plan {
     /// `SHOW GRAPHS` / `CREATE GRAPH name`, the graph statements Ontological
     /// takes over Bolt (Robo's launcher lists and makes projects with them).
     Graphs(GraphStatement),
+}
+
+impl Plan {
+    /// What the trace calls it.
+    pub fn kind(&self) -> &'static str {
+        match self {
+            Plan::Cypher { .. } => "cypher",
+            Plan::Ddl(_) => "ddl",
+            Plan::Procedure(_) => "procedure",
+            Plan::Steps(_) => "steps",
+            Plan::Reach(_) => "reach",
+            Plan::Graphs(_) => "graphs",
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]

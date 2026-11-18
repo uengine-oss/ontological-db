@@ -78,6 +78,9 @@ impl Session<'_> {
         }
         let st = age::translate(query, &pjson).map_err(|r| Failure::client(&r.code, r.message))?;
         self.qtype = if st.write { "w" } else { "r" };
+        if self.config.age.as_ref().is_some_and(|a| a.trace) {
+            eprintln!("age-trace plan {}{}", st.plan.kind(), if st.write { " write" } else { "" });
+        }
         if let serde_json::Value::Object(m) = &mut pjson {
             for (k, v) in &st.extra {
                 m.insert(k.clone(), v.clone());
@@ -183,9 +186,10 @@ impl Session<'_> {
         stream: &mut TcpStream,
     ) -> Result<Outcome, Failure> {
         let graph = self.graph.clone();
+        let counters = self.config.age.as_ref().is_none_or(|a| a.counters);
         match &st.plan {
             Plan::Cypher { text, ncols } => {
-                let before = if st.write { Some(self.age_counts()?) } else { None };
+                let before = if st.write && counters { Some(self.age_counts()?) } else { None };
                 let sql = age::cypher_sql(&graph, text, *ncols);
                 let rows = self.age_query(&sql, params, limit_ms, stream)?;
                 let records = rows_to_records(&rows, *ncols)?;
@@ -242,7 +246,7 @@ impl Session<'_> {
                 Ok(Outcome { records, stats: None })
             }
             Plan::Reach(r) => {
-                let before = if st.write { Some(self.age_counts()?) } else { None };
+                let before = if st.write && counters { Some(self.age_counts()?) } else { None };
                 let rows = {
                     let mut x = Steps { sess: &mut *self, stream: &mut *stream, limit_ms };
                     age::reach::run(&mut x, r, params).map_err(|r| Failure::client(&r.code, r.message))?
@@ -259,19 +263,25 @@ impl Session<'_> {
                 Ok(Outcome { records, stats })
             }
             Plan::Steps(steps) => {
-                let before = self.age_counts()?;
+                let before = if counters { Some(self.age_counts()?) } else { None };
                 let (rows, adjust) = {
                     let mut x = Steps { sess: &mut *self, stream: &mut *stream, limit_ms };
                     age::split::run(&mut x, steps, params).map_err(|r| Failure::client(&r.code, r.message))?
                 };
-                let mut stats = Stats::from_counts(self.age_counts()?.minus(before));
-                stats.add(&adjust);
+                let stats = match before {
+                    Some(b) => {
+                        let mut stats = Stats::from_counts(self.age_counts()?.minus(b));
+                        stats.add(&adjust);
+                        Some(stats)
+                    }
+                    None => None,
+                };
                 let records = if steps.ncols == 0 {
                     Vec::new()
                 } else {
                     rows.iter().map(|r| Value::List(r.iter().map(agtype::Ag::to_bolt).collect())).collect()
                 };
-                Ok(Outcome { records, stats: if st.write { Some(stats) } else { None } })
+                Ok(Outcome { records, stats: if st.write { stats } else { None } })
             }
         }
     }
