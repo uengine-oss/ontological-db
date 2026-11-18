@@ -1677,6 +1677,173 @@ pub fn split_aggregations(q: &Query) -> Query {
     Query { clauses: out, union: q.union.as_ref().map(|(all, t)| (*all, Box::new(split_aggregations(t)))) }
 }
 
+// ------------------------------------------------------- MERGE and null
+
+/// A MERGE pattern property whose value may be null: what Neo4j says then.
+#[derive(Debug, Clone, PartialEq)]
+pub struct NullMerge {
+    /// `node` or `relationship`.
+    pub kind: &'static str,
+    pub key: String,
+    /// The element as Neo4j shows it in the message: `(:W {key: null})`.
+    pub shape: String,
+}
+
+impl NullMerge {
+    /// Neo4j's `Neo.ClientError.Statement.SemanticError` text.
+    pub fn message(&self) -> String {
+        format!("Cannot merge the following {} because of null property value for '{}': {}", self.kind, self.key, self.shape)
+    }
+}
+
+/// What a MERGE key is, as far as the gateway can tell before sending it.
+enum Known {
+    Null,
+    NotNull,
+    Unknown,
+}
+
+fn known(e: &Expr, params: Option<&Map<String, Json>>) -> Known {
+    /// `$p`, `$p.a.b`: the parameter's value, if it was given.
+    fn param_value<'a>(e: &Expr, params: &'a Map<String, Json>) -> Option<Option<&'a Json>> {
+        match e {
+            Expr::Param(p) => params.get(p).map(Some),
+            Expr::Prop(b, k) => match param_value(b, params)? {
+                Some(Json::Object(m)) => Some(m.get(k)),
+                Some(Json::Null) | None => Some(None),
+                // a field of something that is not a map: AGE says what it says
+                Some(_) => None,
+            },
+            _ => None,
+        }
+    }
+    match e {
+        Expr::Lit(Lit::Null) => Known::Null,
+        Expr::Lit(_) | Expr::List(_) | Expr::Map(_) => Known::NotNull,
+        // the statement's clock and a new UUID are never null
+        Expr::Func { name, args, .. }
+            if args.is_empty()
+                && matches!(name.to_ascii_lowercase().as_str(), "datetime" | "localdatetime" | "date" | "timestamp" | "randomuuid") =>
+        {
+            Known::NotNull
+        }
+        // not given: AGE reports the parameter missing, as Neo4j does
+        Expr::Param(p) if !params.is_some_and(|m| m.contains_key(p)) => Known::NotNull,
+        Expr::Param(_) | Expr::Prop(..) => match params.and_then(|m| param_value(e, m)) {
+            Some(None) | Some(Some(Json::Null)) => Known::Null,
+            Some(Some(_)) => Known::NotNull,
+            // not a parameter path, or a parameter not given (AGE says it is missing)
+            None => Known::Unknown,
+        },
+        _ => Known::Unknown,
+    }
+}
+
+/// `CASE WHEN e IS NULL THEN 1 / (CASE WHEN e IS NULL THEN 0 ELSE 1 END) ELSE e END`:
+/// `e`, or a division by zero when it is null. The divisor reads `e`, so
+/// PostgreSQL cannot fold the division while planning (a constant `1 / 0` in
+/// a branch never taken fails at plan time); and the value is used — the
+/// pattern's map is the MERGE's match and its create — so it cannot be
+/// dropped as an unused column either.
+fn null_guard(e: &Expr) -> Expr {
+    let is_null = Expr::IsNull(Box::new(e.clone()), true);
+    let zero_if_null = Expr::Case {
+        operand: None,
+        whens: vec![(is_null.clone(), Expr::Lit(Lit::Int(0)))],
+        else_: Some(Box::new(Expr::Lit(Lit::Int(1)))),
+    };
+    Expr::Case {
+        operand: None,
+        whens: vec![(is_null, Expr::Binary(BinOp::Div, Box::new(Expr::Lit(Lit::Int(1))), Box::new(zero_if_null)))],
+        else_: Some(Box::new(e.clone())),
+    }
+}
+
+fn node_shape(n: &NodePat, key: &str) -> String {
+    let labels: String = distinct(&n.labels).iter().map(|l| format!(":{l}")).collect();
+    format!("({labels} {{{key}: null}})")
+}
+
+fn rel_shape(r: &RelPat, key: &str) -> String {
+    let t: String = r.types.first().map(|t| format!(":{t}")).unwrap_or_default();
+    match r.dir {
+        Dir::Out => format!("()-[{t} {{{key}: null}}]->()"),
+        Dir::In => format!("()<-[{t} {{{key}: null}}]-()"),
+        Dir::Both => format!("()-[{t} {{{key}: null}}]-()"),
+    }
+}
+
+/// MERGE with a null property value (SUITES-ON-AGE N7): Neo4j refuses
+/// (`Cannot merge the following node because of null property value for
+/// 'key'`), AGE 1.8.0 makes an element without the key — `UNWIND [{x: 1}] AS
+/// r MERGE (n:W {key: r.missing}) RETURN n` gives a new `(:W {})` every time,
+/// so MERGE stops being idempotent.
+///
+/// A value known now — a literal, a parameter given, a field of one — is
+/// checked here: null is refused with Neo4j's message (`Err`). Any other value
+/// goes to AGE as [`null_guard`]`(e)`, which divides by zero when it is null
+/// (AGE: `ERRCODE_DIVISION_BY_ZERO`, "division by zero", `agtype_ops.c`
+/// `agtype_div`); the gateway reads that error, from a statement holding a
+/// guard, as the [`NullMerge`]s returned (`run.rs`). Into FOREACH and
+/// CALL { … } bodies and UNION's branches.
+pub fn guard_merge_nulls(q: &Query, params: Option<&Map<String, Json>>) -> Result<(Query, Vec<NullMerge>), NullMerge> {
+    let mut guards = Vec::new();
+    let q = guard_query(q, params, &mut guards)?;
+    Ok((q, guards))
+}
+
+fn guard_query(q: &Query, params: Option<&Map<String, Json>>, out: &mut Vec<NullMerge>) -> Result<Query, NullMerge> {
+    let clauses = guard_clauses(&q.clauses, params, out)?;
+    let union = match &q.union {
+        Some((all, t)) => Some((*all, Box::new(guard_query(t, params, out)?))),
+        None => None,
+    };
+    Ok(Query { clauses, union })
+}
+
+fn guard_clauses(cs: &[Clause], params: Option<&Map<String, Json>>, out: &mut Vec<NullMerge>) -> Result<Vec<Clause>, NullMerge> {
+    let mut res = Vec::with_capacity(cs.len());
+    for c in cs {
+        res.push(match c {
+            Clause::Merge { pattern, on_create, on_match } => {
+                let mut pattern = pattern.clone();
+                for el in &mut pattern.elems {
+                    let (props, kind, shape): (&mut Vec<(String, Expr)>, &'static str, Box<dyn Fn(&str) -> String>) = match el {
+                        PatElem::Node(n) => {
+                            let nn = n.clone();
+                            (&mut n.props, "node", Box::new(move |k: &str| node_shape(&nn, k)))
+                        }
+                        PatElem::Rel(r) => {
+                            let rr = r.clone();
+                            (&mut r.props, "relationship", Box::new(move |k: &str| rel_shape(&rr, k)))
+                        }
+                    };
+                    for (k, v) in props.iter_mut() {
+                        let nm = NullMerge { kind, key: k.clone(), shape: shape(k) };
+                        match known(v, params) {
+                            Known::Null => return Err(nm),
+                            Known::NotNull => {}
+                            Known::Unknown => {
+                                *v = null_guard(v);
+                                out.push(nm);
+                            }
+                        }
+                    }
+                }
+                Clause::Merge { pattern, on_create: on_create.clone(), on_match: on_match.clone() }
+            }
+            Clause::Foreach { var, list, body } => {
+                Clause::Foreach { var: var.clone(), list: list.clone(), body: guard_clauses(body, params, out)? }
+            }
+            Clause::Subquery { scope, body, optional } => {
+                Clause::Subquery { scope: scope.clone(), body: Box::new(guard_query(body, params, out)?), optional: *optional }
+            }
+            other => other.clone(),
+        });
+    }
+    Ok(res)
+}
+
 // ------------------------------------------------------------- MERGE + SET
 
 /// [`fold_merge_sets`] inside CALL { … } bodies and FOREACH bodies only: at the
@@ -1963,6 +2130,33 @@ mod tests {
             assert!(e.contains("not run on the AGE backend"), "{e}");
         }
         assert_eq!(print("MATCH (a)-[:X*1..30]-(b) RETURN b"), "MATCH (a)-[:X*1..30]-(b) RETURN b");
+    }
+
+    #[test]
+    fn a_null_merge_key_fails_as_in_neo4j() {
+        let params: Map<String, Json> = serde_json::json!({"k": null, "m": {"a": 1}, "v": 5}).as_object().unwrap().clone();
+        let guard = |q: &str| guard_merge_nulls(&cypher_syntax::parse(q).unwrap(), Some(&params));
+        // known to be null now: refused with Neo4j's words
+        assert_eq!(guard("MERGE (n:W {key: null})").unwrap_err().message(),
+            "Cannot merge the following node because of null property value for 'key': (:W {key: null})");
+        for q in ["MERGE (n:W {key: $k}) RETURN n", "MERGE (n:W {key: $m.b})", "MATCH (a) FOREACH (x IN [1] | MERGE (a)-[:R]->(:W {key: $k}))"] {
+            assert_eq!(guard(q).unwrap_err().key, "key", "{q}");
+        }
+        assert_eq!(guard("MATCH (a), (b) MERGE (a)-[:R {since: $k}]->(b)").unwrap_err().message(),
+            "Cannot merge the following relationship because of null property value for 'since': ()-[:R {since: null}]->()");
+        // known not to be null, or a parameter not given (AGE reports it missing): as it was
+        let (q, g) = guard("MERGE (n:W {key: $v, a: $m.a, c: 'x', t: datetime(), u: $nope})").unwrap();
+        assert!(g.is_empty());
+        assert_eq!(Printer::new(Some(&params), "2026-11-18T00:00:00+00:00".into()).query(&q).unwrap(),
+            "MERGE (n:W {key: $v, a: $m.a, c: 'x', t: $__og_now, u: $nope})");
+        // computed: a division by zero when it is null, which the gateway reads back
+        let (q, g) = guard("UNWIND [{x: 1}] AS r MERGE (n:W {key: r.missing}) RETURN n").unwrap();
+        assert_eq!(g, vec![NullMerge { kind: "node", key: "key".into(), shape: "(:W {key: null})".into() }]);
+        assert_eq!(Printer::new(None, String::new()).query(&q).unwrap(),
+            "UNWIND [{x: 1}] AS r MERGE (n:W {key: CASE WHEN r.missing IS NULL THEN 1 / CASE WHEN r.missing IS NULL THEN 0 ELSE 1 END ELSE r.missing END}) RETURN n");
+        let (_, g) = guard("UNWIND $rows AS r MATCH (a {id: r.a}) MERGE (a)<-[e:R {k: r.k}]-(b:B {id: r.b})").unwrap();
+        assert_eq!(g.iter().map(|x| (x.kind, x.shape.as_str())).collect::<Vec<_>>(),
+            vec![("relationship", "()<-[:R {k: null}]-()"), ("node", "(:B {id: null})")]);
     }
 
     #[test]

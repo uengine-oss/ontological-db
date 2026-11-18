@@ -127,7 +127,14 @@ impl Session<'_> {
                 return Err(f);
             }
         }
-        let done = self.age_execute(&st, &pjson, limit_ms, stream);
+        // A MERGE key guarded against null that was null fails as a division
+        // by zero; Neo4j's answer is its null-merge error (N7).
+        let done = self.age_execute(&st, &pjson, limit_ms, stream).map_err(|f| {
+            match age::null_merge_refusal(&f.code, &f.message, &st.merge_nulls) {
+                Some(r) => Failure::client(&r.code, r.message),
+                None => f,
+            }
+        });
         let out = match (done, wrap) {
             (Ok(o), true) => {
                 self.sql("COMMIT")?;

@@ -83,6 +83,7 @@ Rewrites (each found by running Robo Architect's queries against AGE; see
 | `n {.a, .b}` | `CASE WHEN n IS NULL THEN null ELSE {a: n.a, b: n.b} END` (Neo4j's answer for null and for an absent key) |
 | `coalesce(a, b)` over nodes | `coalesce(head([a]), head([b]))` |
 | `SET n += $map` | `WITH …, $map AS p SET n += p` |
+| a MERGE pattern property that is null (SUITES N7: AGE makes an element without the key, a new one every time; Neo4j refuses) | known now (a literal, a parameter given, a field of one): refused with Neo4j's `SemanticError` "Cannot merge the following node because of null property value for 'key': (:W {key: null})" ("…relationship…"). Computed (`r.missing`): sent as `CASE WHEN e IS NULL THEN 1 / CASE WHEN e IS NULL THEN 0 ELSE 1 END ELSE e END`, and AGE's "division by zero" from such a statement is answered with that error (`cypher.rs` `guard_merge_nulls`, `mod.rs` `null_merge_refusal`) |
 | an aggregation next to a list comprehension | three projections: lists, aggregates, the rest |
 | variables named `id`, `properties`, `start_id`, `end_id` | renamed (they clash with the label tables' columns) |
 | a leading `OPTIONAL MATCH` | `WITH 1 AS …` in front (AGE returns no row when nothing matches) |

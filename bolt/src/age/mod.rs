@@ -144,7 +144,7 @@ fn graph_or_fabric(query: &str) -> Option<Result<Statement, Refusal>> {
     let up: Vec<String> = w.iter().map(|x| x.to_ascii_uppercase()).collect();
     let up: Vec<&str> = up.iter().map(String::as_str).collect();
     let plan = |g: GraphStatement, columns: &[&str], write: bool| {
-        Some(Ok(Statement { plan: Plan::Graphs(g), columns: columns.iter().map(|c| c.to_string()).collect(), write, extra: Map::new() }))
+        Some(Ok(Statement { plan: Plan::Graphs(g), columns: columns.iter().map(|c| c.to_string()).collect(), write, extra: Map::new(), merge_nulls: Vec::new() }))
     };
     match up.as_slice() {
         ["SHOW", "GRAPHS", ..] if up.len() == 2 => plan(GraphStatement::Show, &["graph", "types"], false),
@@ -175,6 +175,9 @@ pub struct Statement {
     pub write: bool,
     /// Parameters the rewrites added, merged into the statement's own.
     pub extra: Map<String, Json>,
+    /// MERGE properties sent guarded against null (`cypher::guard_merge_nulls`):
+    /// a division by zero from this statement is Neo4j's null-merge error.
+    pub merge_nulls: Vec<cypher::NullMerge>,
 }
 
 /// A failure, as the code a Neo4j driver expects and a message.
@@ -216,13 +219,16 @@ pub fn translate(query: &str, params: &Json) -> Result<Statement, Refusal> {
         if q.clauses.len() > 1 {
             return Err(Refusal::syntax("a schema command cannot be combined with other clauses".into()));
         }
-        return Ok(Statement { plan: Plan::Ddl(d.clone()), columns, write: true, extra: Map::new() });
+        return Ok(Statement { plan: Plan::Ddl(d.clone()), columns, write: true, extra: Map::new(), merge_nulls: Vec::new() });
     }
     if let Some(p) = ddl::Procedure::recognise(&q) {
         let columns = p.columns();
-        return Ok(Statement { plan: Plan::Procedure(p), columns, write: false, extra: Map::new() });
+        return Ok(Statement { plan: Plan::Procedure(p), columns, write: false, extra: Map::new(), merge_nulls: Vec::new() });
     }
     let pmap = params.as_object();
+    // MERGE keys that are null: refused now, or guarded (N7).
+    let (q, merge_nulls) = cypher::guard_merge_nulls(&q, pmap)
+        .map_err(|n| Refusal { code: "Neo.ClientError.Statement.SemanticError".into(), message: n.message() })?;
     let mut printer = cypher::Printer::new(pmap, cypher::now_text());
     if reach::needed(&q) {
         if split::needed(&q) {
@@ -231,14 +237,14 @@ pub fn translate(query: &str, params: &Json) -> Result<Statement, Refusal> {
             )));
         }
         let r = reach::plan(&q, &mut printer, columns.len()).map_err(Refusal::syntax)?;
-        return Ok(Statement { plan: Plan::Reach(r), columns, write, extra: printer.extra });
+        return Ok(Statement { plan: Plan::Reach(r), columns, write, extra: printer.extra, merge_nulls });
     }
     if split::needed(&q) {
         let steps = split::plan(&q, &mut printer).map_err(Refusal::syntax)?;
-        return Ok(Statement { plan: Plan::Steps(steps), columns, write, extra: printer.extra });
+        return Ok(Statement { plan: Plan::Steps(steps), columns, write, extra: printer.extra, merge_nulls });
     }
     let text = printer.query(&q).map_err(Refusal::syntax)?;
-    Ok(Statement { plan: Plan::Cypher { text, ncols: columns.len() }, columns, write, extra: printer.extra })
+    Ok(Statement { plan: Plan::Cypher { text, ncols: columns.len() }, columns, write, extra: printer.extra, merge_nulls })
 }
 
 /// A SQL string literal.
@@ -394,6 +400,22 @@ impl Stats {
     }
 }
 
+/// A failure of a statement whose MERGE properties went guarded against null
+/// ([`cypher::guard_merge_nulls`]): AGE's "division by zero" is the guard's,
+/// and Neo4j's answer is its null-merge error. With more than one guarded
+/// property the gateway cannot tell which one was null, and names them all.
+pub fn null_merge_refusal(code: &str, message: &str, guards: &[cypher::NullMerge]) -> Option<Refusal> {
+    if guards.is_empty() || code != "Neo.ClientError.Statement.ArithmeticError" || !message.contains("division by zero") {
+        return None;
+    }
+    let mut m = guards[0].message();
+    if guards.len() > 1 {
+        let others: Vec<String> = guards[1..].iter().map(|g| format!("'{}'", g.key)).collect();
+        m.push_str(&format!(" (or of {} — one of the MERGE properties computed in this statement was null)", others.join(", ")));
+    }
+    Some(Refusal { code: "Neo.ClientError.Statement.SemanticError".into(), message: m })
+}
+
 /// The Neo4j status code for an error from AGE.
 ///
 /// AGE reports through PostgreSQL's SQLSTATEs, so a few that mean something
@@ -450,6 +472,24 @@ mod tests {
         assert_eq!(j["nodes-deleted"], Json::from(1));
         assert_eq!(j["contains-updates"], Json::Bool(true));
         assert_eq!(Stats::default().to_json()["contains-updates"], Json::Bool(false));
+    }
+
+    #[test]
+    fn a_guarded_merge_key_that_was_null_is_neo4js_error() {
+        let g = |k: &str| cypher::NullMerge { kind: "node", key: k.into(), shape: format!("(:W {{{k}: null}})") };
+        let r = null_merge_refusal("Neo.ClientError.Statement.ArithmeticError", "division by zero", &[g("key")]).unwrap();
+        assert_eq!(r.code, "Neo.ClientError.Statement.SemanticError");
+        assert_eq!(r.message, "Cannot merge the following node because of null property value for 'key': (:W {key: null})");
+        let r = null_merge_refusal("Neo.ClientError.Statement.ArithmeticError", "division by zero", &[g("a"), g("b")]).unwrap();
+        assert!(r.message.contains("for 'a'") && r.message.contains("'b'"), "{}", r.message);
+        // nothing guarded, or another failure: as it came
+        assert!(null_merge_refusal("Neo.ClientError.Statement.ArithmeticError", "division by zero", &[]).is_none());
+        assert!(null_merge_refusal("Neo.ClientError.Statement.TypeError", "division by zero", &[g("a")]).is_none());
+        // through translate: a parameter known to be null is refused before anything runs
+        let e = translate("MERGE (n:W {key: $k}) RETURN n", &serde_json::json!({"k": null})).err().unwrap();
+        assert_eq!(e.code, "Neo.ClientError.Statement.SemanticError");
+        let st = translate("UNWIND $rows AS r MERGE (n:W {key: r.k}) RETURN n", &serde_json::json!({"rows": []})).ok().unwrap();
+        assert_eq!(st.merge_nulls.len(), 1);
     }
 
     #[test]
