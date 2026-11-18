@@ -202,7 +202,7 @@ class Runner:
             m = f"(n:`{label}`)" if label and label != "*" else "(n)"
             order = ("toString(coalesce(n.id, n._source_id, n.key, n.schema_id, n.class_name, n.chunk_id, "
                      "n.document_id, n.name)), toString(properties(n))")
-            if self.args.target == "apache-age":
+            if getattr(getattr(self, "args", None), "target", None) == "apache-age":
                 # AGE (like Neo4j) refuses toString() of a map; the map itself orders
                 # (STUDIO-ON-AGE.md 2.1, A2). v1's order key stays as it was.
                 order = order.replace("toString(properties(n))", "properties(n)")
