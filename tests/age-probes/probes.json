@@ -2271,6 +2271,64 @@
         {"cypher": "UNWIND [{sid: 't1', tid: 't2', props: {k: 1, conf: 0.5}}] AS item MATCH (s:T {id: item.sid}) MATCH (t:T {id: item.tid}) CREATE (s)-[r:FK]->(t) WITH item, s, t, r, item.props AS __og_setv1 SET r = __og_setv1 RETURN r.k, r.conf", "cols": 2}
       ],
       "fixed": {"output": "1|0.5"}
+    },
+    {
+      "id": "analyzer_map_projection_all_null_entry",
+      "kind": "defect",
+      "rewrite": "n {.*, k: e, .p} → CASE WHEN n IS NULL THEN null ELSE (properties(n) - ['k', 'p']) + {k: e, p: n.p} END (cypher.rs all_properties_and)",
+      "defects": ["ANALYZER §5.4"],
+      "upstream": null,
+      "source": "ANALYZER-ON-AGE §5.4 (through the gateway, which sent n{.*, embedding: null} as written; seen as a Python dict, so the regex does not fix the key order)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:RULE {id: 'r1', a: 1, embedding: [0.1, 0.2]})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:RULE {id: 'r1'}) RETURN n {.*, embedding: null}"}
+      ],
+      "broken": {"output_regex": "\"embedding\": \\[0\\.1, 0\\.2\\]"},
+      "fixed": {"output_regex": "^(?=.*\"a\": 1)(?=.*\"id\": \"r1\")(?=.*\"embedding\": null)\\{.*\\}$"},
+      "note": "AGE builds it as age_properties(n) + agtype_build_map_nonull(...), which drops the null entry (cypher_expr.c transform_cypher_map_projection)."
+    },
+    {
+      "id": "analyzer_map_projection_all_key_override",
+      "kind": "defect",
+      "rewrite": "n {.*, k: e, .p} → CASE WHEN n IS NULL THEN null ELSE (properties(n) - ['k', 'p']) + {k: e, p: n.p} END (cypher.rs all_properties_and)",
+      "defects": ["ANALYZER §5.4"],
+      "upstream": null,
+      "source": "ANALYZER-ON-AGE §5.4 ({'id': 'override'} alone, through the gateway, which sent n{.*, id: 'override'} as written)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:RULE {id: 'r1', a: 1, embedding: [0.1, 0.2]})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:RULE {id: 'r1'}) RETURN n {.*, id: 'override'}"}
+      ],
+      "broken": {"output": "{\"id\": \"override\"}"},
+      "fixed": {"output_regex": "^(?=.*\"a\": 1)(?=.*\"id\": \"override\")(?=.*\"embedding\": \\[0\\.1, 0\\.2\\])\\{.*\\}$"},
+      "note": "AGE's own regress (map_projection.sql) has map { name: 'Tom', .* } right over a map literal; the vertex case is what the analyzer saw. Why the merge loses the keys there was not traced."
+    },
+    {
+      "id": "tgt_map_projection_minus_keys",
+      "kind": "relied_on",
+      "rewrite": "n {.*, k: e, .p} → CASE WHEN n IS NULL THEN null ELSE (properties(n) - ['k', 'p']) + {k: e, p: n.p} END (cypher.rs all_properties_and): agtype - [keys] removes keys from an object, + of two objects merges them, a map literal keeps a null entry",
+      "defects": ["ANALYZER §5.4"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:RULE {id: 'r1', a: 1, embedding: [0.1, 0.2]})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:RULE {id: 'r1'}) RETURN CASE WHEN n IS NULL THEN null ELSE (properties(n) - ['embedding']) + {embedding: null} END"},
+        {"cypher": "MATCH (n:RULE {id: 'r1'}) RETURN CASE WHEN n IS NULL THEN null ELSE (properties(n) - ['id', 'zz']) + {id: 'override', zz: n.zz} END"},
+        {"cypher": "WITH 1 AS one OPTIONAL MATCH (x:Nope) RETURN CASE WHEN x IS NULL THEN null ELSE (properties(x) - ['k']) + {k: 1} END"}
+      ],
+      "fixed": {"output_regex": "^\\{(?=[^\\n]*\"a\": 1)(?=[^\\n]*\"id\": \"r1\")(?=[^\\n]*\"embedding\": null)[^\\n]*\\}\\n\\{(?=[^\\n]*\"a\": 1)(?=[^\\n]*\"id\": \"override\")(?=[^\\n]*\"zz\": null)(?=[^\\n]*\"embedding\": \\[0\\.1, 0\\.2\\])[^\\n]*\\}\\n<null>$"},
+      "note": "Inferred from agtype_ops.c (agtype_sub with an array: delete_from_object; agtype_add of two objects: agtype_concat_impl) and cypher_gram.y (a map literal keeps null-valued keys); not run yet."
     }
   ]
 }

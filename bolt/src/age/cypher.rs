@@ -630,6 +630,9 @@ impl<'a> Printer<'a> {
                 let v = ident(var);
                 let mut parts = Vec::new();
                 let all = items.iter().any(|i| matches!(i, MapProjItem::All));
+                if all && items.iter().any(|i| !matches!(i, MapProjItem::All)) {
+                    return self.all_properties_and(var, items);
+                }
                 for it in items {
                     parts.push(match it {
                         MapProjItem::Prop(p) if all => format!(".{}", ident(p)),
@@ -723,6 +726,42 @@ impl<'a> Printer<'a> {
             }
             Expr::Star => "*".into(),
         })
+    }
+
+    /// `n {.*, k: e, .p}` — every property and entries over them.
+    ///
+    /// ANALYZER §5.4: AGE 1.8.0 builds this as `age_properties(n) +
+    /// agtype_build_map_nonull(k, e, …)` (`cypher_expr.c`
+    /// `transform_cypher_map_projection`). The entries' map drops a null
+    /// entry, so `n {.*, embedding: null}` keeps the stored `embedding`
+    /// (Neo4j: `embedding: null`); and an entry whose key the element already
+    /// has, `n {.*, id: 'x'}`, came back as `{id: 'x'}` alone (Neo4j: every
+    /// other key too, `id` replaced). Neither happens without a key in both
+    /// maps (`n {.*, extra: 5}` is right). So the keys the entries give are
+    /// taken out of the properties first (`agtype - [keys]`, which removes
+    /// keys from an object), and the entries added as a map literal, which
+    /// keeps its null entries:
+    /// `CASE WHEN n IS NULL THEN null ELSE (properties(n) - ['k', 'p']) + {k: e, p: n.p} END`.
+    /// `.p` next to `.*` becomes `p: n.p`, so an absent `p` is `p: null` as
+    /// in Neo4j. The entries win over `.*` wherever they are written, as in
+    /// Neo4j.
+    fn all_properties_and(&mut self, var: &str, items: &[MapProjItem]) -> R<String> {
+        let v = ident(var);
+        let mut keys: Vec<String> = Vec::new();
+        let mut entries: Vec<String> = Vec::new();
+        for it in items {
+            let (k, e) = match it {
+                MapProjItem::All => continue,
+                MapProjItem::Prop(p) => (p.clone(), format!("{v}.{}", ident(p))),
+                MapProjItem::Entry(k, e) => (k.clone(), self.expr(e)?),
+            };
+            if !keys.contains(&k) {
+                keys.push(k.clone());
+            }
+            entries.push(format!("{}: {e}", ident(&k)));
+        }
+        let drop = keys.iter().map(|k| str_lit(k)).collect::<Vec<_>>().join(", ");
+        Ok(format!("CASE WHEN {v} IS NULL THEN null ELSE (properties({v}) - [{drop}]) + {{{}}} END", entries.join(", ")))
     }
 
     /// `datetime()`, `datetime($p)`, `datetime('…')` as UTC epoch seconds and
@@ -2252,7 +2291,7 @@ mod tests {
         assert_eq!(print("MATCH (a)-[:R*..]->(b) RETURN b"), "MATCH (a)-[:R*1..8]->(b) RETURN b");
         assert_eq!(print("MATCH (a)-[*]->(b) RETURN b"), "MATCH (a)-[*1..1]->(b) RETURN b");
         assert_eq!(print("RETURN [x IN $xs WHERE x > 1 | x * 2] AS d, n {.a, .*, k: 1} AS m, xs[0] AS h, xs[1..] AS t"),
-            "RETURN [x IN $xs WHERE x > 1 | x * 2] AS d, CASE WHEN n IS NULL THEN null ELSE n{.a, .*, k: 1} END AS m, xs[0] AS h, xs[1..] AS t");
+            "RETURN [x IN $xs WHERE x > 1 | x * 2] AS d, CASE WHEN n IS NULL THEN null ELSE (properties(n) - ['a', 'k']) + {a: n.a, k: 1} END AS m, xs[0] AS h, xs[1..] AS t");
         assert_eq!(print("RETURN n {.a, k: 1} AS m"), "RETURN CASE WHEN n IS NULL THEN null ELSE {a: n.a, k: 1} END AS m");
         assert_eq!(print("MATCH (rm) RETURN rm {.id, .name} AS m ORDER BY m.name, m.x"),
             "MATCH (rm) RETURN CASE WHEN rm IS NULL THEN null ELSE {id: rm.id, name: rm.name} END AS m ORDER BY rm.name, m.x");
@@ -2510,6 +2549,23 @@ mod tests {
             print("MATCH (m) MERGE (n:L {id: 1}) ON MATCH SET n += m.p ON CREATE SET n += n.q"),
             "MATCH (m) WITH m, m.p AS __og_setv1 MERGE (n:L {id: 1}) ON CREATE SET n += n.q ON MATCH SET n += __og_setv1"
         );
+    }
+
+    #[test]
+    fn all_properties_with_entries_take_the_entries_keys_out_first() {
+        // ANALYZER §5.4: AGE kept the stored embedding, and dropped every other key for `id: …`
+        assert_eq!(
+            print("MATCH (n:RULE {id: 'r1'}) RETURN n {.*, embedding: null} AS p"),
+            "MATCH (n:RULE {id: 'r1'}) RETURN CASE WHEN n IS NULL THEN null ELSE (properties(n) - ['embedding']) + {embedding: null} END AS p"
+        );
+        assert_eq!(
+            print("MATCH (n:RULE) RETURN n {.*, id: 'override', .name, score: n.s * 2} AS p"),
+            "MATCH (n:RULE) RETURN CASE WHEN n IS NULL THEN null ELSE (properties(n) - ['id', 'name', 'score']) + \
+             {id: 'override', name: n.name, score: n.s * 2} END AS p"
+        );
+        // `.*` alone, and projections without it, as before
+        assert_eq!(print("MATCH (n) RETURN n {.*} AS p"), "MATCH (n) RETURN CASE WHEN n IS NULL THEN null ELSE n{.*} END AS p");
+        assert_eq!(print("MATCH (n) RETURN n {.a, b: 1} AS p"), "MATCH (n) RETURN CASE WHEN n IS NULL THEN null ELSE {a: n.a, b: 1} END AS p");
     }
 
     #[test]
