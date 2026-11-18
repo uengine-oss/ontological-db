@@ -1943,6 +1943,84 @@ pub fn pattern_vars(p: &Pattern, out: &mut Vec<String>) {
     }
 }
 
+/// Every variable an expression reads (a list comprehension's own variable
+/// included: reading too much only cuts where it need not).
+pub fn expr_vars(e: &Expr, out: &mut Vec<String>) {
+    let push = |v: &String, out: &mut Vec<String>| {
+        if !out.contains(v) {
+            out.push(v.clone());
+        }
+    };
+    match e {
+        Expr::Var(v) => push(v, out),
+        Expr::HasLabels { var, .. } => push(var, out),
+        Expr::MapProjection { var, items } => {
+            push(var, out);
+            for it in items {
+                if let MapProjItem::Entry(_, v) = it {
+                    expr_vars(v, out);
+                }
+            }
+        }
+        Expr::Prop(b, _) | Expr::Not(b) | Expr::Neg(b) | Expr::IsNull(b, _) => expr_vars(b, out),
+        Expr::Binary(_, a, b) => {
+            expr_vars(a, out);
+            expr_vars(b, out);
+        }
+        Expr::Func { args, .. } | Expr::List(args) => args.iter().for_each(|a| expr_vars(a, out)),
+        Expr::Map(kv) => kv.iter().for_each(|(_, v)| expr_vars(v, out)),
+        Expr::Case { operand, whens, else_ } => {
+            if let Some(o) = operand {
+                expr_vars(o, out);
+            }
+            for (a, b) in whens {
+                expr_vars(a, out);
+                expr_vars(b, out);
+            }
+            if let Some(x) = else_ {
+                expr_vars(x, out);
+            }
+        }
+        Expr::ListComp { source, filter, project, .. } => {
+            expr_vars(source, out);
+            for x in [filter, project].into_iter().flatten() {
+                expr_vars(x, out);
+            }
+        }
+        Expr::ListPred { source, filter, .. } => {
+            expr_vars(source, out);
+            expr_vars(filter, out);
+        }
+        Expr::Slice { list, from, to } => {
+            expr_vars(list, out);
+            for x in [from, to].into_iter().flatten() {
+                expr_vars(x, out);
+            }
+        }
+        Expr::Reduce { init, list, expr, .. } => {
+            expr_vars(init, out);
+            expr_vars(list, out);
+            expr_vars(expr, out);
+        }
+        Expr::Subquery { patterns, where_, project, .. } => {
+            for p in patterns {
+                pattern_vars(p, out);
+                for el in &p.elems {
+                    let props = match el {
+                        PatElem::Node(n) => &n.props,
+                        PatElem::Rel(r) => &r.props,
+                    };
+                    props.iter().for_each(|(_, v)| expr_vars(v, out));
+                }
+            }
+            for x in [where_, project].into_iter().flatten() {
+                expr_vars(x, out);
+            }
+        }
+        Expr::Lit(_) | Expr::Param(_) | Expr::Star => {}
+    }
+}
+
 /// The column a projection item becomes (`og_cypher_columns`' rule).
 pub fn item_name(it: &ReturnItem) -> String {
     it.alias.clone().unwrap_or_else(|| it.expr.default_alias())

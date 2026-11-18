@@ -231,7 +231,9 @@ pub fn translate(query: &str, params: &Json) -> Result<Statement, Refusal> {
         .map_err(|n| Refusal { code: "Neo.ClientError.Statement.SemanticError".into(), message: n.message() })?;
     let mut printer = cypher::Printer::new(pmap, cypher::now_text());
     if reach::needed(&q) {
-        if split::needed(&q) {
+        // (the walk runs the statement as it is: the cuts for AGE's wrong
+        // answers in one statement are not made there)
+        if split::must_cut(&q) {
             return Err(Refusal::syntax(cypher::unsupported(
                 "a long variable-length relationship together with FOREACH, CALL { … } or a label change",
             )));
