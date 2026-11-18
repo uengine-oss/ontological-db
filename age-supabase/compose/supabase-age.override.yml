@@ -1,0 +1,37 @@
+# An override for a self-hosted Supabase docker compose (the stack whose database
+# service is `db`, e.g. supabase/docker or the company's docker-infra):
+#
+#   docker compose -f docker-compose.yml -f <this repo>/age-supabase/compose/supabase-age.override.yml up -d
+#
+# - db: the Supabase Postgres image with Apache AGE 1.8.0 (same Supabase tag,
+#   15.8.1.060). A fresh volume gets AGE, the `graph` database (LC_COLLATE C) and
+#   AGE in _supabase / template1 from the image's initdb. A volume made by the
+#   stock image: run scripts/install-age.sh once (NAME=<db container>).
+#   Lite's install compose also runs the image in a `migrate` service: give it
+#   the same image line.
+# - graph-bolt: the Bolt gateway with the AGE backend (gateway/build.sh), on
+#   127.0.0.1:${AGE_BOLT_PORT:-7697}, connected to `graph`.
+#
+# Then make the login role (scripts/create-robo-role.sh, NAME=<db container>) and
+# point Robo Architect at bolt://127.0.0.1:7697 as robo. run-robo.sh does both:
+#   DB_CONTAINER=<db container> GATEWAY=none ./run-robo.sh up
+services:
+  db:
+    image: ${AGE_DB_IMAGE:-uengine/supabase-postgres-age:15.8.1.060-age1.8.0}
+
+  graph-bolt:
+    image: ${AGE_BOLT_IMAGE:-uengine/ontological-bolt:age}
+    restart: unless-stopped
+    init: true   # PID 1 that passes SIGTERM on (the gateway stops at once instead of after the kill timeout)
+    environment:
+      OG_BOLT_BACKEND: age
+      OG_BOLT_LISTEN: 0.0.0.0:7687
+      OG_BOLT_PGHOST: db
+      OG_BOLT_PGPORT: "5432"
+      OG_BOLT_PGDATABASE: graph
+      OG_BOLT_GRAPH: ${ROBO_GRAPH:-robo}
+    ports:
+      - "127.0.0.1:${AGE_BOLT_PORT:-7697}:7687"
+    depends_on:
+      db:
+        condition: service_healthy

@@ -1,0 +1,54 @@
+# Supabase Postgres + Apache AGE and the Bolt gateway, on their own — for Robo
+# Architect Lite when there is no Supabase stack yet. run-robo.sh uses it
+# (MODE=standalone); by hand:
+#
+#   POSTGRES_PASSWORD=... docker compose -f compose/robo-age.yml -p robo-age up -d
+#
+# The database is the Supabase image as it is (its own initdb: roles, auth,
+# storage …, plus the `graph` database in LC_COLLATE C). The `robo` login role is
+# made afterwards with scripts/create-robo-role.sh (its password never goes into
+# this file or the gateway: a Bolt client logs in as robo and the gateway passes
+# that login on to PostgreSQL).
+name: robo-age
+
+services:
+  db:
+    image: ${AGE_DB_IMAGE:-uengine/supabase-postgres-age:15.8.1.060-age1.8.0}
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?the supabase_admin / postgres password}
+      POSTGRES_HOST: /var/run/postgresql
+    ports:
+      - "127.0.0.1:${AGE_DB_PORT:-55449}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    mem_limit: ${AGE_DB_MEMORY:-1500m}
+    cpus: ${AGE_DB_CPUS:-2}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -h 127.0.0.1 -q"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  graph-bolt:
+    image: ${AGE_BOLT_IMAGE:-uengine/ontological-bolt:age}
+    restart: unless-stopped
+    init: true   # PID 1 that passes SIGTERM on (the gateway stops at once instead of after the kill timeout)
+    environment:
+      OG_BOLT_BACKEND: age
+      OG_BOLT_LISTEN: 0.0.0.0:7687
+      OG_BOLT_PGHOST: db
+      OG_BOLT_PGPORT: "5432"
+      OG_BOLT_PGDATABASE: graph
+      OG_BOLT_GRAPH: ${ROBO_GRAPH:-robo}
+    ports:
+      # Bolt carries the password in plain text: loopback only
+      - "127.0.0.1:${AGE_BOLT_PORT:-7697}:7687"
+    mem_limit: 256m
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:
