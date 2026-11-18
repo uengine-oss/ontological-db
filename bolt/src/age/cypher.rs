@@ -44,6 +44,11 @@ const RESERVED: &[&str] = &[
     "verbose", "when", "where", "with", "xor", "yield", "drop", "foreach", "load", "csv",
 ];
 
+/// The most hops a variable-length relationship may have without exactly one
+/// type: AGE's VLE enumerates trails, and filtering the types afterwards means
+/// walking every relationship of the graph first.
+pub const MAX_UNTYPED_HOPS: u32 = 3;
+
 /// The prefix of every name the rewrites introduce. Never a column: `RETURN *`
 /// leaves them out.
 pub const FRESH: &str = "__og_";
@@ -106,11 +111,13 @@ pub struct Printer<'a> {
     /// The statement's clock, ISO 8601 UTC, as PostgreSQL writes a timestamptz.
     pub now: String,
     fresh: usize,
+    /// The variables the expression being printed can see.
+    in_scope: Vec<String>,
 }
 
 impl<'a> Printer<'a> {
     pub fn new(params: Option<&'a Map<String, Json>>, now: String) -> Self {
-        Printer { params, extra: Map::new(), now, fresh: 0 }
+        Printer { params, extra: Map::new(), now, fresh: 0, in_scope: Vec::new() }
     }
 
     pub fn fresh(&mut self, what: &str) -> String {
@@ -136,12 +143,67 @@ impl<'a> Printer<'a> {
     }
 
     pub fn clause(&mut self, c: &Clause, scope: &[String]) -> R<String> {
+        let mut seen = scope.to_vec();
+        for v in scope_after(scope, c) {
+            if !seen.contains(&v) {
+                seen.push(v);
+            }
+        }
+        self.in_scope = seen;
+        // AGE takes a whole-map parameter in SET only once it is bound to a
+        // variable (`SET n += $p` is refused; `WITH $p AS p … SET n += p` is
+        // not), so such a clause gets a WITH in front that binds it.
+        if let Some((with, c2)) = self.bind_map_params(c, scope) {
+            return Ok(format!("{with} {}", self.clause_text(&c2, scope)?));
+        }
+        self.clause_text(c, scope)
+    }
+
+    fn bind_map_params(&mut self, c: &Clause, scope: &[String]) -> Option<(String, Clause)> {
+        let mut c = c.clone();
+        let mut bound: Vec<(String, String)> = Vec::new();
+        let mut fix = |items: &mut Vec<SetOp>, this: &mut Self| {
+            for it in items.iter_mut() {
+                if let SetOp::Map { value: Expr::Param(p), .. } = it {
+                    let alias = match bound.iter().find(|(q, _)| q == p) {
+                        Some((_, a)) => a.clone(),
+                        None => {
+                            let a = this.fresh("p");
+                            bound.push((p.clone(), a.clone()));
+                            a
+                        }
+                    };
+                    if let SetOp::Map { value, .. } = it {
+                        *value = Expr::Var(alias);
+                    }
+                }
+            }
+        };
+        match &mut c {
+            Clause::Set(items) => fix(items, self),
+            Clause::Merge { on_create, on_match, .. } => {
+                fix(on_create, self);
+                fix(on_match, self);
+            }
+            _ => {}
+        }
+        if bound.is_empty() {
+            return None;
+        }
+        let mut items: Vec<String> = scope.iter().map(|v| ident(v)).collect();
+        for (p, a) in &bound {
+            items.push(format!("${} AS {}", p, ident(a)));
+        }
+        Some((format!("WITH {}", items.join(", ")), c))
+    }
+
+    fn clause_text(&mut self, c: &Clause, scope: &[String]) -> R<String> {
         Ok(match c {
             Clause::Match { patterns, optional, where_ } => {
                 let mut patterns = patterns.clone();
                 let mut preds = Vec::new();
                 for p in &mut patterns {
-                    self.lift_alternatives(p, &mut preds);
+                    self.lift_alternatives(p, &mut preds)?;
                 }
                 let where_ = and_all(where_.clone(), preds);
                 let mut s = String::from(if *optional { "OPTIONAL MATCH " } else { "MATCH " });
@@ -246,7 +308,8 @@ impl<'a> Printer<'a> {
         if !p.order.is_empty() {
             let mut keys = Vec::new();
             for o in &p.order {
-                keys.push(format!("{}{}", self.expr(&o.expr)?, if o.desc { " DESC" } else { "" }));
+                let key = order_through_projection(&o.expr, &p.items);
+                keys.push(format!("{}{}", self.expr(key.as_ref().unwrap_or(&o.expr))?, if o.desc { " DESC" } else { "" }));
             }
             s.push_str(" ORDER BY ");
             s.push_str(&keys.join(", "));
@@ -267,7 +330,22 @@ impl<'a> Printer<'a> {
     /// `-[:A|B]-` and `(n:A|B)`: AGE takes one label or type per element. The
     /// element gets a variable (a fresh one if it had none) and the choice
     /// becomes a predicate.
-    pub fn lift_alternatives(&mut self, p: &mut Pattern, preds: &mut Vec<Expr>) {
+    pub fn lift_alternatives(&mut self, p: &mut Pattern, preds: &mut Vec<Expr>) -> R<()> {
+        for el in &p.elems {
+            if let PatElem::Rel(r) = el {
+                if let Some((_, hi)) = r.range {
+                    if r.types.len() != 1 && hi > MAX_UNTYPED_HOPS {
+                        return Err(format!(
+                            "a variable-length relationship with {} and up to {hi} hops is not run on the AGE backend: \
+                             AGE filters a variable-length pattern by one type only, and walks every trail of the \
+                             rest (*1..30 over every type took the server to its memory limit). Give it one type, \
+                             or at most {MAX_UNTYPED_HOPS} hops",
+                            if r.types.is_empty() { "no type".to_string() } else { format!("the types {}", r.types.join("|")) }
+                        ));
+                    }
+                }
+            }
+        }
         for el in &mut p.elems {
             match el {
                 PatElem::Rel(r) if r.types.len() > 1 => {
@@ -303,6 +381,7 @@ impl<'a> Printer<'a> {
                 _ => {}
             }
         }
+        Ok(())
     }
 
     fn patterns(&mut self, ps: &[Pattern]) -> R<String> {
@@ -378,7 +457,11 @@ impl<'a> Printer<'a> {
     /// An expression that can stand where an operand goes without changing
     /// what binds to what.
     fn atomic(e: &Expr) -> bool {
-        !matches!(e, Expr::Binary(..) | Expr::Not(_) | Expr::Neg(_) | Expr::IsNull(..) | Expr::HasLabels { .. })
+        // A list predicate goes out as `size([…]) > 0`: a comparison.
+        !matches!(
+            e,
+            Expr::Binary(..) | Expr::Not(_) | Expr::Neg(_) | Expr::IsNull(..) | Expr::HasLabels { .. } | Expr::ListPred { .. }
+        )
     }
 
     /// `e`, parenthesised unless atomic.
@@ -466,24 +549,37 @@ impl<'a> Printer<'a> {
                 s
             }
             Expr::ListPred { kind, var, source, filter } => {
-                let k = match kind {
-                    ListPredKind::Any => "any",
-                    ListPredKind::All => "all",
-                    ListPredKind::None => "none",
-                    ListPredKind::Single => "single",
+                // AGE 1.8.0's any()/all()/none()/single() crash the backend
+                // (signal 11) or fail ("attribute 1 of type record has wrong
+                // type") when the predicate reads a matched element —
+                // `any(l IN $ls WHERE l IN labels(n))`. A list comprehension
+                // with the same predicate does not, so count its elements.
+                let (v, src) = (ident(var), self.operand(source)?);
+                let (pred, cmp) = match kind {
+                    ListPredKind::Any => (self.expr(filter)?, "> 0"),
+                    ListPredKind::None => (self.expr(filter)?, "= 0"),
+                    ListPredKind::Single => (self.expr(filter)?, "= 1"),
+                    ListPredKind::All => (format!("NOT ({})", self.expr(filter)?), "= 0"),
                 };
-                format!("{k}({} IN {} WHERE {})", ident(var), self.operand(source)?, self.expr(filter)?)
+                format!("size([{v} IN {src} WHERE {pred}]) {cmp}")
             }
             Expr::MapProjection { var, items } => {
+                // Neo4j: a projection of null is null, and `.k` of an element
+                // without k is `k: null`. AGE gives `{}` and leaves the key
+                // out, so without `.*` the projection goes out as a map.
+                let v = ident(var);
                 let mut parts = Vec::new();
+                let all = items.iter().any(|i| matches!(i, MapProjItem::All));
                 for it in items {
                     parts.push(match it {
-                        MapProjItem::Prop(p) => format!(".{}", ident(p)),
+                        MapProjItem::Prop(p) if all => format!(".{}", ident(p)),
+                        MapProjItem::Prop(p) => format!("{}: {v}.{}", ident(p), ident(p)),
                         MapProjItem::All => ".*".into(),
-                        MapProjItem::Entry(k, v) => format!("{}: {}", ident(k), self.expr(v)?),
+                        MapProjItem::Entry(k, e) => format!("{}: {}", ident(k), self.expr(e)?),
                     });
                 }
-                format!("{}{{{}}}", ident(var), parts.join(", "))
+                let inner = if all { format!("{v}{{{}}}", parts.join(", ")) } else { format!("{{{}}}", parts.join(", ")) };
+                format!("CASE WHEN {v} IS NULL THEN null ELSE {inner} END")
             }
             Expr::Slice { list, from, to } => {
                 let f = match from {
@@ -523,11 +619,20 @@ impl<'a> Printer<'a> {
                 let mut patterns = patterns.clone();
                 let mut preds = Vec::new();
                 for p in &mut patterns {
-                    self.lift_alternatives(p, &mut preds);
+                    self.lift_alternatives(p, &mut preds)?;
                 }
                 let where_ = and_all(where_.as_deref().cloned(), preds);
+                // AGE's `exists(pattern)` may not name a variable of its own;
+                // `EXISTS { MATCH … }` may.
+                let mut named = Vec::new();
+                for p in &patterns {
+                    pattern_vars(p, &mut named);
+                }
+                let only_known = named.iter().all(|v| self.in_scope.contains(v));
                 match kind {
-                    SubqueryKind::Exists if patterns.len() == 1 && where_.is_none() && patterns[0].path_var.is_none() => {
+                    SubqueryKind::Exists
+                        if patterns.len() == 1 && where_.is_none() && patterns[0].path_var.is_none() && only_known =>
+                    {
                         format!("EXISTS({})", self.pattern(&patterns[0])?)
                     }
                     SubqueryKind::Exists | SubqueryKind::Count => {
@@ -579,7 +684,14 @@ impl<'a> Printer<'a> {
             ("datetime" | "localdatetime", [x]) => return self.expr(x),
             ("date", [x]) => return Ok(format!("left(toString({}), 10)", self.expr(x)?)),
             ("randomuuid", []) => return Ok(uuid_expr()),
-            ("elementid", [x]) => return Ok(format!("toString(id({}))", self.expr(x)?)),
+            // `id(n)` on a matched vertex is AGE's raw graphid, which
+            // toString() refuses; through coalesce() it is an agtype integer.
+            ("elementid", [x]) => return Ok(format!("toString(id(coalesce({})))", self.expr(x)?)),
+            ("tostring" | "tointeger" | "tofloat", [Expr::Func { name: f, args: inner, .. }])
+                if f.eq_ignore_ascii_case("id") && inner.len() == 1 =>
+            {
+                return Ok(format!("{name}(id(coalesce({})))", self.expr(&inner[0])?));
+            }
             ("nullif", [a, b]) => {
                 let (a, b) = (self.operand(a)?, self.operand(b)?);
                 return Ok(format!("CASE WHEN {a} = {b} THEN null ELSE {a} END"));
@@ -598,6 +710,25 @@ impl<'a> Printer<'a> {
         s.push_str(&xs.join(", "));
         s.push(')');
         Ok(s)
+    }
+}
+
+/// `ORDER BY m.k` where `m` is this projection's map (`n {.k} AS m`, `{k: e}
+/// AS m`): AGE cannot reach into the projected map there ("could not find
+/// rte for m"), so the key is read where the map got it — `n.k`, `e`.
+fn order_through_projection(e: &Expr, items: &[ReturnItem]) -> Option<Expr> {
+    let Expr::Prop(base, key) = e else { return None };
+    let Expr::Var(alias) = &**base else { return None };
+    let item = items.iter().find(|i| i.alias.as_deref() == Some(alias.as_str()))?;
+    match &item.expr {
+        Expr::MapProjection { var, items } => items.iter().rev().find_map(|it| match it {
+            MapProjItem::Entry(k, v) if k == key => Some(v.clone()),
+            MapProjItem::Prop(p) if p == key => Some(Expr::Prop(Box::new(Expr::Var(var.clone())), key.clone())),
+            MapProjItem::All => Some(Expr::Prop(Box::new(Expr::Var(var.clone())), key.clone())),
+            _ => None,
+        }),
+        Expr::Map(kv) => kv.iter().find(|(k, _)| k == key).map(|(_, v)| v.clone()),
+        _ => None,
     }
 }
 
@@ -648,13 +779,13 @@ pub fn and_all(w: Option<Expr>, preds: Vec<Expr>) -> Option<Expr> {
     out
 }
 
-/// A version-4 UUID, built in Cypher from `rand()` so that every evaluation —
-/// every row of an `UNWIND` — gets its own. AGE has no `randomUUID()`.
+/// A version-4 UUID per evaluation — every row of an `UNWIND` gets its own.
+/// AGE has no `randomUUID()`, but passes a schema-qualified name through to
+/// PostgreSQL: `gen_random_uuid()` is built in (13+), `concat` makes it text
+/// and `toString` agtype. (A UUID put together from `rand()` in a `reduce`
+/// is refused inside `ON CREATE SET`: "unrecognized node type: 124".)
 fn uuid_expr() -> String {
-    "reduce(s = '', i IN range(0, 35) | s + CASE WHEN i IN [8, 13, 18, 23] THEN '-' WHEN i = 14 THEN '4' \
-     WHEN i = 19 THEN substring('89ab', toInteger(floor(rand() * 4)), 1) \
-     ELSE substring('0123456789abcdef', toInteger(floor(rand() * 16)), 1) END)"
-        .into()
+    "toString(pg_catalog.concat(pg_catalog.gen_random_uuid()))".into()
 }
 
 /// An ISO 8601 date-time as PostgreSQL writes a `timestamptz` on a UTC session
@@ -750,6 +881,554 @@ pub fn now_text() -> String {
         tod % 60,
         if frac.is_empty() { String::new() } else { format!(".{frac}") }
     )
+}
+
+// ------------------------------------------------------- AGE's own names
+
+/// Variable names AGE's generated SQL also uses as column names — of the
+/// label tables (`id`, `properties`, `start_id`, `end_id`). A Cypher variable
+/// spelled like one makes the SQL ambiguous: `UNWIND $ids AS id MATCH (n {id:
+/// id}) RETURN n.id` fails with `column reference "id" is ambiguous`.
+const CLASHING: &[&str] = &["id", "properties", "start_id", "end_id"];
+
+/// Rename the variables that clash with AGE's columns. Columns (Bolt fields)
+/// are worked out from the statement as sent, before this.
+pub fn rename_clashing(q: &Query) -> Query {
+    let mut q = q.clone();
+    let mut names = Vec::new();
+    collect_query(&q, &mut names);
+    let map: Vec<(String, String)> = names
+        .into_iter()
+        .filter(|n| CLASHING.contains(&n.to_ascii_lowercase().as_str()))
+        .map(|n| (n.clone(), format!("{FRESH}v_{n}")))
+        .collect();
+    if !map.is_empty() {
+        rename_query(&mut q, &|n: &str| map.iter().find(|(a, _)| a == n).map(|(_, b)| b.clone()));
+    }
+    q
+}
+
+fn collect_query(q: &Query, out: &mut Vec<String>) {
+    let mut push = |n: &String| {
+        if !out.contains(n) {
+            out.push(n.clone())
+        }
+    };
+    for c in &q.clauses {
+        let mut vars = Vec::new();
+        match c {
+            Clause::Match { patterns, .. } | Clause::Create(patterns) => patterns.iter().for_each(|p| pattern_vars(p, &mut vars)),
+            Clause::Merge { pattern, .. } => pattern_vars(pattern, &mut vars),
+            Clause::Unwind { alias, .. } => vars.push(alias.clone()),
+            Clause::With { proj, .. } | Clause::Return(proj) => vars.extend(proj.items.iter().filter_map(|i| i.alias.clone())),
+            Clause::Call { yields, .. } => vars.extend(yields.iter().map(|(_, a)| a.clone())),
+            Clause::Foreach { var, .. } => vars.push(var.clone()),
+            Clause::Subquery { body, .. } => collect_query(body, &mut vars),
+            _ => {}
+        }
+        vars.iter().for_each(&mut push);
+    }
+    if let Some((_, t)) = &q.union {
+        collect_query(t, out);
+    }
+}
+
+type Rename<'a> = &'a dyn Fn(&str) -> Option<String>;
+
+fn rn(v: &mut String, f: Rename) {
+    if let Some(n) = f(v) {
+        *v = n;
+    }
+}
+
+fn rename_query(q: &mut Query, f: Rename) {
+    for c in &mut q.clauses {
+        rename_clause(c, f);
+    }
+    if let Some((_, t)) = &mut q.union {
+        rename_query(t, f);
+    }
+}
+
+fn rename_pattern(p: &mut Pattern, f: Rename) {
+    if let Some(v) = &mut p.path_var {
+        rn(v, f);
+    }
+    for el in &mut p.elems {
+        match el {
+            PatElem::Node(n) => {
+                if let Some(v) = &mut n.var {
+                    rn(v, f);
+                }
+                n.props.iter_mut().for_each(|(_, e)| rename_expr(e, f));
+            }
+            PatElem::Rel(r) => {
+                if let Some(v) = &mut r.var {
+                    rn(v, f);
+                }
+                r.props.iter_mut().for_each(|(_, e)| rename_expr(e, f));
+            }
+        }
+    }
+}
+
+fn rename_proj(p: &mut Projection, f: Rename) {
+    for it in &mut p.items {
+        rename_expr(&mut it.expr, f);
+        if let Some(a) = &mut it.alias {
+            rn(a, f);
+        }
+    }
+    p.order.iter_mut().for_each(|o| rename_expr(&mut o.expr, f));
+    if let Some(e) = &mut p.skip {
+        rename_expr(e, f);
+    }
+    if let Some(e) = &mut p.limit {
+        rename_expr(e, f);
+    }
+}
+
+fn rename_ops(items: &mut [SetOp], f: Rename) {
+    for it in items {
+        match it {
+            SetOp::Prop { var, value, .. } | SetOp::Map { var, value, .. } => {
+                rn(var, f);
+                rename_expr(value, f);
+            }
+            SetOp::Label { var, .. } => rn(var, f),
+        }
+    }
+}
+
+fn rename_clause(c: &mut Clause, f: Rename) {
+    match c {
+        Clause::Match { patterns, where_, .. } => {
+            patterns.iter_mut().for_each(|p| rename_pattern(p, f));
+            if let Some(w) = where_ {
+                rename_expr(w, f);
+            }
+        }
+        Clause::Unwind { expr, alias } => {
+            rename_expr(expr, f);
+            rn(alias, f);
+        }
+        Clause::With { proj, where_ } => {
+            rename_proj(proj, f);
+            if let Some(w) = where_ {
+                rename_expr(w, f);
+            }
+        }
+        Clause::Return(proj) => rename_proj(proj, f),
+        Clause::Create(ps) => ps.iter_mut().for_each(|p| rename_pattern(p, f)),
+        Clause::Merge { pattern, on_create, on_match } => {
+            rename_pattern(pattern, f);
+            rename_ops(on_create, f);
+            rename_ops(on_match, f);
+        }
+        Clause::Set(items) | Clause::Remove(items) => rename_ops(items, f),
+        Clause::Delete { exprs, .. } => exprs.iter_mut().for_each(|e| rename_expr(e, f)),
+        Clause::Call { args, yields, .. } => {
+            args.iter_mut().for_each(|e| rename_expr(e, f));
+            yields.iter_mut().for_each(|(_, a)| rn(a, f));
+        }
+        Clause::Foreach { var, list, body } => {
+            rn(var, f);
+            rename_expr(list, f);
+            body.iter_mut().for_each(|c| rename_clause(c, f));
+        }
+        Clause::Subquery { scope, body, .. } => {
+            if let Some(names) = scope {
+                names.iter_mut().for_each(|n| rn(n, f));
+            }
+            rename_query(body, f);
+        }
+        Clause::Ddl(_) => {}
+    }
+}
+
+fn rename_expr(e: &mut Expr, f: Rename) {
+    match e {
+        Expr::Var(v) => rn(v, f),
+        Expr::Prop(b, _) | Expr::Not(b) | Expr::Neg(b) | Expr::IsNull(b, _) => rename_expr(b, f),
+        Expr::Binary(_, a, b) => {
+            rename_expr(a, f);
+            rename_expr(b, f);
+        }
+        Expr::Func { args, .. } | Expr::List(args) => args.iter_mut().for_each(|a| rename_expr(a, f)),
+        Expr::Map(kv) => kv.iter_mut().for_each(|(_, v)| rename_expr(v, f)),
+        Expr::Case { operand, whens, else_ } => {
+            if let Some(o) = operand {
+                rename_expr(o, f);
+            }
+            for (a, b) in whens {
+                rename_expr(a, f);
+                rename_expr(b, f);
+            }
+            if let Some(x) = else_ {
+                rename_expr(x, f);
+            }
+        }
+        Expr::ListComp { var, source, filter, project } => {
+            rn(var, f);
+            rename_expr(source, f);
+            if let Some(x) = filter {
+                rename_expr(x, f);
+            }
+            if let Some(x) = project {
+                rename_expr(x, f);
+            }
+        }
+        Expr::ListPred { var, source, filter, .. } => {
+            rn(var, f);
+            rename_expr(source, f);
+            rename_expr(filter, f);
+        }
+        Expr::MapProjection { var, items } => {
+            rn(var, f);
+            for it in items {
+                if let MapProjItem::Entry(_, v) = it {
+                    rename_expr(v, f);
+                }
+            }
+        }
+        Expr::Slice { list, from, to } => {
+            rename_expr(list, f);
+            if let Some(x) = from {
+                rename_expr(x, f);
+            }
+            if let Some(x) = to {
+                rename_expr(x, f);
+            }
+        }
+        Expr::HasLabels { var, .. } => rn(var, f),
+        Expr::Reduce { acc, init, var, list, expr } => {
+            rn(acc, f);
+            rn(var, f);
+            rename_expr(init, f);
+            rename_expr(list, f);
+            rename_expr(expr, f);
+        }
+        Expr::Subquery { patterns, where_, project, .. } => {
+            patterns.iter_mut().for_each(|p| rename_pattern(p, f));
+            if let Some(w) = where_ {
+                rename_expr(w, f);
+            }
+            if let Some(p) = project {
+                rename_expr(p, f);
+            }
+        }
+        Expr::Lit(_) | Expr::Param(_) | Expr::Star => {}
+    }
+}
+
+/// A statement that begins with OPTIONAL MATCH gets a row to start from:
+/// AGE gives no row when nothing matches (`OPTIONAL MATCH (x:Nope) RETURN
+/// x.id` → 0 rows), Neo4j gives one with nulls.
+pub fn lead_optional(q: &Query) -> Query {
+    let mut q = q.clone();
+    if matches!(q.clauses.first(), Some(Clause::Match { optional: true, .. })) {
+        q.clauses.insert(
+            0,
+            Clause::With {
+                proj: Projection {
+                    items: vec![ReturnItem { expr: Expr::Lit(Lit::Int(1)), alias: Some(format!("{FRESH}one")) }],
+                    ..Default::default()
+                },
+                where_: None,
+            },
+        );
+    }
+    if let Some((all, t)) = &q.union {
+        q.union = Some((*all, Box::new(lead_optional(t))));
+    }
+    q
+}
+
+// ------------------------------------------------------ aggregation + lists
+
+const AGGREGATES: &[&str] = &["count", "sum", "avg", "min", "max", "collect", "stdev", "stdevp", "percentilecont", "percentiledisc"];
+
+fn is_agg_call(e: &Expr) -> bool {
+    matches!(e, Expr::Func { name, .. } if AGGREGATES.contains(&name.to_ascii_lowercase().as_str()))
+}
+
+/// Does the expression hold something AGE compiles to a subquery (SubLink):
+/// a list comprehension, a list predicate, reduce(), a pattern predicate?
+fn has_sublink(e: &Expr) -> bool {
+    match e {
+        Expr::ListComp { .. } | Expr::ListPred { .. } | Expr::Reduce { .. } | Expr::Subquery { .. } => true,
+        Expr::Prop(b, _) | Expr::Not(b) | Expr::Neg(b) | Expr::IsNull(b, _) => has_sublink(b),
+        Expr::Binary(_, a, b) => has_sublink(a) || has_sublink(b),
+        Expr::Func { args, .. } | Expr::List(args) => args.iter().any(has_sublink),
+        Expr::Map(kv) => kv.iter().any(|(_, v)| has_sublink(v)),
+        Expr::Case { operand, whens, else_ } => {
+            operand.as_deref().is_some_and(has_sublink)
+                || whens.iter().any(|(a, b)| has_sublink(a) || has_sublink(b))
+                || else_.as_deref().is_some_and(has_sublink)
+        }
+        Expr::MapProjection { items, .. } => items.iter().any(|i| matches!(i, MapProjItem::Entry(_, v) if has_sublink(v))),
+        Expr::Slice { list, from, to } => {
+            has_sublink(list) || from.as_deref().is_some_and(has_sublink) || to.as_deref().is_some_and(has_sublink)
+        }
+        _ => false,
+    }
+}
+
+/// Every aggregate call in `e` replaced by a fresh variable, returned with
+/// the call it stands for.
+fn lift_aggs(e: &mut Expr, out: &mut Vec<(String, Expr)>, fresh: &mut dyn FnMut() -> String) {
+    if is_agg_call(e) {
+        let v = fresh();
+        let call = std::mem::replace(e, Expr::Var(v.clone()));
+        out.push((v, call));
+        return;
+    }
+    let mut go = |x: &mut Expr| lift_aggs(x, out, fresh);
+    match e {
+        Expr::Prop(b, _) | Expr::Not(b) | Expr::Neg(b) | Expr::IsNull(b, _) => go(b),
+        Expr::Binary(_, a, b) => {
+            go(a);
+            go(b);
+        }
+        Expr::Func { args, .. } | Expr::List(args) => args.iter_mut().for_each(go),
+        Expr::Map(kv) => kv.iter_mut().for_each(|(_, v)| go(v)),
+        Expr::Case { operand, whens, else_ } => {
+            if let Some(o) = operand {
+                go(o);
+            }
+            for (a, b) in whens {
+                go(a);
+                go(b);
+            }
+            if let Some(x) = else_ {
+                go(x);
+            }
+        }
+        Expr::ListComp { source, filter, project, .. } => {
+            go(source);
+            if let Some(x) = filter {
+                go(x);
+            }
+            if let Some(x) = project {
+                go(x);
+            }
+        }
+        Expr::ListPred { source, filter, .. } => {
+            go(source);
+            go(filter);
+        }
+        Expr::Reduce { init, list, expr, .. } => {
+            go(init);
+            go(list);
+            go(expr);
+        }
+        Expr::MapProjection { items, .. } => {
+            for it in items {
+                if let MapProjItem::Entry(_, v) = it {
+                    go(v);
+                }
+            }
+        }
+        Expr::Slice { list, from, to } => {
+            go(list);
+            if let Some(x) = from {
+                go(x);
+            }
+            if let Some(x) = to {
+                go(x);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// An aggregating WITH / RETURN that also holds a list comprehension, a list
+/// predicate or a pattern predicate — or an aggregate inside one
+/// (`[p IN collect(p) WHERE …]`) — fails in AGE 1.8.0 ("unsupported SubLink",
+/// or "`x` must be either part of an explicitly listed key or used inside an
+/// aggregate function"). It becomes three projections, which AGE runs:
+///
+/// 1. `WITH <scope>, <list expressions of the grouping keys and of the
+///    aggregates' arguments> AS __og_kN` — no aggregation;
+/// 2. `WITH <grouping keys>, <aggregate calls> AS __og_aN` — no lists;
+/// 3. the projection as written, reading those variables.
+///
+/// The groups are the same: each grouping key is computed once per row
+/// before step 2 and grouped on as it was.
+pub fn split_aggregations(q: &Query) -> Query {
+    let mut out = Vec::new();
+    let mut scope: Vec<String> = Vec::new();
+    let mut n = 0usize;
+    for c in &q.clauses {
+        let (proj, where_, is_return) = match c {
+            Clause::With { proj, where_ } => (proj, where_.clone(), false),
+            Clause::Return(proj) => (proj, None, true),
+            other => {
+                let other = match other {
+                    Clause::Subquery { scope: sc, body, optional } => {
+                        Clause::Subquery { scope: sc.clone(), body: Box::new(split_aggregations(body)), optional: *optional }
+                    }
+                    o => o.clone(),
+                };
+                scope = scope_after(&scope, &other);
+                out.push(other);
+                continue;
+            }
+        };
+        let aggregating = proj.items.iter().any(|i| i.expr.is_aggregate());
+        let lists = proj.items.iter().any(|i| has_sublink(&i.expr));
+        if !aggregating || !lists || proj.items.iter().any(|i| matches!(i.expr, Expr::Star)) {
+            scope = scope_after(&scope, c);
+            out.push(c.clone());
+            continue;
+        }
+        let mut fresh = |what: &str| {
+            n += 1;
+            format!("{FRESH}{what}{n}")
+        };
+        let mut pre: Vec<ReturnItem> = scope.iter().map(|v| ReturnItem { expr: Expr::Var(v.clone()), alias: None }).collect();
+        let mut agg: Vec<ReturnItem> = Vec::new();
+        let mut post: Vec<ReturnItem> = Vec::new();
+        for it in &proj.items {
+            if it.expr.is_aggregate() {
+                let mut e = it.expr.clone();
+                let mut calls = Vec::new();
+                lift_aggs(&mut e, &mut calls, &mut || fresh("a"));
+                for (v, mut call) in calls {
+                    if let Expr::Func { args, .. } = &mut call {
+                        for a in args.iter_mut() {
+                            if has_sublink(a) {
+                                let k = fresh("g");
+                                pre.push(ReturnItem { expr: a.clone(), alias: Some(k.clone()) });
+                                *a = Expr::Var(k);
+                            }
+                        }
+                    }
+                    agg.push(ReturnItem { expr: call, alias: Some(v) });
+                }
+                post.push(ReturnItem { expr: e, alias: it.alias.clone() });
+            } else {
+                match &it.expr {
+                    Expr::Var(v) if it.alias.is_none() || it.alias.as_deref() == Some(v.as_str()) => {
+                        agg.push(ReturnItem { expr: it.expr.clone(), alias: None });
+                        post.push(it.clone());
+                    }
+                    e => {
+                        let k = fresh("k");
+                        if has_sublink(e) {
+                            pre.push(ReturnItem { expr: e.clone(), alias: Some(k.clone()) });
+                            agg.push(ReturnItem { expr: Expr::Var(k.clone()), alias: None });
+                        } else {
+                            agg.push(ReturnItem { expr: e.clone(), alias: Some(k.clone()) });
+                        }
+                        post.push(ReturnItem { expr: Expr::Var(k), alias: Some(item_name(it)) });
+                    }
+                }
+            }
+        }
+        // ORDER BY may name an item by its expression: read the item instead.
+        let printed = |e: &Expr| Printer::new(None, String::new()).expr(e).ok();
+        let order = proj
+            .order
+            .iter()
+            .map(|o| {
+                let hit = proj.items.iter().find(|i| printed(&i.expr).is_some() && printed(&i.expr) == printed(&o.expr));
+                match hit {
+                    Some(i) => OrderItem { expr: Expr::Var(item_name(i)), desc: o.desc },
+                    None => o.clone(),
+                }
+            })
+            .collect();
+        let plain = |items: Vec<ReturnItem>| Projection { items, ..Default::default() };
+        if pre.len() > scope.len() {
+            out.push(Clause::With { proj: plain(pre), where_: None });
+        }
+        out.push(Clause::With { proj: plain(agg), where_: None });
+        let last = Projection { items: post, distinct: proj.distinct, order, skip: proj.skip.clone(), limit: proj.limit.clone() };
+        let rewritten = if is_return { Clause::Return(last) } else { Clause::With { proj: last, where_ } };
+        scope = scope_after(&scope, c);
+        out.push(rewritten);
+    }
+    Query { clauses: out, union: q.union.as_ref().map(|(all, t)| (*all, Box::new(split_aggregations(t)))) }
+}
+
+// ------------------------------------------------------------- MERGE + SET
+
+/// [`fold_merge_sets`] inside CALL { … } bodies and FOREACH bodies only: at the
+/// top level the statement is cut instead (`split.rs`), which avoids a second
+/// AGE fault the fold can run into.
+pub fn fold_nested_merge_sets(q: &Query) -> Query {
+    let clauses = q
+        .clauses
+        .iter()
+        .map(|c| match c {
+            Clause::Subquery { scope, body, optional } => {
+                Clause::Subquery { scope: scope.clone(), body: Box::new(fold_merge_sets(body)), optional: *optional }
+            }
+            Clause::Foreach { var, list, body } => {
+                Clause::Foreach { var: var.clone(), list: list.clone(), body: fold_merge_set_clauses(body) }
+            }
+            other => other.clone(),
+        })
+        .collect();
+    Query { clauses, union: q.union.as_ref().map(|(all, t)| (*all, Box::new(fold_nested_merge_sets(t)))) }
+}
+
+/// `MERGE … ON CREATE SET a … SET b` → `MERGE … ON CREATE SET a, b ON MATCH SET b`.
+///
+/// AGE 1.8.0 silently drops a SET (or REMOVE) clause that follows a MERGE
+/// whose branch that ran had SET items of its own: the statement returns the
+/// new values, but they are not stored (measured: `MATCH (m) MERGE (n:L {k: 1})
+/// ON CREATE SET n.a = 1 SET n.b = 2 MERGE (m)-[:R]->(n)` stores `{a, k}`).
+/// Items inside ON CREATE / ON MATCH are stored, so the clauses after the MERGE
+/// move into both branches — Neo4j runs them after either branch, which is the
+/// same order. Recursively into FOREACH bodies and CALL { … } subqueries.
+pub fn fold_merge_sets(q: &Query) -> Query {
+    Query { clauses: fold_merge_set_clauses(&q.clauses), union: q.union.as_ref().map(|(all, t)| (*all, Box::new(fold_merge_sets(t)))) }
+}
+
+/// [`fold_merge_sets`] on a run of clauses.
+pub fn fold_merge_set_clauses(cs: &[Clause]) -> Vec<Clause> {
+    let mut out: Vec<Clause> = Vec::with_capacity(cs.len());
+    let mut i = 0;
+    while i < cs.len() {
+        match &cs[i] {
+            Clause::Merge { pattern, on_create, on_match } if !on_create.is_empty() || !on_match.is_empty() => {
+                let (mut oc, mut om) = (on_create.clone(), on_match.clone());
+                let mut j = i + 1;
+                while j < cs.len() {
+                    let items: Vec<SetOp> = match &cs[j] {
+                        Clause::Set(items) if !items.iter().any(|x| matches!(x, SetOp::Label { .. })) => items.clone(),
+                        Clause::Remove(items) if !items.iter().any(|x| matches!(x, SetOp::Label { .. })) => items
+                            .iter()
+                            .map(|x| match x {
+                                SetOp::Prop { var, prop, .. } => {
+                                    SetOp::Prop { var: var.clone(), prop: prop.clone(), value: Expr::Lit(Lit::Null) }
+                                }
+                                other => other.clone(),
+                            })
+                            .collect(),
+                        _ => break,
+                    };
+                    oc.extend(items.iter().cloned());
+                    om.extend(items);
+                    j += 1;
+                }
+                out.push(Clause::Merge { pattern: pattern.clone(), on_create: oc, on_match: om });
+                i = j;
+                continue;
+            }
+            Clause::Foreach { var, list, body } => {
+                out.push(Clause::Foreach { var: var.clone(), list: list.clone(), body: fold_merge_set_clauses(body) })
+            }
+            Clause::Subquery { scope, body, optional } => {
+                out.push(Clause::Subquery { scope: scope.clone(), body: Box::new(fold_merge_sets(body)), optional: *optional })
+            }
+            other => out.push(other.clone()),
+        }
+        i += 1;
+    }
+    out
 }
 
 // ------------------------------------------------------------------ scope
@@ -895,16 +1574,19 @@ mod tests {
             "MATCH (a:Person {name: $n})-[r:KNOWS]->(b) WHERE a.age > 30 RETURN b.name AS n");
         assert_eq!(print("OPTIONAL MATCH (a)<-[:R*1..3]-(b) RETURN count(*) AS count ORDER BY count DESC LIMIT 5"),
             "OPTIONAL MATCH (a)<-[:R*1..3]-(b) RETURN count(*) AS `count` ORDER BY `count` DESC LIMIT 5");
-        assert_eq!(print("MERGE (n:L {k: 1}) ON CREATE SET n.c = 1 ON MATCH SET n.m = 2 SET n += $p RETURN n"),
-            "MERGE (n:L {k: 1}) ON CREATE SET n.c = 1 ON MATCH SET n.m = 2 SET n += $p RETURN n");
+        assert_eq!(print("MERGE (n:L {k: 1}) ON CREATE SET n.c = 1 ON MATCH SET n.m = 2 SET n += r RETURN n"),
+            "MERGE (n:L {k: 1}) ON CREATE SET n.c = 1 ON MATCH SET n.m = 2 SET n += r RETURN n");
         assert_eq!(print("UNWIND $rows AS r WITH r WHERE r.x IS NOT NULL MATCH (n) WHERE n.id = r.id DETACH DELETE n"),
             "UNWIND $rows AS r WITH r WHERE r.x IS NOT NULL MATCH (n) WHERE n.id = r.id DETACH DELETE n");
         // `*..` gets the engine's bound, as on v1; the engine's parser reads a
         // bare `*` as one hop, and so it goes out.
-        assert_eq!(print("MATCH (a)-[*..]->(b) RETURN b"), "MATCH (a)-[*1..8]->(b) RETURN b");
+        assert_eq!(print("MATCH (a)-[:R*..]->(b) RETURN b"), "MATCH (a)-[:R*1..8]->(b) RETURN b");
         assert_eq!(print("MATCH (a)-[*]->(b) RETURN b"), "MATCH (a)-[*1..1]->(b) RETURN b");
         assert_eq!(print("RETURN [x IN $xs WHERE x > 1 | x * 2] AS d, n {.a, .*, k: 1} AS m, xs[0] AS h, xs[1..] AS t"),
-            "RETURN [x IN $xs WHERE x > 1 | x * 2] AS d, n{.a, .*, k: 1} AS m, xs[0] AS h, xs[1..] AS t");
+            "RETURN [x IN $xs WHERE x > 1 | x * 2] AS d, CASE WHEN n IS NULL THEN null ELSE n{.a, .*, k: 1} END AS m, xs[0] AS h, xs[1..] AS t");
+        assert_eq!(print("RETURN n {.a, k: 1} AS m"), "RETURN CASE WHEN n IS NULL THEN null ELSE {a: n.a, k: 1} END AS m");
+        assert_eq!(print("MATCH (rm) RETURN rm {.id, .name} AS m ORDER BY m.name, m.x"),
+            "MATCH (rm) RETURN CASE WHEN rm IS NULL THEN null ELSE {id: rm.id, name: rm.name} END AS m ORDER BY rm.name, m.x");
     }
 
     #[test]
@@ -926,8 +1608,8 @@ mod tests {
         let params: Map<String, Json> = [("c".to_string(), Json::String("2026-01-11T18:00:00+09:00".into()))].into_iter().collect();
         let mut p = Printer::new(Some(&params), "2026-11-18T01:02:03.5+00:00".into());
         let s = p.query(&ast).unwrap();
-        assert!(s.starts_with("CREATE (n:N {at: $__og_now, id: reduce(s = '', i IN range(0, 35) |"), "{s}");
-        assert!(s.ends_with("c: $__og_dt_c, d: n.x}) RETURN toString(id(n)) AS e"), "{s}");
+        assert_eq!(s, "CREATE (n:N {at: $__og_now, id: toString(pg_catalog.concat(pg_catalog.gen_random_uuid())), \
+            c: $__og_dt_c, d: n.x}) RETURN toString(id(coalesce(n))) AS e");
         assert_eq!(p.extra.get("__og_now"), Some(&Json::String("2026-11-18T01:02:03.5+00:00".into())));
         assert_eq!(p.extra.get("__og_dt_c"), Some(&Json::String("2026-01-11T09:00:00+00:00".into())));
     }
@@ -940,11 +1622,22 @@ mod tests {
         assert_eq!(print("MATCH (a)-[:X|Y]->(b) WHERE a.k = 1 RETURN b"),
             "MATCH (a)-[__og_r1]->(b) WHERE (a.k = 1) AND (type(__og_r1) IN ['X', 'Y']) RETURN b");
         assert_eq!(print("MATCH (a)-[r:X|:Y*1..2]->(b) RETURN b"),
-            "MATCH (a)-[r*1..2]->(b) WHERE all(__og_x1 IN r WHERE type(__og_x1) IN ['X', 'Y']) RETURN b");
+            "MATCH (a)-[r*1..2]->(b) WHERE size([__og_x1 IN r WHERE NOT (type(__og_x1) IN ['X', 'Y'])]) = 0 RETURN b");
+        assert_eq!(print("MATCH (e) WHERE any(l IN $ls WHERE l IN labels(e)) AND none(x IN e.xs WHERE x = 1) RETURN e"),
+            "MATCH (e) WHERE (size([l IN $ls WHERE l IN labels(e)]) > 0) AND (size([x IN e.xs WHERE x = 1]) = 0) RETURN e");
         assert_eq!(print("MATCH (a) WHERE NOT (a)-[:X|Y]->() RETURN a"),
             "MATCH (a) WHERE NOT EXISTS { MATCH (a)-[__og_r1]->() WHERE type(__og_r1) IN ['X', 'Y'] } RETURN a");
         assert_eq!(print("MATCH (a) WHERE (a)-[:X]->(:B) RETURN a"), "MATCH (a) WHERE EXISTS((a)-[:X]->(:B)) RETURN a");
+        assert_eq!(print("MATCH (a) WHERE exists((b:B)-[:X]->(a)) RETURN a"),
+            "MATCH (a) WHERE EXISTS { MATCH (b:B)-[:X]->(a) } RETURN a");
         assert_eq!(print("MATCH (n:A|B) RETURN n"), "MATCH (n) WHERE label(n) IN ['A', 'B'] RETURN n");
+        // Long variable-length patterns without one type are refused, not run.
+        let mut p = Printer::new(None, "2026-11-18T00:00:00+00:00".into());
+        for q in ["MATCH (a)-[:X|Y*1..30]-(b) RETURN b", "MATCH (a)-[*1..4]-(b) RETURN b"] {
+            let e = p.query(&cypher_syntax::parse(q).unwrap()).unwrap_err();
+            assert!(e.contains("not run on the AGE backend"), "{e}");
+        }
+        assert_eq!(print("MATCH (a)-[:X*1..30]-(b) RETURN b"), "MATCH (a)-[:X*1..30]-(b) RETURN b");
     }
 
     #[test]
@@ -957,6 +1650,49 @@ mod tests {
         assert_eq!(print("MATCH (b)-[r]->(a) RETURN *"), "MATCH (b)-[r]->(a) RETURN a, b, r");
         assert!(is_write(&cypher_syntax::parse("MATCH (n) SET n.x = 1").unwrap()));
         assert!(columns(&cypher_syntax::parse("CREATE (n)").unwrap()).is_empty());
+    }
+
+    #[test]
+    fn a_map_parameter_in_set_is_bound_first() {
+        assert_eq!(print("MATCH (n {id: $id}) SET n += $props RETURN n"),
+            "MATCH (n {id: $id}) WITH n, $props AS __og_p1 SET n += __og_p1 RETURN n");
+        assert_eq!(print("MERGE (n:L {id: 1}) ON CREATE SET n = $p ON MATCH SET n += $p"),
+            "WITH $p AS __og_p1 MERGE (n:L {id: 1}) ON CREATE SET n = __og_p1 ON MATCH SET n += __og_p1");
+        // a map parameter's field is an ordinary value
+        assert_eq!(print("MATCH (n) SET n.a = $p.a"), "MATCH (n) SET n.a = $p.a");
+    }
+
+    #[test]
+    fn a_set_after_merge_moves_into_its_branches() {
+        let fold = |q: &str| {
+            let ast = fold_merge_sets(&cypher_syntax::parse(q).unwrap());
+            Printer::new(None, String::new()).query(&ast).unwrap()
+        };
+        assert_eq!(fold("MATCH (m) MERGE (n:L {k: 1}) ON CREATE SET n.a = 1 SET n.b = 2 REMOVE n.c MERGE (m)-[:R]->(n)"),
+            "MATCH (m) MERGE (n:L {k: 1}) ON CREATE SET n.a = 1, n.b = 2, n.c = null ON MATCH SET n.b = 2, n.c = null MERGE (m)-[:R]->(n)");
+        // a MERGE without branches keeps its SET: AGE stores that one
+        assert_eq!(fold("MERGE (n:L {k: 1}) SET n.b = 2"), "MERGE (n:L {k: 1}) SET n.b = 2");
+    }
+
+    #[test]
+    fn names_that_clash_with_age_columns_are_renamed() {
+        let ast = rename_clashing(&cypher_syntax::parse("UNWIND $ids AS id MATCH (n {id: id}) RETURN n.id AS id, [x IN n.l | x.id] AS l ORDER BY id").unwrap());
+        assert_eq!(Printer::new(None, String::new()).query(&ast).unwrap(),
+            "UNWIND $ids AS __og_v_id MATCH (n {id: __og_v_id}) RETURN n.id AS __og_v_id, [x IN n.l | x.id] AS l ORDER BY __og_v_id");
+        let ast = lead_optional(&cypher_syntax::parse("OPTIONAL MATCH (x:A) RETURN x.id AS i").unwrap());
+        assert_eq!(Printer::new(None, String::new()).query(&ast).unwrap(), "WITH 1 AS __og_one OPTIONAL MATCH (x:A) RETURN x.id AS i");
+    }
+
+    #[test]
+    fn aggregations_with_lists_come_apart() {
+        let p = |q: &str| Printer::new(None, String::new()).query(&split_aggregations(&cypher_syntax::parse(q).unwrap())).unwrap();
+        assert_eq!(p("MATCH (c)-[r]-(n) WITH c, [x IN collect(n) WHERE x IS NOT NULL] AS ps RETURN c, ps"),
+            "MATCH (c)-[r]-(n) WITH c, collect(n) AS __og_a1 WITH c, [x IN __og_a1 WHERE x IS NOT NULL] AS ps RETURN c, ps");
+        assert_eq!(p("MATCH (b)-[:R]->(a) WITH b, collect(a) AS l RETURN b.id AS id, count(*) AS c, [x IN l WHERE x.k = 1] AS f ORDER BY b.id"),
+            "MATCH (b)-[:R]->(a) WITH b, collect(a) AS l WITH b, l, [x IN l WHERE x.k = 1] AS __og_k3 \
+WITH b.id AS __og_k1, count(*) AS __og_a2, __og_k3 RETURN __og_k1 AS id, __og_a2 AS c, __og_k3 AS f ORDER BY id");
+        // nothing to do without both
+        assert_eq!(p("MATCH (a) RETURN a.id AS id, count(*) AS c"), "MATCH (a) RETURN a.id AS id, count(*) AS c");
     }
 
     #[test]

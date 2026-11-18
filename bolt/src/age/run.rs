@@ -15,9 +15,12 @@ use std::net::TcpStream;
 /// After the PostgreSQL login: AGE's library, its schema on the path, the
 /// deployment's time limit. Returns the session's limit in milliseconds.
 pub(super) fn hello(client: &mut Client, config: &Config) -> Result<i64, Failure> {
-    // Preloaded (`shared_preload_libraries`) there is nothing to do, and a role
-    // that is not a superuser may not LOAD; either way go on.
-    let _ = client.batch_execute("LOAD 'age'");
+    // Preloaded (`shared_preload_libraries`, as the Supabase image does) there
+    // is nothing to do; elsewhere AGE's parser hook needs the library loaded,
+    // which only a superuser may do.
+    if config.age.as_ref().is_some_and(|a| a.load) {
+        client.batch_execute("LOAD 'age'").map_err(|e| Failure::from_pg(&e))?;
+    }
     client
         .batch_execute("SET search_path = ag_catalog, \"$user\", public")
         .map_err(|e| Failure::from_pg(&e))?;
@@ -136,6 +139,16 @@ impl Session<'_> {
             return Ok(());
         }
         let graph = self.graph.clone();
+        // AGE's graph names are identifiers; anything else would be a schema
+        // name to quote, and AGE refuses most of them anyway.
+        let ok = graph.chars().next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+            && graph.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
+        if !ok {
+            return Err(Failure::client(
+                "Neo.ClientError.Database.DatabaseNotFound",
+                format!("'{graph}' is not a graph name AGE takes (letters, digits and _, not starting with a digit)"),
+            ));
+        }
         let create = self.config.age.as_ref().is_some_and(|a| a.create_graphs);
         let pg = self.client()?;
         let exists = pg.query_opt(age::GRAPH_EXISTS, &[&graph]).map_err(|e| Failure::from_pg(&e))?.is_some();
@@ -226,10 +239,25 @@ impl Session<'_> {
         stream: &mut TcpStream,
     ) -> Result<Vec<postgres::Row>, Failure> {
         let p = agtype::AgParam(agtype::params_text(params));
+        let trace = self.config.age.as_ref().is_some_and(|a| a.trace);
+        let started = std::time::Instant::now();
+        if trace {
+            eprintln!("age-trace > {sql} -- params {}", p.0);
+        }
         let pg = self.client()?;
         let watch = Watch::start(stream, pg.cancel_token(), limit_ms);
         let result = pg.query(sql, &[&p]);
         let seen = watch.finish(stream);
+        if trace {
+            eprintln!(
+                "age-trace < {} ms {}",
+                started.elapsed().as_millis(),
+                match &result {
+                    Ok(r) => format!("{} rows", r.len()),
+                    Err(e) => format!("error {}", super::pg_message(e)),
+                }
+            );
+        }
         self.early.extend(seen.bytes);
         result.map_err(|e| failure(&e, seen.interrupt, limit_ms))
     }

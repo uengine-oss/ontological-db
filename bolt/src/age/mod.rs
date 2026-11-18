@@ -36,15 +36,28 @@ pub struct AgeConfig {
     /// and Ontological answer "database not found" instead; a project-per-graph
     /// client has no Cypher for making one, so this is on by default.
     pub create_graphs: bool,
+    /// `LOAD 'age'` at login, for a server that does not preload AGE
+    /// (`shared_preload_libraries`). Only a superuser may; off by default.
+    pub load: bool,
+    /// Write every SQL statement sent to AGE, and how long it took, to stderr.
+    pub trace: bool,
+}
+
+fn flag(v: Option<String>, default: bool) -> bool {
+    match v.map(|v| v.trim().to_ascii_lowercase()).as_deref() {
+        Some("0" | "false" | "no" | "off") => false,
+        Some("1" | "true" | "yes" | "on") => true,
+        _ => default,
+    }
 }
 
 impl AgeConfig {
     pub fn from_env(get: impl Fn(&str) -> Option<String>) -> AgeConfig {
-        let create_graphs = !matches!(
-            get("OG_BOLT_AGE_CREATE_GRAPHS").map(|v| v.trim().to_ascii_lowercase()).as_deref(),
-            Some("0" | "false" | "no" | "off")
-        );
-        AgeConfig { create_graphs }
+        AgeConfig {
+            create_graphs: flag(get("OG_BOLT_AGE_CREATE_GRAPHS"), true),
+            load: flag(get("OG_BOLT_AGE_LOAD"), false),
+            trace: flag(get("OG_BOLT_AGE_TRACE"), false),
+        }
     }
 }
 
@@ -92,8 +105,12 @@ pub fn check(query: &str) -> Result<bool, Refusal> {
 /// Read and re-print one statement.
 pub fn translate(query: &str, params: &Json) -> Result<Statement, Refusal> {
     let q: Query = cypher_syntax::parse(query).map_err(Refusal::syntax)?;
+    // The fields and read/write are the statement's as sent.
     let write = cypher::is_write(&q);
     let columns = cypher::columns(&q);
+    // Not cut (split.rs) inside CALL { … }; folded there instead.
+    let q = cypher::fold_nested_merge_sets(&q);
+    let q = cypher::lead_optional(&cypher::split_aggregations(&cypher::rename_clashing(&q)));
     if let Some(Clause::Ddl(d)) = q.clauses.first() {
         if q.clauses.len() > 1 {
             return Err(Refusal::syntax("a schema command cannot be combined with other clauses".into()));

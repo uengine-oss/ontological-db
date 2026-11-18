@@ -77,7 +77,20 @@ pub fn needed(q: &Query) -> bool {
         Clause::Set(items) | Clause::Remove(items) => has_label_op(items),
         Clause::Merge { on_create, on_match, .. } => has_label_op(on_create) || has_label_op(on_match),
         _ => false,
-    })
+    }) || q.clauses.windows(2).any(|w| merge_then_set(&w[0], &w[1]))
+}
+
+/// A MERGE with ON CREATE / ON MATCH items, then a SET or REMOVE: AGE 1.8.0
+/// does not store that SET when the branch that ran had items of its own
+/// (the statement returns the new values; the table keeps the old ones).
+/// Moving the SET into both branches is not enough either — reading the
+/// merged relationship's own properties there (`ON MATCH SET r.x =
+/// coalesce(r.x, …)`) fails with "binary container must be a VLE vpc" — so the
+/// statement is cut after the MERGE and the SET runs as the next statement,
+/// on the same rows.
+fn merge_then_set(a: &Clause, b: &Clause) -> bool {
+    matches!(a, Clause::Merge { on_create, on_match, .. } if !on_create.is_empty() || !on_match.is_empty())
+        && matches!(b, Clause::Set(_) | Clause::Remove(_))
 }
 
 /// Cut the statement into steps.
@@ -171,6 +184,9 @@ pub fn plan(q: &Query, p: &mut Printer) -> Result<Steps, String> {
                         }
                     }
                     if !rest.is_empty() {
+                        if cur.last().is_some_and(|l| merge_then_set(l, &q.clauses[j])) {
+                            flush(&mut cur, &mut segs, &scope);
+                        }
                         cur.push(if add { Clause::Set(rest) } else { Clause::Remove(rest) });
                     }
                     j += 1;
@@ -183,14 +199,17 @@ pub fn plan(q: &Query, p: &mut Printer) -> Result<Steps, String> {
             Clause::Merge { on_create, on_match, .. } if has_label_op(on_create) || has_label_op(on_match) => {
                 return Err(super::cypher::unsupported("a label set in ON CREATE / ON MATCH"));
             }
-            other => cur.push(other.clone()),
+            other => {
+                if cur.last().is_some_and(|l| merge_then_set(l, other)) {
+                    flush(&mut cur, &mut segs, &scope);
+                }
+                cur.push(other.clone())
+            }
         }
         scope = scope_after(&scope, c);
         i += 1;
     }
     flush(&mut cur, &mut segs, &scope);
-    // Printing happens when the rows are known; check now that it can.
-    let _ = p;
     Ok(Steps { ncols, segs, now: p.now.clone() })
 }
 
@@ -785,6 +804,17 @@ mod tests {
         assert!(f.asked[3].contains("DELETE FROM \"g\".\"_ag_label_vertex\" WHERE id = '844424930131969'::ag_catalog.graphid"), "{}", f.asked[3]);
         assert!(f.asked[5].contains("OPTIONAL MATCH (n:BpmnProcess) WHERE id(n) = __og_row.n") && f.asked[5].contains("1407374883553281"), "{}", f.asked[5]);
         assert_eq!((adj.nodes_created, adj.nodes_deleted, adj.labels_added, adj.labels_removed, adj.properties_set), (-1, -1, 0, 1, -2));
+    }
+
+    #[test]
+    fn a_set_after_merge_runs_as_its_own_statement() {
+        let s = steps("UNWIND $rows AS r MATCH (a:A {id: r.a}) MERGE (a)-[e:R]->(b:B {k: 1}) ON CREATE SET e.x = r.x SET e.x = coalesce(e.x, 0) RETURN e.x AS x");
+        let e = Ag::Edge { id: 7, label: "R".into(), start: 1, end: 2, props: vec![] };
+        let mut f = Fake { asked: vec![], answers: vec![vec![vec![Ag::Map(vec![("a".into(), Ag::Int(1))]), v(1, "A"), e, v(2, "B")]], vec![vec![Ag::Int(5)]]] };
+        let (rows, _) = run(&mut f, &s, &serde_json::json!({"rows": [{"a": 1}]})).unwrap();
+        assert_eq!(rows, vec![vec![Ag::Int(5)]]);
+        assert!(f.asked[0].starts_with("UNWIND $rows AS r MATCH (a:A {id: r.a}) MERGE (a)-[e:R]->(b:B {k: 1}) ON CREATE SET e.x = r.x RETURN r, a, e, b |"), "{}", f.asked[0]);
+        assert!(f.asked[1].contains("OPTIONAL MATCH ()-[e]->() WHERE id(e) = __og_row.e") && f.asked[1].contains("SET e.x = coalesce(e.x, 0) RETURN e.x AS x"), "{}", f.asked[1]);
     }
 
     #[test]

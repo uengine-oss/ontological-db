@@ -10,6 +10,10 @@
     # v2 against the v1 answers (once v2 has a bootstrap and a gateway)
     python3 tests/compat/run.py --target age --bolt-bin <v2-bolt> --pg-port … --out /tmp/age --compare tests/compat/expected/v1
 
+    # Robo's part through the gateway in front of Apache AGE (no fabric there, so no shared fixture)
+    python3 tests/compat/run.py --target apache-age --clients robo --skip-shared --bolt-env OG_BOLT_BACKEND=age \
+        --bolt-bin <bolt> --pg-port … --pg-user … --out /tmp/agebolt --compare tests/compat/expected/v1
+
 Needs psql (for the bootstrap) and the neo4j Python driver (5 or 6). See README.md.
 """
 from __future__ import annotations
@@ -45,10 +49,12 @@ DELTA_CAP = 100   # nodes / relationships listed per step delta
 # ---------------------------------------------------------------- setup
 
 def psql(args, sql=None, file=None, db=None, variables=None):
-    cmd = [args.psql, "-h", args.pg_host, "-p", str(args.pg_port), "-U", args.pg_user, "-d", db or args.pg_database,
+    cmd = [args.psql, "-h", args.pg_host, "-p", str(args.pg_port), "-U", args.bootstrap_user or args.pg_user, "-d", db or args.pg_database,
            "-X", "-q", "-v", "ON_ERROR_STOP=1"]
     for k, v in (variables or {}).items():
         cmd += ["-v", f"{k}={v}"]
+    if args.bootstrap_user:
+        cmd += ["-v", f"login={args.pg_user}"]
     cmd += ["-f", file] if file else ["-c", sql]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0:
@@ -58,7 +64,10 @@ def psql(args, sql=None, file=None, db=None, variables=None):
 
 def bootstrap(args, graphs):
     psql(args, f"DROP DATABASE IF EXISTS {args.pg_database}", db="postgres")
-    psql(args, f"CREATE DATABASE {args.pg_database}", db="postgres")
+    # --db-locale: the collation strings sort by (v1's clusters are initdb'd with C; a server whose default is
+    # a language collation sorts 'orderId' before 'Property 1', and the parameters looked up by ORDER BY change)
+    locale = f" TEMPLATE template0 ENCODING 'UTF8' LC_COLLATE '{args.db_locale}' LC_CTYPE '{args.db_locale}'" if args.db_locale else ""
+    psql(args, f"CREATE DATABASE {args.pg_database}{locale}", db="postgres")
     # every session (the gateway's too) on UTC, whatever the cluster's own timezone: datetime() and
     # times read back are then written the same on every machine
     psql(args, f"ALTER DATABASE {args.pg_database} SET TimeZone TO 'UTC'", db="postgres")
@@ -70,6 +79,10 @@ def start_gateway(args, default_graph):
         return None
     env = dict(os.environ, OG_BOLT_LISTEN=args.bolt_listen, OG_BOLT_PGHOST=args.pg_host, OG_BOLT_PGPORT=str(args.pg_port),
                OG_BOLT_PGDATABASE=args.pg_database, OG_BOLT_GRAPH=default_graph, OG_BOLT_MAX_SESSIONS="16")
+    # the gateway's own settings for this target (OG_BOLT_BACKEND=age …)
+    for kv in args.bolt_env:
+        k, _, v = kv.partition("=")
+        env[k] = v
     log = open(os.path.join(args.work, "bolt.log"), "a")
     gw = subprocess.Popen([args.bolt_bin], env=env, stdout=log, stderr=log)
     host, port = args.bolt_listen.split(":")
@@ -343,7 +356,7 @@ def one_pass(args, out_dir):
         os.makedirs(out_dir)
         # fixtures: shared first, then each client's, in file order
         setup = []
-        files = [(os.path.join(HERE, "corpus", "_shared", "fixture"), graphs[0])]
+        files = [] if args.skip_shared else [(os.path.join(HERE, "corpus", "_shared", "fixture"), graphs[0])]
         conf = json.load(open(os.path.join(HERE, "extract", "clients.json"), encoding="utf-8"))
         files += [(os.path.join(d, "fixture"), conf[c]["graph"]) for c, (d, man) in corpus.items()]
         for fdir, g0 in files:
@@ -477,8 +490,11 @@ def dump(path, obj):
 
 # ---------------------------------------------------------------- comparing two result sets
 
-def compare(got_dir, want_dir, known_path=None):
-    """Differences between two result folders, with the relaxations the expected files ask for."""
+def compare(got_dir, want_dir, known_path=None, clients=None, shared=True):
+    """Differences between two result folders, with the relaxations the expected files ask for.
+
+    clients: compare only these clients' answers and fixture files (a run of part of the corpus);
+    shared: whether the shared fixture (fabric datasources) was loaded and is compared."""
     known = {}
     if known_path and os.path.exists(known_path):
         for k in json.load(open(known_path, encoding="utf-8")):
@@ -489,12 +505,19 @@ def compare(got_dir, want_dir, known_path=None):
         p = os.path.join(d, "_setup.json")
         if not os.path.exists(p):
             return None
+        def wanted(f):
+            part = f.split("/")[1] if f.startswith("corpus/") else ""
+            if part == "_shared":
+                return shared
+            return clients is None or part in clients
         return [(s["file"], s["statements"], s["failed"], [(e["line"], e["code"]) for e in s["errors"]])
-                for s in json.load(open(p, encoding="utf-8"))]
+                for s in json.load(open(p, encoding="utf-8")) if wanted(s["file"])]
     if setup_codes(got_dir) != setup_codes(want_dir):
         diffs.append({"file": "_setup.json", "why": "the fixture loaded differently (statements failing / error codes)"})
     for want in sorted(glob.glob(os.path.join(want_dir, "*", "*.json")) + glob.glob(os.path.join(want_dir, "*", "scenarios", "*.json"))):
         rel = os.path.relpath(want, want_dir)
+        if clients is not None and rel.split(os.sep)[0] not in clients:
+            continue
         got = os.path.join(got_dir, rel)
         w = json.load(open(want, encoding="utf-8"))
         if not os.path.exists(got):
@@ -524,17 +547,28 @@ def same(w, g):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--target", default="v1", choices=["v1", "age"], help="which bootstrap (targets/<target>/bootstrap.sql)")
+    ap.add_argument("--target", default="v1", choices=["v1", "age", "apache-age"],
+                    help="which bootstrap (targets/<target>/bootstrap.sql); apache-age is AGE as it ships, behind the "
+                         "gateway's AGE backend (--bolt-env OG_BOLT_BACKEND=age)")
     ap.add_argument("--clients", nargs="*", default=["studio", "robo", "analyzer"])
     ap.add_argument("--pg-host", default=os.environ.get("PGHOST", "127.0.0.1"))
     ap.add_argument("--pg-port", type=int, default=int(os.environ.get("PGPORT", "28830")))
     ap.add_argument("--pg-user", default=os.environ.get("PGUSER", "og"))
     ap.add_argument("--pg-password", default=os.environ.get("PGPASSWORD", ""))
+    ap.add_argument("--pg-password-file", default=None, help="read --pg-password from this file instead")
+    ap.add_argument("--bootstrap-user", default=None,
+                    help="psql runs the bootstrap and statistics as this role (its password from PGPASSWORD or "
+                         "~/.pgpass); --pg-user is then only the gateway's login, and the bootstrap sees it as :login")
     ap.add_argument("--pg-database", default="og_compat", help="dropped and made again at every pass")
     ap.add_argument("--psql", default=os.environ.get("PSQL", "psql"))
+    ap.add_argument("--db-locale", default=None, help="make the test database with this collation and ctype (e.g. C)")
     ap.add_argument("--bolt-bin", default=os.environ.get("OG_BOLT_BIN"), help="start this gateway (else --bolt-uri must be up)")
     ap.add_argument("--bolt-listen", default="127.0.0.1:28731")
     ap.add_argument("--bolt-uri", default=None)
+    ap.add_argument("--bolt-env", action="append", default=[], metavar="KEY=VALUE",
+                    help="an environment setting for the gateway --bolt-bin starts (repeatable)")
+    ap.add_argument("--skip-shared", action="store_true",
+                    help="do not load corpus/_shared/fixture (the fabric datasources), nor compare it")
     ap.add_argument("--timeout", type=float, default=30.0, help="seconds per statement")
     ap.add_argument("--out", required=True, help="result folder (replaced)")
     ap.add_argument("--repeat", type=int, default=1, help="run N passes into <out>, <out>.2 … and check they are identical")
@@ -542,6 +576,9 @@ def main():
     ap.add_argument("--known-differences", default=os.path.join(HERE, "expected", "known-differences.json"))
     ap.add_argument("--work", default=None, help="folder for the gateway log (default: next to --out)")
     args = ap.parse_args()
+    if args.pg_password_file:
+        with open(args.pg_password_file, encoding="utf-8") as f:
+            args.pg_password = f.read().strip()
     args.bolt_uri = args.bolt_uri or f"bolt://{args.bolt_listen}"
     args.work = args.work or os.path.dirname(os.path.abspath(args.out))
     os.makedirs(args.work, exist_ok=True)
@@ -565,7 +602,9 @@ def main():
                 rc = 1
                 print(f"DIFFERENT: {outs[0]} vs {other}\n{r.stdout}")
     if args.compare:
-        diffs = compare(args.out, args.compare, args.known_differences)
+        diffs = compare(args.out, args.compare, args.known_differences,
+                        clients=None if set(args.clients) >= {"studio", "robo", "analyzer"} else set(args.clients),
+                        shared=not args.skip_shared)
         print(f"compare with {args.compare}: {len(diffs)} differences")
         for d in diffs[:50]:
             print(f"  {d['file']}: {d['why']}")
