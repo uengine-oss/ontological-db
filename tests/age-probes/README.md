@@ -272,4 +272,5 @@ server may print that WARNING too; it does not change any result.
 | `start_id` / `end_id` variable names | no failing form is known (`upstream/INDEX.md`, "Not reproduced"); `robo04_variable_named_end_id` is kept `disabled` |
 | `none()` / `single()` crashing like `any()` / `all()` | not reproduced in the reports; only `any()` and `all()` are probed |
 | zone-id DateTime parameters, the `(n:A:B)`-as-either and `elementId` text-scan fixes, `SHOW GRAPHS` / `CREATE GRAPH` | gateway-only: entries with `gateway_only: true`, no SQL |
-| SUITES B2–B8, B10–B13 | gateway-side (error codes, `CALL {}` handling, counters' approximation), not AGE behaviour |
+| SUITES B2–B4, B10, B12 | gateway-side (`CALL {}` handling, error codes): `gateway_only` entries (`gateway_call_subquery_union_and_names`, `gateway_type_error_codes`, `gateway_unknown_procedure`); the forms they send, and the AGE messages the codes are read from, are `relied_on` probes (`tgt_rows_in_every_union_branch`, `tgt_type_error_message`) |
+| SUITES B8, B11, B13 | gateway-side (date text check, counters' approximation, `OG_BOLT_AGE_CREATE_GRAPHS`), not AGE behaviour |
