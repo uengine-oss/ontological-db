@@ -74,6 +74,8 @@ Rewrites (each found by running Robo Architect's queries against AGE; see
 |---|---|
 | `datetime()`, `date()`; `datetime($p)`; `datetime() - duration({minutes: $m})` | the statement's clock, `$p` written as PostgreSQL writes a timestamptz, the shifted instant — as ISO 8601 text in parameters |
 | `randomUUID()` | `toString(pg_catalog.concat(pg_catalog.gen_random_uuid()))` |
+| `id(x) IN list` (AGE: `id(n) IN $param` kills the backend, signal 11; `id(n) IN [1, 2]` fails "not a common type" — ROBO 11.4) | `id(coalesce(x)) IN list` |
+| `elementId(x) = e`, `e = elementId(x)` (STUDIO G4: `toString(id(…)) = e` reads every row, 28 ms → 2 ms at 25k vertices) | `id(x) = $__og_eid_p` / `id(x) = 12` when the parameter or literal is an integer's text; `id(x) = toInteger(e) AND toString(id(coalesce(x))) = e` for an expression (the index finds it, the text decides); the text comparison for anything else. `elementId(x) IN list` stays a text comparison (`id(x) IN` is the crash above) |
 | `n:L` in an expression; `(n:A\|B)`, `-[:A\|B]-` | `label(n) = 'L'`; the choice moved into the clause's WHERE |
 | `(n:A:B)` in MATCH / OPTIONAL MATCH / EXISTS — both labels (SUITES B1: was read as either, `MATCH (n:Lamp:Part)` counted Lamps and Parts) | `(n:A) WHERE false` when A ≠ B (a vertex has one label), `(n:A)` for `(n:A:A)`; decided in `cypher.rs` `node_label_test`, the place a label hierarchy will change it |
 | `any/all/none/single(x IN l WHERE p)` | `size([x IN l WHERE p]) > 0` … (AGE's own crash the backend when `p` reads a matched node) |

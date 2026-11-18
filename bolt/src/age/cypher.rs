@@ -504,6 +504,9 @@ impl<'a> Printer<'a> {
                 self.extra.insert(name.clone(), Json::String(at));
                 format!("${name}")
             }
+            Expr::Binary(op @ (BinOp::Eq | BinOp::In), a, b) if id_test(*op, a, b).is_some() => {
+                return self.id_comparison(*op, a, b);
+            }
             Expr::Binary(op, a, b) => {
                 let sym = match op {
                     BinOp::Add | BinOp::Concat => "+",
@@ -744,6 +747,50 @@ impl<'a> Printer<'a> {
         Some((months as i64, days as i64, secs.round() as i64))
     }
 
+    /// Comparisons with a node's or relationship's id ([`id_test`]):
+    ///
+    /// - `id(x) IN list` → `id(coalesce(x)) IN list`. AGE 1.8.0 crashes the
+    ///   backend (signal 11) on `id(n) IN $param` and refuses `id(n) IN [1, 2]`
+    ///   ("not a common type"); through `coalesce()` the id is an agtype
+    ///   integer and both run (ROBO-ON-AGE 11.4).
+    /// - `elementId(x) = e` (either side) → `id(x) = <e as an integer>`, which
+    ///   AGE answers from the label table's id index. The element id is
+    ///   `toString(id(x))` here, and `toString(id(coalesce(x))) = e` is read
+    ///   row by row (STUDIO-ON-AGE G4: 28 ms → 2 ms at 25k vertices). A
+    ///   parameter or literal that is an integer's text goes as that integer;
+    ///   anything else known now keeps the text comparison (the same answer
+    ///   for `'012'`, `'x'`, null); an expression becomes `id(x) =
+    ///   toInteger(e) AND toString(id(coalesce(x))) = e` — the index finds the
+    ///   candidate, the text decides.
+    fn id_comparison(&mut self, op: BinOp, a: &Expr, b: &Expr) -> R<String> {
+        match id_test(op, a, b).ok_or_else(|| "not an id comparison".to_string())? {
+            IdTest::IdIn(x, list) => Ok(format!("id(coalesce({})) IN {}", self.expr(x)?, self.operand(list)?)),
+            IdTest::ElementIdEq(x, e) => {
+                let xs = self.expr(x)?;
+                let text = |this: &mut Self| -> R<String> { Ok(format!("toString(id(coalesce({xs}))) = {}", this.operand(e)?)) };
+                match e {
+                    Expr::Lit(Lit::Str(s)) => match canonical_int(s) {
+                        Some(i) => Ok(format!("id({xs}) = {i}")),
+                        None => text(self),
+                    },
+                    Expr::Lit(_) => text(self),
+                    Expr::Param(p) => match self.params.and_then(|m| m.get(p)).and_then(Json::as_str).and_then(canonical_int) {
+                        Some(i) => {
+                            let name = format!("{FRESH}eid_{}", param_name(p)?);
+                            self.extra.insert(name.clone(), Json::from(i));
+                            Ok(format!("id({xs}) = ${name}"))
+                        }
+                        None => text(self),
+                    },
+                    _ => {
+                        let ev = self.operand(e)?;
+                        Ok(format!("id({xs}) = toInteger({ev}) AND toString(id(coalesce({xs}))) = {ev}"))
+                    }
+                }
+            }
+        }
+    }
+
     fn func(&mut self, name: &str, args: &[Expr], distinct: bool) -> R<String> {
         let lname = name.to_ascii_lowercase();
         match (lname.as_str(), args) {
@@ -816,6 +863,40 @@ impl<'a> Printer<'a> {
         s.push(')');
         Ok(s)
     }
+}
+
+/// An id comparison the printer writes its own way ([`Printer::id_comparison`]).
+enum IdTest<'e> {
+    /// `id(x) IN list`: x, list.
+    IdIn(&'e Expr, &'e Expr),
+    /// `elementId(x) = e` or `e = elementId(x)`: x, e.
+    ElementIdEq(&'e Expr, &'e Expr),
+}
+
+/// `f(x)` (any case) → x.
+fn one_arg<'e>(e: &'e Expr, f: &str) -> Option<&'e Expr> {
+    match e {
+        Expr::Func { name, args, distinct: false } if name.eq_ignore_ascii_case(f) && args.len() == 1 => Some(&args[0]),
+        _ => None,
+    }
+}
+
+fn id_test<'e>(op: BinOp, a: &'e Expr, b: &'e Expr) -> Option<IdTest<'e>> {
+    match op {
+        BinOp::In => one_arg(a, "id").map(|x| IdTest::IdIn(x, b)),
+        BinOp::Eq => match (one_arg(a, "elementid"), one_arg(b, "elementid")) {
+            (Some(x), None) => Some(IdTest::ElementIdEq(x, b)),
+            (None, Some(x)) => Some(IdTest::ElementIdEq(x, a)),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+/// The integer whose text `s` is, written the way `toString()` writes it
+/// (no sign but `-`, no leading zeros).
+fn canonical_int(s: &str) -> Option<i64> {
+    s.parse::<i64>().ok().filter(|i| i.to_string() == s)
 }
 
 /// `ORDER BY m.k` where `m` is this projection's map (`n {.k} AS m`, `{k: e}
@@ -1882,6 +1963,48 @@ mod tests {
             assert!(e.contains("not run on the AGE backend"), "{e}");
         }
         assert_eq!(print("MATCH (a)-[:X*1..30]-(b) RETURN b"), "MATCH (a)-[:X*1..30]-(b) RETURN b");
+    }
+
+    #[test]
+    fn id_comparisons_use_the_id() {
+        let params: Map<String, Json> = [
+            ("id".to_string(), Json::from("844424930131969")),
+            ("bad".to_string(), Json::from("012")),
+            ("n".to_string(), Json::from(12)),
+        ]
+        .into_iter()
+        .collect();
+        let pr = |q: &str| {
+            let mut p = Printer::new(Some(&params), "2026-11-18T00:00:00+00:00".into());
+            let s = p.query(&cypher_syntax::parse(q).unwrap()).unwrap();
+            (s, p.extra)
+        };
+        // G4: an element id that is an integer's text is compared as the id
+        let (s, extra) = pr("MATCH (n) WHERE elementId(n) = $id RETURN n");
+        assert_eq!(s, "MATCH (n) WHERE id(n) = $__og_eid_id RETURN n");
+        assert_eq!(extra["__og_eid_id"], Json::from(844424930131969i64));
+        assert_eq!(pr("MATCH (n) WHERE $id = elementId(n) DETACH DELETE n").0, "MATCH (n) WHERE id(n) = $__og_eid_id DETACH DELETE n");
+        assert_eq!(pr("MATCH (n) WHERE elementId(n) = '12' RETURN n").0, "MATCH (n) WHERE id(n) = 12 RETURN n");
+        // anything else known now keeps the text comparison: the same answer
+        for (q, want) in [
+            ("MATCH (n) WHERE elementId(n) = $bad RETURN n", "toString(id(coalesce(n))) = $bad"),
+            ("MATCH (n) WHERE elementId(n) = $n RETURN n", "toString(id(coalesce(n))) = $n"),
+            ("MATCH (n) WHERE elementId(n) = $nope RETURN n", "toString(id(coalesce(n))) = $nope"),
+            ("MATCH (n) WHERE elementId(n) = 'x' RETURN n", "toString(id(coalesce(n))) = 'x'"),
+        ] {
+            assert!(pr(q).0.contains(want), "{q}: {}", pr(q).0);
+        }
+        // an expression: the index finds it, the text decides
+        assert_eq!(pr("UNWIND $items AS item MATCH (t) WHERE elementId(t) = item.tid AND t.x = 1 RETURN t").0,
+            "UNWIND $items AS item MATCH (t) WHERE (id(t) = toInteger(item.tid) AND toString(id(coalesce(t))) = item.tid) AND (t.x = 1) RETURN t");
+        // the id IN crash: through coalesce()
+        assert_eq!(pr("MATCH (n) WHERE id(n) IN $ids RETURN n").0, "MATCH (n) WHERE id(coalesce(n)) IN $ids RETURN n");
+        assert_eq!(pr("MATCH (n) WHERE NOT id(n) IN [1, 2] RETURN n").0, "MATCH (n) WHERE NOT (id(coalesce(n)) IN [1, 2]) RETURN n");
+        // left as they were: IN of element ids, two element ids
+        assert_eq!(pr("MATCH ()-[r]->() WHERE elementId(r) IN $ids RETURN r").0,
+            "MATCH ()-[r]->() WHERE toString(id(coalesce(r))) IN $ids RETURN r");
+        assert_eq!(pr("MATCH (m), (n) WHERE elementId(m) <> elementId(n) RETURN m").0,
+            "MATCH (m), (n) WHERE toString(id(coalesce(m))) <> toString(id(coalesce(n))) RETURN m");
     }
 
     #[test]
