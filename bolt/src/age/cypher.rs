@@ -15,10 +15,12 @@
 //! | `datetime(x)` | `x` (dates are ISO text here) |
 //! | `randomUUID()` | a UUID built from `rand()` in Cypher, one per evaluation |
 //! | `elementId(x)` | `toString(id(x))` — what a driver makes the element id from on Bolt 4.4 |
-//! | `n:L` as a predicate | `label(n) = 'L'` |
+//! | `n:L` as a predicate | `label(n) = 'L'`, or `label(n) IN [L, the labels whose tables inherit L's]` (`hierarchy.rs`) |
 //! | `-[:A\|B]-` in MATCH, EXISTS, COUNT | `-[v]-` and `type(v) IN ['A', 'B']` in that clause's WHERE |
-//! | `(n:A\|B)` in MATCH | `(n)` and `label(n) IN ['A', 'B']` |
-//! | `(n:A:B)` in MATCH (both labels), A ≠ B | `(n:A)` and `false` — a vertex has one label ([`node_label_test`]) |
+//! | `(n:A\|B)` in MATCH | `(n)` and `label(n) IN [A, B, the labels below them]` |
+//! | `(n:A:B)` in MATCH (both labels) | `(n:B)`, and `label(n) IN [the labels below B that are A too]`, nothing, or `false` ([`node_label_test`]) |
+//! | `labels(x)`, when a label table inherits another | `(CASE label(x) WHEN 'S' THEN ['S', S's ancestors…] … ELSE labels(x) END)` |
+//! | `CREATE`/`MERGE (n:A:B)` | `(n:B)`, B's table made to inherit A's first (`hierarchy.rs`) |
 //! | `xs[i]`, `a \|\| b` | as written (`\|\|` as `+`, which is what it means for text and lists) |
 //! | `RETURN *` | the variables in scope, sorted, as Neo4j names the columns |
 //!
@@ -30,6 +32,7 @@
 //! changed by `SET`/`REMOVE` — is not printed here: `split.rs` cuts the statement
 //! around it and the gateway runs the parts in one transaction.
 
+use super::hierarchy::Hierarchy;
 use cypher_syntax::ast::*;
 use serde_json::{Map, Value as Json};
 
@@ -111,6 +114,9 @@ pub struct Printer<'a> {
     pub extra: Map<String, Json>,
     /// The statement's clock, ISO 8601 UTC, as PostgreSQL writes a timestamptz.
     pub now: String,
+    /// The graph's label hierarchy as the statement will see it (empty — every
+    /// node its one label — unless the statement needed it read).
+    pub hier: Hierarchy,
     fresh: usize,
     /// The variables the expression being printed can see.
     in_scope: Vec<String>,
@@ -118,7 +124,12 @@ pub struct Printer<'a> {
 
 impl<'a> Printer<'a> {
     pub fn new(params: Option<&'a Map<String, Json>>, now: String) -> Self {
-        Printer { params, extra: Map::new(), now, fresh: 0, in_scope: Vec::new() }
+        Printer { params, extra: Map::new(), now, hier: Hierarchy::default(), fresh: 0, in_scope: Vec::new() }
+    }
+
+    pub fn with_hierarchy(mut self, h: Hierarchy) -> Self {
+        self.hier = h;
+        self
     }
 
     pub fn fresh(&mut self, what: &str) -> String {
@@ -330,8 +341,8 @@ impl<'a> Printer<'a> {
 
     /// `-[:A|B]-`, `(n:A|B)` and `(n:A:B)`: AGE takes one label or type per
     /// element. The element gets a variable (a fresh one if it had none) and
-    /// the choice becomes a predicate; what a node's labels mean is
-    /// [`node_label_test`]'s to say.
+    /// the choice becomes a predicate; what a node's labels mean, given the
+    /// label hierarchy, is [`node_label_test`]'s to say.
     pub fn lift_alternatives(&mut self, p: &mut Pattern, preds: &mut Vec<Expr>) -> R<()> {
         for el in &p.elems {
             if let PatElem::Rel(r) = el {
@@ -375,10 +386,10 @@ impl<'a> Printer<'a> {
                     if groups.len() < 2 && groups.iter().all(|g| g.len() < 2) {
                         continue;
                     }
-                    let (mut scan, mut pred) = node_label_test(n.var.as_deref().unwrap_or(""), &groups);
+                    let (mut scan, mut pred) = node_label_test(n.var.as_deref().unwrap_or(""), &groups, &self.hier);
                     if pred.is_some() && n.var.is_none() {
                         let var = self.fresh("n");
-                        (scan, pred) = node_label_test(&var, &groups);
+                        (scan, pred) = node_label_test(&var, &groups, &self.hier);
                         n.var = Some(var);
                     }
                     if let Some(p) = pred {
@@ -618,18 +629,29 @@ impl<'a> Printer<'a> {
                 format!("{}[{f}..{t}]", self.operand(list)?)
             }
             Expr::HasLabels { var, alts } => {
-                // One label per vertex in AGE: `n:A:B` holds only when A and B
-                // are the same name.
+                // A vertex has the labels of its table and the tables that one
+                // inherits: `n:L` holds for the vertices stored under L or a
+                // label below it, `n:A:B` for those under a label that has both.
                 let label = format!("label({})", ident(var));
-                let one = |ls: &Vec<String>| -> String {
-                    ls.iter().map(|l| format!("{label} = {}", str_lit(l))).collect::<Vec<_>>().join(" AND ")
-                };
-                if alts.len() == 1 && alts[0].len() == 1 {
-                    one(&alts[0])
-                } else if alts.iter().all(|a| a.len() == 1) {
-                    format!("{label} IN [{}]", alts.iter().map(|a| str_lit(&a[0])).collect::<Vec<_>>().join(", "))
-                } else {
-                    alts.iter().map(|a| format!("({})", one(a))).collect::<Vec<_>>().join(" OR ")
+                let mut stored: Vec<String> = Vec::new();
+                for alt in alts {
+                    for s in labels_having(&distinct(alt), &self.hier) {
+                        if !stored.contains(&s) {
+                            stored.push(s);
+                        }
+                    }
+                }
+                match stored.as_slice() {
+                    // none has them all (`n:A:B`, A ≠ B, neither inheriting
+                    // the other): false — and null for a null element, as
+                    // Neo4j's, which `label(n) = 'A' AND label(n) = 'B'` is.
+                    [] => distinct(alts.first().map(Vec::as_slice).unwrap_or(&[]))
+                        .iter()
+                        .map(|l| format!("{label} = {}", str_lit(l)))
+                        .collect::<Vec<_>>()
+                        .join(" AND "),
+                    [one] => format!("{label} = {}", str_lit(one)),
+                    many => format!("{label} IN [{}]", many.iter().map(|l| str_lit(l)).collect::<Vec<_>>().join(", ")),
                 }
             }
             Expr::Reduce { acc, init, var, list, expr } => format!(
@@ -848,6 +870,21 @@ impl<'a> Printer<'a> {
                 let (a, b) = (self.operand(a)?, self.operand(b)?);
                 return Ok(format!("CASE WHEN {a} = {b} THEN null ELSE {a} END"));
             }
+            // STUDIO G3: AGE's labels() is the one label of the table; a node
+            // stored under a label whose table inherits others has those too
+            // (nearest first, so `labels(n)[0]` is the label it was written
+            // with last). Only the labels that inherit get a branch; anything
+            // else — another label, null, a relationship — is AGE's answer.
+            ("labels", [x]) if !self.hier.is_flat() && !x.is_aggregate() => {
+                let xs = self.expr(x)?;
+                let mut s = format!("(CASE label({xs})");
+                for (l, up) in self.hier.chains() {
+                    let list = up.iter().map(|u| str_lit(u)).collect::<Vec<_>>().join(", ");
+                    s.push_str(&format!(" WHEN {} THEN [{list}]", str_lit(&l)));
+                }
+                s.push_str(&format!(" ELSE labels({xs}) END)"));
+                return Ok(s);
+            }
             _ => {}
         }
         let mut s = String::new();
@@ -960,7 +997,7 @@ fn no_alternatives(p: &Pattern, clause: &str) -> R<()> {
 }
 
 /// The names, each once, in order.
-fn distinct(xs: &[String]) -> Vec<String> {
+pub(crate) fn distinct(xs: &[String]) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
     for x in xs {
         if !out.contains(x) {
@@ -981,38 +1018,76 @@ pub fn label_groups(n: &NodePat) -> Vec<Vec<String>> {
     }
 }
 
-/// What a node pattern's labels ask of AGE, where a vertex has exactly one
-/// label: the label to put in the pattern (scanned), and a predicate for the
-/// clause's WHERE. `groups` are [`NodePat::label_groups`] — all of the groups,
-/// any label within a group — so the vertex's one label must be in every
-/// group:
+/// The labels a vertex that has every one of `all` may be stored under: those
+/// whose table is, or inherits, each of them.
+pub fn labels_having(all: &[String], h: &Hierarchy) -> Vec<String> {
+    let Some(first) = all.first() else { return Vec::new() };
+    h.down(first)
+        .into_iter()
+        .filter(|s| {
+            let up = h.up(s);
+            all.iter().all(|l| up.contains(l))
+        })
+        .collect()
+}
+
+/// What a node pattern's labels ask of AGE, where a vertex is stored under one
+/// label and has that label's and the ones its table inherits ([`Hierarchy`]):
+/// the label to put in the pattern (scanned — AGE's scan takes the tables
+/// inheriting it along), and a predicate for the clause's WHERE. `groups` are
+/// [`NodePat::label_groups`] — all of the groups, any label within a group.
 ///
-/// - one label is in all of them (`(n:A)`, `(n:A:A)`) → that label, no
-///   predicate;
-/// - several are (`(n:A|B)`) → no label, `label(n) IN [...]`;
-/// - none is (`(n:A:B)`, A ≠ B) → nothing can match: the first label and
-///   `false`.
+/// The scan is the last label given alone (`(n:_Entity:Customer)` →
+/// `Customer`); with none (`(n:A|B)`) nothing is scanned. The predicate keeps
+/// the vertices whose stored label has, for every group, one of its labels:
+///
+/// - every table the scan reaches qualifies (`(n:A)`, `(n:A:A)`, `(n:_Entity:
+///   Customer)` where Customer's table inherits `_Entity`'s) → no predicate;
+/// - some do → `label(n) IN [those]` (`label(n) = 'S'` for one);
+/// - none does (`(n:A:B)`, A and B unrelated) → `false`.
 ///
 /// SUITES-ON-AGE B1: the parser used to give `:A:B` and `:A|B` as one list,
 /// and both went out as `label(n) IN ['A', 'B']` — `MATCH (n:Lamp:Part)
-/// RETURN count(n)` counted the Lamps and the Parts (2; Neo4j 0). This is the
-/// one place that decides it, so that a label hierarchy (an umbrella label
-/// whose table the others inherit, STUDIO-ON-AGE G1/G2) can change it here.
-pub fn node_label_test(var: &str, groups: &[Vec<String>]) -> (Option<String>, Option<Expr>) {
+/// RETURN count(n)` counted the Lamps and the Parts (2; Neo4j 0). STUDIO G2:
+/// `(n:_Entity:X)` was a scan of every vertex (6–10 ms at 25k vertices; one
+/// label's table, 1 ms).
+pub fn node_label_test(var: &str, groups: &[Vec<String>], h: &Hierarchy) -> (Option<String>, Option<Expr>) {
+    let groups: Vec<Vec<String>> = groups.iter().map(|g| distinct(g)).filter(|g| !g.is_empty()).collect();
     let Some(first) = groups.first() else { return (None, None) };
-    let common: Vec<String> = distinct(first).into_iter().filter(|l| groups.iter().all(|g| g.contains(l))).collect();
-    match common.as_slice() {
-        [] => (first.first().cloned(), Some(Expr::Lit(Lit::Bool(false)))),
-        [one] => (Some(one.clone()), None),
-        many => (
-            None,
-            Some(Expr::Binary(
-                BinOp::In,
-                Box::new(Expr::Func { name: "label".into(), args: vec![Expr::Var(var.to_string())], distinct: false }),
-                Box::new(Expr::List(many.iter().map(|l| Expr::Lit(Lit::Str(l.clone()))).collect())),
-            )),
-        ),
+    let scan = groups.iter().rev().find(|g| g.len() == 1).map(|g| g[0].clone());
+    // the stored labels the scan (or, with none, the first choice) reaches
+    let starts: Vec<String> = match &scan {
+        Some(l) => vec![l.clone()],
+        None => first.clone(),
+    };
+    let mut reached: Vec<String> = Vec::new();
+    for l in &starts {
+        for s in h.down(l) {
+            if !reached.contains(&s) {
+                reached.push(s);
+            }
+        }
     }
+    let fits: Vec<String> = reached
+        .iter()
+        .filter(|s| {
+            let up = h.up(s);
+            groups.iter().all(|g| g.iter().any(|l| up.contains(l)))
+        })
+        .cloned()
+        .collect();
+    if fits.is_empty() {
+        return (scan.or_else(|| first.first().cloned()), Some(Expr::Lit(Lit::Bool(false))));
+    }
+    if scan.is_some() && fits.len() == reached.len() {
+        return (scan, None);
+    }
+    let label = Box::new(Expr::Func { name: "label".into(), args: vec![Expr::Var(var.to_string())], distinct: false });
+    let pred = match fits.as_slice() {
+        [one] => Expr::Binary(BinOp::Eq, label, Box::new(Expr::Lit(Lit::Str(one.clone())))),
+        many => Expr::Binary(BinOp::In, label, Box::new(Expr::List(many.iter().map(|l| Expr::Lit(Lit::Str(l.clone()))).collect()))),
+    };
+    (scan, Some(pred))
 }
 
 /// `w AND p1 AND p2 …`.
@@ -2281,27 +2356,91 @@ mod tests {
 
     #[test]
     fn all_labels_are_not_any_label() {
-        // B1: (n:A:B) is both — no vertex of AGE's, which has one label.
-        assert_eq!(print("MATCH (n:Lamp:Part) RETURN count(n) AS c"), "MATCH (n:Lamp) WHERE false RETURN count(n) AS c");
-        assert_eq!(print("MATCH (n:A:B) WHERE n.k = 1 RETURN n"), "MATCH (n:A) WHERE (n.k = 1) AND false RETURN n");
+        // B1: (n:A:B) is both — no vertex of AGE's when neither table inherits
+        // the other. The last label is the one scanned.
+        assert_eq!(print("MATCH (n:Lamp:Part) RETURN count(n) AS c"), "MATCH (n:Part) WHERE false RETURN count(n) AS c");
+        assert_eq!(print("MATCH (n:A:B) WHERE n.k = 1 RETURN n"), "MATCH (n:B) WHERE (n.k = 1) AND false RETURN n");
         assert_eq!(print("OPTIONAL MATCH (:A:B)-[:R]->(m) RETURN m"),
-            "OPTIONAL MATCH (__og_n1:A)-[:R]->(m) WHERE false RETURN m");
+            "OPTIONAL MATCH (__og_n1:B)-[:R]->(m) WHERE false RETURN m");
         // the same label twice, or a choice that leaves one, is that label
         assert_eq!(print("MATCH (n:A:A) RETURN n"), "MATCH (n:A) RETURN n");
         assert_eq!(print("MATCH (n:A|B:B) RETURN n"), "MATCH (n:B) RETURN n");
         // a choice is still a choice
         assert_eq!(print("MATCH (n:A|B) RETURN n"), "MATCH (n) WHERE label(n) IN ['A', 'B'] RETURN n");
         assert_eq!(print("MATCH (a) WHERE EXISTS { MATCH (a)-[:X]->(:A:B) } RETURN a"),
-            "MATCH (a) WHERE EXISTS { MATCH (a)-[:X]->(__og_n1:A) WHERE false } RETURN a");
-        assert!(matches!(node_label_test("n", &[vec!["A".into()], vec!["B".into(), "A".into()]]), (Some(l), None) if l == "A"));
-        assert!(matches!(node_label_test("n", &[]), (None, None)));
-        // writes: one label, as before
+            "MATCH (a) WHERE EXISTS { MATCH (a)-[:X]->(__og_n1:B) WHERE false } RETURN a");
+        let flat = Hierarchy::default();
+        assert!(matches!(node_label_test("n", &[vec!["A".into()], vec!["B".into(), "A".into()]], &flat), (Some(l), None) if l == "A"));
+        assert!(matches!(node_label_test("n", &[], &flat), (None, None)));
+        // the printer alone refuses a write with several labels (translate
+        // stores it first, hierarchy.rs) and a choice
         let mut p = Printer::new(None, "2026-11-18T00:00:00+00:00".into());
         let e = p.query(&cypher_syntax::parse("CREATE (n:A:B)").unwrap()).unwrap_err();
         assert!(e.contains("more than one label"), "{e}");
         let e = p.query(&cypher_syntax::parse("MERGE (n:A|B {k: 1})").unwrap()).unwrap_err();
         assert!(e.contains("not a choice"), "{e}");
         assert_eq!(print("CREATE (n:A:A {k: 1})"), "CREATE (n:A {k: 1})");
+    }
+
+    fn print_in(q: &str, h: &Hierarchy) -> String {
+        let ast = cypher_syntax::parse(q).unwrap();
+        Printer::new(None, "2026-11-18T01:02:03.5+00:00".into()).with_hierarchy(h.clone()).query(&ast).unwrap()
+    }
+
+    /// _Entity ← Customer ← VIP, _Entity ← Supplier, Rated ← VIP; Lamp alone.
+    fn studio() -> Hierarchy {
+        Hierarchy::of(&[("Customer", "_Entity"), ("Supplier", "_Entity"), ("VIP", "Customer"), ("VIP", "Rated")], &["Lamp"])
+    }
+
+    #[test]
+    fn labels_read_through_the_hierarchy() {
+        let h = studio();
+        // G2: an umbrella and a kind scan the kind's table, and nothing else is asked
+        assert_eq!(print_in("MATCH (n:_Entity:Customer) WHERE n.name = 's77' RETURN n", &h),
+            "MATCH (n:Customer) WHERE n.name = 's77' RETURN n");
+        assert_eq!(print_in("MATCH (c:_Entity:Customer)-[:PLACED]->(o:_Entity:Supplier) RETURN c, o", &h),
+            "MATCH (c:Customer)-[:PLACED]->(o:Supplier) RETURN c, o");
+        // only some of the tables reached have both
+        assert_eq!(print_in("MATCH (n:Customer:Rated) RETURN n", &h), "MATCH (n:Rated) WHERE label(n) = 'VIP' RETURN n");
+        assert_eq!(print_in("MATCH (n:_Entity:Rated) RETURN n", &h), "MATCH (n:Rated) WHERE label(n) = 'VIP' RETURN n");
+        // none has both: false, as before
+        assert_eq!(print_in("MATCH (n:_Entity:Customer:Supplier) RETURN count(n) AS c", &h),
+            "MATCH (n:Supplier) WHERE false RETURN count(n) AS c");
+        assert_eq!(print_in("MATCH (n:Lamp:_Entity) RETURN n", &h), "MATCH (n:_Entity) WHERE false RETURN n");
+        // a choice: the labels below each
+        assert_eq!(print_in("MATCH (n:Customer|Lamp) RETURN n", &h),
+            "MATCH (n) WHERE label(n) IN ['Customer', 'VIP', 'Lamp'] RETURN n");
+        // a label alone is AGE's scan, children included, unchanged
+        assert_eq!(print_in("MATCH (n:_Entity) RETURN n", &h), "MATCH (n:_Entity) RETURN n");
+        // n:L as a predicate: L or a label below it
+        assert_eq!(print_in("MATCH (n) WHERE n:_Entity RETURN n", &h),
+            "MATCH (n) WHERE label(n) IN ['_Entity', 'Customer', 'Supplier', 'VIP'] RETURN n");
+        assert_eq!(print_in("MATCH (n) WHERE n:Lamp OR NOT n:VIP RETURN n", &h),
+            "MATCH (n) WHERE (label(n) = 'Lamp') OR (NOT (label(n) = 'VIP')) RETURN n");
+        assert_eq!(print_in("MATCH (n) WHERE n:Customer:Rated RETURN n", &h), "MATCH (n) WHERE label(n) = 'VIP' RETURN n");
+        assert_eq!(print_in("MATCH (n) WHERE n:Supplier|Rated RETURN n", &h), "MATCH (n) WHERE label(n) IN ['Supplier', 'Rated', 'VIP'] RETURN n");
+        // none has them all: false (null for a null node)
+        assert_eq!(print_in("MATCH (n) WHERE n:Lamp:Customer RETURN n", &h),
+            "MATCH (n) WHERE label(n) = 'Lamp' AND label(n) = 'Customer' RETURN n");
+    }
+
+    #[test]
+    fn labels_gives_the_inherited_ones() {
+        let h = Hierarchy::of(&[("Customer", "_Entity"), ("PurchaseOrder", "_Entity")], &[]);
+        let case = "(CASE label(n) WHEN 'Customer' THEN ['Customer', '_Entity'] WHEN 'PurchaseOrder' THEN ['PurchaseOrder', '_Entity'] ELSE labels(n) END)";
+        // G3 and how the corpus uses it
+        assert_eq!(print_in("MATCH (n:_Entity) RETURN labels(n), count(*)", &h), format!("MATCH (n:_Entity) RETURN {case}, count(*)"));
+        assert_eq!(print_in("MATCH (n:_Entity) WHERE $class IN labels(n) RETURN n", &h),
+            format!("MATCH (n:_Entity) WHERE $class IN {case} RETURN n"));
+        assert_eq!(print_in("MATCH (n) RETURN labels(n)[0] AS t", &h), format!("MATCH (n) RETURN {case}[0] AS t"));
+        assert_eq!(print_in("MATCH (n) RETURN [l IN labels(n) WHERE l <> '_Entity'] AS labels", &h),
+            format!("MATCH (n) RETURN [l IN {case} WHERE l <> '_Entity'] AS labels"));
+        assert_eq!(print_in("MATCH (n) WHERE any(l IN labels(n) WHERE l IN $classes) RETURN n", &h),
+            format!("MATCH (n) WHERE size([l IN {case} WHERE l IN $classes]) > 0 RETURN n"));
+        // nothing inherits: AGE's labels(), as it was
+        assert_eq!(print_in("MATCH (n) RETURN labels(n)[0] AS t, size(labels(n)) AS k", &Hierarchy::of(&[], &["A"])),
+            "MATCH (n) RETURN labels(n)[0] AS t, size(labels(n)) AS k");
+        assert_eq!(print("MATCH (n) RETURN labels(n) AS l"), "MATCH (n) RETURN labels(n) AS l");
     }
 
     #[test]

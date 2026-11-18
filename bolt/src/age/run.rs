@@ -89,7 +89,16 @@ impl Session<'_> {
                 Ok(t)
             })?;
         }
-        let st = age::translate(query, &pjson).map_err(|r| Failure::client(&r.code, r.message))?;
+        // The label hierarchy, for a statement that needs it (`hierarchy.rs`):
+        // one catalog read, in the client's transaction if it has one.
+        let parsed = age::parse(query);
+        let hier = if parsed.needs_hierarchy() {
+            self.age_graph()?;
+            self.age_hierarchy(stream)?
+        } else {
+            age::hierarchy::Hierarchy::default()
+        };
+        let st = age::translate_parsed(parsed, &pjson, &hier).map_err(|r| Failure::client(&r.code, r.message))?;
         self.qtype = if st.write { "w" } else { "r" };
         if self.config.age.as_ref().is_some_and(|a| a.trace) {
             eprintln!("age-trace plan {}{}", st.plan.kind(), if st.write { " write" } else { "" });
@@ -206,6 +215,19 @@ impl Session<'_> {
         Ok(())
     }
 
+    /// The graph's label hierarchy, read from the catalog now.
+    fn age_hierarchy(&mut self, stream: &mut TcpStream) -> Result<age::hierarchy::Hierarchy, Failure> {
+        let trace = self.config.age.as_ref().is_some_and(|a| a.trace);
+        let h = {
+            let mut x = Steps { sess: &mut *self, stream, limit_ms: 0 };
+            age::hierarchy::read(&mut x).map_err(|r| Failure::client(&r.code, r.message))?
+        };
+        if trace {
+            eprintln!("age-trace hierarchy {} labels, {} inheriting", h.vertex.len(), h.chains().len());
+        }
+        Ok(h)
+    }
+
     fn age_counts(&mut self) -> Result<Counts, Failure> {
         let graph = self.graph.clone();
         let pg = self.client()?;
@@ -222,6 +244,12 @@ impl Session<'_> {
     ) -> Result<Outcome, Failure> {
         let graph = self.graph.clone();
         let counters = self.config.age.as_ref().is_none_or(|a| a.counters);
+        if !st.schema.is_empty() {
+            // the label tables and inheritance a multi-label CREATE / MERGE
+            // needs, in this transaction, before it runs (`hierarchy.rs`)
+            let mut x = Steps { sess: &mut *self, stream: &mut *stream, limit_ms };
+            age::hierarchy::apply(&mut x, &st.schema).map_err(|r| Failure::client(&r.code, r.message))?;
+        }
         match &st.plan {
             Plan::Cypher { text, ncols } => {
                 let before = if st.write && counters { Some(self.age_counts()?) } else { None };
@@ -425,6 +453,9 @@ impl age::split::Exec for Steps<'_, '_> {
     }
 
     fn sql(&mut self, sql: &str) -> Result<Vec<Vec<Option<String>>>, age::Refusal> {
+        if self.sess.config.age.as_ref().is_some_and(|a| a.trace) {
+            eprintln!("age-trace > {sql}");
+        }
         let pg = self.sess.client().map_err(refusal)?;
         let rows = pg.simple_query(sql).map_err(|e| refusal(failure(&e, None, 0)))?;
         let mut out = Vec::new();

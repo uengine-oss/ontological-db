@@ -22,8 +22,13 @@
 //!    - `SET n:L` / `REMOVE n:L`: the vertex is moved to the label's table —
 //!      its row deleted from the old one, inserted into the new one with its
 //!      properties, and every edge's `start_id`/`end_id` pointed at the new id.
-//!      Its id changes (the label is part of AGE's graphid). A vertex can end
-//!      with one label only; asking for two is refused;
+//!      Its id changes (the label is part of AGE's graphid). A vertex has the
+//!      labels of its table and of the tables that one inherits
+//!      (`hierarchy.rs`): setting one of those is nothing to do, removing one
+//!      is refused, and a new table takes the old one's parents
+//!      (`REMOVE n:Customer SET n:Client` makes `Client` inherit `_Entity`).
+//!      Otherwise a vertex ends with one label only; asking for two is
+//!      refused;
 //! 3. the clauses after it run on the rows that came out, each row's vertices
 //!    and edges found again by id.
 //!
@@ -47,6 +52,7 @@
 
 use super::agtype::Ag;
 use super::cypher::{scope_after, Printer, FRESH};
+use super::hierarchy::{self, Hierarchy, Move, Schema};
 use super::{sql_ident, sql_lit, Refusal, Stats};
 use cypher_syntax::ast::*;
 use serde_json::{Map, Value as Json};
@@ -84,6 +90,9 @@ pub struct Steps {
     pub ncols: usize,
     segs: Vec<Seg>,
     now: String,
+    /// The label hierarchy the steps are printed with; a label change that
+    /// adds inheritance adds it here too, for the steps after it.
+    hier: Hierarchy,
 }
 
 fn has_label_op(items: &[SetOp]) -> bool {
@@ -104,8 +113,9 @@ pub fn must_cut(q: &Query) -> bool {
 }
 
 /// Does this statement need to be cut? [`must_cut`], or one of the shapes AGE
-/// answers wrongly in one statement (N1, N3, N4).
-pub fn needed(q: &Query) -> bool {
+/// answers wrongly in one statement (N1, N3, N4). `h`: what a write's labels
+/// bring with them (N3).
+pub fn needed(q: &Query, h: &Hierarchy) -> bool {
     if must_cut(q) {
         return true;
     }
@@ -118,7 +128,7 @@ pub fn needed(q: &Query) -> bool {
         if (i > 0 && cut.before(c, &scope)) || merge_moves(c, &scope).is_some() {
             return true;
         }
-        cut.after(c, &scope);
+        cut.after(c, &scope, h);
         scope = scope_after(&scope, c);
     }
     false
@@ -135,7 +145,8 @@ struct Cut {
     /// nothing) — not what UNWIND or MATCH bring after it.
     below: Vec<String>,
     /// N3: the labels of the vertices CREATE / MERGE wrote so far (`""` for
-    /// none), and the types of the relationships.
+    /// none) — each with the labels its table inherits, which a MATCH of those
+    /// scans too — and the types of the relationships.
     labels: Vec<String>,
     types: Vec<String>,
 }
@@ -234,7 +245,7 @@ impl Cut {
         false
     }
 
-    fn after(&mut self, c: &Clause, scope: &[String]) {
+    fn after(&mut self, c: &Clause, scope: &[String], h: &Hierarchy) {
         match c {
             Clause::Set(items) | Clause::Remove(items) if !has_label_op(items) => {
                 self.set = true;
@@ -248,24 +259,25 @@ impl Cut {
             Clause::Create(ps) => {
                 let mut bound = scope.to_vec();
                 for p in ps {
-                    self.wrote(p, &mut bound);
+                    self.wrote(p, &mut bound, h);
                 }
             }
-            Clause::Merge { pattern, .. } => self.wrote(pattern, &mut scope.to_vec()),
+            Clause::Merge { pattern, .. } => self.wrote(pattern, &mut scope.to_vec(), h),
             _ => {}
         }
     }
 
     /// What a CREATE / MERGE pattern may write: its new nodes' labels, its
     /// relationships' types.
-    fn wrote(&mut self, p: &Pattern, bound: &mut Vec<String>) {
+    fn wrote(&mut self, p: &Pattern, bound: &mut Vec<String>, h: &Hierarchy) {
         for el in &p.elems {
             match el {
                 PatElem::Node(n) => {
                     if n.var.as_ref().is_some_and(|v| bound.contains(v)) {
                         continue;
                     }
-                    let ls: Vec<String> = if n.labels.is_empty() { vec![String::new()] } else { n.labels.clone() };
+                    let ls: Vec<String> =
+                        if n.labels.is_empty() { vec![String::new()] } else { n.labels.iter().flat_map(|l| h.up(l)).collect() };
                     for l in ls {
                         if !self.labels.contains(&l) {
                             self.labels.push(l);
@@ -502,7 +514,7 @@ pub fn plan(q: &Query, p: &mut Printer) -> Result<Steps, String> {
                         continue;
                     }
                     _ => {
-                        cut.after(other, &scope);
+                        cut.after(other, &scope, &p.hier);
                         cur.push(other.clone());
                     }
                 }
@@ -512,7 +524,7 @@ pub fn plan(q: &Query, p: &mut Printer) -> Result<Steps, String> {
         i += 1;
     }
     flush(&mut cur, &mut segs, &scope, &mut cut);
-    Ok(Steps { ncols, segs, now: p.now.clone() })
+    Ok(Steps { ncols, segs, now: p.now.clone(), hier: p.hier.clone() })
 }
 
 // ------------------------------------------------------------------ rows
@@ -863,8 +875,9 @@ pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag
     let mut out: Vec<Vec<Ag>> = Vec::new();
     let mut first = true;
     let last = steps.segs.len().saturating_sub(1);
+    let mut hier = steps.hier.clone();
     for (k, seg) in steps.segs.iter().enumerate() {
-        let mut printer = Printer::new(Some(&pmap), steps.now.clone());
+        let mut printer = Printer::new(Some(&pmap), steps.now.clone()).with_hierarchy(hier.clone());
         let ks = kinds(&rows, &scope)?;
         let pre = if first { None } else { Some(prelude(&ks)) };
         match seg {
@@ -1076,29 +1089,20 @@ pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag
                             }
                             return Err(Refusal::syntax(format!("SET/REMOVE of a label needs a node; `{var}` is not one")));
                         };
-                        let current = if label.is_empty() || label == "_ag_label_vertex" { Vec::new() } else { vec![label.clone()] };
-                        let mut want: Vec<String> = current.iter().filter(|l| !remove.contains(l)).cloned().collect();
-                        for a in add {
-                            if !want.contains(a) {
-                                want.push(a.clone());
-                            }
-                        }
-                        let added = add.iter().filter(|a| !current.contains(a)).count() as i64;
-                        let removed = remove.iter().filter(|l| current.contains(l)).count() as i64;
-                        if want.len() > 1 {
-                            return Err(Refusal {
-                                code: "Neo.ClientError.Statement.SemanticError".into(),
-                                message: format!(
-                                    "a vertex in AGE has one label: `{var}` would have {} — set the new one and remove the old one in the same statement",
-                                    want.join(", ")
-                                ),
-                            });
-                        }
-                        let target = want.first().cloned().unwrap_or_else(|| "_ag_label_vertex".into());
-                        if target == label || (current.is_empty() && want.is_empty()) {
+                        // Its labels are its table's and those that table
+                        // inherits (`hierarchy.rs`): which table it moves to,
+                        // and the inheritance that table gets first.
+                        let stored = if label.is_empty() || label == "_ag_label_vertex" { None } else { Some(label.as_str()) };
+                        let mut schema = Schema::default();
+                        let (target, added, removed) = match hier.relabel(var, stored, add, remove, &mut schema)? {
+                            Move::Stay => continue,
+                            Move::To { label: to, added, removed } => (to.unwrap_or_else(|| "_ag_label_vertex".into()), added, removed),
+                        };
+                        hierarchy::apply(x, &schema)?;
+                        if target == label {
                             continue;
                         }
-                        let new_id = relabel(x, &graph, id, &target)?;
+                        let new_id = relabel(x, &graph, id, &target, &mut hier)?;
                         adjust.nodes_created -= 1;
                         adjust.nodes_deleted -= 1;
                         adjust.labels_added += added - 1;
@@ -1128,10 +1132,15 @@ pub fn run(x: &mut dyn Exec, steps: &Steps, params: &Json) -> Result<(Vec<Vec<Ag
 }
 
 /// Move one vertex to `target`'s table; returns its new id and how many edge
-/// rows were pointed at it.
-fn relabel(x: &mut dyn Exec, graph: &str, id: i64, target: &str) -> Result<(i64, i64), Refusal> {
+/// rows were pointed at it. A table the hierarchy does not know of yet is
+/// looked up, and made if missing.
+///
+/// The id changes: AGE's graphid carries the label's number, so a vertex in
+/// another table is another id — an AGE limit (STUDIO G6). An element id a
+/// client kept from before the change no longer finds it.
+fn relabel(x: &mut dyn Exec, graph: &str, id: i64, target: &str, hier: &mut Hierarchy) -> Result<(i64, i64), Refusal> {
     let g = sql_ident(graph);
-    if target != "_ag_label_vertex" {
+    if target != "_ag_label_vertex" && !hier.vertex.contains(target) {
         let have = x.sql(&format!(
             "SELECT l.kind::text FROM ag_catalog.ag_label l JOIN ag_catalog.ag_graph g ON g.graphid = l.graph \
              WHERE g.name = {} AND l.name = {}",
@@ -1140,13 +1149,14 @@ fn relabel(x: &mut dyn Exec, graph: &str, id: i64, target: &str) -> Result<(i64,
         ))?;
         match have.first().and_then(|r| r[0].clone()) {
             None => {
-                x.sql(&format!("SELECT ag_catalog.create_vlabel({}, {})", sql_lit(graph), sql_lit(target)))?;
+                x.sql(&hierarchy::create_vlabel_sql(graph, target))?;
             }
             Some(k) if k == "v" => {}
             Some(_) => {
                 return Err(Refusal::syntax(format!("'{target}' is a relationship type in graph '{graph}', not a label")));
             }
         }
+        hier.vertex.insert(target.to_string());
     }
     let got = x.sql(&format!(
         "WITH old AS (DELETE FROM {g}.\"_ag_label_vertex\" WHERE id = '{id}'::ag_catalog.graphid RETURNING properties) \
@@ -1203,9 +1213,13 @@ mod tests {
     }
 
     fn steps(q: &str) -> Steps {
+        steps_in(q, Hierarchy::default())
+    }
+
+    fn steps_in(q: &str, h: Hierarchy) -> Steps {
         let ast = cypher_syntax::parse(q).unwrap();
-        assert!(needed(&ast));
-        let mut p = Printer::new(None, "2026-11-18T00:00:00+00:00".into());
+        assert!(needed(&ast, &h));
+        let mut p = Printer::new(None, "2026-11-18T00:00:00+00:00".into()).with_hierarchy(h);
         plan(&ast, &mut p).unwrap()
     }
 
@@ -1250,7 +1264,7 @@ mod tests {
         let (rows, adj) = run(&mut f, &s, &serde_json::json!({"sid": "s"})).unwrap();
         assert_eq!(rows, vec![vec![Ag::Int(1)]]);
         assert_eq!(f.asked[0], "MATCH (n:Process) WHERE n.x IS NULL SET n.s = $sid RETURN n | rows=[{\"__i\":0}]");
-        assert!(f.asked[2].contains("SELECT ag_catalog.create_vlabel('g', 'BpmnProcess')"), "{:?}", f.asked);
+        assert!(f.asked[2].starts_with("SELECT ag_catalog.create_vlabel('g'::cstring, 'BpmnProcess'::cstring) WHERE NOT EXISTS"), "{:?}", f.asked);
         assert!(f.asked[3].contains("DELETE FROM \"g\".\"_ag_label_vertex\" WHERE id = '844424930131969'::ag_catalog.graphid"), "{}", f.asked[3]);
         assert!(f.asked[5].contains("OPTIONAL MATCH (n:BpmnProcess) WHERE id(n) = __og_row.n") && f.asked[5].contains("1407374883553281"), "{}", f.asked[5]);
         assert_eq!((adj.nodes_created, adj.nodes_deleted, adj.labels_added, adj.labels_removed, adj.properties_set), (-1, -1, 0, 1, -2));
@@ -1268,7 +1282,7 @@ mod tests {
     }
 
     fn not_cut(q: &str) -> bool {
-        !needed(&cypher_syntax::parse(q).unwrap())
+        !needed(&cypher_syntax::parse(q).unwrap(), &Hierarchy::default())
     }
 
     #[test]
@@ -1381,6 +1395,40 @@ mod tests {
         // then the rest of the part, on all the rows
         assert!(f.asked[3].contains("RETURN t.n AS n |") && f.asked[3].contains(r#""d":2"#) && f.asked[3].contains(r#""d":3"#), "{}", f.asked[3]);
         assert_eq!(waves(&[], &["t".into()]), Vec::<Vec<usize>>::new());
+    }
+
+    #[test]
+    fn a_label_change_keeps_the_labels_the_table_inherits() {
+        // G6: the class renamed — the new table inherits the old one's parent
+        // first (DDL only), then the vertex moves as before
+        let h = Hierarchy::of(&[("Customer", "_Entity")], &[]);
+        let s = steps_in("MATCH (n:_Entity:Customer) WHERE n.name = 'a' REMOVE n:Customer SET n:Client RETURN count(n) AS c", h.clone());
+        let mut f = Fake { asked: vec![], answers: vec![vec![vec![v(844424930131969, "Customer")]], vec![vec![Ag::Int(1)]]] };
+        let (rows, adj) = run(&mut f, &s, &Json::Object(Map::new())).unwrap();
+        assert_eq!(rows, vec![vec![Ag::Int(1)]]);
+        assert_eq!(f.asked[0], "MATCH (n:Customer) WHERE n.name = 'a' RETURN n | rows=[{\"__i\":0}]");
+        assert!(f.asked[1].starts_with("SELECT ag_catalog.create_vlabel('g'::cstring, 'Client'::cstring)"), "{:#?}", f.asked);
+        assert_eq!(f.asked[2], "ALTER TABLE \"g\".\"Client\" INHERIT \"g\".\"_Entity\"");
+        assert!(f.asked[3].contains("INSERT INTO \"g\".\"Client\" (properties)"), "{}", f.asked[3]);
+        assert!(f.asked[5].contains("OPTIONAL MATCH (n:Client) WHERE id(n) = __og_row.n"), "{}", f.asked[5]);
+        assert_eq!(f.asked.len(), 6, "{:#?}", f.asked);
+        assert_eq!((adj.nodes_created, adj.nodes_deleted, adj.labels_added, adj.labels_removed), (-1, -1, 0, 1));
+        // a label it has through its table: nothing happens, nothing is counted
+        let s = steps_in("MATCH (n:Customer) SET n:_Entity RETURN count(n) AS c", h.clone());
+        let mut f = Fake { asked: vec![], answers: vec![vec![vec![v(7, "Customer")]], vec![vec![Ag::Int(1)]]] };
+        let (_, adj) = run(&mut f, &s, &Json::Object(Map::new())).unwrap();
+        assert_eq!(f.asked.len(), 2, "{:#?}", f.asked);
+        assert_eq!(adj, Stats::default());
+        // and it cannot be taken off one node
+        let s = steps_in("MATCH (n:Customer) REMOVE n:_Entity RETURN n", h.clone());
+        let mut f = Fake { asked: vec![], answers: vec![vec![vec![v(7, "Customer")]]] };
+        let e = run(&mut f, &s, &Json::Object(Map::new())).err().unwrap();
+        assert_eq!(e.code, "Neo.ClientError.Statement.SemanticError");
+        assert!(e.message.starts_with("REMOVE n:_Entity is refused on the AGE backend"), "{}", e.message);
+        // N3: a MATCH of the parent sees what a write of the child wrote
+        let q = cypher_syntax::parse("CREATE (n:Customer {k: 1}) WITH n MATCH (m:_Entity) RETURN count(m) AS c").unwrap();
+        assert!(needed(&q, &h));
+        assert!(!needed(&q, &Hierarchy::default()));
     }
 
     #[test]

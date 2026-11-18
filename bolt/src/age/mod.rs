@@ -19,6 +19,11 @@
 //! - `reach.rs` walks a long variable-length relationship AGE cannot (more
 //!   than three hops without exactly one type) breadth first in SQL, where only
 //!   the nodes it reaches matter;
+//! - `hierarchy.rs` gives a node several labels the way AGE can hold it: one
+//!   table, which inherits the tables of its other labels (PostgreSQL
+//!   inheritance, made before a `CREATE`/`MERGE (n:A:B)` runs); the reads of
+//!   labels are printed with that hierarchy, read from the catalog for each
+//!   statement that needs it;
 //! - the write counters come from PostgreSQL's per-transaction table
 //!   statistics (`pg_stat_xact_user_tables`) of the graph's label tables,
 //!   read before and after the statement ([`Counts`]).
@@ -28,10 +33,12 @@
 pub mod agtype;
 pub mod cypher;
 pub mod ddl;
+pub mod hierarchy;
 pub mod reach;
 pub mod split;
 
 use cypher_syntax::ast::{Clause, Query};
+use hierarchy::{Hierarchy, Schema};
 use serde_json::{Map, Value as Json};
 
 /// How the AGE backend is configured.
@@ -144,7 +151,14 @@ fn graph_or_fabric(query: &str) -> Option<Result<Statement, Refusal>> {
     let up: Vec<String> = w.iter().map(|x| x.to_ascii_uppercase()).collect();
     let up: Vec<&str> = up.iter().map(String::as_str).collect();
     let plan = |g: GraphStatement, columns: &[&str], write: bool| {
-        Some(Ok(Statement { plan: Plan::Graphs(g), columns: columns.iter().map(|c| c.to_string()).collect(), write, extra: Map::new(), merge_nulls: Vec::new() }))
+        Some(Ok(Statement {
+            plan: Plan::Graphs(g),
+            columns: columns.iter().map(|c| c.to_string()).collect(),
+            write,
+            extra: Map::new(),
+            merge_nulls: Vec::new(),
+            schema: Schema::default(),
+        }))
     };
     match up.as_slice() {
         ["SHOW", "GRAPHS", ..] if up.len() == 2 => plan(GraphStatement::Show, &["graph", "types"], false),
@@ -178,6 +192,9 @@ pub struct Statement {
     /// MERGE properties sent guarded against null (`cypher::guard_merge_nulls`):
     /// a division by zero from this statement is Neo4j's null-merge error.
     pub merge_nulls: Vec<cypher::NullMerge>,
+    /// Label tables and inheritance to make first, in the statement's
+    /// transaction (a `CREATE`/`MERGE (n:A:B)`; `hierarchy.rs`).
+    pub schema: Schema,
 }
 
 /// A failure, as the code a Neo4j driver expects and a message.
@@ -203,33 +220,79 @@ pub fn check(query: &str) -> Result<bool, Refusal> {
     Ok(cypher::is_write(&q))
 }
 
-/// Read and re-print one statement.
-pub fn translate(query: &str, params: &Json) -> Result<Statement, Refusal> {
-    if let Some(st) = graph_or_fabric(query) {
-        return st;
+/// A statement read, before it is translated.
+pub enum Parsed {
+    /// Answered without the Cypher parser (graph and fabric statements), or
+    /// a syntax error.
+    Done(Result<Statement, Refusal>),
+    Cypher(Query),
+}
+
+impl Parsed {
+    /// Does it need the graph's label hierarchy ([`hierarchy::needs`])?
+    pub fn needs_hierarchy(&self) -> bool {
+        matches!(self, Parsed::Cypher(q) if hierarchy::needs(q))
     }
-    let q: Query = cypher_syntax::parse(query).map_err(Refusal::syntax)?;
+}
+
+pub fn parse(query: &str) -> Parsed {
+    if let Some(st) = graph_or_fabric(query) {
+        return Parsed::Done(st);
+    }
+    match cypher_syntax::parse(query) {
+        Ok(q) => Parsed::Cypher(q),
+        Err(e) => Parsed::Done(Err(Refusal::syntax(e))),
+    }
+}
+
+/// Read and re-print one statement, given the graph's label hierarchy (an
+/// empty one, when the statement does not need it). The session parses first
+/// ([`parse`]) to know whether to read the hierarchy, then
+/// [`translate_parsed`]; this is the two in one.
+#[allow(dead_code)]
+pub fn translate(query: &str, params: &Json, hier: &Hierarchy) -> Result<Statement, Refusal> {
+    translate_parsed(parse(query), params, hier)
+}
+
+pub fn translate_parsed(parsed: Parsed, params: &Json, hier: &Hierarchy) -> Result<Statement, Refusal> {
+    let q: Query = match parsed {
+        Parsed::Done(st) => return st,
+        Parsed::Cypher(q) => q,
+    };
     // The fields and read/write are the statement's as sent.
     let write = cypher::is_write(&q);
     let columns = cypher::columns(&q);
     // Not cut (split.rs) inside CALL { … }; folded there instead.
     let q = cypher::fold_nested_merge_sets(&q);
     let q = cypher::lead_optional(&cypher::split_aggregations(&cypher::rename_clashing(&q)));
+    let plain = |plan: Plan, columns: Vec<String>, write: bool| Statement {
+        plan,
+        columns,
+        write,
+        extra: Map::new(),
+        merge_nulls: Vec::new(),
+        schema: Schema::default(),
+    };
     if let Some(Clause::Ddl(d)) = q.clauses.first() {
         if q.clauses.len() > 1 {
             return Err(Refusal::syntax("a schema command cannot be combined with other clauses".into()));
         }
-        return Ok(Statement { plan: Plan::Ddl(d.clone()), columns, write: true, extra: Map::new(), merge_nulls: Vec::new() });
+        return Ok(plain(Plan::Ddl(d.clone()), columns, true));
     }
     if let Some(p) = ddl::Procedure::recognise(&q) {
         let columns = p.columns();
-        return Ok(Statement { plan: Plan::Procedure(p), columns, write: false, extra: Map::new(), merge_nulls: Vec::new() });
+        return Ok(plain(Plan::Procedure(p), columns, false));
     }
     let pmap = params.as_object();
     // MERGE keys that are null: refused now, or guarded (N7).
     let (q, merge_nulls) = cypher::guard_merge_nulls(&q, pmap)
         .map_err(|n| Refusal { code: "Neo.ClientError.Statement.SemanticError".into(), message: n.message() })?;
-    let mut printer = cypher::Printer::new(pmap, cypher::now_text());
+    // A node written with several labels: stored under one, whose table
+    // inherits the others' (G1). What is printed reads the hierarchy as it
+    // will be once that schema has run.
+    let mut hier = hier.clone();
+    let (q, schema) = hierarchy::store_all(&q, &mut hier)?;
+    let mut printer = cypher::Printer::new(pmap, cypher::now_text()).with_hierarchy(hier);
     if reach::needed(&q) {
         // (the walk runs the statement as it is: the cuts for AGE's wrong
         // answers in one statement are not made there)
@@ -239,14 +302,14 @@ pub fn translate(query: &str, params: &Json) -> Result<Statement, Refusal> {
             )));
         }
         let r = reach::plan(&q, &mut printer, columns.len()).map_err(Refusal::syntax)?;
-        return Ok(Statement { plan: Plan::Reach(r), columns, write, extra: printer.extra, merge_nulls });
+        return Ok(Statement { plan: Plan::Reach(r), columns, write, extra: printer.extra, merge_nulls, schema });
     }
-    if split::needed(&q) {
+    if split::needed(&q, &printer.hier) {
         let steps = split::plan(&q, &mut printer).map_err(Refusal::syntax)?;
-        return Ok(Statement { plan: Plan::Steps(steps), columns, write, extra: printer.extra, merge_nulls });
+        return Ok(Statement { plan: Plan::Steps(steps), columns, write, extra: printer.extra, merge_nulls, schema });
     }
     let text = printer.query(&q).map_err(Refusal::syntax)?;
-    Ok(Statement { plan: Plan::Cypher { text, ncols: columns.len() }, columns, write, extra: printer.extra, merge_nulls })
+    Ok(Statement { plan: Plan::Cypher { text, ncols: columns.len() }, columns, write, extra: printer.extra, merge_nulls, schema })
 }
 
 /// A SQL string literal.
@@ -454,11 +517,11 @@ mod tests {
 
     #[test]
     fn graph_statements_and_fabric_ones() {
-        let st = translate("SHOW GRAPHS;", &Json::Null).ok().unwrap();
+        let st = translate("SHOW GRAPHS;", &Json::Null, &Hierarchy::default()).ok().unwrap();
         assert_eq!((st.columns.clone(), st.write), (vec!["graph".to_string(), "types".to_string()], false));
-        let st = translate("// new project\nCREATE GRAPH shop", &Json::Null).ok().unwrap();
+        let st = translate("// new project\nCREATE GRAPH shop", &Json::Null, &Hierarchy::default()).ok().unwrap();
         assert!(matches!(st.plan, Plan::Graphs(GraphStatement::Create(ref n)) if n == "shop"));
-        let e = translate("QUERY FABRIC SELECT 1", &Json::Null).err().unwrap();
+        let e = translate("QUERY FABRIC SELECT 1", &Json::Null, &Hierarchy::default()).err().unwrap();
         assert!(e.message.contains("fabric"), "{}", e.message);
         assert!(check("SHOW GRAPHS").is_ok_and(|w| !w));
     }
@@ -488,10 +551,48 @@ mod tests {
         assert!(null_merge_refusal("Neo.ClientError.Statement.ArithmeticError", "division by zero", &[]).is_none());
         assert!(null_merge_refusal("Neo.ClientError.Statement.TypeError", "division by zero", &[g("a")]).is_none());
         // through translate: a parameter known to be null is refused before anything runs
-        let e = translate("MERGE (n:W {key: $k}) RETURN n", &serde_json::json!({"k": null})).err().unwrap();
+        let e = translate("MERGE (n:W {key: $k}) RETURN n", &serde_json::json!({"k": null}), &Hierarchy::default()).err().unwrap();
         assert_eq!(e.code, "Neo.ClientError.Statement.SemanticError");
-        let st = translate("UNWIND $rows AS r MERGE (n:W {key: r.k}) RETURN n", &serde_json::json!({"rows": []})).ok().unwrap();
+        let st = translate("UNWIND $rows AS r MERGE (n:W {key: r.k}) RETURN n", &serde_json::json!({"rows": []}), &Hierarchy::default()).ok().unwrap();
         assert_eq!(st.merge_nulls.len(), 1);
+    }
+
+    #[test]
+    fn a_node_with_several_labels_is_stored_under_the_last() {
+        let text = |st: &Statement| match &st.plan {
+            Plan::Cypher { text, .. } => text.clone(),
+            _ => panic!("not one cypher() call"),
+        };
+        // ANALYZER §5.1, on a graph that has neither label yet
+        let st = translate("MERGE (n:ANALYZER_OWNED:TABLE {id: 'x9', graph_owner: 'analyzer'}) RETURN n", &Json::Null, &Hierarchy::of(&[], &[]))
+            .ok()
+            .unwrap();
+        assert_eq!(text(&st), "MERGE (n:TABLE {id: 'x9', graph_owner: 'analyzer'}) RETURN n");
+        assert_eq!(st.schema.create, vec!["ANALYZER_OWNED".to_string(), "TABLE".to_string()]);
+        assert_eq!(st.schema.inherit, vec![("TABLE".to_string(), "ANALYZER_OWNED".to_string())]);
+        assert!(st.schema.empty.is_empty());
+        // STUDIO G1, once Customer's table inherits _Entity's: nothing to make
+        let h = Hierarchy::of(&[("Customer", "_Entity")], &[]);
+        let st = translate("CREATE (n:_Entity:Customer {customer_id: 'x'}) RETURN elementId(n) AS eid", &Json::Null, &h).ok().unwrap();
+        assert_eq!(text(&st), "CREATE (n:Customer {customer_id: 'x'}) RETURN toString(id(coalesce(n))) AS eid");
+        assert!(st.schema.is_empty());
+        // what the statement prints reads the hierarchy its schema makes
+        let st = translate("CREATE (c:_Entity:Supplier {k: 1}) RETURN labels(c) AS l", &Json::Null, &h).ok().unwrap();
+        assert_eq!(st.schema.inherit, vec![("Supplier".to_string(), "_Entity".to_string())]);
+        assert_eq!(
+            text(&st),
+            "CREATE (c:Supplier {k: 1}) RETURN (CASE label(c) WHEN 'Customer' THEN ['Customer', '_Entity'] \
+             WHEN 'Supplier' THEN ['Supplier', '_Entity'] ELSE labels(c) END) AS l"
+        );
+        // Neo4j's null-merge message names every label
+        let e = translate("MERGE (n:_Entity:Customer {k: $k})", &serde_json::json!({"k": null}), &h).err().unwrap();
+        assert!(e.message.ends_with("(:_Entity:Customer {k: null})"), "{}", e.message);
+        // still refused: a choice of labels, two relationship types
+        assert!(translate("MERGE (n:A|B {k: 1})", &Json::Null, &h).err().unwrap().message.contains("not a choice"));
+        assert!(translate("MATCH (a), (b) CREATE (a)-[:R|S]->(b)", &Json::Null, &h).err().unwrap().message.contains("one relationship type"));
+        // a cycle is refused before anything runs
+        let e = translate("CREATE (n:Customer:X:_Entity)", &Json::Null, &h).err().unwrap();
+        assert_eq!(e.code, "Neo.ClientError.Statement.SemanticError");
     }
 
     #[test]
@@ -499,9 +600,9 @@ mod tests {
         assert!(!check("MATCH (n) RETURN n // CREATE (x)").unwrap());
         assert!(check("MATCH (n) SET n.x = 'CREATE'").unwrap());
         assert_eq!(check("MATCH (n RETURN n").err().unwrap().code, "Neo.ClientError.Statement.SyntaxError");
-        let st = translate("CREATE CONSTRAINT c IF NOT EXISTS FOR (n:L) REQUIRE n.id IS UNIQUE", &Json::Null).ok().unwrap();
+        let st = translate("CREATE CONSTRAINT c IF NOT EXISTS FOR (n:L) REQUIRE n.id IS UNIQUE", &Json::Null, &Hierarchy::default()).ok().unwrap();
         assert!(matches!(st.plan, Plan::Ddl(_)) && st.write);
-        let st = translate("MATCH (n:L) RETURN n.id AS id, count(*)", &Json::Null).ok().unwrap();
+        let st = translate("MATCH (n:L) RETURN n.id AS id, count(*)", &Json::Null, &Hierarchy::default()).ok().unwrap();
         assert_eq!(st.columns, vec!["id", "count(*)"]);
         let Plan::Cypher { ncols, .. } = st.plan else { panic!() };
         assert_eq!(ncols, 2);
