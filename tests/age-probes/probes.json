@@ -1,0 +1,2133 @@
+{
+  "about": "Probes for the Bolt gateway's Apache AGE backend (bolt/README.md, 'In front of Apache AGE'). Each probe sends the plain form straight to AGE, without the gateway's rewrite. See README.md here.",
+  "reports": "/Users/uengine/uengine-platform/reports/age-on-supabase/ (ROBO-ON-AGE.md, SUITES-ON-AGE.md, IMAGE-RESULTS.md, STUDIO-ON-AGE.md, upstream/)",
+  "measured_on": "AGE 1.8.0 (PG15/v1.8.0-rc0, 88646eb) in uengine/supabase-postgres-age:15.8.1.060-age1.8.0",
+  "probes": [
+    {
+      "id": "robo01_merge_on_create_then_set",
+      "kind": "defect",
+      "rewrite": "a SET after a MERGE that has ON CREATE/ON MATCH items → cut into several statements in one transaction: the MERGE ends one, the SET runs as the next (split.rs)",
+      "defects": ["ROBO #1", "upstream 01"],
+      "upstream": "upstream/01-merge-on-set-then-set-not-stored.md",
+      "source": "upstream/01 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "MERGE (n:L {k: 1}) ON CREATE SET n.a = 1 SET n.b = 2 RETURN n.b"},
+        {"cypher": "MATCH (n:L {k: 1}) RETURN n.a, n.b", "cols": 2}
+      ],
+      "broken": {"output": "2\n1|<null>"},
+      "fixed": {"output": "2\n1|2"},
+      "note": "The statement's own row shows b = 2; the stored vertex has no b."
+    },
+    {
+      "id": "robo01_merge_on_match_then_remove",
+      "kind": "defect",
+      "rewrite": "a REMOVE after a MERGE whose ON MATCH branch has items → cut after the MERGE (split.rs)",
+      "defects": ["ROBO #1", "upstream 01"],
+      "upstream": "upstream/01-merge-on-set-then-set-not-stored.md",
+      "source": "upstream/01 'Actual behavior' (REMOVE form)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:L {k: 1, a: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MERGE (n:L {k: 1}) ON MATCH SET n.e = 5 REMOVE n.a RETURN n.a, n.e", "cols": 2},
+        {"cypher": "MATCH (n:L {k: 1}) RETURN n.a, n.e", "cols": 2}
+      ],
+      "broken": {"output": "<null>|5\n1|5"},
+      "fixed": {"output": "<null>|5\n<null>|5"}
+    },
+    {
+      "id": "robo02_any_reads_matched_vertex",
+      "kind": "defect",
+      "rewrite": "any/all/none/single(x IN l WHERE p) → size([x IN l WHERE p]) > 0 (= 0, = 1; all: NOT p counted = 0) (cypher.rs ListPred)",
+      "defects": ["ROBO #2", "upstream 02"],
+      "upstream": "upstream/02-list-predicate-in-match-where-segfault.md",
+      "source": "upstream/02 'Actual behavior' (signal 11, server restart)",
+      "kills_backend": true,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:P {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (e:P) WHERE any(l IN ['P'] WHERE l IN labels(e)) RETURN e"}
+      ],
+      "broken": {"crash": true},
+      "fixed": {"output_regex": "^\\{\"id\": \\d+, \"label\": \"P\", \"properties\": \\{\"k\": 1\\}\\}::vertex$"},
+      "note": "Kills the backend: every session on the server is reset."
+    },
+    {
+      "id": "robo02_all_reads_matched_vertex",
+      "kind": "defect",
+      "rewrite": "any/all/none/single(x IN l WHERE p) → size([x IN l WHERE p]) … (cypher.rs ListPred)",
+      "defects": ["ROBO #2", "upstream 02"],
+      "upstream": "upstream/02-list-predicate-in-match-where-segfault.md",
+      "source": "upstream/02 ('Also crashes: … all(x IN [1] WHERE e IS NOT NULL) RETURN e.k')",
+      "kills_backend": true,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:P {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (e:P) WHERE all(x IN [1] WHERE e IS NOT NULL) RETURN e.k"}
+      ],
+      "broken": {"crash": true},
+      "fixed": {"output": "1"}
+    },
+    {
+      "id": "robo03_aggregate_and_comprehension",
+      "kind": "defect",
+      "rewrite": "an aggregation next to a list comprehension → three projections: lists, aggregates, the rest",
+      "defects": ["ROBO #3", "upstream 03"],
+      "upstream": "upstream/03-aggregate-with-list-comprehension.md",
+      "source": "upstream/03 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:B {k: 1})-[:R]->(:U {v: 1}), (:B {k: 2})-[:R]->(:U {v: 2})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (u:U) RETURN count(u) AS t, [x IN [1, 2] WHERE x > 1] AS l", "cols": 2}
+      ],
+      "broken": {"error": "unsupported SubLink"},
+      "fixed": {"output": "2|[2]"}
+    },
+    {
+      "id": "robo03_group_key_and_comprehension",
+      "kind": "defect",
+      "rewrite": "an aggregation next to a list comprehension → three projections: lists, aggregates, the rest",
+      "defects": ["ROBO #3", "upstream 03"],
+      "upstream": "upstream/03-aggregate-with-list-comprehension.md",
+      "source": "upstream/03 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "unordered": true,
+      "setup": [
+        {"cypher": "CREATE (:B {k: 1})-[:R]->(:U {v: 1}), (:B {k: 2})-[:R]->(:U {v: 2})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (b:B)-[:R]->(u:U) RETURN b.k AS k, [x IN collect(u.v) WHERE x > 1] AS l", "cols": 2}
+      ],
+      "broken": {"error": "must be either part of an explicitly listed key or used inside an aggregate function"},
+      "fixed": {"output": "1|[]\n2|[2]"}
+    },
+    {
+      "id": "robo04_variable_named_id",
+      "kind": "defect",
+      "rewrite": "variables named id, properties, start_id, end_id → renamed (they clash with the label tables' columns)",
+      "defects": ["ROBO #4", "upstream 04"],
+      "upstream": "upstream/04-variable-named-id-ambiguous.md",
+      "source": "upstream/04 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "unordered": true,
+      "setup": [
+        {"cypher": "CREATE (:N {id: 1}), (:N {id: 2})"}
+      ],
+      "probe": [
+        {"cypher": "UNWIND [1, 2] AS id MATCH (n:N {id: id}) RETURN n.id"}
+      ],
+      "broken": {"error": "column reference \"id\" is ambiguous"},
+      "fixed": {"output": "1\n2"}
+    },
+    {
+      "id": "robo04_variable_named_properties",
+      "kind": "defect",
+      "rewrite": "variables named id, properties, start_id, end_id → renamed",
+      "defects": ["ROBO #4", "upstream 04"],
+      "upstream": "upstream/04-variable-named-id-ambiguous.md",
+      "source": "upstream/04 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:N {id: 1}), (:N {id: 2})"}
+      ],
+      "probe": [
+        {"cypher": "WITH 1 AS properties MATCH (n:N) WHERE n.id = properties RETURN n.id"}
+      ],
+      "broken": {"error": "column reference \"properties\" is ambiguous"},
+      "fixed": {"output": "1"}
+    },
+    {
+      "id": "robo04_variable_named_end_id",
+      "kind": "defect",
+      "rewrite": "variables named id, properties, start_id, end_id → renamed (start_id / end_id: defensively)",
+      "defects": ["ROBO #4"],
+      "upstream": "upstream/04-variable-named-id-ambiguous.md",
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "disabled": "no failing form is known: upstream/INDEX.md 'Not reproduced' — WITH 3 AS start_id …, WITH 1 AS end_id … ran without error, so this probe would read FIXED from the start. Name it in --only to look again.",
+      "setup": [
+        {"cypher": "CREATE (:N {id: 1})-[:R {w: 1}]->(:N {id: 2})"}
+      ],
+      "probe": [
+        {"cypher": "UNWIND [1] AS end_id MATCH (a:N)-[e:R]->(b:N) WHERE e.w = end_id RETURN b.id"}
+      ],
+      "broken": {"error": "column reference \"end_id\" is ambiguous"},
+      "fixed": {"output": "2"}
+    },
+    {
+      "id": "robo05_leading_optional_match",
+      "kind": "defect",
+      "rewrite": "a leading OPTIONAL MATCH → WITH 1 AS … in front (AGE returns no row when nothing matches)",
+      "defects": ["ROBO #5", "upstream 05"],
+      "upstream": "upstream/05-leading-optional-match-no-row.md",
+      "source": "upstream/05 'Actual behavior' (0 rows)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "OPTIONAL MATCH (x:Nope) RETURN x.id"}
+      ],
+      "broken": {"output": ""},
+      "fixed": {"output": "<null>"}
+    },
+    {
+      "id": "robo06_map_projection_absent_key",
+      "kind": "defect",
+      "rewrite": "n {.a, .b} → CASE WHEN n IS NULL THEN null ELSE {a: n.a, b: n.b} END",
+      "defects": ["ROBO #6", "upstream 06"],
+      "upstream": "upstream/06-map-projection-nulls.md",
+      "source": "upstream/06 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:M {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:M) RETURN n {.k, .zz}"}
+      ],
+      "broken": {"output": "{\"k\": 1}"},
+      "fixed": {"output": "{\"k\": 1, \"zz\": null}"}
+    },
+    {
+      "id": "robo06_map_projection_of_null",
+      "kind": "defect",
+      "rewrite": "n {.a, .b} → CASE WHEN n IS NULL THEN null ELSE {…} END",
+      "defects": ["ROBO #6", "upstream 06"],
+      "upstream": "upstream/06-map-projection-nulls.md",
+      "source": "upstream/06 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "WITH 1 AS one OPTIONAL MATCH (x:Nope) RETURN x {.k}"}
+      ],
+      "broken": {"output": "{}"},
+      "fixed": {"output": "<null>"},
+      "note": "AGE's own regress output expects {} here, so it may be deliberate."
+    },
+    {
+      "id": "robo07_merge_rel_on_match_reads_itself",
+      "kind": "defect",
+      "rewrite": "a MERGE whose ON CREATE / ON MATCH items read what it merges → the MERGE marks what it creates, the items run after it (split.rs N1 / #7)",
+      "defects": ["ROBO #7", "upstream 07"],
+      "upstream": "upstream/07-merge-on-set-self-reference.md",
+      "source": "upstream/07 'Actual behavior' (PG 15.8 / 1.8.0)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1}), (:B {k: 1})"},
+        {"cypher": "MATCH (a:A {k: 1}), (b:B {k: 1}) MERGE (a)-[e:R]->(b) RETURN e.n"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (a:A {k: 1}), (b:B {k: 1}) MERGE (a)-[e:R]->(b) ON MATCH SET e.n = coalesce(e.n, 0) + 1 RETURN e.n"}
+      ],
+      "broken": {"error": "binary container must be a VLE vpc"},
+      "fixed": {"output": "1"},
+      "note": "AGE master 8c7e44f answers 'container must be an array or object' here: that would read CHANGED."
+    },
+    {
+      "id": "robo08_order_by_projection_alias",
+      "kind": "defect",
+      "rewrite": "ORDER BY m.k of a projected map m → the key read from where the map got it",
+      "defects": ["ROBO #8", "upstream 08"],
+      "upstream": "upstream/08-order-by-return-alias-property.md",
+      "source": "upstream/08 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:RM {id: 1, name: 'b'}), (:RM {id: 2, name: 'a'})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (rm:RM) RETURN rm {.id, .name} AS readmodel ORDER BY readmodel.name"}
+      ],
+      "broken": {"error": "could not find rte for readmodel"},
+      "fixed": {"output": "{\"id\": 2, \"name\": \"a\"}\n{\"id\": 1, \"name\": \"b\"}"}
+    },
+    {
+      "id": "robo09_tostring_of_id",
+      "kind": "defect",
+      "rewrite": "toString(id(n)) → toString(id(coalesce(n))); elementId(x) → toString(id(coalesce(x)))",
+      "defects": ["ROBO #9", "upstream 09"],
+      "upstream": "upstream/09-id-returns-graphid.md",
+      "source": "upstream/09 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (a:A) RETURN toString(id(a))"}
+      ],
+      "broken": {"error": "toString\\(\\) unsupported argument type \\d+"},
+      "fixed": {"output_regex": "^\"\\d+\"$"}
+    },
+    {
+      "id": "robo09_tointeger_of_id",
+      "kind": "defect",
+      "rewrite": "toInteger(id(n)) → toInteger(id(coalesce(n)))",
+      "defects": ["ROBO #9", "upstream 09"],
+      "upstream": "upstream/09-id-returns-graphid.md",
+      "source": "upstream/09 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (a:A) RETURN toInteger(id(a))"}
+      ],
+      "broken": {"error": "toInteger\\(\\) unsupported argument type \\d+"},
+      "fixed": {"output_regex": "^\\d+$"}
+    },
+    {
+      "id": "robo09_id_arithmetic",
+      "kind": "defect",
+      "rewrite": "id(n) used as a number → id(coalesce(n)) (README: id(x) IN list → id(coalesce(x)) IN list)",
+      "defects": ["ROBO #9", "upstream 09"],
+      "upstream": "upstream/09-id-returns-graphid.md",
+      "source": "upstream/09 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (a:A) RETURN id(a) + 0"}
+      ],
+      "broken": {"error": "operator does not exist: graphid \\+ agtype"},
+      "fixed": {"output_regex": "^\\d+$"}
+    },
+    {
+      "id": "robo09_id_in_literal_list",
+      "kind": "defect",
+      "rewrite": "id(x) IN list → id(coalesce(x)) IN list (AGE: id(n) IN [1, 2] fails 'not a common type' — ROBO 11.4)",
+      "defects": ["ROBO #9", "upstream 09"],
+      "upstream": "upstream/09-id-returns-graphid.md",
+      "source": "upstream/09 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'A')",
+        {"cypher": "CREATE (:A {k: 1}), (:A {k: 2})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:A) WHERE id(n) IN [844424930131969] RETURN n.k"}
+      ],
+      "broken": {"error": "not a common type"},
+      "fixed": {"output": "1"},
+      "note": "844424930131969 = 3 * 2^48 + 1: the first vertex of the graph's first label (A, made first in setup)."
+    },
+    {
+      "id": "robo09_id_in_parameter",
+      "kind": "defect",
+      "rewrite": "id(x) IN list → id(coalesce(x)) IN list (AGE: id(n) IN $param kills the backend, signal 11)",
+      "defects": ["ROBO #9", "upstream 09", "ROBO 11.4"],
+      "upstream": "upstream/09-id-returns-graphid.md",
+      "source": "upstream/09 'Actual behavior' (EXECUTE p_crash → signal 11)",
+      "kills_backend": true,
+      "slow": false,
+      "unordered": true,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'A')",
+        {"cypher": "CREATE (:A {k: 1}), (:A {k: 2})"}
+      ],
+      "probe": [
+        "SELECT json_build_object('ids', json_agg(id::text::bigint ORDER BY id))::text AS params FROM @graph@.\"A\" \\gset",
+        {"cypher": "MATCH (n:A) WHERE id(n) IN $ids RETURN n.k", "params_var": "params"}
+      ],
+      "broken": {"crash": true},
+      "fixed": {"output": "1\n2"},
+      "note": "Kills the backend: every session on the server is reset."
+    },
+    {
+      "id": "robo09_id_in_variable",
+      "kind": "defect",
+      "rewrite": "id(x) IN list → id(coalesce(x)) IN list (the crash without a parameter)",
+      "defects": ["ROBO #9", "upstream 09"],
+      "upstream": "upstream/09-id-returns-graphid.md",
+      "source": "upstream/repro/09.sql (comment: 'the same crash without a parameter')",
+      "kills_backend": true,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'A')",
+        {"cypher": "CREATE (:A {k: 1}), (:A {k: 2})"}
+      ],
+      "probe": [
+        {"cypher": "WITH [844424930131969] AS ids MATCH (n:A) WHERE id(n) IN ids RETURN n.k"}
+      ],
+      "broken": {"crash": true},
+      "fixed": {"output": "1"},
+      "note": "Kills the backend. 844424930131969: the first vertex of the first label, as above."
+    },
+    {
+      "id": "robo10_coalesce_over_vertices",
+      "kind": "defect",
+      "rewrite": "coalesce(a, b) over nodes → coalesce(head([a]), head([b]))",
+      "defects": ["ROBO #10", "upstream 10"],
+      "upstream": "upstream/10-coalesce-vertex-agtype.md",
+      "source": "upstream/10 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (a:A) OPTIONAL MATCH (b:Nope) RETURN coalesce(b, a)"}
+      ],
+      "broken": {"error": "COALESCE types agtype and vertex cannot be matched"},
+      "fixed": {"output_regex": "^\\{\"id\": \\d+, \"label\": \"A\", \"properties\": \\{\"k\": 1\\}\\}::vertex$"}
+    },
+    {
+      "id": "robo11_reduce_in_on_create_set",
+      "kind": "defect",
+      "rewrite": "randomUUID() → toString(pg_catalog.concat(pg_catalog.gen_random_uuid())) — not a reduce() over rand(), which AGE refuses inside ON CREATE / ON MATCH SET",
+      "defects": ["ROBO #11", "upstream 11"],
+      "upstream": "upstream/11-sublink-in-merge-on-set.md",
+      "source": "upstream/11 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "MERGE (t:T {k: 1}) ON CREATE SET t.s = reduce(acc = 0, x IN [1, 2, 3] | acc + x) RETURN t.s"}
+      ],
+      "broken": {"error": "unrecognized node type: \\d+"},
+      "fixed": {"output": "6"},
+      "note": "A list comprehension or list predicate there fails the same way (T_SubLink)."
+    },
+    {
+      "id": "robo11_random_uuid",
+      "kind": "surface",
+      "rewrite": "randomUUID() → toString(pg_catalog.concat(pg_catalog.gen_random_uuid()))",
+      "defects": ["ROBO #11"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "RETURN randomUUID()"}
+      ],
+      "broken": {"error": "(?i)function randomuuid does not exist"},
+      "fixed": {"output_regex": "^\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\"$"}
+    },
+    {
+      "id": "robo12_exists_names_new_variable",
+      "kind": "defect",
+      "rewrite": "exists(pattern) that names a variable of its own → EXISTS { MATCH … }",
+      "defects": ["ROBO #12"],
+      "upstream": null,
+      "source": "upstream/INDEX.md 'Not drafted' (reproduced: variable bc does not exist)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:BC {id: 'x'})-[:R]->(:N {k: 1}), (:N {k: 2})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:N) WHERE exists((bc:BC {id: 'x'})-[:R]->(n)) RETURN n.k"}
+      ],
+      "broken": {"error": "variable bc does not exist"},
+      "fixed": {"output": "1"},
+      "note": "AGE's regress test expects this error and openCypher pattern predicates do not introduce variables, so FIXED is unlikely; the rewrite to EXISTS { MATCH … } is what Robo's queries need either way."
+    },
+    {
+      "id": "robo13_vle_with_two_types",
+      "kind": "surface",
+      "rewrite": "a variable-length relationship without exactly one type over 3 hops → walked by the gateway (reach.rs, breadth first, one SQL statement per hop); up to 3 hops → -[v*1..n]- and the types tested on v",
+      "defects": ["ROBO #13", "ROBO 11.4", "upstream 12 (context)"],
+      "upstream": "upstream/12-vle-path-hash-join-memory.md",
+      "source": "upstream/INDEX.md 'Not drafted' (-[:A|B*1..3]- is a syntax error)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:V {k: 0})-[:A]->(:V {k: 1})-[:B]->(:V {k: 2})-[:A]->(:V {k: 3})"},
+        {"cypher": "MATCH (s:V {k: 0}) CREATE (s)-[:C]->(:V {k: 9})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (s:V {k: 0})-[:A|B*1..3]->(t) RETURN count(DISTINCT t)"}
+      ],
+      "broken": {"error": "syntax error"},
+      "fixed": {"output": "3"},
+      "note": "Small and bounded on purpose: never probe a long untyped VLE over a cyclic graph (it filled the disk and took Docker down on 2026-11-18)."
+    },
+    {
+      "id": "robo13_vle_path_on_hash_side",
+      "kind": "defect",
+      "rewrite": "the refusal of long multi-type / untyped VLEs whose trails matter, and the walk in reach.rs: AGE keeps every enumerated path of a VLE with a path variable on the hash side of a join (memory grows with the paths)",
+      "defects": ["ROBO #13", "upstream 12"],
+      "upstream": "upstream/12-vle-path-hash-join-memory.md",
+      "source": "upstream/12 'Actual behavior' (plan for *1..10: Hash over Function Scan on age_vle)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "UNWIND range(0, 299) AS i CREATE (:V {id: i})"},
+        {"cypher": "MATCH (a:V), (b:V) WHERE b.id = (a.id + 1) % 300 CREATE (a)-[:R]->(b)"},
+        {"cypher": "MATCH (a:V), (b:V) WHERE b.id = (a.id + 7) % 300 CREATE (a)-[:S]->(b)"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (c:V {id: 1}) OPTIONAL MATCH p = (c)-[*1..10]-(n) RETURN max(length(p))", "explain": true}
+      ],
+      "broken": {"output_regex": "(?m)->\\s+Hash\\s*\\n\\s*->\\s+Function Scan on age_vle"},
+      "fixed": {"output_regex": "(?s)\\A(?!.*->\\s+Hash\\s*\\n\\s*->\\s+Function Scan on age_vle)"},
+      "note": "EXPLAIN only, never ANALYZE: running it is the memory-exhausting statement. 300 vertices, 600 edges, as in the draft. The plan can depend on statistics; a FIXED here is a reason to measure (repro/12.sql, bounded part, on a disposable server), not proof."
+    },
+    {
+      "id": "robo14_set_label",
+      "kind": "surface",
+      "rewrite": "SET n:L → the vertex moved to the label's table by SQL in the same transaction (split.rs relabel); a vertex keeps one label",
+      "defects": ["ROBO #14", "SUITES A1"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:L {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:L {k: 1}) SET n:M RETURN labels(n)"}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output": "[\"L\", \"M\"]"}
+    },
+    {
+      "id": "robo14_remove_label",
+      "kind": "surface",
+      "rewrite": "REMOVE n:L → the vertex moved to _ag_label_vertex by SQL (split.rs relabel)",
+      "defects": ["ROBO #14"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:L {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:L {k: 1}) REMOVE n:L RETURN labels(n)"}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output": "[]"}
+    },
+    {
+      "id": "multi_label_create",
+      "kind": "surface",
+      "rewrite": "refused by name: a node with two labels (CREATE / MERGE (:A:B)); with label-table inheritance the gateway is to store (:_Entity:X) as X inheriting _Entity (DIRECTION §4.2 rule 5, STUDIO G1)",
+      "defects": ["ROBO #14", "SUITES A1", "IMAGE-RESULTS §5.10"],
+      "upstream": null,
+      "source": "IMAGE-RESULTS §5.10 (tests/16-neo4j-probe.sql output)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "CREATE (n:A:B {k: 1}) RETURN labels(n)"}
+      ],
+      "broken": {"error": "syntax error at or near \":\""},
+      "fixed": {"output": "[\"A\", \"B\"]"}
+    },
+    {
+      "id": "surface_datetime_now",
+      "kind": "surface",
+      "rewrite": "datetime(), date() → the statement's clock, as ISO 8601 text in a parameter",
+      "defects": ["ROBO §5.1 (surface)", "SUITES A11"],
+      "upstream": null,
+      "source": "IMAGE-RESULTS §5.10 (function datetime does not exist)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "RETURN datetime()"}
+      ],
+      "broken": {"error": "function datetime does not exist"},
+      "fixed": {"output_regex": "^\"?\\d{4}-\\d{2}-\\d{2}T"}
+    },
+    {
+      "id": "surface_date_today",
+      "kind": "surface",
+      "rewrite": "date() → the statement's date, as ISO 8601 text in a parameter",
+      "defects": ["ROBO §5.1 (surface)", "SUITES A11"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "RETURN date()"}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output_regex": "^\"?\\d{4}-\\d{2}-\\d{2}\"?$"}
+    },
+    {
+      "id": "surface_datetime_of_parameter",
+      "kind": "surface",
+      "rewrite": "datetime($p) → $p written as PostgreSQL writes a timestamptz",
+      "defects": ["ROBO §5.1 (surface)"],
+      "upstream": null,
+      "source": "IMAGE-RESULTS §5.10 (function datetime does not exist)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "RETURN datetime($p)", "params": {"p": "2026-01-11T09:00:00Z"}}
+      ],
+      "broken": {"error": "function datetime does not exist"},
+      "fixed": {"output_regex": "2026-01-11T09:00"}
+    },
+    {
+      "id": "surface_duration",
+      "kind": "surface",
+      "rewrite": "datetime() - duration({minutes: $m}) → the shifted instant, worked out by the gateway",
+      "defects": ["ROBO §5.1 (surface)", "SUITES A11"],
+      "upstream": null,
+      "source": "SUITES §3 A11 (function duration does not exist)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "RETURN duration({minutes: 5})"}
+      ],
+      "broken": {"error": "function duration does not exist"},
+      "fixed": {"output_regex": "PT5M"}
+    },
+    {
+      "id": "gateway_zone_id_datetime",
+      "kind": "defect",
+      "rewrite": "a DateTime parameter with a zone id (Bolt 0x66) → its instant, asked of PostgreSQL's zone database (run.rs age_params); the gateway used to drop the zone and read the wall time as UTC",
+      "defects": ["SUITES B9", "SUITES G13"],
+      "upstream": null,
+      "source": "SUITES §3 B9",
+      "kills_backend": false,
+      "slow": false,
+      "gateway_only": true,
+      "note": "Gateway-only: the Bolt structure never reaches AGE, so there is nothing to probe there."
+    },
+    {
+      "id": "surface_element_id",
+      "kind": "surface",
+      "rewrite": "elementId(x) → toString(id(coalesce(x))); elementId(x) = e → id(x) = <e as an integer>",
+      "defects": ["IMAGE-RESULTS §5.10", "STUDIO G4"],
+      "upstream": null,
+      "source": "IMAGE-RESULTS §5.10 (function elementId does not exist)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:A) RETURN elementId(n)"}
+      ],
+      "broken": {"error": "function elementId does not exist"},
+      "fixed": {"output_regex": "^\"[^\"]+\"$"}
+    },
+    {
+      "id": "gateway_element_id_text_scan",
+      "kind": "defect",
+      "rewrite": "elementId(x) = e → id(x) = <integer> instead of the gateway's earlier toString(id(…)) = e, which read every row (STUDIO G4: 28 ms → 2 ms at 25k vertices)",
+      "defects": ["STUDIO G4"],
+      "upstream": null,
+      "source": "STUDIO-ON-AGE §5 G4",
+      "kills_backend": false,
+      "slow": false,
+      "gateway_only": true,
+      "note": "A cost of the gateway's own earlier rewrite; what AGE must keep doing for the new form is tgt_id_equals_uses_index."
+    },
+    {
+      "id": "surface_label_predicate",
+      "kind": "surface",
+      "rewrite": "n:L in an expression → label(n) = 'L'",
+      "defects": ["ROBO §5.1 (surface)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1}), (:B {k: 2})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n) WHERE n:A RETURN n.k"}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output": "1"}
+    },
+    {
+      "id": "surface_label_choice",
+      "kind": "surface",
+      "rewrite": "(n:A|B) → (n) and label(n) IN ['A', 'B'] in the clause's WHERE",
+      "defects": ["ROBO §5.1 (surface)", "IMAGE-RESULTS §5.10"],
+      "upstream": null,
+      "source": "IMAGE-RESULTS §5.10 (syntax error at or near \"|\")",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1}), (:B {k: 2}), (:C {k: 3})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:A|B) RETURN count(n)"}
+      ],
+      "broken": {"error": "syntax error at or near \"\\|\""},
+      "fixed": {"output": "2"}
+    },
+    {
+      "id": "surface_type_choice",
+      "kind": "surface",
+      "rewrite": "-[:A|B]- → -[v]- and type(v) IN ['A', 'B'] in the clause's WHERE",
+      "defects": ["ROBO §5.1 (surface)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:N)-[:X]->(:N), (:N)-[:Y]->(:N), (:N)-[:Z]->(:N)"}
+      ],
+      "probe": [
+        {"cypher": "MATCH ()-[r:X|Y]->() RETURN count(r)"}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output": "2"}
+    },
+    {
+      "id": "surface_two_labels_in_match",
+      "kind": "surface",
+      "rewrite": "(n:A:B) in MATCH / OPTIONAL MATCH / EXISTS → (n:A) WHERE false when A ≠ B (a vertex has one label), (n:A) for (n:A:A); decided in cypher.rs node_label_test, which label inheritance will change",
+      "defects": ["SUITES B1", "STUDIO G2"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1}), (:B {k: 2})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:A:B) RETURN count(n)"}
+      ],
+      "broken": {"error": "syntax error"},
+      "fixed": {"output": "0"},
+      "note": "AGE rejects CREATE (n:A:B) with 'syntax error at or near \":\"' (IMAGE §5.10); MATCH is expected to fail the same way."
+    },
+    {
+      "id": "gateway_two_labels_read_as_either",
+      "kind": "defect",
+      "rewrite": "(n:A:B) means both labels, (n:A|B) either — the gateway had read both as either (label(n) IN [...]); MATCH (n:Lamp:Part) counted Lamps and Parts",
+      "defects": ["SUITES B1", "STUDIO G2"],
+      "upstream": null,
+      "source": "SUITES §3 B1",
+      "kills_backend": false,
+      "slow": false,
+      "gateway_only": true,
+      "note": "The gateway's own parser/printer bug (fixed in 312e2c0); AGE's side is surface_two_labels_in_match."
+    },
+    {
+      "id": "surface_set_map_parameter",
+      "kind": "surface",
+      "rewrite": "SET n += $map → WITH …, $map AS p SET n += p",
+      "defects": ["ROBO §5.1 (surface)", "IMAGE-RESULTS §5.3"],
+      "upstream": null,
+      "source": "IMAGE-RESULTS §5.3 (tests/11-params.sql: SET clause expects a map)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:A {k: 1}) SET n += $m RETURN n.x", "params": {"m": {"x": 5}}}
+      ],
+      "broken": {"error": "SET clause expects a map"},
+      "fixed": {"output": "5"}
+    },
+    {
+      "id": "surface_return_star_columns",
+      "kind": "surface",
+      "rewrite": "RETURN * → the variables in scope, sorted (Neo4j's column order; the gateway also needs the count for the column definition list)",
+      "defects": ["ROBO §5.1 (surface)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:Z {k: 26}), (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (z:Z), (a:A) RETURN *", "cols": 2}
+      ],
+      "broken": [{"output_regex": "^\\{[^|]*\"label\": \"Z\"[^|]*\\}::vertex\\|\\{[^|]*\"label\": \"A\""}, {"error": ".+"}],
+      "fixed": {"output_regex": "^\\{[^|]*\"label\": \"A\"[^|]*\\}::vertex\\|\\{[^|]*\"label\": \"Z\""},
+      "note": "AGE runs RETURN * (IMAGE §5.10); the probe asks whether its columns come in Neo4j's sorted order. Even when they do, the gateway must still know how many there are, so FIXED means only the sorting can go."
+    },
+    {
+      "id": "surface_foreach",
+      "kind": "surface",
+      "rewrite": "FOREACH → the writes for every row and element, as UNWIND $rows … UNWIND list AS x (split.rs)",
+      "defects": ["ROBO §7 (R3)", "apache/age #2381"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:A) FOREACH (x IN [1, 2] | CREATE (:F {v: x}))"},
+        {"cypher": "MATCH (f:F) RETURN count(f)"}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output": "2"}
+    },
+    {
+      "id": "surface_call_subquery",
+      "kind": "surface",
+      "rewrite": "CALL { … } → the body once per row, the rows carried as a parameter (split.rs)",
+      "defects": ["ROBO §7 (R3)", "apache/age #1690"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:A) CALL { WITH n RETURN n.k * 2 AS d } RETURN d"}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output": "2"}
+    },
+    {
+      "id": "surface_create_constraint",
+      "kind": "surface",
+      "rewrite": "CREATE CONSTRAINT … IS UNIQUE → a unique expression index on the label's table (ddl.rs)",
+      "defects": ["ROBO §5.1 (surface)", "apache/age #1635"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "CREATE CONSTRAINT agp_u FOR (n:A) REQUIRE n.k IS UNIQUE"},
+        {"cypher": "CREATE (:A {k: 1})"},
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "broken": {"error": "syntax error"},
+      "fixed": {"error": "(?i)unique|duplicate|already exists|constraint"}
+    },
+    {
+      "id": "surface_create_index",
+      "kind": "surface",
+      "rewrite": "CREATE INDEX → a plain expression index on the label's table (ddl.rs)",
+      "defects": ["ROBO §5.1 (surface)", "apache/age #1635"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "CREATE INDEX agp_i FOR (n:A) ON (n.k)"},
+        {"cypher": "RETURN 1"}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output": "1"}
+    },
+    {
+      "id": "surface_db_labels",
+      "kind": "surface",
+      "rewrite": "CALL db.labels() → answered from ag_catalog.ag_label",
+      "defects": ["ROBO §5.1 (surface)", "IMAGE-RESULTS §5.10"],
+      "upstream": null,
+      "source": "IMAGE-RESULTS §5.10 (schema \"db\" does not exist)",
+      "kills_backend": false,
+      "slow": false,
+      "unordered": true,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1}), (:B {k: 2})-[:R]->(:B {k: 3})"}
+      ],
+      "probe": [
+        {"cypher": "CALL db.labels() YIELD label RETURN label"}
+      ],
+      "broken": {"error": "schema \"db\" does not exist"},
+      "fixed": {"output": "\"A\"\n\"B\""}
+    },
+    {
+      "id": "surface_db_property_keys",
+      "kind": "surface",
+      "rewrite": "CALL db.propertyKeys() (and db.relationshipTypes()) → answered from the label tables",
+      "defects": ["ROBO §5.1 (surface)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "unordered": true,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})-[:R {w: 2}]->(:B {k: 3})"}
+      ],
+      "probe": [
+        {"cypher": "CALL db.propertyKeys() YIELD propertyKey RETURN propertyKey"}
+      ],
+      "broken": {"error": "schema \"db\" does not exist"},
+      "fixed": {"output": "\"k\"\n\"w\""}
+    },
+    {
+      "id": "gateway_show_and_create_graph",
+      "kind": "surface",
+      "rewrite": "SHOW GRAPHS, CREATE GRAPH g → answered from ag_catalog / ag_catalog.create_graph()",
+      "defects": ["ROBO §5.1 (surface)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "gateway_only": true,
+      "note": "Ontological's own statements, not Neo4j's; AGE has SQL functions for them and no Cypher form, so there is no plain form to probe."
+    },
+    {
+      "id": "surface_pattern_comprehension",
+      "kind": "surface",
+      "rewrite": "refused: a pattern comprehension or COLLECT { … } (cypher.rs)",
+      "defects": ["SUITES A12", "SUITES G21"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})-[:R]->(:B {k: 2})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (a:A) RETURN [(a)-[:R]->(b) | b.k]"}
+      ],
+      "broken": {"error": ".+"},
+      "fixed": {"output": "[2]"}
+    },
+    {
+      "id": "precedence_in_below_plus",
+      "kind": "surface",
+      "rewrite": "operator precedence: every operand that is not atomic is parenthesised (AGE binds IN tighter than arithmetic)",
+      "defects": ["ROBO §5.1 (precedence)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "RETURN [1] + [2] IN [[1, 2]]"}
+      ],
+      "broken": [{"output": "[1, false]"}, {"error": ".+"}],
+      "fixed": {"output": "true"},
+      "note": "Neo4j: ([1] + [2]) IN [[1, 2]] = true. Read with AGE's precedence: [1] + ([2] IN [[1, 2]])."
+    },
+    {
+      "id": "precedence_is_null_below_plus",
+      "kind": "surface",
+      "rewrite": "operator precedence: … AGE binds IS NULL tighter than arithmetic",
+      "defects": ["ROBO §5.1 (precedence)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "RETURN 1 + null IS NULL"}
+      ],
+      "broken": [{"output": "2"}, {"output": "<null>"}, {"error": ".+"}],
+      "fixed": {"output": "true"},
+      "note": "Neo4j: (1 + null) IS NULL = true. AGE's reading: 1 + (null IS NULL)."
+    },
+    {
+      "id": "precedence_starts_with_below_plus",
+      "kind": "surface",
+      "rewrite": "operator precedence: … AGE binds STARTS WITH / CONTAINS / =~ tighter than arithmetic",
+      "defects": ["ROBO §5.1 (precedence)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "RETURN 'a' + 'b' STARTS WITH 'ab'"}
+      ],
+      "broken": [{"output": "\"afalse\""}, {"error": ".+"}],
+      "fixed": {"output": "true"},
+      "note": "Neo4j: ('a' + 'b') STARTS WITH 'ab' = true. AGE's reading: 'a' + ('b' STARTS WITH 'ab')."
+    },
+    {
+      "id": "precedence_xor_above_and",
+      "kind": "surface",
+      "rewrite": "operator precedence: … AGE binds XOR tighter than AND",
+      "defects": ["ROBO §5.1 (precedence)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "RETURN true XOR true AND false"}
+      ],
+      "broken": {"output": "false"},
+      "fixed": {"output": "true"},
+      "note": "Neo4j: true XOR (true AND false) = true. AGE's reading: (true XOR true) AND false = false."
+    },
+    {
+      "id": "suites_n1_on_match_reads_merged",
+      "kind": "defect",
+      "rewrite": "a MERGE whose ON CREATE / ON MATCH items read what it merges → the MERGE with ON CREATE SET m.__og_c = true, then the ON MATCH items on the rows that did not create, the ON CREATE items and m.__og_c = null on those that did (split.rs)",
+      "defects": ["SUITES N1", "SUITES A3", "upstream 07"],
+      "upstream": "upstream/07-merge-on-set-self-reference.md",
+      "source": "SUITES §5 N1 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:T {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MERGE (t:T {k: 1}) ON MATCH SET t.hits = coalesce(t.hits, 0) + 1 RETURN t.hits"}
+      ],
+      "broken": {"error": "attribute 1 of type record has wrong type"},
+      "fixed": {"output": "1"}
+    },
+    {
+      "id": "suites_n1_with_then_merge_reads_merged",
+      "kind": "defect",
+      "rewrite": "a MERGE whose ON CREATE / ON MATCH items read what it merges → the MERGE with ON CREATE SET m.__og_c = true, then the ON MATCH items on the rows that did not create, the ON CREATE items and m.__og_c = null on those that did (split.rs)",
+      "defects": ["SUITES N1", "upstream 07"],
+      "upstream": "upstream/07-merge-on-set-self-reference.md",
+      "source": "SUITES §5 N1 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:T {k: 1, hits: 5})"}
+      ],
+      "probe": [
+        {"cypher": "WITH 1 AS i MERGE (t:T {k: i}) ON MATCH SET t.hits = t.hits + 1 RETURN t.hits"}
+      ],
+      "broken": {"error": "binary container must be a VLE vpc"},
+      "fixed": {"output": "6"}
+    },
+    {
+      "id": "suites_n1_on_create_reads_merged",
+      "kind": "defect",
+      "rewrite": "a MERGE whose ON CREATE / ON MATCH items read what it merges → the MERGE with ON CREATE SET m.__og_c = true, then the ON MATCH items on the rows that did not create, the ON CREATE items and m.__og_c = null on those that did (split.rs)",
+      "defects": ["SUITES N1", "upstream 07"],
+      "upstream": "upstream/07-merge-on-set-self-reference.md",
+      "source": "upstream/07 'Actual behavior' (MERGE as the first clause, ON CREATE)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "MERGE (v:A {k: 2}) ON CREATE SET v.n = v.k + 1 RETURN v"}
+      ],
+      "broken": {"error": "attribute 1 of type record has wrong type"},
+      "fixed": {"output_regex": "\"properties\": \\{\"k\": 2, \"n\": 3\\}"}
+    },
+    {
+      "id": "suites_n2_same_element_twice",
+      "kind": "defect",
+      "rewrite": "a step that writes on rows holding the same element more than once → run in waves, no element twice in a wave (split.rs waves)",
+      "defects": ["SUITES N2", "SUITES A4"],
+      "upstream": null,
+      "source": "SUITES §5 N2 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "UNWIND [1, 1, 1] AS i MERGE (t:U {k: i}) ON MATCH SET t.hits = coalesce(t.hits, 0) + 1 RETURN coalesce(t.hits, 0)"},
+        {"cypher": "MATCH (t:U) RETURN count(t), collect(t.hits)", "cols": 2}
+      ],
+      "broken": {"output": "0\n1\n1\n1|[1]"},
+      "fixed": {"output": "0\n1\n2\n1|[2]"}
+    },
+    {
+      "id": "suites_n3_match_after_create",
+      "kind": "defect",
+      "rewrite": "a MATCH / OPTIONAL MATCH after a CREATE / MERGE in the same part that can see what was written → cut before the MATCH (split.rs Cut)",
+      "defects": ["SUITES N3", "SUITES A5"],
+      "upstream": null,
+      "source": "SUITES §5 N3 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "UNWIND [1, 2, 3] AS i CREATE (s:V {k: i}) WITH count(s) AS made MATCH (t:V) RETURN made, count(t)", "cols": 2}
+      ],
+      "broken": {"output": "3|1"},
+      "fixed": {"output": "3|3"}
+    },
+    {
+      "id": "suites_n4_where_on_set_property",
+      "kind": "defect",
+      "rewrite": "a WHERE after a SET / REMOVE whose part reads only what was there at the SET → cut before the WHERE's clause (split.rs Cut)",
+      "defects": ["SUITES N4", "SUITES A6"],
+      "upstream": null,
+      "source": "SUITES §5 N4 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "UNWIND [1, 2, 3] AS i CREATE (:V {k: i})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (s:V) SET s.v = s.k * 10 WITH s WHERE s.v > 10 RETURN collect(s.v)"},
+        {"cypher": "MATCH (s:V) RETURN s.k, s.v ORDER BY s.k", "cols": 2}
+      ],
+      "broken": {"output": "[]\n1|<null>\n2|<null>\n3|<null>"},
+      "fixed": {"output": "[20, 30]\n1|10\n2|20\n3|30"}
+    },
+    {
+      "id": "suites_n4_filtered_rows_not_written",
+      "kind": "defect",
+      "rewrite": "a WHERE after a SET → cut before the WHERE's clause (split.rs Cut): the rows the WHERE drops are never written",
+      "defects": ["SUITES N4"],
+      "upstream": null,
+      "source": "SUITES §5 N4 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "UNWIND [1, 2, 3] AS i CREATE (:V {k: i})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (s:V) SET s.u = s.k * 10 WITH s WHERE s.k > 1 RETURN collect(s.u)"},
+        {"cypher": "MATCH (s:V) RETURN s.k, s.u ORDER BY s.k", "cols": 2}
+      ],
+      "broken": {"output": "[20, 30]\n1|<null>\n2|20\n3|30"},
+      "fixed": {"output": "[20, 30]\n1|10\n2|20\n3|30"}
+    },
+    {
+      "id": "suites_n5_size_of_string",
+      "kind": "defect",
+      "rewrite": "(no rewrite yet) size() of a string counts bytes; the gateway could rewrite it for constants and parameters only (SUITES G16)",
+      "defects": ["SUITES N5", "SUITES A7"],
+      "upstream": null,
+      "source": "SUITES §5 N5 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "RETURN size('héllo'), size('가나')", "cols": 2}
+      ],
+      "broken": {"output": "6|6"},
+      "fixed": {"output": "5|2"}
+    },
+    {
+      "id": "suites_n6_property_of_function_result",
+      "kind": "defect",
+      "rewrite": "(no rewrite yet) a property of a function result: coalesce(a, b).k → CASE … (SUITES G17)",
+      "defects": ["SUITES N6", "SUITES A8"],
+      "upstream": null,
+      "source": "SUITES §5 N6 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:V {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (s:V {k: 1}) RETURN coalesce(s, s).k"}
+      ],
+      "broken": {"error": "invalid indirection syntax"},
+      "fixed": {"output": "1"}
+    },
+    {
+      "id": "suites_n6_three_part_function_name",
+      "kind": "defect",
+      "rewrite": "(no rewrite yet) vector.similarity.cosine(…) as a list expression (SUITES G18)",
+      "defects": ["SUITES N6", "SUITES A8"],
+      "upstream": null,
+      "source": "SUITES §5 N6 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "RETURN vector.similarity.cosine([1, 0], [1, 0])"}
+      ],
+      "broken": {"error": "invalid indirection syntax"},
+      "fixed": {"output_regex": "^1(\\.0+)?$"}
+    },
+    {
+      "id": "suites_n7_merge_null_key",
+      "kind": "defect",
+      "rewrite": "a MERGE pattern property that is null → refused with Neo4j's SemanticError when known; computed: guarded by a division by zero that the gateway answers with that error (cypher.rs guard_merge_nulls)",
+      "defects": ["SUITES N7", "SUITES A9"],
+      "upstream": null,
+      "source": "SUITES §5 N7 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "UNWIND [{x: 1}] AS r MERGE (n:W {key: r.missing}) RETURN n.key"},
+        {"cypher": "UNWIND [{x: 1}] AS r MERGE (n:W {key: r.missing}) RETURN n.key"},
+        {"cypher": "MATCH (n:W) RETURN count(n)"}
+      ],
+      "broken": {"output": "<null>\n<null>\n2"},
+      "fixed": {"error": "(?i)null"},
+      "note": "Neo4j: Cannot merge the following node because of null property value for 'key'. Today AGE makes a new vertex without the key every time."
+    },
+    {
+      "id": "suites_n8_set_on_a_map",
+      "kind": "defect",
+      "rewrite": "(no rewrite) SET on a map, not an element: AGE's internal message (SUITES G14 maps error codes)",
+      "defects": ["SUITES N8", "SUITES B12"],
+      "upstream": null,
+      "source": "SUITES §5 N8 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "WITH {a: 1} AS n SET n.x = 1"}
+      ],
+      "broken": {"error": "container is not an agtype array"},
+      "fixed": {"error": "(?i)node|relationship|vertex|edge|map"}
+    },
+    {
+      "id": "suites_n9_tointeger_of_boolean",
+      "kind": "defect",
+      "rewrite": "(no rewrite yet) toInteger(true) → CASE WHEN x = true THEN 1 … (SUITES G19)",
+      "defects": ["SUITES N9", "SUITES A10"],
+      "upstream": null,
+      "source": "SUITES §5 N9 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "RETURN toInteger(true)"}
+      ],
+      "broken": {"error": "toInteger\\(\\) unsupported argument agtype 5"},
+      "fixed": {"output": "1"}
+    },
+    {
+      "id": "suites_n10_short_graph_name",
+      "kind": "defect",
+      "rewrite": "(no rewrite) a graph name under three characters is refused; the gateway passes AGE's error on (SUITES G27)",
+      "defects": ["SUITES N10", "SUITES A14"],
+      "upstream": null,
+      "source": "SUITES §5 N10 output (new-defects.out)",
+      "kills_backend": false,
+      "slow": false,
+      "graph": false,
+      "probe": [
+        "BEGIN",
+        "SELECT ag_catalog.create_graph('ab')",
+        "ROLLBACK"
+      ],
+      "broken": {"error": "graph name is invalid"},
+      "fixed": {"output": ""},
+      "note": "Not a Neo4j difference: Neo4j database names need three characters too. Rolled back either way."
+    },
+    {
+      "id": "suites_n11_graph_version_slots",
+      "kind": "defect",
+      "rewrite": "(no rewrite) AGE's graph version counter table has 128 slots that drop_graph does not free; after that every Cypher write warns and the VLE cache falls back to snapshots",
+      "defects": ["SUITES N11"],
+      "upstream": null,
+      "source": "SUITES §5 N11 (WARNING:  AGE: graph version counter table full (128 graphs))",
+      "kills_backend": false,
+      "slow": true,
+      "probe": [
+        "SET statement_timeout = '120s'",
+        "DO $do$ DECLARE g text; BEGIN FOR i IN 1..130 LOOP g := 'agp_n11_' || i; PERFORM ag_catalog.create_graph(g::name); EXECUTE format('SELECT * FROM ag_catalog.cypher(%L, $cy$ CREATE (:V {k: 1}) $cy$) AS (a ag_catalog.agtype)', g); PERFORM ag_catalog.drop_graph(g::name, true); COMMIT; END LOOP; END $do$",
+        {"cypher": "CREATE (:V {k: 1})"}
+      ],
+      "cleanup": [
+        "SELECT ag_catalog.drop_graph(name, true) FROM ag_catalog.ag_graph WHERE name::text LIKE 'agp\\_n11\\_%'"
+      ],
+      "broken": {"stderr": "graph version counter table full"},
+      "fixed": {"output": ""},
+      "note": "Makes and drops 130 graphs, one transaction each (the COMMIT keeps the lock table small). Leaves the server's 128 slots full until it restarts (every later Cypher write warns), so it runs after every other non-crashing probe and only with --include-slow. AGE master frees the slot on drop (release_graph_version()) and has 256."
+    },
+    {
+      "id": "searchpath_create_graph",
+      "kind": "defect",
+      "rewrite": "the session sets search_path = ag_catalog, \"$user\", public (run.rs; README: AGE's documented setup)",
+      "defects": ["IMAGE-RESULTS §5.1", "upstream 14"],
+      "upstream": "upstream/14 (search_path)",
+      "source": "IMAGE-RESULTS §5.1 / upstream/14 (PG 15.8 / 1.8.0)",
+      "kills_backend": false,
+      "slow": false,
+      "graph": false,
+      "probe": [
+        "SET search_path = \"$user\", public",
+        "BEGIN",
+        "SELECT ag_catalog.create_graph('agp_searchpath_made')",
+        "ROLLBACK"
+      ],
+      "broken": {"error": "operator class \"graphid_ops\" does not exist for access method \"btree\""},
+      "fixed": {"output": ""},
+      "note": "Fixed on AGE master by 2e2120b (#2505): this one probe may read FIXED on a newer AGE while the others stay BROKEN. Rolled back either way."
+    },
+    {
+      "id": "searchpath_property_map",
+      "kind": "defect",
+      "rewrite": "the session sets search_path = ag_catalog, \"$user\", public (run.rs; README: AGE's documented setup)",
+      "defects": ["IMAGE-RESULTS §5.1", "upstream 14"],
+      "upstream": "upstream/14 (search_path)",
+      "source": "upstream/14 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:Pre {name: 'a'})"}
+      ],
+      "probe": [
+        "SET search_path = \"$user\", public",
+        {"cypher": "MATCH (n:Pre {name: 'a'}) RETURN n.name"}
+      ],
+      "broken": {"error": "operator does not exist: ag_catalog\\.agtype @> ag_catalog\\.agtype"},
+      "fixed": {"output": "\"a\""}
+    },
+    {
+      "id": "searchpath_where_equals",
+      "kind": "defect",
+      "rewrite": "the session sets search_path = ag_catalog, \"$user\", public (run.rs; README: AGE's documented setup)",
+      "defects": ["IMAGE-RESULTS §5.1", "upstream 14"],
+      "upstream": "upstream/14 (search_path)",
+      "source": "upstream/14 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:Pre {name: 'a'})"}
+      ],
+      "probe": [
+        "SET search_path = \"$user\", public",
+        {"cypher": "MATCH (n:Pre) WHERE n.name = 'a' RETURN n.name"}
+      ],
+      "broken": {"error": "cannot cast agtype string to type boolean"},
+      "fixed": {"output": "\"a\""}
+    },
+    {
+      "id": "searchpath_unwind",
+      "kind": "defect",
+      "rewrite": "the session sets search_path = ag_catalog, \"$user\", public (run.rs; README: AGE's documented setup)",
+      "defects": ["IMAGE-RESULTS §5.1", "upstream 14"],
+      "upstream": "upstream/14 (search_path)",
+      "source": "upstream/14 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        "SET search_path = \"$user\", public",
+        {"cypher": "UNWIND [1, 2] AS x RETURN x"}
+      ],
+      "broken": {"error": "function age_unnest\\(ag_catalog\\.agtype\\) does not exist"},
+      "fixed": {"output": "1\n2"}
+    },
+    {
+      "id": "searchpath_edge_join",
+      "kind": "defect",
+      "rewrite": "the session sets search_path = ag_catalog, \"$user\", public (run.rs; README: AGE's documented setup)",
+      "defects": ["IMAGE-RESULTS §5.1", "upstream 14"],
+      "upstream": "upstream/14 (search_path)",
+      "source": "upstream/14 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:Pre {name: 'a'})-[:REL]->(:Pre {name: 'b'})"}
+      ],
+      "probe": [
+        "SET search_path = \"$user\", public",
+        {"cypher": "MATCH (a)-[r]->(b) RETURN b.name"}
+      ],
+      "broken": {"error": "operator does not exist: ag_catalog\\.graphid = ag_catalog\\.graphid"},
+      "fixed": {"output": "\"b\""}
+    },
+    {
+      "id": "image1_truncate_without_age",
+      "kind": "defect",
+      "rewrite": "(image, no gateway rewrite) TRUNCATE fails in a database without the age extension while age is preloaded; the image installs age in every database and template1 (ROBO 11.3)",
+      "defects": ["IMAGE-RESULTS §5.11 ①", "IMAGE-RESULTS §3.3", "ROBO 11.3", "upstream 13"],
+      "upstream": "upstream/13-backport-truncate-without-age-extension.md",
+      "source": "IMAGE-RESULTS §3.3 (tests/02-other-database.sql output)",
+      "kills_backend": false,
+      "slow": false,
+      "needs_admin": true,
+      "graph": false,
+      "database": "agp_truncate_noage",
+      "setup": [
+        "CREATE DATABASE agp_truncate_noage TEMPLATE template0"
+      ],
+      "probe": [
+        "CREATE TABLE agp_t (i int)",
+        "INSERT INTO agp_t VALUES (1)",
+        "TRUNCATE agp_t",
+        "SELECT count(*) FROM agp_t"
+      ],
+      "cleanup": [
+        "DROP DATABASE IF EXISTS agp_truncate_noage WITH (FORCE)"
+      ],
+      "broken": {"error": "schema \"ag_catalog\" does not exist"},
+      "fixed": {"output": "0"},
+      "note": "Needs a role that may create databases (--admin-user). The probe runs in the new database, made from template0 so that it has no age. Fixed on AGE master by 6e073cf (#2578)."
+    },
+    {
+      "id": "image2_merge_four_column_label",
+      "kind": "defect",
+      "rewrite": "(rule, no rewrite) the gateway adds no column to a label table — only indexes (ddl.rs) and INHERIT (DIRECTION §4.2 rule 5); MERGE takes a 4-column vertex label for an edge label",
+      "defects": ["IMAGE-RESULTS §5.11 ②", "upstream 15"],
+      "upstream": "upstream/15-merge-four-column-vertex-label.md",
+      "source": "upstream/15 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'P')",
+        "ALTER TABLE @graph@.\"P\" ADD COLUMN c1 text",
+        "ALTER TABLE @graph@.\"P\" ADD COLUMN c2 text"
+      ],
+      "probe": [
+        {"cypher": "MERGE (n:P {k: 2}) RETURN n.k"}
+      ],
+      "broken": {"error": "Expecting vertex label, found existing edge label"},
+      "fixed": {"output": "2"}
+    },
+    {
+      "id": "image3_drop_added_column",
+      "kind": "defect",
+      "rewrite": "(rule, no rewrite) a column added to a label table cannot be dropped again, so the gateway never adds one",
+      "defects": ["IMAGE-RESULTS §5.11 ③", "upstream 15", "apache/age #1639"],
+      "upstream": "upstream/15-merge-four-column-vertex-label.md",
+      "source": "upstream/15 'Actual behavior'",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'P')",
+        "ALTER TABLE @graph@.\"P\" ADD COLUMN c1 text"
+      ],
+      "probe": [
+        "ALTER TABLE @graph@.\"P\" DROP COLUMN c1"
+      ],
+      "broken": {"error": "table \"P\" is for label \"P\""},
+      "fixed": {"output": ""}
+    },
+    {
+      "id": "image5_scalar_to_jsonb",
+      "kind": "defect",
+      "rewrite": "results are read as agtype text (agtype.rs: ::vertex / ::edge / ::path, 1 and 1.0 kept apart), never cast to jsonb: AGE refuses a top-level scalar as json",
+      "defects": ["IMAGE-RESULTS §5.11 ⑤", "IMAGE-RESULTS §5.4"],
+      "upstream": null,
+      "source": "IMAGE-RESULTS §5.4 ('cannot cast agtype integer to json' 류)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        "SELECT r::jsonb FROM ag_catalog.cypher('@graph@', $$ RETURN 1 $$) AS (r ag_catalog.agtype)"
+      ],
+      "broken": {"error": "cannot cast agtype \\w+ to json"},
+      "fixed": {"output": "1"},
+      "note": "By design in AGE (agtype_to_json rejects scalar roots, master too)."
+    },
+    {
+      "id": "image_cypher_writes_skip_triggers",
+      "kind": "defect",
+      "rewrite": "(no rewrite) summary.counters come from pg_stat_xact_* (mod.rs COUNTS), because no trigger fires on a Cypher write; nothing may hang off Cypher writes",
+      "defects": ["IMAGE-RESULTS §5.7", "upstream 17"],
+      "upstream": "upstream/17-cypher-writes-skip-triggers-defaults.md",
+      "source": "IMAGE-RESULTS §5.7 (0 trigger calls)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'T')",
+        "CREATE TABLE @graph@.agp_log (op text)",
+        "CREATE FUNCTION @graph@.agp_trg() RETURNS trigger LANGUAGE plpgsql AS $f$ BEGIN INSERT INTO @graph@.agp_log VALUES (TG_OP); RETURN NEW; END $f$",
+        "CREATE TRIGGER agp_after_row AFTER INSERT ON @graph@.\"T\" FOR EACH ROW EXECUTE FUNCTION @graph@.agp_trg()"
+      ],
+      "probe": [
+        {"cypher": "CREATE (:T {name: 'c1'})"},
+        "SELECT count(*) FROM @graph@.agp_log"
+      ],
+      "cleanup": [
+        "DROP FUNCTION IF EXISTS @graph@.agp_trg() CASCADE",
+        "DROP TABLE IF EXISTS @graph@.agp_log"
+      ],
+      "broken": {"output": "0"},
+      "fixed": {"output_regex": "^[1-9]\\d*$"},
+      "note": "Likely by design (the draft asks AGE to document it). The trigger, its function and the log table live in the probe's graph schema and go with it."
+    },
+    {
+      "id": "inh_match_parent_includes_children",
+      "kind": "relied_on",
+      "rewrite": "MATCH (n:_Entity) reads the child tables too — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": "STUDIO-ON-AGE §2.5 (og_studio_probe, through the gateway)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\""
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:_Entity) RETURN n.name ORDER BY n.name"}
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "broken": {"output": "\"e0\""},
+      "fixed": {"output": "\"c1\"\n\"e0\"\n\"s1\""},
+      "note": "Not a documented AGE behaviour: the label scan is built with PostgreSQL's inheritance expansion on (no ONLY). If it stops, MATCH (n:_Entity) loses every class's vertices."
+    },
+    {
+      "id": "inh_label_is_own_table",
+      "kind": "relied_on",
+      "rewrite": "label(n) of a vertex found through the parent is its own table's label — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": "STUDIO-ON-AGE §2.5 (og_studio_probe, through the gateway)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\""
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:_Entity) RETURN n.name, label(n) ORDER BY n.name", "cols": 2}
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "fixed": {"output": "\"c1\"|\"Customer\"\n\"e0\"|\"_Entity\"\n\"s1\"|\"Supplier\""}
+    },
+    {
+      "id": "inh_labels_lacks_ancestor",
+      "kind": "relied_on",
+      "rewrite": "labels(n) has the own label only; the gateway adds the ancestors itself from pg_inherits (G3) and would list them twice if AGE started to — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": "STUDIO-ON-AGE §2.5 (og_studio_probe, through the gateway)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\""
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:_Entity {name: 'c1'}) RETURN labels(n)"}
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "fixed": {"output": "[\"Customer\"]"}
+    },
+    {
+      "id": "inh_match_all_counts_once",
+      "kind": "relied_on",
+      "rewrite": "MATCH (n) sees each vertex once although a child table has two parents — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": "STUDIO-ON-AGE §2.5 (og_studio_probe, through the gateway)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\""
+      ],
+      "probe": [
+        {"cypher": "MATCH (n) RETURN count(n)"}
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "broken": {"output_regex": "^(?!4$)\\d+$"},
+      "fixed": {"output": "4"},
+      "note": "e0, c1, o1, s1 and nothing twice (Customer inherits both _ag_label_vertex and _Entity)."
+    },
+    {
+      "id": "inh_merge_parent_finds_child",
+      "kind": "relied_on",
+      "rewrite": "MERGE (n:_Entity {name: …}) finds the vertex in the child table instead of making a new one — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": "STUDIO-ON-AGE §2.5 (og_studio_probe, through the gateway)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\""
+      ],
+      "probe": [
+        {"cypher": "MERGE (n:_Entity {name: 'c1'}) RETURN label(n)"},
+        {"cypher": "MATCH (n) RETURN count(n)"}
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "fixed": {"output": "\"Customer\"\n4"}
+    },
+    {
+      "id": "inh_set_through_parent",
+      "kind": "relied_on",
+      "rewrite": "SET through the parent label is stored in the child table — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": "STUDIO-ON-AGE §2.5 (og_studio_probe, through the gateway)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\""
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:_Entity {name: 'c1'}) SET n.grade = 'B'"},
+        {"cypher": "MATCH (n:Customer) RETURN n.grade"}
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "fixed": {"output": "\"B\""}
+    },
+    {
+      "id": "inh_relationship_through_parent",
+      "kind": "relied_on",
+      "rewrite": "a relationship pattern from the parent label reaches the child's edges — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": "STUDIO-ON-AGE §2.5 (og_studio_probe, through the gateway)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\""
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:_Entity)-[r]->(m) RETURN n.name, type(r), m.name", "cols": 3}
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "fixed": {"output": "\"c1\"|\"PLACED\"|\"o1\""}
+    },
+    {
+      "id": "inh_detach_delete_counts_per_table",
+      "kind": "relied_on",
+      "rewrite": "DETACH DELETE through the parent label deletes from the child table and the per-table statistics the counters read (mod.rs COUNTS) see it there — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": "STUDIO-ON-AGE §2.5 (node 1, relationship 1 deleted, counters right); the per-table numbers are inferred",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\""
+      ],
+      "probe": [
+        "BEGIN",
+        {"cypher": "MATCH (n:_Entity) WHERE n.name = 'c1' DETACH DELETE n"},
+        "SELECT pg_stat_get_xact_tuples_deleted('@graph@.\"Customer\"'::regclass), pg_stat_get_xact_tuples_deleted('@graph@.\"_Entity\"'::regclass), pg_stat_get_xact_tuples_deleted('@graph@.\"PLACED\"'::regclass)",
+        "COMMIT",
+        {"cypher": "MATCH (n) RETURN n.name ORDER BY n.name"}
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "fixed": {"output": "1|0|1\n\"e0\"\n\"o1\"\n\"s1\""}
+    },
+    {
+      "id": "inh_drop_parent_label_refused",
+      "kind": "relied_on",
+      "rewrite": "ag_catalog.drop_label(g, '_Entity') is refused while a child inherits, so a class table cannot go by accident — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": "STUDIO-ON-AGE §2.5 (og_studio_probe, through the gateway)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\""
+      ],
+      "probe": [
+        "SELECT ag_catalog.drop_label('@graph@', '_Entity')"
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "broken": {"output": ""},
+      "fixed": {"error": "depends on"}
+    },
+    {
+      "id": "inh_create_child_after_inherit",
+      "kind": "relied_on",
+      "rewrite": "a vertex created in the child label after the INHERIT is seen through the parent (G1 makes the child table and its INHERIT before the first write) — label-table inheritance the gateway is to rely on (DIRECTION §4.2 rule 5, STUDIO G1/G3/G6): (:_Entity:X) stored as X, with ALTER TABLE g.\"X\" INHERIT g.\"_Entity\"",
+      "defects": ["STUDIO §2.5", "DIRECTION §4.2 rule 5"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:_Entity {name: 'e0'}), (:Customer {name: 'c1'})-[:PLACED]->(:Order {name: 'o1'}), (:Supplier {name: 's1'})"},
+        "ALTER TABLE @graph@.\"Customer\" INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" INHERIT @graph@.\"_Entity\""
+      ],
+      "probe": [
+        {"cypher": "CREATE (:Customer {name: 'c2'})"},
+        {"cypher": "MATCH (n:_Entity) RETURN count(n)"}
+      ],
+      "cleanup": [
+        "ALTER TABLE @graph@.\"Customer\" NO INHERIT @graph@.\"_Entity\"",
+        "ALTER TABLE @graph@.\"Supplier\" NO INHERIT @graph@.\"_Entity\""
+      ],
+      "fixed": {"output": "4"}
+    },
+    {
+      "id": "tgt_any_as_size_of_comprehension",
+      "kind": "relied_on",
+      "rewrite": "any/all/none/single → size([x IN l WHERE p]) > 0: the comprehension may read a matched vertex",
+      "defects": ["ROBO #2", "upstream 02"],
+      "upstream": "upstream/02-list-predicate-in-match-where-segfault.md",
+      "source": "upstream/02 (controls that work)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:P {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (e:P) WHERE size([l IN ['P'] WHERE l IN labels(e)]) > 0 RETURN e.k"}
+      ],
+      "fixed": {"output": "1"}
+    },
+    {
+      "id": "tgt_id_in_list_through_coalesce",
+      "kind": "relied_on",
+      "rewrite": "id(x) IN list → id(coalesce(x)) IN list, with a parameter and with a literal list",
+      "defects": ["ROBO #9", "upstream 09"],
+      "upstream": "upstream/09-id-returns-graphid.md",
+      "source": "upstream/09 (controls that work)",
+      "kills_backend": false,
+      "slow": false,
+      "unordered": true,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'A')",
+        {"cypher": "CREATE (:A {k: 1}), (:A {k: 2})"}
+      ],
+      "probe": [
+        "SELECT json_build_object('ids', json_agg(id::text::bigint ORDER BY id))::text AS params FROM @graph@.\"A\" \\gset",
+        {"cypher": "MATCH (n:A) WHERE id(coalesce(n)) IN $ids RETURN n.k", "params_var": "params"},
+        {"cypher": "MATCH (n:A) WHERE id(coalesce(n)) IN [844424930131969] RETURN n.k"}
+      ],
+      "fixed": {"output": "1\n1\n2"}
+    },
+    {
+      "id": "tgt_tostring_id_through_coalesce",
+      "kind": "relied_on",
+      "rewrite": "elementId(x) / toString(id(x)) → toString(id(coalesce(x))): the element id a Bolt 4.4 driver derives",
+      "defects": ["ROBO #9", "upstream 09"],
+      "upstream": "upstream/09-id-returns-graphid.md",
+      "source": "upstream/09 (controls that work)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (a:A) RETURN toString(id(coalesce(a)))"}
+      ],
+      "fixed": {"output_regex": "^\"\\d+\"$"}
+    },
+    {
+      "id": "tgt_element_id_compared_as_integer",
+      "kind": "relied_on",
+      "rewrite": "elementId(x) = e → id(x) = $__og_eid_p (a parameter that is an integer's text), or id(x) = toInteger(e) AND toString(id(coalesce(x))) = e for an expression",
+      "defects": ["STUDIO G4"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'A')",
+        {"cypher": "CREATE (:A {k: 1}), (:A {k: 2})"}
+      ],
+      "probe": [
+        "SELECT json_build_object('e', (SELECT id::text::bigint FROM @graph@.\"A\" ORDER BY id LIMIT 1))::text AS params \\gset",
+        {"cypher": "MATCH (n:A) WHERE id(n) = $e RETURN n.k", "params_var": "params"},
+        {"cypher": "MATCH (n:A) WITH n, toString(id(coalesce(n))) AS e MATCH (m:A) WHERE id(m) = toInteger(e) AND toString(id(coalesce(m))) = e RETURN m.k ORDER BY m.k"}
+      ],
+      "fixed": {"output": "1\n1\n2"}
+    },
+    {
+      "id": "tgt_id_equals_uses_index",
+      "kind": "relied_on",
+      "rewrite": "elementId(x) = e → id(x) = <integer> so that AGE answers from the label table's id index (STUDIO G4: 28 ms → 2 ms at 25k vertices)",
+      "defects": ["STUDIO G4"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'A')",
+        {"cypher": "CREATE (:A {k: 1}), (:A {k: 2})"}
+      ],
+      "probe": [
+        "SET enable_seqscan = off",
+        {"cypher": "MATCH (n:A) WHERE id(n) = 844424930131969 RETURN n.k", "explain": true}
+      ],
+      "fixed": {"output_regex": "Index (Only )?Scan|Bitmap Index Scan"},
+      "note": "With sequential scans discouraged, the plan should use the label table's primary key. Only the timing was measured (STUDIO G4), not this plan."
+    },
+    {
+      "id": "tgt_coalesce_through_head",
+      "kind": "relied_on",
+      "rewrite": "coalesce(a, b) over nodes → coalesce(head([a]), head([b]))",
+      "defects": ["ROBO #10", "upstream 10"],
+      "upstream": "upstream/10-coalesce-vertex-agtype.md",
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (a:A) OPTIONAL MATCH (b:Nope) RETURN coalesce(head([b]), head([a]))"}
+      ],
+      "fixed": {"output_regex": "^\\{\"id\": \\d+, \"label\": \"A\", \"properties\": \\{\"k\": 1\\}\\}::vertex$"}
+    },
+    {
+      "id": "tgt_set_map_bound_by_with",
+      "kind": "relied_on",
+      "rewrite": "SET n += $map → WITH …, $map AS p SET n += p",
+      "defects": ["IMAGE-RESULTS §5.3"],
+      "upstream": null,
+      "source": "IMAGE-RESULTS §5.3 (WITH $patch AS p MATCH … SET c += p works)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:A {k: 1}) WITH n, $m AS p SET n += p RETURN n.x", "params": {"m": {"x": 5}}}
+      ],
+      "fixed": {"output": "5"}
+    },
+    {
+      "id": "tgt_with_before_optional_match",
+      "kind": "relied_on",
+      "rewrite": "a leading OPTIONAL MATCH → WITH 1 AS __og_one in front",
+      "defects": ["ROBO #5", "upstream 05"],
+      "upstream": "upstream/05-leading-optional-match-no-row.md",
+      "source": "upstream/05 (control with a preceding clause)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "WITH 1 AS __og_one OPTIONAL MATCH (x:Nope) RETURN x.id"}
+      ],
+      "fixed": {"output": "<null>"}
+    },
+    {
+      "id": "tgt_map_projection_as_case",
+      "kind": "relied_on",
+      "rewrite": "n {.a, .b} → CASE WHEN n IS NULL THEN null ELSE {a: n.a, b: n.b} END",
+      "defects": ["ROBO #6", "upstream 06"],
+      "upstream": "upstream/06-map-projection-nulls.md",
+      "source": "upstream/06 (a map literal keeps the null-valued key)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:M {k: 1})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:M) RETURN CASE WHEN n IS NULL THEN null ELSE {k: n.k, zz: n.zz} END"},
+        {"cypher": "WITH 1 AS one OPTIONAL MATCH (x:Nope) RETURN CASE WHEN x IS NULL THEN null ELSE {k: x.k} END"}
+      ],
+      "fixed": {"output": "{\"k\": 1, \"zz\": null}\n<null>"}
+    },
+    {
+      "id": "tgt_order_by_source_key",
+      "kind": "relied_on",
+      "rewrite": "ORDER BY m.k of a projected map m → the key read from where the map got it (rm.name)",
+      "defects": ["ROBO #8", "upstream 08"],
+      "upstream": "upstream/08-order-by-return-alias-property.md",
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:RM {id: 1, name: 'b'}), (:RM {id: 2, name: 'a'})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (rm:RM) RETURN CASE WHEN rm IS NULL THEN null ELSE {id: rm.id, name: rm.name} END AS readmodel ORDER BY rm.name"}
+      ],
+      "fixed": {"output": "{\"id\": 2, \"name\": \"a\"}\n{\"id\": 1, \"name\": \"b\"}"}
+    },
+    {
+      "id": "tgt_aggregate_then_comprehension",
+      "kind": "relied_on",
+      "rewrite": "an aggregation next to a list comprehension → aggregates first, the comprehension in the next projection",
+      "defects": ["ROBO #3", "upstream 03"],
+      "upstream": "upstream/03-aggregate-with-list-comprehension.md",
+      "source": "upstream/repro/03.sql (workaround)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:B {k: 1})-[:R]->(:U {v: 1}), (:B {k: 2})-[:R]->(:U {v: 2})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (b:B)-[:R]->(u:U) WITH b, count(u) AS t, collect(u.v) AS c RETURN b.k, t, [x IN c WHERE x > 1] ORDER BY b.k", "cols": 3}
+      ],
+      "fixed": {"output": "1|1|[]\n2|1|[2]"}
+    },
+    {
+      "id": "tgt_uuid_from_pg_function",
+      "kind": "relied_on",
+      "rewrite": "randomUUID() → toString(pg_catalog.concat(pg_catalog.gen_random_uuid())): AGE hands a schema-qualified name to PostgreSQL's function, also inside ON CREATE SET",
+      "defects": ["ROBO #11"],
+      "upstream": null,
+      "source": "ROBO-ON-AGE §5.1 #11",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "MERGE (t:T {k: 1}) ON CREATE SET t.id = toString(pg_catalog.concat(pg_catalog.gen_random_uuid())) RETURN t.id"}
+      ],
+      "fixed": {"output_regex": "^\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\"$"}
+    },
+    {
+      "id": "tgt_exists_subquery_names_variable",
+      "kind": "relied_on",
+      "rewrite": "exists(pattern) with a new variable → EXISTS { MATCH … }",
+      "defects": ["ROBO #12"],
+      "upstream": null,
+      "source": "upstream/INDEX.md ('EXISTS { MATCH ... } works')",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:BC {id: 'x'})-[:R]->(:N {k: 1}), (:N {k: 2})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n:N) WHERE EXISTS { MATCH (bc:BC {id: 'x'})-[:R]->(n) } RETURN n.k"}
+      ],
+      "fixed": {"output": "1"}
+    },
+    {
+      "id": "tgt_label_and_type_tests",
+      "kind": "relied_on",
+      "rewrite": "n:L → label(n) = 'L'; (n:A|B) → label(n) IN [...]; -[:A|B]- → type(v) IN [...]",
+      "defects": ["ROBO §5.1 (surface)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A)-[:X]->(:B), (:B)-[:Y]->(:C), (:C)-[:Z]->(:A)"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (n) WHERE label(n) IN ['A', 'B'] RETURN count(n)"},
+        {"cypher": "MATCH ()-[r]->() WHERE type(r) IN ['X', 'Y'] RETURN count(r)"},
+        {"cypher": "MATCH (n) WHERE label(n) = 'C' RETURN count(n)"}
+      ],
+      "fixed": {"output": "4\n2\n2"},
+      "note": "CREATE (:A)-[:X]->(:B), (:B)-[:Y]->(:C), (:C)-[:Z]->(:A) makes six vertices: two A, two B, two C."
+    },
+    {
+      "id": "tgt_null_merge_guard",
+      "kind": "relied_on",
+      "rewrite": "a computed MERGE property → CASE WHEN e IS NULL THEN 1 / CASE WHEN e IS NULL THEN 0 ELSE 1 END ELSE e END; AGE's 'division by zero' is answered with Neo4j's null-merge error (cypher.rs guard_merge_nulls, mod.rs)",
+      "defects": ["SUITES N7"],
+      "upstream": null,
+      "source": "cypher.rs guard_merge_nulls (agtype_ops.c ERRCODE_DIVISION_BY_ZERO)",
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "UNWIND [{x: 1}] AS r MERGE (n:W {key: CASE WHEN r.x IS NULL THEN 1 / CASE WHEN r.x IS NULL THEN 0 ELSE 1 END ELSE r.x END}) RETURN n.key"},
+        {"cypher": "UNWIND [{x: 1}] AS r MERGE (n:W {key: CASE WHEN r.missing IS NULL THEN 1 / CASE WHEN r.missing IS NULL THEN 0 ELSE 1 END ELSE r.missing END}) RETURN n.key"}
+      ],
+      "fixed": {"output": "1", "error": "division by zero"}
+    },
+    {
+      "id": "tgt_unique_index_holds_in_cypher",
+      "kind": "relied_on",
+      "rewrite": "CREATE CONSTRAINT … IS UNIQUE → a unique expression index on the label's table: AGE's executor inserts through the table's indexes (ddl.rs)",
+      "defects": ["ROBO §5.3"],
+      "upstream": null,
+      "source": "ROBO-ON-AGE §5.3 (unique constraints hold in AGE's Cypher writes)",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'A')",
+        "CREATE UNIQUE INDEX agp_a_k ON @graph@.\"A\" (ag_catalog.agtype_access_operator(VARIADIC ARRAY[properties, '\"k\"'::ag_catalog.agtype]))"
+      ],
+      "probe": [
+        {"cypher": "CREATE (:A {k: 1})"},
+        {"cypher": "MERGE (n:A {k: 1}) RETURN n.k"},
+        {"cypher": "CREATE (:A {k: 1})"}
+      ],
+      "fixed": {"output": "1", "error": "duplicate key value violates unique constraint"}
+    },
+    {
+      "id": "tgt_counters_from_pg_stat_xact",
+      "kind": "relied_on",
+      "rewrite": "summary.counters → pg_stat_get_xact_tuples_{inserted,deleted,updated} of the graph's label tables before and after the statement (mod.rs COUNTS)",
+      "defects": ["ROBO §6"],
+      "upstream": null,
+      "source": "ROBO-ON-AGE §6 (counters match v1 over 364 steps); these exact numbers are inferred",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'A')",
+        {"cypher": "CREATE (:A {k: 0})-[:R]->(:A {k: 9})"}
+      ],
+      "probe": [
+        "BEGIN",
+        {"cypher": "CREATE (:A {k: 1}), (:A {k: 2})"},
+        {"cypher": "MATCH (n:A {k: 0}) DETACH DELETE n"},
+        {"cypher": "MATCH (n:A {k: 9}) SET n.x = 1"},
+        "SELECT coalesce(sum(pg_stat_get_xact_tuples_inserted(l.relation)) FILTER (WHERE l.kind = 'v'), 0)::int8, coalesce(sum(pg_stat_get_xact_tuples_deleted(l.relation)) FILTER (WHERE l.kind = 'v'), 0)::int8, coalesce(sum(pg_stat_get_xact_tuples_updated(l.relation)) FILTER (WHERE l.kind = 'v'), 0)::int8, coalesce(sum(pg_stat_get_xact_tuples_inserted(l.relation)) FILTER (WHERE l.kind = 'e'), 0)::int8, coalesce(sum(pg_stat_get_xact_tuples_deleted(l.relation)) FILTER (WHERE l.kind = 'e'), 0)::int8, coalesce(sum(pg_stat_get_xact_tuples_updated(l.relation)) FILTER (WHERE l.kind = 'e'), 0)::int8 FROM ag_catalog.ag_label l JOIN ag_catalog.ag_graph g ON g.graphid = l.graph WHERE g.name = '@graph@'",
+        "COMMIT"
+      ],
+      "fixed": {"output": "2|1|1|0|1|0"},
+      "note": "Columns: vertices inserted, deleted, updated; edges inserted, deleted, updated — in this transaction."
+    },
+    {
+      "id": "tgt_catalog_lists_labels",
+      "kind": "relied_on",
+      "rewrite": "CALL db.labels() / db.relationshipTypes() → ag_catalog.ag_label rows of the graph, kind 'v' / 'e', the two base tables left out (catalog reads: DIRECTION §4.2 rule 6)",
+      "defects": ["ROBO §5.1 (surface)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A)-[:R]->(:B)"}
+      ],
+      "probe": [
+        "SELECT l.name, l.kind FROM ag_catalog.ag_label l JOIN ag_catalog.ag_graph g ON g.graphid = l.graph WHERE g.name = '@graph@' ORDER BY l.kind, l.name"
+      ],
+      "fixed": {"output": "R|e\n_ag_label_edge|e\nA|v\nB|v\n_ag_label_vertex|v"}
+    },
+    {
+      "id": "tgt_walk_reads_edge_tables",
+      "kind": "relied_on",
+      "rewrite": "the VLE walk (reach.rs fetch): SELECT id::text, start_id::text, end_id::text FROM <edge tables or _ag_label_edge> WHERE start_id = ANY('{…}'::ag_catalog.graphid[]); the ids are Cypher's id()",
+      "defects": ["ROBO 11.4", "ROBO #13"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:V {k: 0})-[:A]->(:V {k: 1})-[:B]->(:V {k: 2})"}
+      ],
+      "probe": [
+        "SELECT count(*) FROM @graph@._ag_label_edge WHERE start_id = ANY (('{' || (SELECT string_agg(id::text, ',') FROM @graph@.\"V\") || '}')::ag_catalog.graphid[])",
+        "SELECT (SELECT string_agg(x::text, ',' ORDER BY x::text) FROM ag_catalog.cypher('@graph@', $$ MATCH (v:V) RETURN id(v) $$) AS (x ag_catalog.agtype)) = (SELECT string_agg(id::text, ',' ORDER BY id::text) FROM @graph@.\"V\")"
+      ],
+      "fixed": {"output": "2\nt"},
+      "note": "_ag_label_edge sees the edges of both edge labels (A, B): every label table inherits it."
+    },
+    {
+      "id": "tgt_walk_reached_map_test",
+      "kind": "relied_on",
+      "rewrite": "the VLE walk's statement: the pattern replaced by id(coalesce(t)) IN coalesce($__og_reachN[toString(id(coalesce(s)))], [])",
+      "defects": ["ROBO 11.4", "ROBO #13"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:V {k: 0})-[:A]->(:V {k: 1})-[:B]->(:V {k: 2}), (:V {k: 7})"}
+      ],
+      "probe": [
+        "SELECT json_build_object('__og_reach1', json_build_object((SELECT id::text FROM @graph@.\"V\" WHERE properties OPERATOR(ag_catalog.@>) '{\"k\": 0}'::ag_catalog.agtype), (SELECT json_agg(id::text::bigint) FROM @graph@.\"V\" WHERE properties OPERATOR(ag_catalog.@>) '{\"k\": 1}'::ag_catalog.agtype OR properties OPERATOR(ag_catalog.@>) '{\"k\": 2}'::ag_catalog.agtype)))::text AS params \\gset",
+        {"cypher": "MATCH (s:V {k: 0}) MATCH (t:V) WHERE id(coalesce(t)) IN coalesce($__og_reach1[toString(id(coalesce(s)))], []) RETURN t.k ORDER BY t.k", "params_var": "params"}
+      ],
+      "fixed": {"output": "1\n2"}
+    },
+    {
+      "id": "tgt_relabel_by_sql",
+      "kind": "relied_on",
+      "rewrite": "SET n:L / REMOVE n:L → the vertex's row moved by SQL: DELETE FROM g._ag_label_vertex … RETURNING properties, INSERT INTO g.\"L\" (properties) … RETURNING id, every edge's start_id/end_id pointed at the new id (split.rs relabel; DIRECTION §4.2 rule 3: the one place that writes label tables)",
+      "defects": ["ROBO #14", "ROBO §7 (R3)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:L {k: 1})-[:R]->(:L {k: 2})"},
+        "SELECT ag_catalog.create_vlabel('@graph@', 'M')"
+      ],
+      "probe": [
+        "SELECT id::text AS old_id FROM @graph@.\"L\" WHERE properties OPERATOR(ag_catalog.@>) '{\"k\": 1}'::ag_catalog.agtype \\gset",
+        "WITH old AS (DELETE FROM @graph@.\"_ag_label_vertex\" WHERE id = :'old_id'::ag_catalog.graphid RETURNING properties) INSERT INTO @graph@.\"M\" (properties) SELECT properties FROM old RETURNING id::text AS new_id \\gset",
+        "WITH u AS (UPDATE @graph@.\"_ag_label_edge\" SET start_id = CASE WHEN start_id = :'old_id'::ag_catalog.graphid THEN :'new_id'::ag_catalog.graphid ELSE start_id END, end_id = CASE WHEN end_id = :'old_id'::ag_catalog.graphid THEN :'new_id'::ag_catalog.graphid ELSE end_id END WHERE start_id = :'old_id'::ag_catalog.graphid OR end_id = :'old_id'::ag_catalog.graphid RETURNING 1) SELECT count(*) FROM u",
+        {"cypher": "MATCH (m:M)-[:R]->(l:L) RETURN m.k, l.k", "cols": 2},
+        {"cypher": "MATCH (n) RETURN count(n)"}
+      ],
+      "fixed": {"output": "1\n1|2\n2"}
+    },
+    {
+      "id": "tgt_rows_found_again_by_id",
+      "kind": "relied_on",
+      "rewrite": "the cut statements carry rows as $__og_rows and find each vertex again: UNWIND $__og_rows AS __og_row OPTIONAL MATCH (v:L) WHERE id(v) = __og_row.v (split.rs)",
+      "defects": ["ROBO §5.3", "ROBO §7 (R3)"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        "SELECT ag_catalog.create_vlabel('@graph@', 'A')",
+        {"cypher": "CREATE (:A {k: 1}), (:A {k: 2})"}
+      ],
+      "probe": [
+        "SELECT json_build_object('__og_rows', json_build_array(json_build_object('v', (SELECT id::text::bigint FROM @graph@.\"A\" ORDER BY id DESC LIMIT 1))))::text AS params \\gset",
+        {"cypher": "UNWIND $__og_rows AS __og_row OPTIONAL MATCH (v:A) WHERE id(v) = __og_row.v RETURN v.k", "params_var": "params"}
+      ],
+      "fixed": {"output": "2"}
+    },
+    {
+      "id": "tgt_merge_marker_set_and_cleared",
+      "kind": "relied_on",
+      "rewrite": "N1's marker: MERGE … ON CREATE SET m.__og_c = true, later SET m.__og_c = null removes the key (split.rs)",
+      "defects": ["SUITES N1"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "probe": [
+        {"cypher": "MERGE (m:T {k: 1}) ON CREATE SET m.__og_c = true RETURN m.__og_c"},
+        {"cypher": "MATCH (m:T {k: 1}) SET m.__og_c = null RETURN m"}
+      ],
+      "fixed": {"output_regex": "^true\\n\\{\"id\": \\d+, \"label\": \"T\", \"properties\": \\{\"k\": 1\\}\\}::vertex$"}
+    },
+    {
+      "id": "tgt_short_vle_trails_like_neo4j",
+      "kind": "relied_on",
+      "rewrite": "a variable-length relationship of up to 3 hops is sent to AGE as written: its rows are Neo4j's trails (no relationship twice), the start counted only over a closed trail",
+      "defects": ["ROBO 11.4", "ROBO #13"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:V {k: 0})-[:R]->(:V {k: 1})-[:R]->(:V {k: 2})"},
+        {"cypher": "MATCH (c:V {k: 2}), (a:V {k: 0}) CREATE (c)-[:R]->(a)"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (s:V {k: 0})-[*1..3]-(t) RETURN count(*), count(DISTINCT t)", "cols": 2}
+      ],
+      "fixed": {"output": "6|3"},
+      "note": "A triangle: from k0, two trails of each length 1, 2, 3; the third reaches k0 itself. Small and bounded."
+    },
+    {
+      "id": "tgt_short_vle_types_tested_on_list",
+      "kind": "relied_on",
+      "rewrite": "-[:A|B*1..n]- with n ≤ 3 → -[v*1..n]- and size([x IN v WHERE NOT (type(x) IN ['A', 'B'])]) = 0 (cypher.rs lift_alternatives)",
+      "defects": ["ROBO #13"],
+      "upstream": null,
+      "source": null,
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:V {k: 0})-[:A]->(:V {k: 1})-[:B]->(:V {k: 2})-[:A]->(:V {k: 3})"},
+        {"cypher": "MATCH (s:V {k: 0}) CREATE (s)-[:C]->(:V {k: 9})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (s:V {k: 0})-[v*1..3]->(t) WHERE size([x IN v WHERE NOT (type(x) IN ['A', 'B'])]) = 0 RETURN count(DISTINCT t)"}
+      ],
+      "fixed": {"output": "3"}
+    },
+    {
+      "id": "tgt_agtype_text_forms",
+      "kind": "relied_on",
+      "rewrite": "results are read as agtype text (agtype.rs): ::vertex {id, label, properties}, ::edge {id, label, end_id, start_id, properties}, ::path, 1 and 1.0 kept apart",
+      "defects": ["IMAGE-RESULTS §5.4", "IMAGE-RESULTS §6.5"],
+      "upstream": null,
+      "source": "IMAGE-RESULTS §5.4",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:A {k: 1})-[:R]->(:B {k: 2})"}
+      ],
+      "probe": [
+        {"cypher": "RETURN 1, 1.0, 'a', [1, 1.0], {k: null}", "cols": 5},
+        {"cypher": "MATCH p = (a:A)-[r:R]->(b:B) RETURN a, r, p", "cols": 3}
+      ],
+      "fixed": {"output_regex": "^1\\|1\\.0\\|\"a\"\\|\\[1, 1\\.0\\]\\|\\{\"k\": null\\}\\n\\{\"id\": \\d+, \"label\": \"A\", \"properties\": \\{\"k\": 1\\}\\}::vertex\\|\\{\"id\": \\d+, \"label\": \"R\", \"end_id\": \\d+, \"start_id\": \\d+, \"properties\": \\{\\}\\}::edge\\|\\[\\{\"id\": \\d+, \"label\": \"A\", [^|]*\\}::vertex, \\{\"id\": \\d+, \"label\": \"R\", [^|]*\\}::edge, \\{\"id\": \\d+, \"label\": \"B\", [^|]*\\}::vertex\\]::path$"}
+    }
+  ]
+}
