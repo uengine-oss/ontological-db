@@ -114,7 +114,7 @@ want() { [ -z "$ONLY" ] || case ",$ONLY," in *",$1,"*) return 0 ;; *) return 1 ;
 # A suite that exits 0 with fewer checks than this has changed, and that is worth a look.
 expected() {
     case "$1" in
-        bolt-unit) echo 56 ;;
+        bolt-unit) echo 91 ;;
         bolt-context) echo 9 ;;         bolt-timeout) echo 15 ;;
         bolt-cypher-gaps) echo 19 ;;    bolt-concurrency) echo 9 ;;
         bolt-fabric-query) echo 21 ;;   bolt-multibyte) echo 9 ;;
