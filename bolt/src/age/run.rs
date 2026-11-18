@@ -76,6 +76,19 @@ impl Session<'_> {
             self.state = State::Streaming;
             return Ok(map(vec![("fields", Value::List(Vec::new())), ("t_first", Value::Int(0)), ("qid", Value::Int(-1))]));
         }
+        if has_zone_id(params) {
+            // A DateTime with a zone id becomes its instant (SUITES-ON-AGE B9).
+            let mut seen: std::collections::HashMap<(String, String), String> = std::collections::HashMap::new();
+            pjson = age_params(params, &mut |local: &str, zone: &str| {
+                let key = (local.to_string(), zone.to_string());
+                if let Some(t) = seen.get(&key) {
+                    return Ok(t.clone());
+                }
+                let t = self.zone_instant(local, zone)?;
+                seen.insert(key, t.clone());
+                Ok(t)
+            })?;
+        }
         let st = age::translate(query, &pjson).map_err(|r| Failure::client(&r.code, r.message))?;
         self.qtype = if st.write { "w" } else { "r" };
         if self.config.age.as_ref().is_some_and(|a| a.trace) {
@@ -137,6 +150,21 @@ impl Session<'_> {
             ("t_first", Value::Int(0)),
             ("qid", Value::Int(-1)),
         ]))
+    }
+
+    /// A local date-time in a zone (IANA name) as the instant, written as
+    /// [`age::cypher::canonical_datetime`] writes one: PostgreSQL's zone
+    /// database does the work (`timezone(zone, timestamp)` reads the wall
+    /// time there; a time that falls in a gap or twice is resolved as
+    /// PostgreSQL resolves it). A zone PostgreSQL does not know is a TypeError.
+    fn zone_instant(&mut self, local: &str, zone: &str) -> Result<String, Failure> {
+        let pg = self.client()?;
+        let row = pg
+            .query_one(ZONE_INSTANT, &[&local, &zone])
+            .map_err(|e| Failure::client("Neo.ClientError.Statement.TypeError", super::pg_message(&e)))?;
+        let utc: String = row.get(0);
+        age::cypher::canonical_datetime(&format!("{utc}Z"))
+            .ok_or_else(|| Failure::client("Neo.ClientError.Statement.TypeError", format!("{local}[{zone}] is not a date-time")))
     }
 
     /// The session's graph exists — or is made, when the deployment says so.
@@ -321,6 +349,52 @@ impl Session<'_> {
 
 }
 
+/// The UTC wall time of `$1` (a local date-time) in zone `$2`.
+const ZONE_INSTANT: &str =
+    "SELECT to_char(timezone('UTC', timezone($2::text, $1::text::timestamp)), 'YYYY-MM-DD\"T\"HH24:MI:SS.US')";
+
+/// Does a parameter hold a DateTime with a zone id (Bolt 4.4 `0x66`)?
+fn has_zone_id(v: &Value) -> bool {
+    match v {
+        Value::Struct(0x66, _) => true,
+        Value::List(xs) => xs.iter().any(has_zone_id),
+        Value::Map(m) => m.iter().any(|(_, v)| has_zone_id(v)),
+        _ => false,
+    }
+}
+
+/// The parameters as the AGE backend sends them: as `to_json` makes them for
+/// the default backend, except a DateTime with a zone id.
+///
+/// SUITES-ON-AGE B9: `to_json` writes one as Neo4j prints it less the offset,
+/// `2024-03-05T13:04:05[Asia/Seoul]` (PostgreSQL reads that as the local time
+/// in the zone, which is what the default backend needs). Here nothing reads
+/// the zone: `canonical_datetime` dropped it and took the wall time for UTC —
+/// `datetime($zoned)` gave 13:04:05+00:00, nine hours off the instant
+/// (04:04:05+00:00). So the gateway asks `zone` for the instant first, and
+/// the parameter becomes that, in the canonical UTC form the other
+/// date-times take here. A DateTime with an offset (`0x46`) is left as it is:
+/// its offset says the instant already.
+fn age_params(v: &Value, zone: &mut dyn FnMut(&str, &str) -> Result<String, Failure>) -> Result<serde_json::Value, Failure> {
+    Ok(match v {
+        Value::Struct(0x66, f) => {
+            let int = |i: usize| {
+                f.get(i).and_then(Value::as_i64).ok_or_else(|| Failure::client("Neo.ClientError.Statement.TypeError", "malformed DateTime structure".into()))
+            };
+            let name = f
+                .get(2)
+                .and_then(Value::as_str)
+                .ok_or_else(|| Failure::client("Neo.ClientError.Statement.TypeError", "malformed DateTime structure".into()))?;
+            serde_json::Value::String(zone(&super::date_time(int(0)?, int(1)?), name)?)
+        }
+        Value::List(xs) => serde_json::Value::Array(xs.iter().map(|x| age_params(x, zone)).collect::<Result<_, _>>()?),
+        Value::Map(m) => serde_json::Value::Object(
+            m.iter().map(|(k, x)| Ok((k.clone(), age_params(x, zone)?))).collect::<Result<_, Failure>>()?,
+        ),
+        other => super::to_json(other).map_err(|e| Failure::client("Neo.ClientError.Statement.TypeError", e))?,
+    })
+}
+
 /// The session as the split steps see it.
 struct Steps<'s, 'a> {
     sess: &'s mut Session<'a>,
@@ -384,4 +458,58 @@ pub(crate) fn row_values(row: &postgres::Row, ncols: usize) -> Result<Vec<agtype
         });
     }
     Ok(vals)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn zoned(t: i64, nanos: i64, zone: &str) -> Value {
+        Value::Struct(0x66, vec![Value::Int(t), Value::Int(nanos), Value::String(zone.into())])
+    }
+
+    #[test]
+    fn a_zone_id_becomes_the_instant() {
+        // 2024-03-05T13:04:05 (19787 days after the epoch), as the driver sends it
+        let t = 19_787 * 86_400 + 3_600 * 13 + 60 * 4 + 5;
+        let params = Value::Map(
+            [
+                ("zoned".to_string(), zoned(t, 0, "Asia/Seoul")),
+                ("again".to_string(), zoned(t, 0, "Asia/Seoul")),
+                ("rows".to_string(), Value::List(vec![Value::Map([("at".to_string(), zoned(t, 500_000_000, "Europe/Paris"))].into_iter().collect())])),
+                ("offset".to_string(), Value::Struct(0x46, vec![Value::Int(t), Value::Int(0), Value::Int(9 * 3600)])),
+                ("text".to_string(), Value::String("2024-03-05T13:04:05[Asia/Seoul]".into())),
+            ]
+            .into_iter()
+            .collect(),
+        );
+        assert!(has_zone_id(&params));
+        assert!(!has_zone_id(&Value::Map([("offset".to_string(), Value::Struct(0x46, vec![Value::Int(t), Value::Int(0), Value::Int(0)]))].into_iter().collect())));
+        // what PostgreSQL's zone database would answer, as text in UTC
+        let asked = std::cell::RefCell::new(Vec::new());
+        let mut fake = |local: &str, zone: &str| -> Result<String, Failure> {
+            asked.borrow_mut().push(format!("{local} {zone}"));
+            let off = match zone {
+                "Asia/Seoul" => "+09:00",
+                "Europe/Paris" => "+01:00",
+                _ => return Err(Failure::client("Neo.ClientError.Statement.TypeError", format!("time zone \"{zone}\" not recognized"))),
+            };
+            Ok(crate::age::cypher::canonical_datetime(&format!("{local}{off}")).unwrap())
+        };
+        let j = age_params(&params, &mut fake).ok().unwrap();
+        assert_eq!(j["zoned"], serde_json::json!("2024-03-05T04:04:05+00:00"));
+        assert_eq!(j["again"], serde_json::json!("2024-03-05T04:04:05+00:00"));
+        assert_eq!(j["rows"][0]["at"], serde_json::json!("2024-03-05T12:04:05.5+00:00"));
+        // an offset says the instant already, and a string stays a string
+        assert_eq!(j["offset"], serde_json::json!("2024-03-05T13:04:05+09:00"));
+        assert_eq!(j["text"], serde_json::json!("2024-03-05T13:04:05[Asia/Seoul]"));
+        let a = asked.borrow().clone();
+        assert!(a.contains(&"2024-03-05T13:04:05 Asia/Seoul".to_string()) && a.contains(&"2024-03-05T13:04:05.5 Europe/Paris".to_string()), "{a:?}");
+        // a zone the database does not know is the client's error
+        let bad = Value::Map([("z".to_string(), zoned(t, 0, "Mars/Olympus"))].into_iter().collect());
+        let e = age_params(&bad, &mut fake).err().unwrap();
+        assert_eq!(e.code, "Neo.ClientError.Statement.TypeError");
+        // the default backend's text is unchanged
+        assert_eq!(super::super::to_json(&params).unwrap()["zoned"], serde_json::json!("2024-03-05T13:04:05[Asia/Seoul]"));
+    }
 }

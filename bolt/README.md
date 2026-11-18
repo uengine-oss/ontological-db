@@ -73,6 +73,7 @@ Rewrites (each found by running Robo Architect's queries against AGE; see
 | Neo4j | sent to AGE |
 |---|---|
 | `datetime()`, `date()`; `datetime($p)`; `datetime() - duration({minutes: $m})` | the statement's clock, `$p` written as PostgreSQL writes a timestamptz, the shifted instant — as ISO 8601 text in parameters |
+| a DateTime parameter with a zone id (Bolt `0x66`; SUITES B9: the zone was dropped and the wall time read as UTC, nine hours off for Asia/Seoul) | its instant, asked of PostgreSQL's zone database before the statement (`timezone(zone, local::timestamp)`, one query per distinct value — `run.rs` `age_params`), as the canonical UTC text the other date-times take. A DateTime with an offset already says its instant and is left alone |
 | `randomUUID()` | `toString(pg_catalog.concat(pg_catalog.gen_random_uuid()))` |
 | `id(x) IN list` (AGE: `id(n) IN $param` kills the backend, signal 11; `id(n) IN [1, 2]` fails "not a common type" — ROBO 11.4) | `id(coalesce(x)) IN list` |
 | `elementId(x) = e`, `e = elementId(x)` (STUDIO G4: `toString(id(…)) = e` reads every row, 28 ms → 2 ms at 25k vertices) | `id(x) = $__og_eid_p` / `id(x) = 12` when the parameter or literal is an integer's text; `id(x) = toInteger(e) AND toString(id(coalesce(x))) = e` for an expression (the index finds it, the text decides); the text comparison for anything else. `elementId(x) IN list` stays a text comparison (`id(x) IN` is the crash above) |
