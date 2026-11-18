@@ -630,7 +630,18 @@ impl<'a> Printer<'a> {
                 let v = ident(var);
                 let mut parts = Vec::new();
                 let all = items.iter().any(|i| matches!(i, MapProjItem::All));
-                if all && items.iter().any(|i| !matches!(i, MapProjItem::All)) {
+                // `.*` with entries: AGE drops an entry whose value is null
+                // (it builds the entries with agtype_build_map_nonull), so the
+                // old value stays. An entry that cannot be null (a literal
+                // that is not null) is right in AGE (probe
+                // analyzer_map_projection_all_key_override); only then is
+                // the projection left to AGE. `.k` can be null (k absent).
+                let can_be_null = |i: &MapProjItem| match i {
+                    MapProjItem::Entry(_, Expr::Lit(l)) => matches!(l, Lit::Null),
+                    MapProjItem::Entry(..) | MapProjItem::Prop(_) => true,
+                    MapProjItem::All => false,
+                };
+                if all && items.iter().any(can_be_null) {
                     return self.all_properties_and(var, items);
                 }
                 for it in items {
@@ -2278,6 +2289,10 @@ mod tests {
 
     #[test]
     fn plain_queries_come_back_as_they_were() {
+        // `.*` with entries that cannot be null is AGE's own (it is right there)
+        assert_eq!(print("MATCH (n) RETURN n {.*, id: 'override'} AS p"),
+            "MATCH (n) RETURN CASE WHEN n IS NULL THEN null ELSE n{.*, id: 'override'} END AS p");
+        assert!(print("MATCH (n) RETURN n {.*, embedding: null} AS p").contains("(properties(n) - ['embedding']) + {embedding: null}"));
         assert_eq!(print("MATCH (a:Person {name: $n})-[r:KNOWS]->(b) WHERE a.age > 30 RETURN b.name AS n"),
             "MATCH (a:Person {name: $n})-[r:KNOWS]->(b) WHERE a.age > 30 RETURN b.name AS n");
         assert_eq!(print("OPTIONAL MATCH (a)<-[:R*1..3]-(b) RETURN count(*) AS count ORDER BY count DESC LIMIT 5"),

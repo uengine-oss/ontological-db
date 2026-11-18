@@ -324,11 +324,11 @@
         {"cypher": "CREATE (:A {k: 1}), (:A {k: 2})"}
       ],
       "probe": [
-        {"cypher": "MATCH (n:A) WHERE id(n) IN [844424930131969] RETURN n.k"}
+        {"cypher": "MATCH (n:A) WHERE id(n) IN [844424930131969, 844424930131970] RETURN n.k"}
       ],
       "broken": {"error": "not a common type"},
-      "fixed": {"output": "1"},
-      "note": "844424930131969 = 3 * 2^48 + 1: the first vertex of the graph's first label (A, made first in setup)."
+      "fixed": {"output": "1\n2"},
+      "note": "Two elements: with one element AGE answers (seen 2026-11-18, agesb-m2: [one id] → 1, [two ids] → 'not a common type: 17401'). 844424930131969 = 3 * 2^48 + 1: the first vertex of the graph's first label (A, made first in setup)."
     },
     {
       "id": "robo09_id_in_parameter",
@@ -436,7 +436,7 @@
       "probe": [
         {"cypher": "MATCH (n:N) WHERE exists((bc:BC {id: 'x'})-[:R]->(n)) RETURN n.k"}
       ],
-      "broken": {"error": "variable bc does not exist"},
+      "broken": {"error": "variable .?bc.? does not exist"},
       "fixed": {"output": "1"},
       "note": "AGE's regress test expects this error and openCypher pattern predicates do not introduce variables, so FIXED is unlikely; the rewrite to EXISTS { MATCH … } is what Robo's queries need either way."
     },
@@ -938,7 +938,7 @@
       "probe": [
         {"cypher": "RETURN 'a' + 'b' STARTS WITH 'ab'"}
       ],
-      "broken": [{"output": "\"afalse\""}, {"error": ".+"}],
+      "broken": [{"output": "\"afalse\""}, {"output": "\"a\""}, {"error": ".+"}],
       "fixed": {"output": "true"},
       "note": "Neo4j: ('a' + 'b') STARTS WITH 'ab' = true. AGE's reading: 'a' + ('b' STARTS WITH 'ab')."
     },
@@ -2293,7 +2293,7 @@
     },
     {
       "id": "analyzer_map_projection_all_key_override",
-      "kind": "defect",
+      "kind": "relied_on",
       "rewrite": "n {.*, k: e, .p} → CASE WHEN n IS NULL THEN null ELSE (properties(n) - ['k', 'p']) + {k: e, p: n.p} END (cypher.rs all_properties_and)",
       "defects": ["ANALYZER §5.4"],
       "upstream": null,
@@ -2308,7 +2308,7 @@
       ],
       "broken": {"output": "{\"id\": \"override\"}"},
       "fixed": {"output_regex": "^(?=.*\"a\": 1)(?=.*\"id\": \"override\")(?=.*\"embedding\": \\[0\\.1, 0\\.2\\])\\{.*\\}$"},
-      "note": "AGE's own regress (map_projection.sql) has map { name: 'Tom', .* } right over a map literal; the vertex case is what the analyzer saw. Why the merge loses the keys there was not traced."
+      "note": "AGE 1.8.0 gets n{.*, id: 'override'} right (agesb-m2, 2026-11-18: {a: 1, id: override, embedding: [0.1, 0.2]}). The {id: override} alone that ANALYZER §5.4 saw came from the gateway's own earlier map-projection rewrite (#6), not from AGE; the AGE defect is the null entry (analyzer_map_projection_all_null_entry). This probe guards that AGE keeps getting the override right."
     },
     {
       "id": "tgt_map_projection_minus_keys",
