@@ -42,8 +42,10 @@ cd age-supabase
    `NEO4J_DATABASE=robo` 이다. 프런트엔드는 `npm run dev` 로 띄우고,
    `ARCHITECT_API_URL` 로 백엔드를 가리킨다. 로그와 pid 는 `~/.age-supabase/robo/` 에 남는다.
 
-그래프 `robo` 는 처음 쓸 때 게이트웨이가 만든다. 만드는 역할은 `robo` 다. 그래서 `robo` 가
-그 그래프의 스키마와 라벨 테이블의 주인이 되고, 새 라벨을 더할 수 있다. 빈 그래프에서
+그래프 `robo` 와 `analyzer_run`(`AGE_GRAPHS`)은 `up` 이 `robo` 역할로 만든다. 게이트웨이는 없는
+그래프를 처음 쓸 때 만들지 않는다(`OG_BOLT_AGE_CREATE_GRAPHS` 기본 끔, Neo4j 처럼 `DatabaseNotFound`).
+프로젝트 그래프는 Robo 런처가 `CREATE GRAPH` 로 만든다. 만드는 역할이 `robo` 라서 `robo` 가 그 그래프의
+스키마와 라벨 테이블의 주인이 되고, 새 라벨을 더할 수 있다. 빈 그래프에서
 시작하므로 예시 설계가 필요하면 Robo 의 `docs/cypher/schema/01~04` 를 Bolt 로 넣는다.
 런처가 하는 것과 같다.
 

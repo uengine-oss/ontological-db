@@ -44,7 +44,7 @@ their SQL are the ones above.
 | Variable | Default | Meaning |
 |---|---|---|
 | `OG_BOLT_BACKEND` | `ontological` | `age` to run Cypher through `ag_catalog.cypher()` |
-| `OG_BOLT_AGE_CREATE_GRAPHS` | on | make a graph the first time a session names it (as the role that logged in, which then owns it — AGE needs that to add labels). `0`: answer `Neo.ClientError.Database.DatabaseNotFound` ("… make it with CREATE GRAPH x"); `SHOW GRAPHS` and `CREATE GRAPH x` work either way, whatever database the session names |
+| `OG_BOLT_AGE_CREATE_GRAPHS` | off | off (as in Neo4j): a database that does not exist is `Neo.ClientError.Database.DatabaseNotFound` ("… make it with CREATE GRAPH x"), so a mistyped name is an error, not a new empty graph (SUITES B13/G26). `1`: make a graph the first time a session names it. Either way the graph is made as the role that logged in, which then owns it (AGE needs that to add labels), and `SHOW GRAPHS` / `CREATE GRAPH x` work whatever database the session names. Robo's launcher makes project graphs with `CREATE GRAPH` already; its fixed graphs (`robo`, `analyzer_run`) are made at install (`age-supabase/run-robo.sh`). Checked with creation off on 2026-11-18: the launcher statements, Robo's 31-step API flow (same answers as with creation on) and Robo's pytest (1,772 passed, as before) |
 | `OG_BOLT_AGE_LOAD` | off | `LOAD 'age'` at login, for a server that does not preload AGE (superuser only) |
 | `OG_BOLT_AGE_TRACE` | off | log every SQL statement sent to AGE and its time, and each statement's plan (cypher, steps, reach, ddl …), to stderr |
 | `OG_BOLT_AGE_COUNTERS` | on | read `summary.counters` (two short SQL statements around every write); off: writes report no counters |

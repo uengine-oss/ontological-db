@@ -47,9 +47,11 @@ use serde_json::{Map, Value as Json};
 
 /// How the AGE backend is configured.
 pub struct AgeConfig {
-    /// Make a graph the first time a session uses it (`create_graph`). Neo4j
-    /// and Ontological answer "database not found" instead; a project-per-graph
-    /// client has no Cypher for making one, so this is on by default.
+    /// Make a graph the first time a session uses it (`create_graph`). Off by
+    /// default (`OG_BOLT_AGE_CREATE_GRAPHS=1` turns it on): Neo4j and
+    /// Ontological answer "database not found", and a mistyped database name
+    /// would otherwise become a new empty graph (SUITES B13/G26). Clients make
+    /// graphs with `CREATE GRAPH x` (Robo's launcher does).
     pub create_graphs: bool,
     /// `LOAD 'age'` at login, for a server that does not preload AGE
     /// (`shared_preload_libraries`). Only a superuser may; off by default.
@@ -73,7 +75,7 @@ fn flag(v: Option<String>, default: bool) -> bool {
 impl AgeConfig {
     pub fn from_env(get: impl Fn(&str) -> Option<String>) -> AgeConfig {
         AgeConfig {
-            create_graphs: flag(get("OG_BOLT_AGE_CREATE_GRAPHS"), true),
+            create_graphs: flag(get("OG_BOLT_AGE_CREATE_GRAPHS"), false),
             load: flag(get("OG_BOLT_AGE_LOAD"), false),
             trace: flag(get("OG_BOLT_AGE_TRACE"), false),
             counters: flag(get("OG_BOLT_AGE_COUNTERS"), true),

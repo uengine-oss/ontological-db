@@ -42,6 +42,7 @@ BOLT_PORT="${BOLT_PORT:-7697}"
 API_PORT="${API_PORT:-8000}"
 UI_PORT="${UI_PORT:-5173}"
 AGE_DB_PORT="${AGE_DB_PORT:-55449}"
+AGE_GRAPHS="${AGE_GRAPHS:-$ROBO_GRAPH analyzer_run}"   # graphs made at install (the gateway does not make them on first use)
 DB_CONTAINER="${DB_CONTAINER:-}"
 SECRETS_DIR="${SECRETS_DIR:-$HOME/.age-supabase/secrets}"
 ADMIN_PW_FILE="${ADMIN_PW_FILE:-$SECRETS_DIR/admin.password}"
@@ -99,6 +100,15 @@ up_db() {
   say "login role robo in graph (scripts/create-robo-role.sh; password in $ROBO_PW_FILE)"
   NAME="$(db_name)" ADMIN_PW_FILE="$ADMIN_PW_FILE" ROBO_PW_FILE="$ROBO_PW_FILE" DB=graph \
     "$here/scripts/create-robo-role.sh" | sed 's/^/    /'
+  # The gateway does not make graphs on first use (OG_BOLT_AGE_CREATE_GRAPHS off, as Neo4j): the
+  # graphs Robo always uses are made here, as robo (it must own them to add labels). Project graphs
+  # are made by Robo's launcher with CREATE GRAPH.
+  local g
+  for g in $AGE_GRAPHS; do
+    docker exec -e PGPASSWORD="$(cat "$ROBO_PW_FILE")" "$(db_name)" sh -c \
+      'psql -X -At -v ON_ERROR_STOP=1 -U robo -h "$(hostname -i | cut -d" " -f1)" -d graph -c "SELECT CASE WHEN EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = '"'"'$0'"'"') THEN '"'"'graph $0: there'"'"' ELSE (SELECT '"'"'graph $0: made'"'"' FROM ag_catalog.create_graph('"'"'$0'"'"')) END"' "$g" \
+      | sed 's/^/    /'
+  done
 }
 
 up_gateway() {

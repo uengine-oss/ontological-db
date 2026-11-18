@@ -25,8 +25,10 @@
 //!                         call name it (`session::EngineSql`).
 //!     OG_BOLT_BACKEND     `ontological` (default) or `age`: Apache AGE's
 //!                         `cypher()` instead of the engine (`age/mod.rs`).
-//!     OG_BOLT_AGE_CREATE_GRAPHS  age only; default on — a graph a session
-//!                         names is made if it does not exist. `0` to refuse.
+//!     OG_BOLT_AGE_CREATE_GRAPHS  age only; default off — a database (graph)
+//!                         that does not exist is `DatabaseNotFound`, as in
+//!                         Neo4j; `CREATE GRAPH x` makes one. `1` makes a
+//!                         graph the first time a session names it.
 //!
 //! The listen default is loopback. Bolt carries the password in the clear on
 //! the way in — there is no TLS here — and this process authenticates by

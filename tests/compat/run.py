@@ -89,6 +89,10 @@ def start_gateway(args, default_graph):
         return None
     env = dict(os.environ, OG_BOLT_LISTEN=args.bolt_listen, OG_BOLT_PGHOST=args.pg_host, OG_BOLT_PGPORT=str(args.pg_port),
                OG_BOLT_PGDATABASE=args.pg_database, OG_BOLT_GRAPH=default_graph, OG_BOLT_MAX_SESSIONS="16")
+    # apache-age: the gateway makes each corpus graph on first use, as the login role (which must
+    # own it to add labels); its default is off since 2026-11-18. --bolt-env can still say otherwise.
+    if getattr(args, "target", None) == "apache-age":
+        env["OG_BOLT_AGE_CREATE_GRAPHS"] = "1"
     # the gateway's own settings for this target (OG_BOLT_BACKEND=age …)
     for kv in args.bolt_env:
         k, _, v = kv.partition("=")
