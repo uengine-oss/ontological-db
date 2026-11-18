@@ -67,7 +67,7 @@ What happens to a statement (`src/age/`):
   `toString(id(n))`, which `elementId(n)` is rewritten to.
 
 Rewrites (each found by running Robo Architect's queries against AGE; see
-`cypher.rs` and `split.rs` for the measurement behind each):
+`cypher.rs`, `split.rs` and `reach.rs` for the measurement behind each):
 
 | Neo4j | sent to AGE |
 |---|---|
@@ -86,10 +86,13 @@ Rewrites (each found by running Robo Architect's queries against AGE; see
 | `FOREACH`, `CALL { … }`, `SET n:L` / `REMOVE n:L`, a SET after a MERGE that has ON CREATE/ON MATCH items | cut into several statements in one transaction, the rows carried between them as a parameter (vertices and edges by id) — AGE has no FOREACH or CALL {}, keeps one label per vertex, and drops a SET that follows such a MERGE |
 | `CREATE CONSTRAINT … IS UNIQUE`, `CREATE INDEX` | unique / plain expression indexes on the label's table (made if missing); `IS NOT NULL`, full-text and vector are accepted and not enforced |
 | `CALL db.labels()`, `db.relationshipTypes()`, `db.propertyKeys()`; `SHOW GRAPHS`, `CREATE GRAPH g` | answered from `ag_catalog` |
+| a variable-length relationship without exactly one type over 3 hops (`-[:A\|B\|…*1..30]-`, `<-[*1..30]-`) where only the nodes it reaches matter: in `EXISTS { }` between two bound nodes, or as the only pattern of a MATCH followed by `DISTINCT`, `DISTINCT` aggregates (and `min`/`max`) or `LIMIT 1` | walked by the gateway (`reach.rs`): the start nodes' ids from the clauses before it, a breadth-first walk with one SQL statement per hop on the label tables' `start_id`/`end_id`, then the statement with the pattern replaced by `id(t) IN $reached[id(s)]`. Neo4j's trail semantics: the start node counts as reached only over a closed trail (a cycle through it) within the bound |
 
-Refused by name: a variable-length relationship without exactly one type over
-3 hops (AGE enumerates every trail; `*1..30` over ten types ran the server out
-of memory), a node with two labels, and Ontological's fabric statements.
+Refused by name: such a relationship where the trails themselves matter (a
+relationship or path variable on it, `count(*)` or rows per trail after it, a
+lower bound above 1, two of them in one statement — AGE enumerates every
+trail; `*1..30` over ten types ran the server out of memory), a node with two
+labels, and Ontological's fabric statements.
 
 `summary.counters` come from PostgreSQL's per-transaction statistics of the
 graph's label tables (`pg_stat_xact_*`), read before and after the statement:

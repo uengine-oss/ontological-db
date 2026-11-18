@@ -740,6 +740,8 @@ impl<'a> Printer<'a> {
         match (lname.as_str(), args) {
             // `xs[i]` comes out of the parser as a call.
             ("element_at", [list, idx]) => return Ok(format!("{}[{}]", self.operand(list)?, self.expr(idx)?)),
+            // Text a rewrite (reach.rs) has already written in AGE's Cypher.
+            (super::reach::RAW, [Expr::Lit(Lit::Str(text))]) => return Ok(text.clone()),
             ("datetime" | "localdatetime", []) => {
                 self.extra.insert(NOW_PARAM.into(), Json::String(self.now.clone()));
                 return Ok(format!("${NOW_PARAM}"));
@@ -1319,7 +1321,7 @@ pub fn lead_optional(q: &Query) -> Query {
 
 const AGGREGATES: &[&str] = &["count", "sum", "avg", "min", "max", "collect", "stdev", "stdevp", "percentilecont", "percentiledisc"];
 
-fn is_agg_call(e: &Expr) -> bool {
+pub(crate) fn is_agg_call(e: &Expr) -> bool {
     matches!(e, Expr::Func { name, .. } if AGGREGATES.contains(&name.to_ascii_lowercase().as_str()))
 }
 

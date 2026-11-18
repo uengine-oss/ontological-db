@@ -103,7 +103,7 @@ impl Session<'_> {
 
         // A write runs in a transaction even when the client sent it on its
         // own: the counters are the transaction's (`pg_stat_xact_*`).
-        let wrap = !self.in_tx && (!own.is_empty() || st.write || matches!(st.plan, Plan::Steps(_)));
+        let wrap = !self.in_tx && (!own.is_empty() || st.write || matches!(st.plan, Plan::Steps(_) | Plan::Reach(_)));
         if wrap {
             self.sql("BEGIN")?;
             if let Err(f) = self.apply_settings(&own) {
@@ -240,6 +240,23 @@ impl Session<'_> {
                     }
                 }
                 Ok(Outcome { records, stats: None })
+            }
+            Plan::Reach(r) => {
+                let before = if st.write { Some(self.age_counts()?) } else { None };
+                let rows = {
+                    let mut x = Steps { sess: &mut *self, stream: &mut *stream, limit_ms };
+                    age::reach::run(&mut x, r, params).map_err(|r| Failure::client(&r.code, r.message))?
+                };
+                let stats = match before {
+                    Some(b) => Some(Stats::from_counts(self.age_counts()?.minus(b))),
+                    None => None,
+                };
+                let records = if r.ncols == 0 {
+                    Vec::new()
+                } else {
+                    rows.iter().map(|row| Value::List(row.iter().map(agtype::Ag::to_bolt).collect())).collect()
+                };
+                Ok(Outcome { records, stats })
             }
             Plan::Steps(steps) => {
                 let before = self.age_counts()?;

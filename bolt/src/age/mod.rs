@@ -16,6 +16,9 @@
 //! - `split.rs` runs what AGE's Cypher has no clause for (`FOREACH`,
 //!   `CALL { … }`, `SET n:L` / `REMOVE n:L`) as several statements in one
 //!   transaction;
+//! - `reach.rs` walks a long variable-length relationship AGE cannot (more
+//!   than three hops without exactly one type) breadth first in SQL, where only
+//!   the nodes it reaches matter;
 //! - the write counters come from PostgreSQL's per-transaction table
 //!   statistics (`pg_stat_xact_user_tables`) of the graph's label tables,
 //!   read before and after the statement ([`Counts`]).
@@ -25,6 +28,7 @@
 pub mod agtype;
 pub mod cypher;
 pub mod ddl;
+pub mod reach;
 pub mod split;
 
 use cypher_syntax::ast::{Clause, Query};
@@ -71,6 +75,9 @@ pub enum Plan {
     Procedure(ddl::Procedure),
     /// Several `cypher()` calls and SQL steps in one transaction.
     Steps(split::Steps),
+    /// A long variable-length relationship walked by the gateway (`reach.rs`):
+    /// the seeds, a breadth-first walk in SQL, the statement.
+    Reach(reach::Reach),
     /// `SHOW GRAPHS` / `CREATE GRAPH name`, the graph statements Ontological
     /// takes over Bolt (Robo's launcher lists and makes projects with them).
     Graphs(GraphStatement),
@@ -198,6 +205,15 @@ pub fn translate(query: &str, params: &Json) -> Result<Statement, Refusal> {
     }
     let pmap = params.as_object();
     let mut printer = cypher::Printer::new(pmap, cypher::now_text());
+    if reach::needed(&q) {
+        if split::needed(&q) {
+            return Err(Refusal::syntax(cypher::unsupported(
+                "a long variable-length relationship together with FOREACH, CALL { … } or a label change",
+            )));
+        }
+        let r = reach::plan(&q, &mut printer, columns.len()).map_err(Refusal::syntax)?;
+        return Ok(Statement { plan: Plan::Reach(r), columns, write, extra: printer.extra });
+    }
     if split::needed(&q) {
         let steps = split::plan(&q, &mut printer).map_err(Refusal::syntax)?;
         return Ok(Statement { plan: Plan::Steps(steps), columns, write, extra: printer.extra });
