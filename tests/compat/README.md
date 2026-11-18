@@ -20,7 +20,7 @@ tests/compat/
     manifest.json         쿼리마다 종류·그래프·출처(파일:줄)·자리표시자·조립 규칙, 그리고 시나리오
     excluded.json         뽑혔지만 모음에 넣지 않은 것과 그 까닭
   corpus/_shared/fixture/ 모든 클라이언트가 같이 쓰는 준비 데이터 (패브릭 데이터소스)
-  targets/<target>/bootstrap.sql   대상 판의 시작점 (v1 은 있음, age 는 자리만)
+  targets/<target>/bootstrap.sql   대상 판의 시작점 (v1 은 있음, age 는 자리만, apache-age 는 AGE 그대로)
   targets/source.sql  패브릭이 읽는 원천 시스템(작은 ERP, 일반 PostgreSQL 테이블)
   targets/stats.sql   준비 데이터를 넣은 뒤 한 번: 통계를 떠 두고 autovacuum 을 꺼 실행 중 계획이 바뀌지 않게 한다
   normalize.py        결과 정규화 규칙
@@ -81,6 +81,23 @@ Bolt 로만 돈다. v2 를 대조하려면:
 `_setup.json` 에서 파일마다 실패한 문장(줄 번호)과 그 오류 코드가 같아야 한다.
 `row_order` 가 `server, ties server` 인 답(정렬 키를 반환하지 않는 ORDER BY)은 동점 행의 순서가 판마다 다를 수
 있으니, 다르게 나오면 그 쿼리를 보고 판단한다.
+
+## Apache AGE 앞의 게이트웨이에 대조하는 법 (`--target apache-age`)
+
+AGE 를 그대로 두고 게이트웨이를 AGE 백엔드(`OG_BOLT_BACKEND=age`)로 돌린다. AGE 에는 패브릭이 없으므로
+패브릭 문장이 없는 Robo 부분만 돌리고, 공용 준비 데이터(데이터소스)는 싣지 않는다.
+
+```sh
+PGPASSWORD=<관리자> python3 tests/compat/run.py --target apache-age --clients robo --skip-shared \
+    --bolt-env OG_BOLT_BACKEND=age --bootstrap-user supabase_admin --pg-user robo --pg-password-file <robo 비밀번호 파일> \
+    --pg-port 55439 --pg-database og_compat_age --db-locale C \
+    --bolt-bin <bolt>/release/ontological-bolt --bolt-listen 127.0.0.1:27952 --out /tmp/agebolt --compare tests/compat/expected/v1
+```
+
+- `--bootstrap-user`: 데이터베이스를 다시 만들고 `CREATE EXTENSION age` 를 하는 역할. 게이트웨이는 `--pg-user` 로 붙고
+  그래프를 처음 쓸 때 그 역할로 만든다(그래야 라벨을 더할 수 있다).
+- `--db-locale C`: v1 클러스터와 같은 문자열 정렬. 언어 정렬(en_US 등)이면 `ORDER BY` 로 찾아 넣는 매개변수가 달라진다.
+- `--clients robo` 이면 비교도 Robo 의 답과 준비 데이터만 본다. 정답(`expected/`)은 그대로다.
 
 ## 새 쿼리 추가법
 

@@ -482,6 +482,19 @@ impl<'a> Printer<'a> {
             Expr::Param(p) => format!("${}", param_name(p)?),
             Expr::Var(v) => ident(v),
             Expr::Prop(b, p) => format!("{}.{}", self.operand(b)?, ident(p)),
+            Expr::Binary(op @ (BinOp::Add | BinOp::Sub), a, b) if self.constant_instant(a).is_some() && self.constant_duration(b).is_some() => {
+                // `datetime() - duration({minutes: $m})`: both sides are fixed for
+                // the statement, so the instant is worked out here and sent as a
+                // parameter — AGE has neither temporal type.
+                let (secs, micros) = self.constant_instant(a).unwrap();
+                let (months, days, dsecs) = self.constant_duration(b).unwrap();
+                let sign = if *op == BinOp::Sub { -1 } else { 1 };
+                let at = shift_instant(secs, micros, sign * months, sign * days, sign * dsecs);
+                self.fresh += 1;
+                let name = format!("{FRESH}t{}", self.fresh);
+                self.extra.insert(name.clone(), Json::String(at));
+                format!("${name}")
+            }
             Expr::Binary(op, a, b) => {
                 let sym = match op {
                     BinOp::Add | BinOp::Concat => "+",
@@ -654,6 +667,74 @@ impl<'a> Printer<'a> {
         })
     }
 
+    /// `datetime()`, `datetime($p)`, `datetime('…')` as UTC epoch seconds and
+    /// microseconds, when it is fixed for the statement.
+    fn constant_instant(&self, e: &Expr) -> Option<(i64, i64)> {
+        let Expr::Func { name, args, .. } = e else { return None };
+        if !matches!(name.to_ascii_lowercase().as_str(), "datetime" | "localdatetime") {
+            return None;
+        }
+        let text = match args.as_slice() {
+            [] => self.now.clone(),
+            [Expr::Param(p)] => self.params?.get(p)?.as_str()?.to_string(),
+            [Expr::Lit(Lit::Str(s))] => s.clone(),
+            _ => return None,
+        };
+        epoch_of(&canonical_datetime(&text)?)
+    }
+
+    /// `duration({days: 1, minutes: $m})` / `duration('P1DT30M')` as (months,
+    /// days, seconds), when its parts are numbers known now.
+    fn constant_duration(&self, e: &Expr) -> Option<(i64, i64, i64)> {
+        let Expr::Func { name, args, .. } = e else { return None };
+        if !name.eq_ignore_ascii_case("duration") {
+            return None;
+        }
+        let num = |x: &Expr| -> Option<f64> {
+            match x {
+                Expr::Lit(Lit::Int(i)) => Some(*i as f64),
+                Expr::Lit(Lit::Float(f)) => Some(*f),
+                Expr::Param(p) => self.params?.get(p)?.as_f64(),
+                Expr::Neg(inner) => match &**inner {
+                    Expr::Lit(Lit::Int(i)) => Some(-(*i as f64)),
+                    Expr::Lit(Lit::Float(f)) => Some(-*f),
+                    _ => None,
+                },
+                _ => None,
+            }
+        };
+        let (mut months, mut days, mut secs) = (0f64, 0f64, 0f64);
+        match args.as_slice() {
+            [Expr::Map(kv)] => {
+                for (k, v) in kv {
+                    let n = num(v)?;
+                    match k.to_ascii_lowercase().as_str() {
+                        "years" => months += 12.0 * n,
+                        "months" => months += n,
+                        "weeks" => days += 7.0 * n,
+                        "days" => days += n,
+                        "hours" => secs += 3600.0 * n,
+                        "minutes" => secs += 60.0 * n,
+                        "seconds" => secs += n,
+                        "milliseconds" => secs += n / 1000.0,
+                        _ => return None,
+                    }
+                }
+            }
+            [Expr::Lit(Lit::Str(iso))] => {
+                let (m, d, s) = parse_iso_duration(iso)?;
+                months = m as f64;
+                days = d as f64;
+                secs = s as f64;
+            }
+            _ => return None,
+        }
+        if months.fract() != 0.0 || days.fract() != 0.0 {
+            return None;
+        }
+        Some((months as i64, days as i64, secs.round() as i64))
+    }
+
     fn func(&mut self, name: &str, args: &[Expr], distinct: bool) -> R<String> {
         let lname = name.to_ascii_lowercase();
         match (lname.as_str(), args) {
@@ -691,6 +772,19 @@ impl<'a> Printer<'a> {
                 if f.eq_ignore_ascii_case("id") && inner.len() == 1 =>
             {
                 return Ok(format!("{name}(id(coalesce({})))", self.expr(&inner[0])?));
+            }
+            // AGE types a matched vertex apart from an agtype one, and
+            // coalesce() refuses to mix them ("COALESCE types vertex and agtype
+            // cannot be matched"); `head([v])` is the same vertex as agtype.
+            ("coalesce", xs) if xs.len() > 1 && xs.iter().any(|x| matches!(x, Expr::Var(_))) => {
+                let parts = xs
+                    .iter()
+                    .map(|x| match x {
+                        Expr::Var(v) => Ok(format!("head([{}])", ident(v))),
+                        other => self.expr(other),
+                    })
+                    .collect::<R<Vec<_>>>()?;
+                return Ok(format!("coalesce({})", parts.join(", ")));
             }
             ("nullif", [a, b]) => {
                 let (a, b) = (self.operand(a)?, self.operand(b)?);
@@ -863,6 +957,83 @@ fn civil_from_days(z: i64) -> (i64, i64, i64) {
     let d = doy - (153 * mp + 2) / 5 + 1;
     let m = if mp < 10 { mp + 3 } else { mp - 9 };
     (yoe + era * 400 + i64::from(m <= 2), m, d)
+}
+
+/// A canonical date-time (`canonical_datetime`) as UTC epoch seconds and
+/// microseconds.
+fn epoch_of(canon: &str) -> Option<(i64, i64)> {
+    let y: i64 = canon.get(..4)?.parse().ok()?;
+    let m: i64 = canon.get(5..7)?.parse().ok()?;
+    let d: i64 = canon.get(8..10)?.parse().ok()?;
+    let hh: i64 = canon.get(11..13)?.parse().ok()?;
+    let mi: i64 = canon.get(14..16)?.parse().ok()?;
+    let ss: i64 = canon.get(17..19)?.parse().ok()?;
+    let rest = canon.get(19..)?;
+    let micros = match rest.strip_prefix('.') {
+        Some(f) => {
+            let digits: String = f.chars().take_while(char::is_ascii_digit).collect();
+            format!("{digits:0<6}")[..6].parse().ok()?
+        }
+        None => 0,
+    };
+    Some((days_from_civil(y, m, d) * 86_400 + hh * 3600 + mi * 60 + ss, micros))
+}
+
+/// `P1Y2M3DT4H5M6S` (Neo4j's printed form) as (months, days, seconds).
+fn parse_iso_duration(s: &str) -> Option<(i64, i64, i64)> {
+    let s = s.trim().strip_prefix('P')?;
+    let (date, time) = s.split_once('T').unwrap_or((s, ""));
+    let (mut months, mut days, mut secs) = (0i64, 0i64, 0f64);
+    let mut num = String::new();
+    for c in date.chars() {
+        match c {
+            '0'..='9' | '-' => num.push(c),
+            'Y' => months += 12 * num.parse::<i64>().ok()?,
+            'M' => months += num.parse::<i64>().ok()?,
+            'W' => days += 7 * num.parse::<i64>().ok()?,
+            'D' => days += num.parse::<i64>().ok()?,
+            _ => return None,
+        }
+        if c.is_ascii_alphabetic() {
+            num.clear();
+        }
+    }
+    for c in time.chars() {
+        match c {
+            '0'..='9' | '-' | '.' => num.push(c),
+            'H' => secs += 3600.0 * num.parse::<f64>().ok()?,
+            'M' => secs += 60.0 * num.parse::<f64>().ok()?,
+            'S' => secs += num.parse::<f64>().ok()?,
+            _ => return None,
+        }
+        if c.is_ascii_alphabetic() {
+            num.clear();
+        }
+    }
+    Some((months, days, secs.round() as i64))
+}
+
+/// An instant moved by a duration — months on the calendar (the day clamped
+/// to the month's last), then days, then seconds — written canonically.
+fn shift_instant(secs: i64, micros: i64, months: i64, days: i64, dsecs: i64) -> String {
+    let (day, tod) = (secs.div_euclid(86_400), secs.rem_euclid(86_400));
+    let (y, m, d) = civil_from_days(day);
+    let total = y * 12 + (m - 1) + months;
+    let (ny, nm) = (total.div_euclid(12), total.rem_euclid(12) + 1);
+    let last = days_from_civil(if nm == 12 { ny + 1 } else { ny }, if nm == 12 { 1 } else { nm + 1 }, 1) - days_from_civil(ny, nm, 1);
+    let nd = d.min(last);
+    let s = (days_from_civil(ny, nm, nd) + days) * 86_400 + tod + dsecs;
+    let (day, tod) = (s.div_euclid(86_400), s.rem_euclid(86_400));
+    let (y, m, d) = civil_from_days(day);
+    let frac = format!("{micros:06}");
+    let frac = frac.trim_end_matches('0');
+    format!(
+        "{y:04}-{m:02}-{d:02}T{:02}:{:02}:{:02}{}+00:00",
+        tod / 3600,
+        (tod / 60) % 60,
+        tod % 60,
+        if frac.is_empty() { String::new() } else { format!(".{frac}") }
+    )
 }
 
 /// The clock now, written as [`canonical_datetime`] writes one.
@@ -1702,6 +1873,20 @@ WITH b.id AS __og_k1, count(*) AS __og_a2, __og_k3 RETURN __og_k1 AS id, __og_a2
         assert_eq!(ident("a`b"), "`a``b`");
         assert_eq!(ident("plain_1"), "plain_1");
         assert_eq!(str_lit("a'b\\c\n"), "'a\\'b\\\\c\\n'");
+    }
+
+    #[test]
+    fn datetime_arithmetic_with_fixed_parts_is_worked_out_here() {
+        let params: Map<String, Json> = [("m".to_string(), Json::from(30)), ("at".to_string(), Json::from("2026-01-31T10:00:00Z"))].into_iter().collect();
+        let mut p = Printer::new(Some(&params), "2026-11-18T01:00:00.5+00:00".into());
+        let s = p.query(&cypher_syntax::parse("MATCH (r) WHERE datetime(r.at) < datetime() - duration({minutes: $m}) RETURN datetime($at) + duration('P1M') AS t").unwrap()).unwrap();
+        assert_eq!(s, "MATCH (r) WHERE r.at < ($__og_t1) RETURN $__og_t2 AS t");
+        assert_eq!(p.extra["__og_t1"], Json::from("2026-11-18T00:30:00.5+00:00"));
+        assert_eq!(p.extra["__og_t2"], Json::from("2026-02-28T10:00:00+00:00"));
+        // with a part not known now, it goes out as written (and AGE says duration() is unknown)
+        let mut p = Printer::new(None, "2026-11-18T01:00:00+00:00".into());
+        assert!(p.query(&cypher_syntax::parse("RETURN datetime() - duration({minutes: r.m}) AS t").unwrap()).unwrap().contains("duration("));
+        assert_eq!(print("MATCH (a), (b) RETURN coalesce(a, b, null).k AS k"), "MATCH (a), (b) RETURN coalesce(head([a]), head([b]), null).k AS k");
     }
 
     #[test]

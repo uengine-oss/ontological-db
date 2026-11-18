@@ -34,6 +34,69 @@ OG_BOLT_PGPORT=28816 OG_BOLT_PGDATABASE=og \
 | `OG_BOLT_STATEMENT_TIMEOUT` | unset: the engine's `og.statement_timeout` (2 min) | every session's statement limit: `300s`, `2min`, `120000` (ms), `0` for none |
 | `OG_BOLT_ENGINE_SCHEMA` | unset: engine functions are called unqualified (resolved by `search_path`, which is `public` for the `ontological` extension) | schema to call the engine functions in, e.g. `oga_catalog` for `ontological_age`. Set it explicitly (`public`) when both editions are installed in one database |
 
+## In front of Apache AGE (`OG_BOLT_BACKEND=age`)
+
+The same gateway can stand in front of an unmodified Apache AGE 1.8.0
+(PostgreSQL 15, e.g. the Supabase image in `age-supabase/`) instead of the
+engine. The default (`ontological`) is unchanged: the five engine calls and
+their SQL are the ones above.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `OG_BOLT_BACKEND` | `ontological` | `age` to run Cypher through `ag_catalog.cypher()` |
+| `OG_BOLT_AGE_CREATE_GRAPHS` | on | make a graph the first time a session names it (as the role that logged in, which then owns it — AGE needs that to add labels). `0`: answer `DatabaseNotFound` |
+| `OG_BOLT_AGE_LOAD` | off | `LOAD 'age'` at login, for a server that does not preload AGE (superuser only) |
+| `OG_BOLT_AGE_TRACE` | off | log every SQL statement sent to AGE and its time to stderr |
+
+The session sets `search_path = ag_catalog, "$user", public` (AGE's generated
+SQL needs it). `HELLO` answers `Neo4j/4.4.0 (age-bolt/<version>)`, without
+"ontolog", so clients that send Ontological's fabric statements to an
+Ontological gateway (Studio, robo-data-catalog, robo-data-analyzer) do not.
+
+What happens to a statement (`src/age/`):
+
+- it is parsed with the engine's own parser (`../cypher-syntax`, the engine's
+  lexer, parser and AST built without pgrx), which gives the RETURN columns
+  and read/write exactly as `og_cypher_columns()` / `og_cypher_check()` do;
+- it is printed back as AGE's Cypher inside
+  `SELECT * FROM ag_catalog.cypher('<graph>', $og$…$og$, $1) AS (c0 agtype, …)`,
+  the parameters going as one agtype map in `$1` (binary: `0x01` + JSON);
+- results are read as agtype text: `::vertex` → `Node`, `::edge` →
+  `Relationship`, `::path` → `Path`, `1` and `1.0` kept apart. A node's id
+  is AGE's graphid, and the element id a Bolt 4.4 driver derives from it is
+  `toString(id(n))`, which `elementId(n)` is rewritten to.
+
+Rewrites (each found by running Robo Architect's queries against AGE; see
+`cypher.rs` and `split.rs` for the measurement behind each):
+
+| Neo4j | sent to AGE |
+|---|---|
+| `datetime()`, `date()`; `datetime($p)`; `datetime() - duration({minutes: $m})` | the statement's clock, `$p` written as PostgreSQL writes a timestamptz, the shifted instant — as ISO 8601 text in parameters |
+| `randomUUID()` | `toString(pg_catalog.concat(pg_catalog.gen_random_uuid()))` |
+| `n:L` in an expression; `(n:A\|B)`, `-[:A\|B]-` | `label(n) = 'L'`; the choice moved into the clause's WHERE |
+| `any/all/none/single(x IN l WHERE p)` | `size([x IN l WHERE p]) > 0` … (AGE's own crash the backend when `p` reads a matched node) |
+| `n {.a, .b}` | `CASE WHEN n IS NULL THEN null ELSE {a: n.a, b: n.b} END` (Neo4j's answer for null and for an absent key) |
+| `coalesce(a, b)` over nodes | `coalesce(head([a]), head([b]))` |
+| `SET n += $map` | `WITH …, $map AS p SET n += p` |
+| an aggregation next to a list comprehension | three projections: lists, aggregates, the rest |
+| variables named `id`, `properties`, `start_id`, `end_id` | renamed (they clash with the label tables' columns) |
+| a leading `OPTIONAL MATCH` | `WITH 1 AS …` in front (AGE returns no row when nothing matches) |
+| `ORDER BY m.k` of a projected map `m` | the key read from where the map got it |
+| `RETURN *` | the variables in scope, sorted |
+| `FOREACH`, `CALL { … }`, `SET n:L` / `REMOVE n:L`, a SET after a MERGE that has ON CREATE/ON MATCH items | cut into several statements in one transaction, the rows carried between them as a parameter (vertices and edges by id) — AGE has no FOREACH or CALL {}, keeps one label per vertex, and drops a SET that follows such a MERGE |
+| `CREATE CONSTRAINT … IS UNIQUE`, `CREATE INDEX` | unique / plain expression indexes on the label's table (made if missing); `IS NOT NULL`, full-text and vector are accepted and not enforced |
+| `CALL db.labels()`, `db.relationshipTypes()`, `db.propertyKeys()`; `SHOW GRAPHS`, `CREATE GRAPH g` | answered from `ag_catalog` |
+
+Refused by name: a variable-length relationship without exactly one type over
+3 hops (AGE enumerates every trail; `*1..30` over ten types ran the server out
+of memory), a node with two labels, and Ontological's fabric statements.
+
+`summary.counters` come from PostgreSQL's per-transaction statistics of the
+graph's label tables (`pg_stat_xact_*`), read before and after the statement:
+nodes and relationships created and deleted are exact; `properties-set`
+counts updated elements, not properties. A write sent without `BEGIN` runs in
+a transaction of its own for that reason.
+
 ## Time limits and cancellation
 
 A statement is cancelled — in PostgreSQL and, on virtual nodes, at the source —
@@ -112,7 +175,7 @@ prints the compatibility matrix as a test.
 ## Tests
 
 ```bash
-cargo test                      # PackStream round trips, chunk boundaries
+cargo test                      # PackStream round trips, chunk boundaries, the AGE translation
 python3 ../tests/common/neo4j-movies/run.py
 ```
 

@@ -96,7 +96,10 @@ impl Session<'_> {
             (own, limit.unwrap_or(self.timeout_ms))
         };
 
-        self.age_graph()?;
+        // SHOW GRAPHS / CREATE GRAPH are about the graphs, not in one.
+        if !matches!(st.plan, Plan::Graphs(_)) {
+            self.age_graph()?;
+        }
 
         // A write runs in a transaction even when the client sent it on its
         // own: the counters are the transaction's (`pg_stat_xact_*`).
@@ -209,6 +212,33 @@ impl Session<'_> {
                         Value::List(vec![string(v); width])
                     })
                     .collect();
+                Ok(Outcome { records, stats: None })
+            }
+            Plan::Graphs(g) => {
+                if let age::GraphStatement::Create(name) = g {
+                    let ok = name.chars().next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+                        && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
+                    if !ok {
+                        return Err(Failure::client(
+                            "Neo.ClientError.Statement.ArgumentError",
+                            format!("'{name}' is not a graph name AGE takes (letters, digits and _)"),
+                        ));
+                    }
+                }
+                let pg = self.client()?;
+                let rows = pg.simple_query(&g.sql()).map_err(|e| failure(&e, None, limit_ms))?;
+                let mut records = Vec::new();
+                for m in rows {
+                    if let postgres::SimpleQueryMessage::Row(r) = m {
+                        records.push(match g {
+                            age::GraphStatement::Show => Value::List(vec![
+                                string(r.get(0).unwrap_or("").to_string()),
+                                Value::Int(r.get(1).and_then(|t| t.parse().ok()).unwrap_or(0)),
+                            ]),
+                            age::GraphStatement::Create(n) => Value::List(vec![string(format!("graph {n} created"))]),
+                        });
+                    }
+                }
                 Ok(Outcome { records, stats: None })
             }
             Plan::Steps(steps) => {

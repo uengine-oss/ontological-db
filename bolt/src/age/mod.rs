@@ -71,6 +71,75 @@ pub enum Plan {
     Procedure(ddl::Procedure),
     /// Several `cypher()` calls and SQL steps in one transaction.
     Steps(split::Steps),
+    /// `SHOW GRAPHS` / `CREATE GRAPH name`, the graph statements Ontological
+    /// takes over Bolt (Robo's launcher lists and makes projects with them).
+    Graphs(GraphStatement),
+}
+
+#[derive(Debug, PartialEq)]
+pub enum GraphStatement {
+    Show,
+    Create(String),
+}
+
+impl GraphStatement {
+    pub fn sql(&self) -> String {
+        match self {
+            GraphStatement::Show => "SELECT g.name::text AS graph, \
+                (SELECT count(*) FROM ag_catalog.ag_label l WHERE l.graph = g.graphid \
+                   AND l.name NOT IN ('_ag_label_vertex', '_ag_label_edge'))::int8 AS types \
+                FROM ag_catalog.ag_graph g ORDER BY 1"
+                .into(),
+            GraphStatement::Create(n) => format!("SELECT ag_catalog.create_graph({}::name)", sql_lit(n)),
+        }
+    }
+}
+
+/// The words Ontological's statement layer (`engine/src/fabric/sqlish.rs`)
+/// takes before Cypher. Graph statements are answered here; the fabric ones
+/// (datasources, virtual nodes, QUERY FABRIC …) belong to the fabric service,
+/// not to a graph store, and are refused by name.
+fn statement_words(query: &str) -> Vec<String> {
+    let mut s = query.trim();
+    loop {
+        if let Some(rest) = s.strip_prefix("--").or_else(|| s.strip_prefix("//")) {
+            s = rest.split_once('\n').map_or("", |(_, r)| r).trim_start();
+        } else if let Some(rest) = s.strip_prefix("/*") {
+            s = rest.split_once("*/").map_or("", |(_, r)| r).trim_start();
+        } else {
+            break;
+        }
+    }
+    s.trim_end_matches(|c: char| c == ';' || c.is_whitespace()).split_whitespace().take(4).map(str::to_string).collect()
+}
+
+fn graph_or_fabric(query: &str) -> Option<Result<Statement, Refusal>> {
+    let w = statement_words(query);
+    let up: Vec<String> = w.iter().map(|x| x.to_ascii_uppercase()).collect();
+    let up: Vec<&str> = up.iter().map(String::as_str).collect();
+    let plan = |g: GraphStatement, columns: &[&str], write: bool| {
+        Some(Ok(Statement { plan: Plan::Graphs(g), columns: columns.iter().map(|c| c.to_string()).collect(), write, extra: Map::new() }))
+    };
+    match up.as_slice() {
+        ["SHOW", "GRAPHS", ..] if up.len() == 2 => plan(GraphStatement::Show, &["graph", "types"], false),
+        ["CREATE", "GRAPH", _] => plan(GraphStatement::Create(w[2].clone()), &["result"], true),
+        ["CREATE", "DATASOURCE" | "VIRTUAL", ..]
+        | ["DROP", "DATASOURCE" | "VIRTUAL", ..]
+        | ["ALTER", "DATASOURCE", ..]
+        | ["SHOW", "DATASOURCES" | "CREDENTIALS" | "TABLES" | "COLUMNS" | "COLUMN" | "VALUE" | "VIRTUAL", ..]
+        | ["REFRESH", "DATASOURCE", ..]
+        | ["MATERIALIZE", ..]
+        | ["EXPLAIN", "FABRIC", ..]
+        | ["QUERY", "FABRIC", ..]
+        | ["USE", "GRAPH", ..] => Some(Err(Refusal {
+            code: "Neo.ClientError.Statement.SyntaxError".into(),
+            message: format!(
+                "{} is an Ontological fabric statement; the AGE backend stores graphs only — the fabric is its own service",
+                up.iter().take(2).cloned().collect::<Vec<_>>().join(" ")
+            ),
+        })),
+        _ => None,
+    }
 }
 
 pub struct Statement {
@@ -98,12 +167,18 @@ impl Refusal {
 /// Parse only: does it write? A query that does not parse gets its syntax
 /// error now, as `og_cypher_check()` gives it on the default backend.
 pub fn check(query: &str) -> Result<bool, Refusal> {
+    if let Some(st) = graph_or_fabric(query) {
+        return st.map(|s| s.write);
+    }
     let q = cypher_syntax::parse(query).map_err(Refusal::syntax)?;
     Ok(cypher::is_write(&q))
 }
 
 /// Read and re-print one statement.
 pub fn translate(query: &str, params: &Json) -> Result<Statement, Refusal> {
+    if let Some(st) = graph_or_fabric(query) {
+        return st;
+    }
     let q: Query = cypher_syntax::parse(query).map_err(Refusal::syntax)?;
     // The fields and read/write are the statement's as sent.
     let write = cypher::is_write(&q);
@@ -316,6 +391,17 @@ mod tests {
         assert!(s.starts_with("SELECT * FROM ag_catalog.cypher('o''k', $og1$RETURN '$og$' AS x$og1$, $1)"), "{s}");
         // No RETURN: one column all the same.
         assert!(cypher_sql("g", "CREATE (n)", 0).ends_with("AS (c0 ag_catalog.agtype)"));
+    }
+
+    #[test]
+    fn graph_statements_and_fabric_ones() {
+        let st = translate("SHOW GRAPHS;", &Json::Null).ok().unwrap();
+        assert_eq!((st.columns.clone(), st.write), (vec!["graph".to_string(), "types".to_string()], false));
+        let st = translate("// new project\nCREATE GRAPH shop", &Json::Null).ok().unwrap();
+        assert!(matches!(st.plan, Plan::Graphs(GraphStatement::Create(ref n)) if n == "shop"));
+        let e = translate("QUERY FABRIC SELECT 1", &Json::Null).err().unwrap();
+        assert!(e.message.contains("fabric"), "{}", e.message);
+        assert!(check("SHOW GRAPHS").is_ok_and(|w| !w));
     }
 
     #[test]
