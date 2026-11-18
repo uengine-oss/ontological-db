@@ -812,16 +812,23 @@ impl Parser {
             None
         };
         let mut labels = Vec::new();
+        // `:A:B` — all of them — and `:A|B` — any of them: one group per `:`.
+        let mut label_groups: Vec<Vec<String>> = Vec::new();
         while self.eat_punct(":") {
-            labels.push(self.name()?);
+            let first = self.name()?;
+            labels.push(first.clone());
+            let mut group = vec![first];
             // `:A|B` multi-label alternatives
             while self.eat_punct("|") {
-                labels.push(self.name()?);
+                let alt = self.name()?;
+                labels.push(alt.clone());
+                group.push(alt);
             }
+            label_groups.push(group);
         }
         let props = if self.at_punct("{") { self.parse_prop_map()? } else { Vec::new() };
         self.expect_punct(")")?;
-        Ok(NodePat { var, labels, props })
+        Ok(NodePat { var, labels, label_groups, props })
     }
 
     fn parse_rel_pat(&mut self) -> PResult<RelPat> {
@@ -1610,5 +1617,21 @@ mod tests {
         assert!(matches!(&*f, Expr::HasLabels { alts, .. } if alts.len() == 1));
         // A map value is not a label predicate.
         parse("RETURN {a: 1, b: 'x'} AS m").unwrap();
+    }
+
+    #[test]
+    fn node_labels_keep_all_apart_from_any() {
+        let node = |q: &str| {
+            let q = parse(q).unwrap();
+            let Clause::Match { patterns, .. } = &q.clauses[0] else { panic!() };
+            let PatElem::Node(n) = &patterns[0].elems[0] else { panic!() };
+            (n.labels.clone(), n.label_groups.clone())
+        };
+        let s = |xs: &[&[&str]]| xs.iter().map(|g| g.iter().map(|l| l.to_string()).collect::<Vec<_>>()).collect::<Vec<_>>();
+        // `labels` stays the flat list the engine has always read.
+        assert_eq!(node("MATCH (n:A:B) RETURN n"), (vec!["A".into(), "B".into()], s(&[&["A"], &["B"]])));
+        assert_eq!(node("MATCH (n:A|B) RETURN n"), (vec!["A".into(), "B".into()], s(&[&["A", "B"]])));
+        assert_eq!(node("MATCH (n:A|B:C) RETURN n").1, s(&[&["A", "B"], &["C"]]));
+        assert_eq!(node("MATCH (n {k: 1}) RETURN n"), (vec![], vec![]));
     }
 }

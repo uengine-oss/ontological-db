@@ -10,7 +10,15 @@ pub enum Dir {
 #[derive(Debug, Clone)]
 pub struct NodePat {
     pub var: Option<String>,
+    /// Every label written, in order: `:A:B` and `:A|B` both give `[A, B]`.
+    /// This is what the engine reads.
     pub labels: Vec<String>,
+    /// The same labels with what they mean kept apart: all of the groups,
+    /// any label within a group — `:A:B` → `[[A], [B]]`, `:A|B` → `[[A, B]]`,
+    /// `:A|B:C` → `[[A, B], [C]]`. Read by the Bolt gateway's AGE backend
+    /// (`bolt/src/age/cypher.rs`), which needs `:A:B` (both) told from `:A|B`
+    /// (either); the engine does not read it.
+    pub label_groups: Vec<Vec<String>>,
     pub props: Vec<(String, Expr)>,
 }
 
