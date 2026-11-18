@@ -1147,7 +1147,7 @@
     {
       "id": "suites_n8_set_on_a_map",
       "kind": "defect",
-      "rewrite": "(no rewrite) SET on a map, not an element: AGE's internal message (SUITES G14 maps error codes)",
+      "rewrite": "(no rewrite of the statement) SET on a map, not an element: AGE's internal message (XX000 container is not an agtype array) is answered as Neo.ClientError.Statement.TypeError (mod.rs error_code, SUITES G14)",
       "defects": ["SUITES N8", "SUITES B12"],
       "upstream": null,
       "source": "SUITES §5 N8 output (new-defects.out)",
@@ -2207,6 +2207,35 @@
         {"cypher": "MATCH p = (a:A)-[r:R]->(b:B) RETURN a, r, p", "cols": 3}
       ],
       "fixed": {"output_regex": "^1\\|1\\.0\\|\"a\"\\|\\[1, 1\\.0\\]\\|\\{\"k\": null\\}\\n\\{\"id\": \\d+, \"label\": \"A\", \"properties\": \\{\"k\": 1\\}\\}::vertex\\|\\{\"id\": \\d+, \"label\": \"R\", \"end_id\": \\d+, \"start_id\": \\d+, \"properties\": \\{\\}\\}::edge\\|\\[\\{\"id\": \\d+, \"label\": \"A\", [^|]*\\}::vertex, \\{\"id\": \\d+, \"label\": \"R\", [^|]*\\}::edge, \\{\"id\": \\d+, \"label\": \"B\", [^|]*\\}::vertex\\]::path$"}
-    }
+        },
+    {
+      "id": "gateway_type_error_codes",
+      "kind": "defect",
+      "rewrite": "AGE's type errors answered as Neo.ClientError.Statement.TypeError (mod.rs error_code): 22023 Invalid input parameter types for agtype_… (was ParameterMissing, read from the word parameter), 0A000 … clause can only update vertex and edges / can only delete vertices and edges (was SyntaxError), XX000 container is not an agtype array",
+      "defects": ["SUITES B10", "SUITES B12", "SUITES G14"],
+      "upstream": null,
+      "source": "SUITES §3 B10, B12",
+      "kills_backend": false,
+      "slow": false,
+      "gateway_only": true,
+      "note": "Gateway-only: AGE refuses these statements as Neo4j does; only the status code the gateway gives the refusal was wrong. AGE's own message for the map case is suites_n8_set_on_a_map."
+        },
+    {
+      "id": "tgt_type_error_message",
+      "kind": "relied_on",
+      "rewrite": "AGE's type errors answered as Neo.ClientError.Statement.TypeError (mod.rs error_code) — the gateway reads the message: 22023 starting with Invalid input parameter type, XX000 container is not an agtype array",
+      "defects": ["SUITES B10", "SUITES G14"],
+      "upstream": null,
+      "source": "SUITES §3 B10 (MATCH (m:Member) RETURN sum(m.name * 2))",
+      "kills_backend": false,
+      "slow": false,
+      "setup": [
+        {"cypher": "CREATE (:Member {name: 'a'})"}
+      ],
+      "probe": [
+        {"cypher": "MATCH (m:Member) RETURN sum(m.name * 2)"}
+      ],
+      "fixed": {"error": "^Invalid input parameter types for agtype_mul"}
+        }
   ]
 }

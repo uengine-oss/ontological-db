@@ -107,6 +107,16 @@ trail; `*1..30` over ten types ran the server out of memory), a choice of
 labels (`:A|B`) or of relationship types in `CREATE` / `MERGE`, the label
 writes *Label hierarchy* lists, and Ontological's fabric statements.
 
+Error codes (`mod.rs` `error_code`; SUITES B10, B12): AGE's type errors are
+answered as `Neo.ClientError.Statement.TypeError`, as Neo4j answers them —
+22023 "Invalid input parameter types for agtype_mul" (an operator over a value
+it does not take, `sum(m.name * 2)`; the gateway had read the word
+"parameter" in it as `ParameterMissing`), 0A000 "… clause can only update
+vertex and edges" / "can only delete vertices and edges" (a SET or DELETE of a
+map or a scalar; was `SyntaxError`) and XX000 "container is not an agtype
+array" (N8, `WITH {a: 1} AS n SET n.x = 1`). A missing parameter map (42P02)
+stays `ParameterMissing`; a key missing from the map reads as null in AGE.
+
 `summary.counters` come from PostgreSQL's per-transaction statistics of the
 graph's label tables (`pg_stat_xact_*`), read before and after the statement:
 nodes and relationships created and deleted are exact; `properties-set`

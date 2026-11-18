@@ -486,14 +486,35 @@ pub fn null_merge_refusal(code: &str, message: &str, guards: &[cypher::NullMerge
 /// AGE reports through PostgreSQL's SQLSTATEs, so a few that mean something
 /// to a Cypher client are read here first; the rest go through the gateway's
 /// usual table (`session::error_code`).
+///
+/// Type errors (SUITES B10, B12, G14), where Neo4j answers
+/// `Neo.ClientError.Statement.TypeError`:
+/// - 22023 "Invalid input parameter types for agtype_mul" (`agtype_ops.c`,
+///   for `+ - * / % ^` and unary minus over values they do not take:
+///   `sum(m.name * 2)`). The word "parameter" there is the C function's
+///   argument, and the gateway used to answer it as `ParameterMissing`;
+/// - 0A000 "age SET clause can only update vertex and edges", "DELETE clause
+///   can only delete vertices and edges" (`cypher_set.c`, `cypher_delete.c`:
+///   a SET or DELETE of a map or a scalar) — not a syntax error;
+/// - XX000 "container is not an agtype array" (`agtype_util.c`, N8: `WITH {a:
+///   1} AS n SET n.x = 1`), AGE's internal message for the same mistake.
+///
+/// A missing parameter in AGE is 42P02 ("parameters argument is missing from
+/// cypher() function call", `cypher_expr.c`) — `ParameterMissing`. The
+/// gateway always passes the map, so it is not expected; a key missing from
+/// the map reads as null in AGE.
 pub fn error_code(state: Option<&str>, message: &str) -> Option<&'static str> {
+    const TYPE: &str = "Neo.ClientError.Statement.TypeError";
     Some(match state? {
         // invalid_schema_name: `graph "x" does not exist`
         "3F000" => "Neo.ClientError.Database.DatabaseNotFound",
         "42601" => "Neo.ClientError.Statement.SyntaxError",
         "23505" | "23502" | "23514" => "Neo.ClientError.Schema.ConstraintValidationFailed",
+        "0A000" if message.contains("clause can only update") || message.contains("clause can only delete") => TYPE,
         "0A000" => "Neo.ClientError.Statement.SyntaxError",
-        "22023" if message.contains("parameter") => "Neo.ClientError.Statement.ParameterMissing",
+        "22023" if message.starts_with("Invalid input parameter type") => TYPE,
+        "XX000" if message.contains("container is not an agtype array") => TYPE,
+        "42P02" => "Neo.ClientError.Statement.ParameterMissing",
         _ => return None,
     })
 }
@@ -524,6 +545,25 @@ mod tests {
         let e = translate("QUERY FABRIC SELECT 1", &Json::Null, &Hierarchy::default()).err().unwrap();
         assert!(e.message.contains("fabric"), "{}", e.message);
         assert!(check("SHOW GRAPHS").is_ok_and(|w| !w));
+    }
+
+    #[test]
+    fn type_errors_are_type_errors() {
+        // B10: an operator over a value it does not take is not a missing parameter
+        assert_eq!(error_code(Some("22023"), "Invalid input parameter types for agtype_mul"), Some("Neo.ClientError.Statement.TypeError"));
+        assert_eq!(error_code(Some("22023"), "Invalid input parameter type for agtype_neg"), Some("Neo.ClientError.Statement.TypeError"));
+        // B12 / N8: SET or DELETE of a map or a scalar
+        assert_eq!(error_code(Some("XX000"), "container is not an agtype array"), Some("Neo.ClientError.Statement.TypeError"));
+        assert_eq!(error_code(Some("0A000"), "age SET clause can only update vertex and edges"), Some("Neo.ClientError.Statement.TypeError"));
+        assert_eq!(error_code(Some("0A000"), "DELETE clause can only delete vertices and edges"), Some("Neo.ClientError.Statement.TypeError"));
+        assert_eq!(error_code(Some("0A000"), "cypher DELETE clause cannot be rescanned"), Some("Neo.ClientError.Statement.SyntaxError"));
+        // a missing parameter map is still that; other 22023s go through the usual table
+        assert_eq!(
+            error_code(Some("42P02"), "parameters argument is missing from cypher() function call"),
+            Some("Neo.ClientError.Statement.ParameterMissing")
+        );
+        assert_eq!(error_code(Some("22023"), "right() length parameter cannot be null"), None);
+        assert_eq!(error_code(Some("XX000"), "something else"), None);
     }
 
     #[test]
