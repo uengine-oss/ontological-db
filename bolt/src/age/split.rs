@@ -517,8 +517,11 @@ fn plan_in(q: &Query, p: &mut Printer, scope0: Vec<String>) -> Result<Steps, Str
                 let imports = subquery_imports(sc, body);
                 let returns = super::cypher::columns(body);
                 // B4: a CALL { … }, FOREACH or label change inside: the body is
-                // cut too, and runs as steps of its own once per row
-                let inner = if must_cut(body) {
+                // cut too, and runs as steps of its own once per row. The
+                // shapes AGE answers wrongly in one statement (N1, N3, N4)
+                // count here as well: a body run once per row also gives each
+                // row the writes of the rows before it (N2).
+                let inner = if must_cut(body) || needed(body, &p.hier) {
                     let sees = match &imports {
                         None => scope.clone(),
                         Some(names) => names.clone(),
@@ -1419,6 +1422,20 @@ mod tests {
         assert!(f.asked[1].starts_with("UNWIND $__og_rows AS __og_row OPTIONAL MATCH (m:M) WHERE id(m) = __og_row.m OPTIONAL MATCH (c:C) WHERE id(c) = __og_row.c WITH __og_row, m, c WITH m, c WHERE NOT (c IS NULL) MERGE (m)-[:MAPS]->(c)"), "{}", f.asked[1]);
         assert!(f.asked[1].ends_with(r#"rows=[{"__i":0,"c":20,"m":10}]"#), "{}", f.asked[1]);
         assert!(f.asked[2].ends_with("WITH __og_row, m, c RETURN m | rows=[{\"__i\":0,\"c\":20,\"m\":10}]"), "{}", f.asked[2]);
+    }
+
+    #[test]
+    fn a_call_body_with_a_wrong_answer_shape_is_cut_too() {
+        // bolt-subqueries 4: MERGE … ON MATCH SET reading the merged node (N1),
+        // inside CALL { }: the body is planned as steps of its own, once per row
+        let s = steps(
+            "UNWIND [1, 1, 1] AS i CALL { WITH i MERGE (t:T {k: i}) ON MATCH SET t.hits = coalesce(t.hits, 0) + 1 RETURN t } RETURN t.hits AS h",
+        );
+        let call = s.segs.iter().find_map(|g| match g {
+            Seg::Call { inner, .. } => Some(inner.is_some()),
+            _ => None,
+        });
+        assert_eq!(call, Some(true));
     }
 
     #[test]
